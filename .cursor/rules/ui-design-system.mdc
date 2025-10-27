@@ -1,0 +1,101 @@
+---
+alwaysApply: true
+description: UI Design System for Water Tanker App
+---
+
+# Manual Changes 
+
+## Dont update the README.md file with minor changes. Update only the major changes done to the project.
+
+## For every screenshot attached dont use the design shown in the image, use the UI design what we are using for our Project.
+
+## For and dates anywhere in the project, check the logic and validation we have used for the date button in the BookTanker.tsx page.
+
+# UI Design System
+
+## Color Palette
+
+### Primary Colors
+- **Pure Black**: `#000000` - Main text, headers, primary actions
+- **Pure White**: `#FFFFFF` - Backgrounds, cards, secondary text
+
+### Accent Colors
+- **Champagne Gold**: `#D4AF37` - Premium touches, highlights, CTAs
+- **Premium Blue**: `#1E3A8A` - Status indicators, alerts, secondary actions
+
+### Neutral Grays
+Use Tailwind CSS gray scale: `gray-50`, `gray-100`, `gray-200`, `gray-300`, `gray-400`, `gray-500`, `gray-600`, `gray-700`, `gray-800`, `gray-900`
+
+### Status Colors
+- **Success Green**: `#059669` - Success states, confirmations
+- **Warning Amber**: `#D97706` - Warnings, pending states
+- **Error Red**: `#DC2626` - Errors, destructive actions
+
+## Typography
+
+### Font Families
+- **Headers**: SF Pro Display / Poppins (Bold, SemiBold)
+- **Body**: SF Pro Text / Inter (Regular, Medium)
+
+### Font Hierarchy
+- **H1**: 32px (2rem) - Main page titles
+- **H2**: 24px (1.5rem) - Section headers
+- **H3**: 18px (1.125rem) - Subsection headers
+- **Body**: 16px (1rem) - Main content text
+- **Caption**: 14px (0.875rem) - Secondary text, labels
+
+## Design Principles
+
+### Spacing
+- **Minimum padding**: 16px (1rem) for all containers
+- **Generous white space**: Use consistent spacing scale
+- **Component spacing**: 8px, 16px, 24px, 32px, 48px increments
+
+### Visual Effects
+- **Shadows**: Subtle elevation with `shadow-sm`, `shadow-md`, `shadow-lg`
+- **Transitions**: 300ms ease-in-out for all interactive elements
+- **Border radius**: Consistent 8px for cards, 4px for buttons
+
+### Icons & Illustrations
+- **Icon style**: Minimalist line icons
+- **Illustrations**: Subtle, clean illustrations
+- **Icon size**: 16px, 20px, 24px for different contexts
+
+### Loading States
+- **Skeleton loaders**: Required for all async content
+- **Loading animations**: Smooth, subtle transitions
+- **Empty states**: Clear messaging with appropriate illustrations
+
+## Implementation Guidelines
+
+### CSS Classes
+```css
+/* Typography */
+.text-h1 { font-size: 2rem; font-weight: 700; }
+.text-h2 { font-size: 1.5rem; font-weight: 600; }
+.text-h3 { font-size: 1.125rem; font-weight: 600; }
+.text-body { font-size: 1rem; font-weight: 400; }
+.text-caption { font-size: 0.875rem; font-weight: 400; }
+
+/* Transitions */
+.transition-smooth { transition: all 300ms ease-in-out; }
+```
+
+### Tailwind Configuration
+Ensure these colors are available in your Tailwind config:
+```js
+colors: {
+  'champagne-gold': '#D4AF37',
+  'premium-blue': '#1E3A8A',
+  'success-green': '#059669',
+  'warning-amber': '#D97706',
+  'error-red': '#DC2626'
+}
+```
+
+### Component Standards
+- All interactive elements must have hover states
+- Use consistent button styles with proper focus states
+- Implement proper contrast ratios for accessibility
+- Ensure mobile-first responsive design
+- Use semantic HTML elements for better accessibility
