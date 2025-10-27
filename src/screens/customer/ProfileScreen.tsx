@@ -22,7 +22,6 @@ const ProfileScreen: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     name: '',
-    email: '',
     phone: '',
   });
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -31,7 +30,6 @@ const ProfileScreen: React.FC = () => {
     if (user) {
       setEditForm({
         name: user.name || '',
-        email: user.email || '',
         phone: user.phone || '',
       });
     }
@@ -47,7 +45,7 @@ const ProfileScreen: React.FC = () => {
     try {
       const updates: Partial<User> = {
         name: editForm.name.trim(),
-        email: editForm.email.trim() || undefined,
+        phone: editForm.phone.trim(),
       };
 
       await updateUser(updates);
@@ -62,7 +60,6 @@ const ProfileScreen: React.FC = () => {
     if (user) {
       setEditForm({
         name: user.name || '',
-        email: user.email || '',
         phone: user.phone || '',
       });
     }
@@ -98,12 +95,25 @@ const ProfileScreen: React.FC = () => {
       .slice(0, 2);
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    }).format(date);
+  const formatDate = (date: Date | string) => {
+    try {
+      // Handle both Date objects and date strings
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Unknown date';
+      }
+      
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }).format(dateObj);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Unknown date';
+    }
   };
 
   if (isLoading) {
@@ -159,11 +169,6 @@ const ProfileScreen: React.FC = () => {
               <Typography variant="body" style={styles.userPhone}>
                 {user.phone}
               </Typography>
-              {user.email && (
-                <Typography variant="body" style={styles.userEmail}>
-                  {user.email}
-                </Typography>
-              )}
               <Typography variant="caption" style={styles.memberSince}>
                 Member since {formatDate(user.createdAt)}
               </Typography>
@@ -191,7 +196,7 @@ const ProfileScreen: React.FC = () => {
         {/* Edit Profile Form */}
         {isEditing && (
           <Card style={styles.editCard}>
-            <Typography variant="h4" style={styles.editTitle}>
+            <Typography variant="h3" style={styles.editTitle}>
               Edit Profile Information
             </Typography>
             
@@ -210,39 +215,23 @@ const ProfileScreen: React.FC = () => {
 
             <View style={styles.inputContainer}>
               <Typography variant="body" style={styles.inputLabel}>
-                Email Address
-              </Typography>
-              <TextInput
-                style={styles.textInput}
-                value={editForm.email}
-                onChangeText={(text) => setEditForm(prev => ({ ...prev, email: text }))}
-                placeholder="Enter your email address"
-                placeholderTextColor="#8E8E93"
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Typography variant="body" style={styles.inputLabel}>
                 Phone Number
               </Typography>
               <TextInput
-                style={[styles.textInput, styles.disabledInput]}
+                style={styles.textInput}
                 value={editForm.phone}
-                editable={false}
+                onChangeText={(text) => setEditForm(prev => ({ ...prev, phone: text }))}
+                placeholder="Enter your phone number"
                 placeholderTextColor="#8E8E93"
+                keyboardType="phone-pad"
               />
-              <Typography variant="caption" style={styles.disabledNote}>
-                Phone number cannot be changed
-              </Typography>
             </View>
           </Card>
         )}
 
         {/* Account Statistics */}
         <Card style={styles.statsCard}>
-          <Typography variant="h4" style={styles.sectionTitle}>
+          <Typography variant="h3" style={styles.sectionTitle}>
             Account Statistics
           </Typography>
           
@@ -278,7 +267,7 @@ const ProfileScreen: React.FC = () => {
 
         {/* Settings */}
         <Card style={styles.settingsCard}>
-          <Typography variant="h4" style={styles.sectionTitle}>
+          <Typography variant="h3" style={styles.sectionTitle}>
             Settings
           </Typography>
           
@@ -332,7 +321,6 @@ const ProfileScreen: React.FC = () => {
             onPress={confirmLogout}
             variant="outline"
             style={styles.logoutButton}
-            textStyle={styles.logoutButtonText}
           />
         </View>
 
@@ -546,9 +534,6 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     borderColor: '#FF3B30',
-  },
-  logoutButtonText: {
-    color: '#FF3B30',
   },
   bottomSpacing: {
     height: 20,

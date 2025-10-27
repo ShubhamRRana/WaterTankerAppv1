@@ -131,14 +131,27 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatDate = (date: Date | string) => {
+    try {
+      // Handle both Date objects and date strings
+      const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Unknown date';
+      }
+      
+      return dateObj.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Unknown date';
+    }
   };
 
   const formatTime = (minutes: number) => {

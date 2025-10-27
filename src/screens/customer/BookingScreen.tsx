@@ -86,34 +86,66 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   // Validate if the date is not in the past
   const validateDate = (dateString: string): { isValid: boolean; error: string } => {
     if (!dateString || dateString.length < 10) {
-      return { isValid: false, error: '' };
+      return { isValid: false, error: 'Please enter a complete date' };
     }
 
     try {
       // Parse the date string (DD-MM-YYYY format)
-      const [day, month, year] = dateString.split('-').map(Number);
+      const dateParts = dateString.split('-');
+      if (dateParts.length !== 3) {
+        return { isValid: false, error: 'Invalid date format. Use DD-MM-YYYY' };
+      }
+
+      const [dayStr, monthStr, yearStr] = dateParts;
+      const day = parseInt(dayStr, 10);
+      const month = parseInt(monthStr, 10);
+      const year = parseInt(yearStr, 10);
       
-      // Check if the date components are valid
+      // Check if the date components are valid numbers
       if (isNaN(day) || isNaN(month) || isNaN(year)) {
-        return { isValid: false, error: 'Invalid date format' };
+        return { isValid: false, error: 'Date must contain only numbers' };
+      }
+
+      // Validate ranges
+      if (year < 2024 || year > 2030) {
+        return { isValid: false, error: 'Year must be between 2024 and 2030' };
+      }
+
+      if (month < 1 || month > 12) {
+        return { isValid: false, error: 'Month must be between 1 and 12' };
+      }
+
+      if (day < 1 || day > 31) {
+        return { isValid: false, error: 'Day must be between 1 and 31' };
       }
 
       // Create date object (month is 0-indexed in JavaScript Date)
       const inputDate = new Date(year, month - 1, day);
+      
+      // Check if the date is valid (handles invalid dates like 32-13-2024)
+      if (isNaN(inputDate.getTime())) {
+        return { isValid: false, error: 'Invalid date - this date does not exist' };
+      }
+
+      if (inputDate.getDate() !== day || inputDate.getMonth() !== month - 1 || inputDate.getFullYear() !== year) {
+        return { isValid: false, error: 'Invalid date - please check the date' };
+      }
+
       const today = new Date();
       
       // Reset time to start of day for accurate comparison
       today.setHours(0, 0, 0, 0);
       inputDate.setHours(0, 0, 0, 0);
 
-      // Check if the date is valid (handles invalid dates like 32-13-2024)
-      if (inputDate.getDate() !== day || inputDate.getMonth() !== month - 1 || inputDate.getFullYear() !== year) {
-        return { isValid: false, error: 'Invalid date' };
-      }
-
       // Check if the date is in the past
       if (inputDate < today) {
         return { isValid: false, error: 'Cannot select past dates' };
+      }
+
+      // Check if date is too far in the future (more than 30 days)
+      const maxDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
+      if (inputDate > maxDate) {
+        return { isValid: false, error: 'Cannot select dates more than 30 days in future' };
       }
 
       return { isValid: true, error: '' };
@@ -170,20 +202,98 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     setTimePeriod(period);
   };
 
-  // Convert 12-hour format to 24-hour format for date creation
-  const createScheduledDate = (dateString: string, timeString: string, period: 'AM' | 'PM'): Date => {
+  // Validate time input
+  const validateTime = (timeString: string): { isValid: boolean; error: string } => {
+    if (!timeString || timeString.length < 5) {
+      return { isValid: false, error: 'Please enter a complete time' };
+    }
+
     try {
-      // Parse date (DD-MM-YYYY format)
-      const [day, month, year] = dateString.split('-').map(Number);
-      
       // Parse time (HH:MM format)
       const timeMatch = timeString.match(/^(\d{1,2}):(\d{2})$/);
       if (!timeMatch) {
-        throw new Error('Invalid time format');
+        return { isValid: false, error: 'Invalid time format. Use HH:MM' };
+      }
+
+      const hours = parseInt(timeMatch[1], 10);
+      const minutes = parseInt(timeMatch[2], 10);
+
+      // Validate time components
+      if (isNaN(hours) || isNaN(minutes)) {
+        return { isValid: false, error: 'Time must contain only numbers' };
+      }
+
+      if (hours < 1 || hours > 12) {
+        return { isValid: false, error: 'Hours must be between 1 and 12' };
+      }
+
+      if (minutes < 0 || minutes > 59) {
+        return { isValid: false, error: 'Minutes must be between 0 and 59' };
+      }
+
+      return { isValid: true, error: '' };
+    } catch (error) {
+      return { isValid: false, error: 'Invalid time format' };
+    }
+  };
+
+  // Convert 12-hour format to 24-hour format for date creation
+  const createScheduledDate = (dateString: string, timeString: string, period: 'AM' | 'PM'): Date => {
+    try {
+      // Validate inputs
+      if (!dateString || !timeString || !period) {
+        throw new Error('Missing required parameters');
+      }
+
+      // Parse date (DD-MM-YYYY format)
+      const dateParts = dateString.split('-');
+      if (dateParts.length !== 3) {
+        throw new Error('Invalid date format - expected DD-MM-YYYY');
+      }
+
+      const [dayStr, monthStr, yearStr] = dateParts;
+      const day = parseInt(dayStr, 10);
+      const month = parseInt(monthStr, 10);
+      const year = parseInt(yearStr, 10);
+      
+      // Validate date components
+      if (isNaN(day) || isNaN(month) || isNaN(year)) {
+        throw new Error('Invalid date components - must be numbers');
+      }
+
+      if (year < 2024 || year > 2030) {
+        throw new Error('Year must be between 2024 and 2030');
+      }
+
+      if (month < 1 || month > 12) {
+        throw new Error('Month must be between 1 and 12');
+      }
+
+      if (day < 1 || day > 31) {
+        throw new Error('Day must be between 1 and 31');
+      }
+
+      // Parse time (HH:MM format)
+      const timeMatch = timeString.match(/^(\d{1,2}):(\d{2})$/);
+      if (!timeMatch) {
+        throw new Error('Invalid time format - expected HH:MM');
       }
       
-      let hours = parseInt(timeMatch[1]);
-      const minutes = parseInt(timeMatch[2]);
+      let hours = parseInt(timeMatch[1], 10);
+      const minutes = parseInt(timeMatch[2], 10);
+      
+      // Validate time components
+      if (isNaN(hours) || isNaN(minutes)) {
+        throw new Error('Invalid time components - must be numbers');
+      }
+
+      if (hours < 1 || hours > 12) {
+        throw new Error('Hours must be between 1 and 12');
+      }
+
+      if (minutes < 0 || minutes > 59) {
+        throw new Error('Minutes must be between 0 and 59');
+      }
       
       // Convert to 24-hour format
       if (period === 'AM') {
@@ -192,12 +302,27 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         if (hours !== 12) hours += 12;
       }
       
-      // Create date object
-      return new Date(year, month - 1, day, hours, minutes);
+      // Create date object with additional validation
+      const date = new Date(year, month - 1, day, hours, minutes);
+      
+      // Verify the date is valid (handles cases like Feb 30, etc.)
+      if (isNaN(date.getTime())) {
+        throw new Error('Invalid date - date does not exist');
+      }
+
+      // Double-check that the created date matches our input
+      if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
+        throw new Error('Invalid date - date components do not match');
+      }
+
+      return date;
     } catch (error) {
       console.error('Error creating scheduled date:', error);
-      // Fallback to current date/time
-      return new Date();
+      // Return a fallback date (tomorrow at 9 AM) instead of current time
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(9, 0, 0, 0);
+      return tomorrow;
     }
   };
 
@@ -217,6 +342,13 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     const dateValidation = validateDate(deliveryDate);
     if (!dateValidation.isValid) {
       Alert.alert('Invalid Date', dateValidation.error);
+      return;
+    }
+
+    // Validate the time
+    const timeValidation = validateTime(deliveryTime);
+    if (!timeValidation.isValid) {
+      Alert.alert('Invalid Time', timeValidation.error);
       return;
     }
 

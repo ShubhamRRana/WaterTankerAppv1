@@ -4,8 +4,6 @@ A React Native mobile application for booking water tankers, built with Expo and
 
 ## Project Structure
 
-## Project Structure
-
 ```
 src/
 ├── components/

@@ -158,16 +158,43 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
   };
 
   const recentBookings = bookings
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .sort((a, b) => {
+      try {
+        const dateA = typeof a.createdAt === 'string' ? new Date(a.createdAt) : new Date(a.createdAt);
+        const dateB = typeof b.createdAt === 'string' ? new Date(b.createdAt) : new Date(b.createdAt);
+        
+        // Handle invalid dates by putting them at the end
+        if (isNaN(dateA.getTime())) return 1;
+        if (isNaN(dateB.getTime())) return -1;
+        
+        return dateB.getTime() - dateA.getTime();
+      } catch (error) {
+        console.error('Error sorting bookings:', error);
+        return 0;
+      }
+    })
     .slice(0, 3);
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatDate = (date: Date | string) => {
+    try {
+      // Handle both Date objects and date strings
+      const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
+      
+      // Check if the date is valid
+      if (isNaN(dateObj.getTime())) {
+        return 'Unknown date';
+      }
+      
+      return dateObj.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Unknown date';
+    }
   };
 
   const formatPrice = (price: number) => {
