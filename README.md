@@ -180,3 +180,4 @@ The app structure has been implemented according to the plan. All core directori
 4. Integrate with local storage services
 5. Add maps and location services
 6. Test and polish the application
+# WaterTankerAppv1
