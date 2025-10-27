@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Typography } from '../../components/common';
 
 interface OTPScreenProps {
   route: {
@@ -61,11 +61,11 @@ const OTPScreen: React.FC<OTPScreenProps> = ({ route }) => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Verify Phone Number</Text>
-        <Text style={styles.subtitle}>
+        <Typography variant="h1" style={styles.title}>Verify Phone Number</Typography>
+        <Typography variant="body" style={styles.subtitle}>
           Enter the 6-digit code sent to{'\n'}
-          <Text style={styles.phoneNumber}>+91 {phone}</Text>
-        </Text>
+          <Typography variant="body" style={styles.phoneNumber}>+91 {phone}</Typography>
+        </Typography>
       </View>
 
       <View style={styles.form}>
@@ -86,23 +86,23 @@ const OTPScreen: React.FC<OTPScreenProps> = ({ route }) => {
           onPress={handleVerifyOTP}
           disabled={otp.length !== 6}
         >
-          <Text style={styles.buttonText}>Verify OTP</Text>
+          <Typography variant="body" style={styles.buttonText}>Verify OTP</Typography>
         </TouchableOpacity>
 
         <View style={styles.resendContainer}>
-          <Text style={styles.resendText}>
+          <Typography variant="body" style={styles.resendText}>
             Didn't receive the code?{' '}
-          </Text>
+          </Typography>
           <TouchableOpacity
             onPress={handleResendOTP}
             disabled={timer > 0 || isResending}
           >
-            <Text style={[
+            <Typography variant="body" style={[
               styles.resendLink,
               (timer > 0 || isResending) && styles.resendLinkDisabled
             ]}>
               {isResending ? 'Sending...' : timer > 0 ? `Resend in ${timer}s` : 'Resend'}
-            </Text>
+            </Typography>
           </TouchableOpacity>
         </View>
       </View>

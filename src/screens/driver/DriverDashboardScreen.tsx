@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
+import { Typography } from '../../components/common';
 
 const DriverDashboardScreen: React.FC = () => {
   const { logout } = useAuthStore();
@@ -43,10 +44,10 @@ const DriverDashboardScreen: React.FC = () => {
         >
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>Driver Dashboard</Text>
+        <Typography variant="h2" style={styles.title}>Driver Dashboard</Typography>
         <View style={styles.placeholder} />
       </View>
-      <Text style={styles.subtitle}>Manage your deliveries</Text>
+      <Typography variant="body" style={styles.subtitle}>Manage your deliveries</Typography>
       </View>
     </SafeAreaView>
   );

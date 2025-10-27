@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -18,6 +17,7 @@ import { useBookingStore } from '../../store/bookingStore';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { Typography } from '../../components/common';
 import { Address, BookingForm, TankerSize } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
@@ -278,7 +278,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           <TouchableOpacity onPress={() => setShowTankerModal(false)}>
             <Ionicons name="close" size={24} color="#000" />
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>Select Tanker Size</Text>
+          <Typography variant="h3" style={styles.modalTitle}>Select Tanker Size</Typography>
           <View style={{ width: 24 }} />
         </View>
 
@@ -293,10 +293,10 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
               onPress={() => handleTankerSelection(tanker.size)}
             >
               <View style={styles.tankerInfo}>
-                <Text style={styles.tankerName}>{tanker.displayName}</Text>
-                <Text style={styles.tankerPrice}>
+                <Typography variant="body" style={styles.tankerName}>{tanker.displayName}</Typography>
+                <Typography variant="caption" style={styles.tankerPrice}>
                   {PricingUtils.formatPrice(tanker.basePrice)} base price
-                </Text>
+                </Typography>
               </View>
               <Ionicons
                 name={selectedTankerSize === tanker.size ? "radio-button-on" : "radio-button-off"}
@@ -317,7 +317,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           <TouchableOpacity onPress={() => setShowSavedAddressModal(false)}>
             <Ionicons name="close" size={24} color="#000" />
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>Select Saved Address</Text>
+          <Typography variant="h3" style={styles.modalTitle}>Select Saved Address</Typography>
           <TouchableOpacity onPress={() => navigation.navigate('SavedAddresses')}>
             <Ionicons name="add" size={24} color="#007AFF" />
           </TouchableOpacity>
@@ -333,22 +333,22 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
               >
                 <View style={styles.addressInfo}>
                   <View style={styles.addressTitleRow}>
-                    <Text style={styles.addressTitle}>{address.street}</Text>
+                    <Typography variant="body" style={styles.addressTitle}>{address.street}</Typography>
                     {address.isDefault && (
                       <View style={styles.defaultBadge}>
-                        <Text style={styles.defaultText}>DEFAULT</Text>
+                        <Typography variant="caption" style={styles.defaultText}>DEFAULT</Typography>
                       </View>
                     )}
                   </View>
                   {(address.city || address.state || address.pincode) && (
-                    <Text style={styles.addressDetails}>
+                    <Typography variant="caption" style={styles.addressDetails}>
                       {[address.city, address.state, address.pincode].filter(Boolean).join(', ')}
-                    </Text>
+                    </Typography>
                   )}
                   {address.landmark && (
-                    <Text style={styles.landmark}>
+                    <Typography variant="caption" style={styles.landmark}>
                       Near {address.landmark}
-                    </Text>
+                    </Typography>
                   )}
                 </View>
                 <Ionicons name="chevron-forward" size={20} color="#8E8E93" />
@@ -357,13 +357,13 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           ) : (
             <View style={styles.emptyState}>
               <Ionicons name="location-outline" size={64} color="#8E8E93" />
-              <Text style={styles.emptyStateText}>No saved addresses</Text>
-              <Text style={styles.emptyStateSubtext}>Add your first address to get started</Text>
+              <Typography variant="body" style={styles.emptyStateText}>No saved addresses</Typography>
+              <Typography variant="caption" style={styles.emptyStateSubtext}>Add your first address to get started</Typography>
               <TouchableOpacity
                 style={styles.emptyStateButton}
                 onPress={() => navigation.navigate('SavedAddresses')}
               >
-                <Text style={styles.emptyStateButtonText}>Add Address</Text>
+                <Typography variant="body" style={styles.emptyStateButtonText}>Add Address</Typography>
               </TouchableOpacity>
             </View>
           )}
@@ -377,7 +377,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <LoadingSpinner />
-          <Text style={styles.loadingText}>Creating your booking...</Text>
+          <Typography variant="body" style={styles.loadingText}>Creating your booking...</Typography>
         </View>
       </SafeAreaView>
     );
@@ -390,22 +390,22 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Book Water Tanker</Text>
+        <Typography variant="h2" style={styles.title}>Book Water Tanker</Typography>
       </View>
 
       {/* Tanker Size Selection */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Select Tanker Size</Text>
+        <Typography variant="h3" style={styles.sectionTitle}>Select Tanker Size</Typography>
         <Card style={styles.selectionCard} onPress={() => setShowTankerModal(true)}>
           <View style={styles.selectionContent}>
             <View style={styles.selectionInfo}>
-              <Text style={styles.selectionLabel}>
+              <Typography variant="body" style={styles.selectionLabel}>
                 {selectedTankerSize ? `${selectedTankerSize}L Tanker` : 'Choose tanker size'}
-              </Text>
+              </Typography>
               {selectedTankerSize && (
-                <Text style={styles.selectionSubtext}>
+                <Typography variant="caption" style={styles.selectionSubtext}>
                   Base price: {PricingUtils.formatPrice(tankerSizes.find(t => t.size === selectedTankerSize)?.basePrice || 0)}
-                </Text>
+                </Typography>
               )}
             </View>
             <Ionicons name="chevron-forward" size={20} color="#8E8E93" />
@@ -415,7 +415,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
       {/* Delivery Address */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Delivery Address</Text>
+        <Typography variant="h3" style={styles.sectionTitle}>Delivery Address</Typography>
         <Card style={styles.inputCard}>
           <TextInput
             style={styles.textArea}
@@ -431,18 +431,18 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           onPress={() => setShowSavedAddressModal(true)}
         >
           <Ionicons name="location-outline" size={20} color="#007AFF" />
-          <Text style={styles.savedAddressButtonText}>Select from Saved Addresses</Text>
+          <Typography variant="body" style={styles.savedAddressButtonText}>Select from Saved Addresses</Typography>
           <Ionicons name="chevron-forward" size={16} color="#8E8E93" />
         </TouchableOpacity>
       </View>
 
       {/* Delivery Timing */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Delivery Timing</Text>
+        <Typography variant="h3" style={styles.sectionTitle}>Delivery Timing</Typography>
         <View style={styles.dateTimeContainer}>
           <View style={styles.dateTimeRow}>
             <View style={styles.dateTimeInputContainer}>
-              <Text style={styles.inputLabel}>Date</Text>
+              <Typography variant="body" style={styles.inputLabel}>Date</Typography>
               <Card style={[styles.inputCard, dateError && styles.inputCardError]}>
                 <TextInput
                   style={styles.dateTimeInput}
@@ -454,11 +454,11 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                 />
               </Card>
               {dateError && (
-                <Text style={styles.errorText}>{dateError}</Text>
+                <Typography variant="caption" style={styles.errorText}>{dateError}</Typography>
               )}
             </View>
             <View style={styles.dateTimeInputContainer}>
-              <Text style={styles.inputLabel}>Time</Text>
+              <Typography variant="body" style={styles.inputLabel}>Time</Typography>
               <Card style={styles.inputCard}>
                 <View style={styles.timeInputContainer}>
                   <TextInput
@@ -477,10 +477,10 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                       ]}
                       onPress={() => handleTimePeriodChange('AM')}
                     >
-                      <Text style={[
+                      <Typography variant="body" style={[
                         styles.timePeriodText,
                         timePeriod === 'AM' && styles.timePeriodTextActive
-                      ]}>AM</Text>
+                      ]}>AM</Typography>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[
@@ -489,10 +489,10 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                       ]}
                       onPress={() => handleTimePeriodChange('PM')}
                     >
-                      <Text style={[
+                      <Typography variant="body" style={[
                         styles.timePeriodText,
                         timePeriod === 'PM' && styles.timePeriodTextActive
-                      ]}>PM</Text>
+                      ]}>PM</Typography>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -504,7 +504,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
       {/* Special Instructions */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Special Instructions (Optional)</Text>
+        <Typography variant="h3" style={styles.sectionTitle}>Special Instructions (Optional)</Typography>
         <Card style={styles.inputCard}>
           <TextInput
             style={styles.textArea}
@@ -520,23 +520,23 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       {/* Price Breakdown */}
       {priceBreakdown && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Price Breakdown</Text>
+          <Typography variant="h3" style={styles.sectionTitle}>Price Breakdown</Typography>
           <Card style={styles.priceCard}>
             <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Tanker Size</Text>
-              <Text style={styles.priceValue}>{priceBreakdown.tankerSize}</Text>
+              <Typography variant="body" style={styles.priceLabel}>Tanker Size</Typography>
+              <Typography variant="body" style={styles.priceValue}>{priceBreakdown.tankerSize}</Typography>
             </View>
             <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Base Price</Text>
-              <Text style={styles.priceValue}>{PricingUtils.formatPrice(priceBreakdown.basePrice)}</Text>
+              <Typography variant="body" style={styles.priceLabel}>Base Price</Typography>
+              <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(priceBreakdown.basePrice)}</Typography>
             </View>
             <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Distance ({priceBreakdown.distance.toFixed(1)} km)</Text>
-              <Text style={styles.priceValue}>{PricingUtils.formatPrice(priceBreakdown.distanceCharge)}</Text>
+              <Typography variant="body" style={styles.priceLabel}>Distance ({priceBreakdown.distance.toFixed(1)} km)</Typography>
+              <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(priceBreakdown.distanceCharge)}</Typography>
             </View>
             <View style={[styles.priceRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total Amount</Text>
-              <Text style={styles.totalValue}>{PricingUtils.formatPrice(priceBreakdown.totalPrice)}</Text>
+              <Typography variant="h3" style={styles.totalLabel}>Total Amount</Typography>
+              <Typography variant="h3" style={styles.totalValue}>{PricingUtils.formatPrice(priceBreakdown.totalPrice)}</Typography>
             </View>
           </Card>
         </View>

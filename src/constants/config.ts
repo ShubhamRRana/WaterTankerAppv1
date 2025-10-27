@@ -60,9 +60,9 @@ export const LOCATION_CONFIG = {
 // UI Configuration
 export const UI_CONFIG = {
   fonts: {
-    primary: 'PlayfairDisplay-Regular',
-    bold: 'PlayfairDisplay-Regular', // Using same font with fontWeight for bold
-    fallback: ['PlayfairDisplay-Regular', 'serif'],
+    primary: 'System',
+    bold: 'System',
+    fallback: ['System'],
   },
   colors: {
     primary: '#007AFF',

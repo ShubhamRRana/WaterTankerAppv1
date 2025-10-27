@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   Alert,
@@ -14,6 +13,7 @@ import { useAuthStore } from '../../store/authStore';
 import { AuthStackParamList } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
+import { Typography } from '../../components/common';
 
 type RoleSelectionScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'RoleSelection'>;
 type RoleSelectionScreenRouteProp = RouteProp<AuthStackParamList, 'RoleSelection'>;
@@ -94,10 +94,10 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <Text style={styles.title}>Select Account Type</Text>
-          <Text style={styles.subtitle}>
+          <Typography variant="h1" style={styles.title}>Select Account Type</Typography>
+          <Typography variant="body" style={styles.subtitle}>
             You have multiple accounts with this phone number. Choose which account you want to access.
-          </Text>
+          </Typography>
         </View>
 
         <View style={styles.roleContainer}>
@@ -111,20 +111,20 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
               onPress={() => setSelectedRole(role)}
             >
               <View style={styles.roleHeader}>
-                <Text style={styles.roleIcon}>{getRoleIcon(role)}</Text>
+                <Typography variant="body" style={styles.roleIcon}>{getRoleIcon(role)}</Typography>
                 <View style={styles.roleInfo}>
-                  <Text style={[
+                  <Typography variant="h3" style={[
                     styles.roleTitle,
                     selectedRole === role && styles.roleTitleSelected,
                   ]}>
                     {getRoleDisplayName(role)}
-                  </Text>
-                  <Text style={[
+                  </Typography>
+                  <Typography variant="caption" style={[
                     styles.roleDescription,
                     selectedRole === role && styles.roleDescriptionSelected,
                   ]}>
                     {getRoleDescription(role)}
-                  </Text>
+                  </Typography>
                 </View>
               </View>
             </TouchableOpacity>
@@ -139,16 +139,16 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
           onPress={handleRoleSelection}
           disabled={!selectedRole || isLoading}
         >
-          <Text style={styles.buttonText}>
+          <Typography variant="body" style={styles.buttonText}>
             {isLoading ? 'Signing In...' : 'Continue'}
-          </Text>
+          </Typography>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.backButtonText}>Back to Login</Text>
+          <Typography variant="body" style={styles.backButtonText}>Back to Login</Typography>
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Typography } from '../../components/common';
 
 const ActiveOrderScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Active Order</Text>
-      <Text style={styles.subtitle}>Update delivery status</Text>
+      <Typography variant='h2' style={styles.title}>Active Order</Typography>
+      <Typography variant='body' style={styles.subtitle}>Update delivery status</Typography>
     </View>
   );
 };

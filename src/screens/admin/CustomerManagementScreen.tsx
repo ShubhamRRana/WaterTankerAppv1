@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Typography } from '../../components/common';
 
 const CustomerManagementScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Customer Management</Text>
-      <Text style={styles.subtitle}>Manage customer accounts</Text>
+      <Typography variant="h2" style={styles.title}>Customer Management</Typography>
+      <Typography variant="body" style={styles.subtitle}>Manage customer accounts</Typography>
     </View>
   );
 };

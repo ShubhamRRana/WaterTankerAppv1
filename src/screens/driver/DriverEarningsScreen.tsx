@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Typography } from '../../components/common';
 
 const DriverEarningsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Earnings</Text>
-      <Text style={styles.subtitle}>Track your delivery earnings</Text>
+      <Typography variant='h2' style={styles.title}>Earnings</Typography>
+      <Typography variant='body' style={styles.subtitle}>Track your delivery earnings</Typography>
     </View>
   );
 };

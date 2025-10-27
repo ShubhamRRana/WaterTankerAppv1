@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
+import { Typography } from '../../components/common';
 
 const AdminDashboardScreen: React.FC = () => {
   const { logout } = useAuthStore();
@@ -43,10 +44,10 @@ const AdminDashboardScreen: React.FC = () => {
         >
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
         </TouchableOpacity>
-        <Text style={styles.title}>Admin Dashboard</Text>
+        <Typography variant="h2" style={styles.title}>Admin Dashboard</Typography>
         <View style={styles.placeholder} />
       </View>
-      <Text style={styles.subtitle}>Manage the water tanker platform</Text>
+      <Typography variant="body" style={styles.subtitle}>Manage the water tanker platform</Typography>
       </View>
     </SafeAreaView>
   );

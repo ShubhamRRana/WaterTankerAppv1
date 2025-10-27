@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Typography } from '../../components/common';
 
 const PricingManagementScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Pricing Management</Text>
-      <Text style={styles.subtitle}>Configure pricing and tanker sizes</Text>
+      <Typography variant='h2' style={styles.title}>Pricing Management</Typography>
+      <Typography variant='body' style={styles.subtitle}>Configure pricing and tanker sizes</Typography>
     </View>
   );
 };

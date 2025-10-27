@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Typography } from '../../components/common';
 
 const AllBookingsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>All Bookings</Text>
-      <Text style={styles.subtitle}>Monitor all platform bookings</Text>
+      <Typography variant="h2" style={styles.title}>All Bookings</Typography>
+      <Typography variant="body" style={styles.subtitle}>Monitor all platform bookings</Typography>
     </View>
   );
 };

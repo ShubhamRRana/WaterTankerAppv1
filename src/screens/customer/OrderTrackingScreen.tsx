@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -15,6 +14,7 @@ import { RouteProp } from '@react-navigation/native';
 import { useBookingStore } from '../../store/bookingStore';
 import Card from '../../components/common/Card';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { Typography } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
@@ -194,7 +194,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <LoadingSpinner />
-          <Text style={styles.loadingText}>Loading order details...</Text>
+          <Typography variant="body" style={styles.loadingText}>Loading order details...</Typography>
         </View>
       </SafeAreaView>
     );
@@ -208,7 +208,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Track Order</Text>
+        <Typography variant="h3" style={styles.title}>Track Order</Typography>
         <View style={{ width: 24 }} />
       </View>
 
@@ -220,17 +220,17 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
               <Ionicons name={getStatusIcon(trackingStatus)} size={32} color="#FFFFFF" />
             </View>
             <View style={styles.statusInfo}>
-              <Text style={styles.statusTitle}>{getStatusText(trackingStatus)}</Text>
-              <Text style={styles.statusDescription}>{getStatusDescription(trackingStatus)}</Text>
+              <Typography variant="h3" style={styles.statusTitle}>{getStatusText(trackingStatus)}</Typography>
+              <Typography variant="body" style={styles.statusDescription}>{getStatusDescription(trackingStatus)}</Typography>
             </View>
           </View>
           
           {estimatedDeliveryTime && trackingStatus === 'in_transit' && (
             <View style={styles.estimatedTime}>
               <Ionicons name="time-outline" size={16} color="#007AFF" />
-              <Text style={styles.estimatedTimeText}>
+              <Typography variant="body" style={styles.estimatedTimeText}>
                 Estimated delivery: {formatTime(estimatedDeliveryTime)}
-              </Text>
+              </Typography>
             </View>
           )}
         </Card>
@@ -238,28 +238,28 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
 
       {/* Order Details */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Order Details</Text>
+        <Typography variant="h3" style={styles.sectionTitle}>Order Details</Typography>
         <Card style={styles.detailsCard}>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Order ID</Text>
-            <Text style={styles.detailValue}>#{booking.id.slice(-6)}</Text>
+            <Typography variant="body" style={styles.detailLabel}>Order ID</Typography>
+            <Typography variant="body" style={styles.detailValue}>#{booking.id.slice(-6)}</Typography>
           </View>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Tanker Size</Text>
-            <Text style={styles.detailValue}>{booking.tankerSize}L</Text>
+            <Typography variant="body" style={styles.detailLabel}>Tanker Size</Typography>
+            <Typography variant="body" style={styles.detailValue}>{booking.tankerSize}L</Typography>
           </View>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Total Amount</Text>
-            <Text style={styles.detailValue}>{PricingUtils.formatPrice(booking.totalPrice)}</Text>
+            <Typography variant="body" style={styles.detailLabel}>Total Amount</Typography>
+            <Typography variant="body" style={styles.detailValue}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
           </View>
           <View style={styles.detailRow}>
-            <Text style={styles.detailLabel}>Order Date</Text>
-            <Text style={styles.detailValue}>{formatDate(booking.createdAt)}</Text>
+            <Typography variant="body" style={styles.detailLabel}>Order Date</Typography>
+            <Typography variant="body" style={styles.detailValue}>{formatDate(booking.createdAt)}</Typography>
           </View>
           {booking.scheduledFor && (
             <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>Scheduled For</Text>
-              <Text style={styles.detailValue}>{formatDate(booking.scheduledFor)}</Text>
+              <Typography variant="body" style={styles.detailLabel}>Scheduled For</Typography>
+              <Typography variant="body" style={styles.detailValue}>{formatDate(booking.scheduledFor)}</Typography>
             </View>
           )}
         </Card>
@@ -267,18 +267,18 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
 
       {/* Delivery Address */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Delivery Address</Text>
+        <Typography variant="h3" style={styles.sectionTitle}>Delivery Address</Typography>
         <Card style={styles.addressCard}>
           <View style={styles.addressHeader}>
             <Ionicons name="location" size={20} color="#34C759" />
-            <Text style={styles.addressTitle}>Delivery Location</Text>
+            <Typography variant="body" style={styles.addressTitle}>Delivery Location</Typography>
           </View>
-          <Text style={styles.addressText}>{booking.deliveryAddress.street}</Text>
-          <Text style={styles.addressText}>
+          <Typography variant="body" style={styles.addressText}>{booking.deliveryAddress.street}</Typography>
+          <Typography variant="body" style={styles.addressText}>
             {booking.deliveryAddress.city}, {booking.deliveryAddress.state} - {booking.deliveryAddress.pincode}
-          </Text>
+          </Typography>
           {booking.deliveryAddress.landmark && (
-            <Text style={styles.landmarkText}>Near {booking.deliveryAddress.landmark}</Text>
+            <Typography variant="caption" style={styles.landmarkText}>Near {booking.deliveryAddress.landmark}</Typography>
           )}
         </Card>
       </View>
@@ -286,15 +286,15 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
       {/* Driver Information */}
       {booking.driverName && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Driver Information</Text>
+          <Typography variant="h3" style={styles.sectionTitle}>Driver Information</Typography>
           <Card style={styles.driverCard}>
             <View style={styles.driverHeader}>
               <View style={styles.driverAvatar}>
                 <Ionicons name="person" size={24} color="#5856D6" />
               </View>
               <View style={styles.driverInfo}>
-                <Text style={styles.driverName}>{booking.driverName}</Text>
-                <Text style={styles.driverPhone}>{booking.driverPhone}</Text>
+                <Typography variant="body" style={styles.driverName}>{booking.driverName}</Typography>
+                <Typography variant="caption" style={styles.driverPhone}>{booking.driverPhone}</Typography>
               </View>
               <TouchableOpacity style={styles.callButton} onPress={handleCallDriver}>
                 <Ionicons name="call" size={20} color="#34C759" />
@@ -304,7 +304,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
             {driverLocation && (
               <View style={styles.locationInfo}>
                 <Ionicons name="navigate" size={16} color="#007AFF" />
-                <Text style={styles.locationText}>Driver is on the way</Text>
+                <Typography variant="caption" style={styles.locationText}>Driver is on the way</Typography>
               </View>
             )}
           </Card>
@@ -313,19 +313,19 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
 
       {/* Price Breakdown */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Price Breakdown</Text>
+        <Typography variant="h3" style={styles.sectionTitle}>Price Breakdown</Typography>
         <Card style={styles.priceCard}>
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Base Price</Text>
-            <Text style={styles.priceValue}>{PricingUtils.formatPrice(booking.basePrice)}</Text>
+            <Typography variant="body" style={styles.priceLabel}>Base Price</Typography>
+            <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(booking.basePrice)}</Typography>
           </View>
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Distance Charge ({booking.distance.toFixed(1)} km)</Text>
-            <Text style={styles.priceValue}>{PricingUtils.formatPrice(booking.distanceCharge)}</Text>
+            <Typography variant="body" style={styles.priceLabel}>Distance Charge ({booking.distance.toFixed(1)} km)</Typography>
+            <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(booking.distanceCharge)}</Typography>
           </View>
           <View style={[styles.priceRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalValue}>{PricingUtils.formatPrice(booking.totalPrice)}</Text>
+            <Typography variant="h3" style={styles.totalLabel}>Total Amount</Typography>
+            <Typography variant="h3" style={styles.totalValue}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
           </View>
         </Card>
       </View>
@@ -336,14 +336,14 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
           {booking.canCancel && trackingStatus === 'pending' && (
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancelOrder}>
               <Ionicons name="close-outline" size={20} color="#FF3B30" />
-              <Text style={styles.cancelButtonText}>Cancel Order</Text>
+              <Typography variant="body" style={styles.cancelButtonText}>Cancel Order</Typography>
             </TouchableOpacity>
           )}
           
           {trackingStatus === 'delivered' && (
             <TouchableOpacity style={styles.rateButton}>
               <Ionicons name="star-outline" size={20} color="#FF9500" />
-              <Text style={styles.rateButtonText}>Rate Delivery</Text>
+              <Typography variant="body" style={styles.rateButtonText}>Rate Delivery</Typography>
             </TouchableOpacity>
           )}
         </View>

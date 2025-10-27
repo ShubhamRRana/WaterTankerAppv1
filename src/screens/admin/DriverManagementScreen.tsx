@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Typography } from '../../components/common';
 
 const DriverManagementScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Driver Management</Text>
-      <Text style={styles.subtitle}>Manage driver accounts and approvals</Text>
+      <Typography variant='h2' style={styles.title}>Driver Management</Typography>
+      <Typography variant='body' style={styles.subtitle}>Manage driver accounts and approvals</Typography>
     </View>
   );
 };

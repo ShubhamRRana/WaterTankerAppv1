@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -15,6 +14,7 @@ import { useAuthStore } from '../../store/authStore';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { Typography } from '../../components/common';
 import { Address } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { LocalStorageService } from '../../services/localStorage';
@@ -185,7 +185,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <LoadingSpinner />
-          <Text style={styles.loadingText}>Loading addresses...</Text>
+          <Typography variant="body" style={styles.loadingText}>Loading addresses...</Typography>
         </View>
       </SafeAreaView>
     );
@@ -198,7 +198,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.title}>Saved Addresses</Text>
+        <Typography variant="h3" style={styles.title}>Saved Addresses</Typography>
         <View style={{ width: 24 }} />
       </View>
 
@@ -207,10 +207,10 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         <Card style={styles.inputCard}>
           {editingAddress && (
             <View style={styles.editModeHeader}>
-              <Text style={styles.editModeText}>Editing Address</Text>
+              <Typography variant="caption" style={styles.editModeText}>Editing Address</Typography>
               <TouchableOpacity onPress={handleCancelEdit} style={styles.cancelButton}>
                 <Ionicons name="close" size={20} color="#FF3B30" />
-                <Text style={styles.cancelButtonText}>Cancel</Text>
+                <Typography variant="caption" style={styles.cancelButtonText}>Cancel</Typography>
               </TouchableOpacity>
             </View>
           )}
@@ -233,12 +233,12 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
                 size={20} 
                 color={newAddressText.trim() ? "#007AFF" : "#8E8E93"} 
               />
-              <Text style={[
+              <Typography variant="body" style={[
                 styles.addButtonText,
                 { color: newAddressText.trim() ? "#007AFF" : "#8E8E93" }
               ]}>
                 {editingAddress ? 'Update' : 'Add'}
-              </Text>
+              </Typography>
             </TouchableOpacity>
           </View>
         </Card>
@@ -248,8 +248,8 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         {addresses.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="location-outline" size={64} color="#8E8E93" />
-            <Text style={styles.emptyStateText}>No saved addresses</Text>
-            <Text style={styles.emptyStateSubtext}>Add your first address using the input above</Text>
+            <Typography variant="h3" style={styles.emptyStateText}>No saved addresses</Typography>
+            <Typography variant="body" style={styles.emptyStateSubtext}>Add your first address using the input above</Typography>
           </View>
         ) : (
           <View style={styles.addressList}>
@@ -258,24 +258,24 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
                 <View style={styles.addressHeader}>
                   <View style={styles.addressInfo}>
                     <View style={styles.addressTitleRow}>
-                      <Text style={styles.addressTitle}>
+                      <Typography variant="body" style={styles.addressTitle}>
                         {address.street}
-                      </Text>
+                      </Typography>
                       {address.isDefault && (
                         <View style={styles.defaultBadge}>
-                          <Text style={styles.defaultText}>DEFAULT</Text>
+                          <Typography variant="caption" style={styles.defaultText}>DEFAULT</Typography>
                         </View>
                       )}
                     </View>
-F                    {(address.city || address.state || address.pincode) && (
-                      <Text style={styles.addressDetails}>
+                    {(address.city || address.state || address.pincode) && (
+                      <Typography variant="caption" style={styles.addressDetails}>
                         {[address.city, address.state, address.pincode].filter(Boolean).join(', ')}
-                      </Text>
+                      </Typography>
                     )}
                     {address.landmark && (
-                      <Text style={styles.landmark}>
+                      <Typography variant="caption" style={styles.landmark}>
                         Near {address.landmark}
-                      </Text>
+                      </Typography>
                     )}
                   </View>
                   <View style={styles.addressActions}>
@@ -300,7 +300,7 @@ F                    {(address.city || address.state || address.pincode) && (
                     onPress={() => handleSetDefault(address.id!)}
                   >
                     <Ionicons name="star-outline" size={16} color="#FF9500" />
-                    <Text style={styles.setDefaultText}>Set as Default</Text>
+                    <Typography variant="caption" style={styles.setDefaultText}>Set as Default</Typography>
                   </TouchableOpacity>
                 )}
               </Card>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -16,6 +15,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import Card from '../../components/common/Card';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import { Typography } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
 import { CustomerTabParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
@@ -187,7 +187,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
           <LoadingSpinner />
-          <Text style={styles.loadingText}>Loading your orders...</Text>
+          <Typography variant="body" style={styles.loadingText}>Loading your orders...</Typography>
         </View>
       </SafeAreaView>
     );
@@ -198,8 +198,8 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Order History</Text>
-        <Text style={styles.subtitle}>{bookings.length} total orders</Text>
+        <Typography variant="h2" style={styles.title}>Order History</Typography>
+        <Typography variant="body" style={styles.subtitle}>{bookings.length} total orders</Typography>
       </View>
 
       {/* Search Bar */}
@@ -241,22 +241,22 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                 size={16} 
                 color={selectedFilter === filter.key ? '#FFFFFF' : '#007AFF'} 
               />
-              <Text style={[
+              <Typography variant="caption" style={[
                 styles.filterButtonText,
                 selectedFilter === filter.key && styles.filterButtonTextActive
               ]}>
                 {filter.label}
-              </Text>
+              </Typography>
               <View style={[
                 styles.countBadge,
                 selectedFilter === filter.key && styles.countBadgeActive
               ]}>
-                <Text style={[
+                <Typography variant="caption" style={[
                   styles.countText,
                   selectedFilter === filter.key && styles.countTextActive
                 ]}>
                   {filter.count}
-                </Text>
+                </Typography>
               </View>
             </TouchableOpacity>
           ))}
@@ -274,23 +274,23 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
         {filteredBookings.length === 0 ? (
           <View style={styles.emptyState}>
             <Ionicons name="receipt-outline" size={64} color="#8E8E93" />
-            <Text style={styles.emptyStateText}>
+            <Typography variant="h3" style={styles.emptyStateText}>
               {searchQuery || selectedFilter !== 'all' ? 'No matching orders' : 'No orders yet'}
-            </Text>
-            <Text style={styles.emptyStateSubtext}>
+            </Typography>
+            <Typography variant="body" style={styles.emptyStateSubtext}>
               {searchQuery || selectedFilter !== 'all'
                 ? 'Try adjusting your search or filter' 
                 : 'Book your first tanker to get started'
               }
-            </Text>
+            </Typography>
           </View>
         ) : (
           filteredBookings.map((booking) => (
             <Card key={booking.id} style={styles.orderCard}>
               <View style={styles.orderHeader}>
                 <View style={styles.orderInfo}>
-                  <Text style={styles.orderId}>Order #{booking.id.slice(-6)}</Text>
-                  <Text style={styles.orderDate}>{formatDate(booking.scheduledFor || booking.createdAt)}</Text>
+                  <Typography variant="body" style={styles.orderId}>Order #{booking.id.slice(-6)}</Typography>
+                  <Typography variant="caption" style={styles.orderDate}>{formatDate(booking.scheduledFor || booking.createdAt)}</Typography>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) }]}>
                   <Ionicons 
@@ -299,32 +299,32 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                     color="#FFFFFF" 
                     style={styles.statusIcon}
                   />
-                  <Text style={styles.statusText}>{getStatusText(booking.status)}</Text>
+                  <Typography variant="caption" style={styles.statusText}>{getStatusText(booking.status)}</Typography>
                 </View>
               </View>
 
               <View style={styles.orderDetails}>
                 <View style={styles.detailRow}>
                   <Ionicons name="water" size={16} color="#007AFF" />
-                  <Text style={styles.detailText}>{booking.tankerSize}L Tanker</Text>
+                  <Typography variant="body" style={styles.detailText}>{booking.tankerSize}L Tanker</Typography>
                 </View>
                 <View style={styles.detailRow}>
                   <Ionicons name="location" size={16} color="#34C759" />
-                  <Text style={styles.detailText}>
+                  <Typography variant="body" style={styles.detailText}>
                     {booking.deliveryAddress.street}, {booking.deliveryAddress.city}
-                  </Text>
+                  </Typography>
                 </View>
                 <View style={styles.detailRow}>
                   <Ionicons name="cash" size={16} color="#FF9500" />
-                  <Text style={styles.detailText}>{PricingUtils.formatPrice(booking.totalPrice)}</Text>
+                  <Typography variant="body" style={styles.detailText}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
                 </View>
               </View>
 
               {booking.driverName && (
                 <View style={styles.driverInfo}>
                   <Ionicons name="person" size={16} color="#5856D6" />
-                  <Text style={styles.driverText}>Driver: {booking.driverName}</Text>
-                  <Text style={styles.driverPhone}>{booking.driverPhone}</Text>
+                  <Typography variant="body" style={styles.driverText}>Driver: {booking.driverName}</Typography>
+                  <Typography variant="caption" style={styles.driverPhone}>{booking.driverPhone}</Typography>
                 </View>
               )}
 
@@ -337,7 +337,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                   }}
                 >
                   <Ionicons name="eye-outline" size={16} color="#007AFF" />
-                  <Text style={styles.actionText}>Track</Text>
+                  <Typography variant="caption" style={styles.actionText}>Track</Typography>
                 </TouchableOpacity>
 
                 {booking.canCancel && booking.status === 'pending' && (
@@ -346,7 +346,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                     onPress={() => handleCancelBooking(booking)}
                   >
                     <Ionicons name="close-outline" size={16} color="#FF3B30" />
-                    <Text style={[styles.actionText, styles.cancelText]}>Cancel</Text>
+                    <Typography variant="caption" style={[styles.actionText, styles.cancelText]}>Cancel</Typography>
                   </TouchableOpacity>
                 )}
 
@@ -358,7 +358,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                     }}
                   >
                     <Ionicons name="star-outline" size={16} color="#FF9500" />
-                    <Text style={styles.actionText}>Rate</Text>
+                    <Typography variant="caption" style={styles.actionText}>Rate</Typography>
                   </TouchableOpacity>
                 )}
               </View>

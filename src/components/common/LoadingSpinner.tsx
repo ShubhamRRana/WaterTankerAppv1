@@ -1,10 +1,10 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import Typography from './Typography';
 
 interface LoadingSpinnerProps {
   size?: 'small' | 'large';
@@ -20,7 +20,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   return (
     <View style={styles.container}>
       <ActivityIndicator size={size} color={color} />
-      {text && <Text style={styles.text}>{text}</Text>}
+      {text && <Typography variant="body" style={styles.text}>{text}</Typography>}
     </View>
   );
 };

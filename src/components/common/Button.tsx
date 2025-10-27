@@ -1,12 +1,12 @@
 import React from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import { UI_CONFIG } from '../../constants/config';
+import Typography from './Typography';
 
 interface ButtonProps {
   title: string;
@@ -55,7 +55,7 @@ const Button: React.FC<ButtonProps> = ({
           size="small"
         />
       ) : (
-        <Text style={textStyle}>{title}</Text>
+        <Typography variant="body" style={textStyle}>{title}</Typography>
       )}
     </TouchableOpacity>
   );
@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
   // Text styles
   text: {
     fontWeight: '600',
-    fontFamily: UI_CONFIG.fonts.primary,
   },
   primaryText: {
     color: '#FFFFFF',

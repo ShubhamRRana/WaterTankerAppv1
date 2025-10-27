@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Typography } from '../../components/common';
 
 const ReportsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Reports</Text>
-      <Text style={styles.subtitle}>View analytics and reports</Text>
+      <Typography variant='h2' style={styles.title}>Reports</Typography>
+      <Typography variant='body' style={styles.subtitle}>View analytics and reports</Typography>
     </View>
   );
 };
