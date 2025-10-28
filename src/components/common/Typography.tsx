@@ -3,7 +3,7 @@ import { Text, StyleSheet, TextProps } from 'react-native';
 import { UI_CONFIG } from '../../constants/config';
 
 interface TypographyProps extends TextProps {
-  variant?: 'h1' | 'h2' | 'h3' | 'body' | 'caption';
+  variant?: 'h1' | 'h2' | 'h3' | 'h4' | 'body' | 'caption';
   children: React.ReactNode;
 }
 
@@ -37,6 +37,12 @@ const styles = StyleSheet.create({
     fontSize: UI_CONFIG.fontSize.lg,
     fontWeight: '600',
     lineHeight: UI_CONFIG.fontSize.lg * 1.2,
+    color: UI_CONFIG.colors.text,
+  },
+  h4: {
+    fontSize: UI_CONFIG.fontSize.md,
+    fontWeight: '600',
+    lineHeight: UI_CONFIG.fontSize.md * 1.2,
     color: UI_CONFIG.colors.text,
   },
   body: {

@@ -1,17 +1,14 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import DriverDashboardScreen from '../screens/driver/DriverDashboardScreen';
-import AvailableOrdersScreen from '../screens/driver/AvailableOrdersScreen';
+import { Ionicons } from '@expo/vector-icons';
+import OrdersScreen from '../screens/driver/OrdersScreen';
 import ActiveOrderScreen from '../screens/driver/ActiveOrderScreen';
 import DriverEarningsScreen from '../screens/driver/DriverEarningsScreen';
-import DriverProfileScreen from '../screens/driver/DriverProfileScreen';
 
 export type DriverTabParamList = {
-  Dashboard: undefined;
   Orders: undefined;
   Earnings: undefined;
-  Profile: undefined;
 };
 
 export type DriverStackParamList = {
@@ -27,28 +24,41 @@ const DriverTabs: React.FC = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#007AFF',
+        tabBarActiveTintColor: '#D4AF37',
+        tabBarInactiveTintColor: '#8E8E93',
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E5EA',
+          paddingBottom: 8,
+          paddingTop: 8,
+          height: 60,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
       }}
     >
       <Tab.Screen 
-        name="Dashboard" 
-        component={DriverDashboardScreen}
-        options={{ tabBarLabel: 'Dashboard' }}
-      />
-      <Tab.Screen 
         name="Orders" 
-        component={AvailableOrdersScreen}
-        options={{ tabBarLabel: 'Orders' }}
+        component={OrdersScreen}
+        options={{ 
+          tabBarLabel: 'Orders',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="list-outline" size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen 
         name="Earnings" 
         component={DriverEarningsScreen}
-        options={{ tabBarLabel: 'Earnings' }}
-      />
-      <Tab.Screen 
-        name="Profile" 
-        component={DriverProfileScreen}
-        options={{ tabBarLabel: 'Profile' }}
+        options={{ 
+          tabBarLabel: 'Earnings',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cash-outline" size={size} color={color} />
+          ),
+        }}
       />
     </Tab.Navigator>
   );

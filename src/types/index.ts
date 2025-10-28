@@ -155,10 +155,8 @@ export interface CustomerStackParamList {
 }
 
 export interface DriverTabParamList {
-  Dashboard: undefined;
   Orders: undefined;
   Earnings: undefined;
-  Profile: undefined;
 }
 
 export interface DriverStackParamList {
@@ -271,4 +269,81 @@ export interface DriverEarnings {
   completedOrders: number;
   averageEarningPerOrder: number;
   period: 'daily' | 'weekly' | 'monthly';
+}
+
+// Driver Dashboard specific types
+export interface DriverDashboardStats {
+  totalEarnings: number;
+  completedOrders: number;
+  pendingOrders: number;
+  activeOrders: number;
+  todayEarnings: number;
+  weeklyEarnings: number;
+  monthlyEarnings: number;
+  averageRating: number;
+  totalRatings: number;
+  isOnline: boolean;
+  lastActiveAt: Date;
+}
+
+export interface DriverQuickAction {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+  color: string;
+  onPress: () => void;
+}
+
+export interface DriverRecentOrder {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  tankerSize: number;
+  totalPrice: number;
+  status: BookingStatus;
+  deliveryAddress: string;
+  distance: number;
+  createdAt: Date;
+  scheduledFor?: Date;
+}
+
+// Reports and Analytics types
+export interface ReportData {
+  totalBookings: number;
+  totalRevenue: number;
+  completedBookings: number;
+  cancelledBookings: number;
+  pendingBookings: number;
+  activeDrivers: number;
+  totalCustomers: number;
+  averageOrderValue: number;
+  topDrivers: Array<{
+    name: string;
+    earnings: number;
+    orders: number;
+  }>;
+  topCustomers: Array<{
+    name: string;
+    orders: number;
+    totalSpent: number;
+  }>;
+  bookingsByStatus: Array<{
+    status: string;
+    count: number;
+    percentage: number;
+  }>;
+  revenueByMonth: Array<{
+    month: string;
+    revenue: number;
+  }>;
+}
+
+export interface ChartData {
+  labels: string[];
+  datasets: Array<{
+    data: number[];
+    color?: string;
+    label?: string;
+  }>;
 }

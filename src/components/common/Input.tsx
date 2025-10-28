@@ -6,7 +6,7 @@ import {
   TextInputProps,
 } from 'react-native';
 import { UI_CONFIG } from '../../constants/config';
-import { Typography } from './Typography';
+import Typography from './Typography';
 
 interface InputProps extends TextInputProps {
   label?: string;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import { Ionicons } from '@expo/vector-icons';
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import AllBookingsScreen from '../screens/admin/AllBookingsScreen';
 import DriverManagementScreen from '../screens/admin/DriverManagementScreen';
@@ -29,38 +30,81 @@ const AdminTabs: React.FC = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#007AFF',
+        tabBarActiveTintColor: '#D4AF37', // Champagne Gold
+        tabBarInactiveTintColor: '#8E8E93',
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E5EA',
+          paddingBottom: 8,
+          paddingTop: 8,
+          height: 60,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
       }}
     >
       <Tab.Screen 
         name="Dashboard" 
         component={AdminDashboardScreen}
-        options={{ tabBarLabel: 'Dashboard' }}
+        options={{ 
+          tabBarLabel: 'Dashboard',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="grid-outline" size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen 
         name="Bookings" 
         component={AllBookingsScreen}
-        options={{ tabBarLabel: 'Bookings' }}
+        options={{ 
+          tabBarLabel: 'Bookings',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="receipt-outline" size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen 
         name="Drivers" 
         component={DriverManagementScreen}
-        options={{ tabBarLabel: 'Drivers' }}
+        options={{ 
+          tabBarLabel: 'Drivers',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="car-outline" size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen 
         name="Customers" 
         component={CustomerManagementScreen}
-        options={{ tabBarLabel: 'Customers' }}
+        options={{ 
+          tabBarLabel: 'Customers',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people-outline" size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen 
         name="Pricing" 
         component={PricingManagementScreen}
-        options={{ tabBarLabel: 'Pricing' }}
+        options={{ 
+          tabBarLabel: 'Pricing',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cash-outline" size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen 
         name="Reports" 
         component={ReportsScreen}
-        options={{ tabBarLabel: 'Reports' }}
+        options={{ 
+          tabBarLabel: 'Reports',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="bar-chart-outline" size={size} color={color} />
+          ),
+        }}
       />
     </Tab.Navigator>
   );

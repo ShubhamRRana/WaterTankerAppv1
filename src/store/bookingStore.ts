@@ -133,7 +133,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const { bookings } = get();
       const updatedBookings = bookings.map(booking =>
         booking.id === bookingId
-          ? { ...booking, status: 'cancelled', cancellationReason: reason, updatedAt: new Date() }
+          ? { ...booking, status: 'cancelled' as BookingStatus, cancellationReason: reason, updatedAt: new Date() }
           : booking
       );
       

@@ -265,55 +265,6 @@ const ProfileScreen: React.FC = () => {
           </View>
         </Card>
 
-        {/* Settings */}
-        <Card style={styles.settingsCard}>
-          <Typography variant="h3" style={styles.sectionTitle}>
-            Settings
-          </Typography>
-          
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingContent}>
-              <Typography variant="body" style={styles.settingTitle}>
-                Notification Preferences
-              </Typography>
-              <Typography variant="caption" style={styles.settingSubtitle}>
-                Manage your notification settings
-              </Typography>
-            </View>
-            <Typography variant="body" style={styles.settingArrow}>
-              ›
-            </Typography>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingContent}>
-              <Typography variant="body" style={styles.settingTitle}>
-                Privacy Settings
-              </Typography>
-              <Typography variant="caption" style={styles.settingSubtitle}>
-                Control your privacy and data
-              </Typography>
-            </View>
-            <Typography variant="body" style={styles.settingArrow}>
-              ›
-            </Typography>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.settingItem}>
-            <View style={styles.settingContent}>
-              <Typography variant="body" style={styles.settingTitle}>
-                Help & Support
-              </Typography>
-              <Typography variant="caption" style={styles.settingSubtitle}>
-                Get help and contact support
-              </Typography>
-            </View>
-            <Typography variant="body" style={styles.settingArrow}>
-              ›
-            </Typography>
-          </TouchableOpacity>
-        </Card>
-
         {/* Logout Button */}
         <View style={styles.logoutContainer}>
           <Button
@@ -497,36 +448,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8E8E93',
     textAlign: 'center',
-  },
-  settingsCard: {
-    margin: 16,
-    marginTop: 0,
-    padding: 20,
-  },
-  settingItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
-  },
-  settingContent: {
-    flex: 1,
-  },
-  settingTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 2,
-  },
-  settingSubtitle: {
-    fontSize: 14,
-    color: '#8E8E93',
-  },
-  settingArrow: {
-    fontSize: 20,
-    color: '#8E8E93',
-    fontWeight: 'bold',
   },
   logoutContainer: {
     margin: 16,
