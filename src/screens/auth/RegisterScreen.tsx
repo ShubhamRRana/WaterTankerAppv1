@@ -16,20 +16,23 @@ import { ValidationUtils } from '../../utils/validation';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../../constants/config';
 import { AuthStackParamList } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { Typography } from '../../components/common';
 
 type RegisterScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Register'>;
+type RegisterScreenRouteProp = RouteProp<AuthStackParamList, 'Register'>;
 
 interface Props {
   navigation: RegisterScreenNavigationProp;
+  route: RegisterScreenRouteProp;
 }
 
-const RegisterScreen: React.FC<Props> = ({ navigation }) => {
+const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
-  const [role, setRole] = useState<'customer' | 'driver' | 'admin'>('customer');
+  const role: 'customer' | 'driver' | 'admin' = route?.params?.preferredRole ?? 'customer';
   const [errors, setErrors] = useState<{
     phone?: string;
     password?: string;
@@ -140,31 +143,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             {errors.confirmPassword && <Typography variant="caption" style={styles.errorText}>{errors.confirmPassword}</Typography>}
           </View>
 
-          <View style={styles.inputContainer}>
-            <Typography variant="body" style={styles.label}>Account Type</Typography>
-            <View style={styles.roleContainer}>
-              {(['customer', 'driver', 'admin'] as const).map((roleOption) => (
-                <TouchableOpacity
-                  key={roleOption}
-                  style={[
-                    styles.roleButton,
-                    role === roleOption && styles.roleButtonActive,
-                  ]}
-                  onPress={() => setRole(roleOption)}
-                >
-                  <Typography
-                    variant="body"
-                    style={[
-                      styles.roleButtonText,
-                      role === roleOption && styles.roleButtonTextActive,
-                    ]}
-                  >
-                    {roleOption.charAt(0).toUpperCase() + roleOption.slice(1)}
-                  </Typography>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
+          {/* Account Type selection removed; role is determined before registration */}
 
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
@@ -245,31 +224,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
-  roleContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  roleButton: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-  },
-  roleButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  roleButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  roleButtonTextActive: {
-    color: '#FFFFFF',
-  },
+  
   button: {
     backgroundColor: '#007AFF',
     borderRadius: 12,

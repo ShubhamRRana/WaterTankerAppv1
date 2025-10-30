@@ -136,11 +136,16 @@ export interface Notification {
 
 // Navigation types
 export interface AuthStackParamList {
-  Login: undefined;
-  Register: undefined;
+  RoleEntry: undefined;
+  Login: { preferredRole?: 'customer' | 'driver' | 'admin' } | undefined;
+  Register: { preferredRole?: 'customer' | 'driver' | 'admin' } | undefined;
   OTP: { phone: string };
   RoleSelection: { phone: string; availableRoles: ('customer' | 'driver' | 'admin')[] };
-  [key: string]: undefined | { phone: string } | { phone: string; availableRoles: ('customer' | 'driver' | 'admin')[] };
+  [key: string]:
+    | undefined
+    | { phone: string }
+    | { phone: string; availableRoles: ('customer' | 'driver' | 'admin')[] }
+    | { preferredRole?: 'customer' | 'driver' | 'admin' };
 }
 
 export interface CustomerTabParamList {

@@ -114,7 +114,7 @@ const AdminDashboardScreen: React.FC = () => {
     <Card style={styles.statCard}>
       <View style={styles.statCardContent}>
         <View style={[styles.statIcon, { backgroundColor: color }]}>
-          <Ionicons name={icon as any} size={24} color="#FFFFFF" />
+          <Ionicons name={icon as any} size={20} color="#FFFFFF" />
         </View>
         <View style={styles.statText}>
           <Typography variant="h3" style={styles.statValue}>
@@ -310,9 +310,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: UI_CONFIG.spacing.md,
@@ -321,18 +321,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: UI_CONFIG.colors.text,
     marginBottom: 2,
   },
   statTitle: {
-    fontSize: 14,
+    fontSize: 12,
     color: UI_CONFIG.colors.textSecondary,
     fontWeight: '500',
   },
   statSubtitle: {
-    fontSize: 12,
+    fontSize: 10,
     color: UI_CONFIG.colors.textSecondary,
     marginTop: 2,
   },

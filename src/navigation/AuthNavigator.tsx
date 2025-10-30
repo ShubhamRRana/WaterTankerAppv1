@@ -4,6 +4,7 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import OTPScreen from '../screens/auth/OTPScreen';
 import RoleSelectionScreen from '../screens/auth/RoleSelectionScreen';
+import RoleEntryScreen from '../screens/auth/RoleEntryScreen';
 import { AuthStackParamList } from '../types/index';
 
 const Stack = createStackNavigator<AuthStackParamList>();
@@ -11,11 +12,12 @@ const Stack = createStackNavigator<AuthStackParamList>();
 const AuthNavigator: React.FC = () => {
   return (
     <Stack.Navigator
-      initialRouteName="Login"
+      initialRouteName="RoleEntry"
       screenOptions={{
         headerShown: false,
       }}
     >
+      <Stack.Screen name="RoleEntry" component={RoleEntryScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="OTP" component={OTPScreen} />

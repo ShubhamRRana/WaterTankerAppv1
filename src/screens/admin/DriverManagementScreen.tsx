@@ -748,20 +748,21 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '48%',
-    padding: UI_CONFIG.spacing.md,
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: UI_CONFIG.spacing.md,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: UI_CONFIG.colors.text,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statLabel: {
     fontSize: 12,
     color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
+    marginTop: 0,
   },
   filterSection: {
     paddingHorizontal: UI_CONFIG.spacing.lg,

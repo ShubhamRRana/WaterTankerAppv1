@@ -16,16 +16,19 @@ import { ValidationUtils } from '../../utils/validation';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../../constants/config';
 import { AuthStackParamList } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
 import { AuthService } from '../../services/auth.service';
 import { Typography } from '../../components/common';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
+type LoginScreenRouteProp = RouteProp<AuthStackParamList, 'Login'>;
 
 interface Props {
   navigation: LoginScreenNavigationProp;
+  route: LoginScreenRouteProp;
 }
 
-const LoginScreen: React.FC<Props> = ({ navigation }) => {
+const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ phone?: string; password?: string }>({});
@@ -52,9 +55,18 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       // Navigation will be handled by the auth store
     } catch (error) {
       if (error instanceof Error && error.message === 'ROLE_SELECTION_REQUIRED') {
-        // Get available roles and navigate to role selection
+        // Get available roles and act on preferred role if provided
         const result = await AuthService.login(phone, password);
         if (result.success && result.availableRoles) {
+          const preferredRole = route?.params?.preferredRole;
+          if (preferredRole && result.availableRoles.includes(preferredRole)) {
+            try {
+              await loginWithRole(phone, preferredRole);
+              return;
+            } catch (_) {
+              // fallback to role selection
+            }
+          }
           navigation.navigate('RoleSelection', {
             phone,
             availableRoles: result.availableRoles,
@@ -117,7 +129,7 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
 
         <View style={styles.footer}>
           <Typography variant="body" style={styles.footerText}>Don't have an account? </Typography>
-          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Register', { preferredRole: route?.params?.preferredRole })}>
             <Typography variant="body" style={styles.linkText}>Sign Up</Typography>
           </TouchableOpacity>
         </View>
