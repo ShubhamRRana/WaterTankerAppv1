@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -13,17 +13,151 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '../../store/userStore';
-import { Typography, Card, Button, LoadingSpinner } from '../../components/common';
+import { Typography, Card, Button, LoadingSpinner, Input } from '../../components/common';
 import { User } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
+import { ValidationUtils } from '../../utils/validation';
+
+// AddDriverModal component moved outside to prevent re-creation on every render
+interface AddDriverModalProps {
+  visible: boolean;
+  onClose: () => void;
+  formData: {
+    name: string;
+    phone: string;
+    password: string;
+    confirmPassword: string;
+  };
+  formErrors: {[key: string]: string};
+  isSubmitting: boolean;
+  onFormChange: (field: string, value: string) => void;
+  onSubmit: () => void;
+  onReset: () => void;
+}
+
+const AddDriverModal: React.FC<AddDriverModalProps> = ({
+  visible,
+  onClose,
+  formData,
+  formErrors,
+  isSubmitting,
+  onFormChange,
+  onSubmit,
+  onReset,
+}) => (
+  <Modal
+    visible={visible}
+    animationType="slide"
+    presentationStyle="pageSheet"
+  >
+    <SafeAreaView style={styles.modalContainer}>
+      <View style={styles.modalHeader}>
+        <Typography variant="h2" style={styles.modalTitle}>
+          Add New Driver
+        </Typography>
+        <TouchableOpacity
+          style={styles.closeButton}
+          onPress={() => {
+            onClose();
+            onReset();
+          }}
+        >
+          <Ionicons name="close" size={24} color="#000000" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.modalContent}>
+        <Card style={styles.detailCard}>
+          <Typography variant="h3" style={styles.detailSectionTitle}>
+            Driver Information
+          </Typography>
+          
+          <View style={styles.formField}>
+            <Input
+              label="Full Name *"
+              value={formData.name}
+              onChangeText={(text) => onFormChange('name', text)}
+              placeholder="Enter driver's full name"
+              error={formErrors.name}
+              autoCapitalize="words"
+            />
+          </View>
+
+          <View style={styles.formField}>
+            <Input
+              label="Phone Number *"
+              value={formData.phone}
+              onChangeText={(text) => onFormChange('phone', text)}
+              placeholder="Enter 10-digit phone number"
+              error={formErrors.phone}
+              keyboardType="phone-pad"
+              maxLength={10}
+            />
+          </View>
+
+          <View style={styles.formField}>
+            <Input
+              label="Password *"
+              value={formData.password}
+              onChangeText={(text) => onFormChange('password', text)}
+              placeholder="Enter password (min 6 characters)"
+              error={formErrors.password}
+              secureTextEntry
+            />
+          </View>
+
+          <View style={styles.formField}>
+            <Input
+              label="Confirm Password *"
+              value={formData.confirmPassword}
+              onChangeText={(text) => onFormChange('confirmPassword', text)}
+              placeholder="Confirm your password"
+              error={formErrors.confirmPassword}
+              secureTextEntry
+            />
+          </View>
+        </Card>
+
+        <View style={styles.modalActions}>
+          <Button
+            title={isSubmitting ? "Adding Driver..." : "Add Driver"}
+            onPress={onSubmit}
+            disabled={isSubmitting}
+            style={styles.addDriverButton}
+          />
+          <Button
+            title="Cancel"
+            onPress={() => {
+              onClose();
+              onReset();
+            }}
+            style={styles.cancelButton}
+            variant="outline"
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  </Modal>
+);
 
 const DriverManagementScreen: React.FC = () => {
-  const { users, fetchAllUsers, updateUser, isLoading } = useUserStore();
+  const { users, fetchAllUsers, updateUser, addUser, isLoading } = useUserStore();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<User | null>(null);
   const [showDriverModal, setShowDriverModal] = useState(false);
+  const [showAddDriverModal, setShowAddDriverModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'approved' | 'pending' | 'rejected'>('all');
+  
+  // Add Driver form state
+  const [addDriverForm, setAddDriverForm] = useState({
+    name: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const drivers = users.filter(user => user.role === 'driver');
 
@@ -96,6 +230,101 @@ const DriverManagementScreen: React.FC = () => {
       Alert.alert('Error', 'Failed to update driver availability');
     }
   };
+
+  const validateAddDriverForm = () => {
+    const errors: {[key: string]: string} = {};
+    
+    // Validate name
+    const nameValidation = ValidationUtils.validateName(addDriverForm.name);
+    if (!nameValidation.isValid) {
+      errors.name = nameValidation.error || 'Invalid name';
+    }
+    
+    // Validate phone
+    const phoneValidation = ValidationUtils.validatePhone(addDriverForm.phone);
+    if (!phoneValidation.isValid) {
+      errors.phone = phoneValidation.error || 'Invalid phone';
+    }
+    
+    // Validate password
+    const passwordValidation = ValidationUtils.validatePassword(addDriverForm.password);
+    if (!passwordValidation.isValid) {
+      errors.password = passwordValidation.error || 'Invalid password';
+    }
+    
+    // Validate confirm password
+    if (!addDriverForm.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password';
+    } else if (addDriverForm.password !== addDriverForm.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleAddDriver = useCallback(async () => {
+    if (!validateAddDriverForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      // Check if phone number already exists
+      const existingUser = users.find(user => user.phone === addDriverForm.phone);
+      if (existingUser) {
+        Alert.alert('Error', 'A user with this phone number already exists');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      await addUser({
+        role: 'driver',
+        name: addDriverForm.name.trim(),
+        phone: addDriverForm.phone,
+        password: addDriverForm.password, // In real app, this should be hashed
+        isApproved: true, // Auto-approve when added by admin
+        isAvailable: true,
+        totalEarnings: 0,
+        completedOrders: 0,
+        createdByAdmin: true, // Mark as created by admin
+      });
+      
+      // Reset form
+      setAddDriverForm({
+        name: '',
+        phone: '',
+        password: '',
+        confirmPassword: '',
+      });
+      setFormErrors({});
+      setShowAddDriverModal(false);
+      
+      Alert.alert('Success', 'Driver added successfully');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to add driver. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [addDriverForm, users, addUser]);
+
+  const resetAddDriverForm = useCallback(() => {
+    setAddDriverForm({
+      name: '',
+      phone: '',
+      password: '',
+      confirmPassword: '',
+    });
+    setFormErrors({});
+  }, []);
+
+  const handleFormChange = useCallback((field: string, value: string) => {
+    setAddDriverForm(prev => ({ ...prev, [field]: value }));
+    // Clear error for this field when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  }, [formErrors]);
 
   const filteredDrivers = drivers.filter(driver => {
     const matchesSearch = driver.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -328,6 +557,7 @@ const DriverManagementScreen: React.FC = () => {
     </Modal>
   );
 
+
   const stats = {
     total: drivers.length,
     approved: drivers.filter(d => d.isApproved === true).length,
@@ -449,7 +679,26 @@ const DriverManagementScreen: React.FC = () => {
         </View>
       </ScrollView>
 
+      {/* Floating Add Driver Button */}
+      <TouchableOpacity
+        style={styles.floatingAddButton}
+        onPress={() => setShowAddDriverModal(true)}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="add" size={24} color="#FFFFFF" />
+      </TouchableOpacity>
+
       <DriverModal />
+      <AddDriverModal 
+        visible={showAddDriverModal}
+        onClose={() => setShowAddDriverModal(false)}
+        formData={addDriverForm}
+        formErrors={formErrors}
+        isSubmitting={isSubmitting}
+        onFormChange={handleFormChange}
+        onSubmit={handleAddDriver}
+        onReset={resetAddDriverForm}
+      />
     </SafeAreaView>
   );
 };
@@ -722,6 +971,37 @@ const styles = StyleSheet.create({
   },
   rejectButtonLarge: {
     backgroundColor: '#FF3B30',
+  },
+  floatingAddButton: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: UI_CONFIG.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+  },
+  formField: {
+    marginBottom: UI_CONFIG.spacing.md,
+  },
+  addDriverButton: {
+    backgroundColor: UI_CONFIG.colors.primary,
+    marginBottom: UI_CONFIG.spacing.md,
+  },
+  cancelButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: UI_CONFIG.colors.textSecondary,
   },
 });
 

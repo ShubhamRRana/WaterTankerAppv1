@@ -146,7 +146,7 @@ const ProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         {/* Profile Header */}
         <Card style={styles.profileCard}>
           <View style={styles.profileHeader}>
@@ -235,31 +235,31 @@ const ProfileScreen: React.FC = () => {
             Account Statistics
           </Typography>
           
-          <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
-              <Typography variant="h2" style={styles.statNumber}>
-                0
-              </Typography>
-              <Typography variant="body" style={styles.statLabel}>
+          <View style={styles.statsList}>
+            <View style={styles.statRow}>
+              <Typography variant="body" style={styles.statLabelLeft}>
                 Total Orders
               </Typography>
-            </View>
-            
-            <View style={styles.statItem}>
-              <Typography variant="h2" style={styles.statNumber}>
+              <Typography variant="h2" style={styles.statNumberRight}>
                 0
               </Typography>
-              <Typography variant="body" style={styles.statLabel}>
+            </View>
+            <View style={styles.separator} />
+            <View style={styles.statRow}>
+              <Typography variant="body" style={styles.statLabelLeft}>
                 Completed Orders
               </Typography>
-            </View>
-            
-            <View style={styles.statItem}>
-              <Typography variant="h2" style={styles.statNumber}>
+              <Typography variant="h2" style={styles.statNumberRight}>
                 0
               </Typography>
-              <Typography variant="body" style={styles.statLabel}>
+            </View>
+            <View style={styles.separator} />
+            <View style={styles.statRow}>
+              <Typography variant="body" style={styles.statLabelLeft}>
                 Saved Addresses
+              </Typography>
+              <Typography variant="h2" style={styles.statNumberRight}>
+                0
               </Typography>
             </View>
           </View>
@@ -290,6 +290,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+  },
+  contentContainer: {
+    paddingBottom: 32,
   },
   loadingContainer: {
     flex: 1,
@@ -429,25 +432,33 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  statsGrid: {
+  statsList: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  statRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statItem: {
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: 'bold',
+  separator: {
+    height: 1,
+    backgroundColor: '#E5E5EA',
+  },
+  statLabelLeft: {
+    fontSize: 16,
+    color: '#000000',
+    fontWeight: '600',
+  },
+  statNumberRight: {
+    fontSize: 22,
+    fontWeight: '700',
     color: '#007AFF',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#8E8E93',
-    textAlign: 'center',
   },
   logoutContainer: {
     margin: 16,
@@ -457,7 +468,7 @@ const styles = StyleSheet.create({
     borderColor: '#FF3B30',
   },
   bottomSpacing: {
-    height: 20,
+    height: 40,
   },
 });
 

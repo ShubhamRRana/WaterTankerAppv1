@@ -34,6 +34,7 @@ export interface User {
   isAvailable?: boolean;
   totalEarnings?: number;
   completedOrders?: number;
+  createdByAdmin?: boolean; // Track if driver was created by admin
 }
 
 // Extended user interface for multi-role support
@@ -59,6 +60,7 @@ export interface UserAccount {
   isAvailable?: boolean;
   totalEarnings?: number;
   completedOrders?: number;
+  createdByAdmin?: boolean; // Track if driver was created by admin
 }
 
 export type BookingStatus = 'pending' | 'accepted' | 'in_transit' | 'delivered' | 'cancelled';

@@ -153,6 +153,21 @@ export class LocalStorageService {
         vehicleNumber: 'DL01AB1234',
         licenseNumber: 'DL123456789',
         createdAt: new Date(),
+        createdByAdmin: false, // Regular driver - should not be able to login
+      },
+      {
+        uid: 'driver_admin_001',
+        role: 'driver',
+        phone: '6666666666',
+        name: 'Admin Created Driver',
+        vehicleNumber: 'DL03EF9012',
+        licenseNumber: 'DL111222333',
+        createdAt: new Date(),
+        createdByAdmin: true, // Admin-created driver - should be able to login
+        isApproved: true,
+        isAvailable: true,
+        totalEarnings: 0,
+        completedOrders: 0,
       },
       {
         uid: 'customer_001',
@@ -177,6 +192,7 @@ export class LocalStorageService {
         vehicleNumber: 'DL02CD5678',
         licenseNumber: 'DL987654321',
         createdAt: new Date(),
+        createdByAdmin: false, // Regular driver - should not be able to login
       }
     ];
 

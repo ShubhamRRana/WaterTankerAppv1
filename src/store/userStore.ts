@@ -11,6 +11,7 @@ interface UserState {
   // Actions
   fetchAllUsers: () => Promise<void>;
   fetchUsersByRole: (role: 'customer' | 'driver' | 'admin') => Promise<void>;
+  addUser: (userData: Omit<User, 'uid' | 'createdAt'>) => Promise<void>;
   updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
   setSelectedUser: (user: User | null) => void;
@@ -45,6 +46,27 @@ export const useUserStore = create<UserState>((set, get) => ({
       set({ users, isLoading: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch users by role';
+      set({ isLoading: false, error: errorMessage });
+      throw error;
+    }
+  },
+
+  addUser: async (userData) => {
+    set({ isLoading: true, error: null });
+    try {
+      const newUser: User = {
+        ...userData,
+        uid: LocalStorageService.generateId(),
+        createdAt: new Date(),
+      };
+      
+      await LocalStorageService.saveUserToCollection(newUser);
+      
+      // Update local state
+      const { users } = get();
+      set({ users: [...users, newUser], isLoading: false });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to add user';
       set({ isLoading: false, error: errorMessage });
       throw error;
     }

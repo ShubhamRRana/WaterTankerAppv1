@@ -1,5 +1,6 @@
 import { LocalStorageService } from './localStorage';
 import { User as AppUser, UserAccount } from '../types/index';
+import { ERROR_MESSAGES } from '../constants/config';
 
 export interface AuthResult {
   success: boolean;
@@ -75,22 +76,56 @@ export class AuthService {
       // In a real app, you'd hash and compare passwords
       
       if (userAccounts.length === 1) {
-        // Single account - proceed normally
+        // Single account - check if driver was created by admin
         const user = userAccounts[0];
+        
+        // Check if it's a driver that wasn't created by admin
+        if (user.role === 'driver' && !user.createdByAdmin) {
+          return {
+            success: false,
+            error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
+          };
+        }
+        
         await LocalStorageService.saveUser(user);
         return {
           success: true,
           user
         };
       } else {
-        // Multiple accounts - require role selection
-        const availableRoles = userAccounts.map(account => account.role);
-        return {
-          success: true,
-          requiresRoleSelection: true,
-          availableRoles,
-          user: undefined
-        };
+        // Multiple accounts - filter out drivers not created by admin
+        const validAccounts = userAccounts.filter(account => {
+          if (account.role === 'driver' && !account.createdByAdmin) {
+            return false; // Exclude drivers not created by admin
+          }
+          return true;
+        });
+        
+        if (validAccounts.length === 0) {
+          return {
+            success: false,
+            error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
+          };
+        }
+        
+        if (validAccounts.length === 1) {
+          // Only one valid account - proceed normally
+          const user = validAccounts[0];
+          await LocalStorageService.saveUser(user);
+          return {
+            success: true,
+            user
+          };
+        } else {
+          // Multiple valid accounts - require role selection
+          const availableRoles = validAccounts.map(account => account.role);
+          return {
+            success: true,
+            requiresRoleSelection: true,
+            availableRoles,
+            user: undefined
+          };
+        }
       }
     } catch (error) {
       return {
@@ -109,6 +144,14 @@ export class AuthService {
         return {
           success: false,
           error: 'User not found with selected role'
+        };
+      }
+
+      // Check if it's a driver that wasn't created by admin
+      if (user.role === 'driver' && !user.createdByAdmin) {
+        return {
+          success: false,
+          error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
         };
       }
 

@@ -144,6 +144,7 @@ export const ERROR_MESSAGES = {
     userExists: 'User already exists with this phone number.',
     weakPassword: 'Password is too weak.',
     networkError: 'Network error during authentication.',
+    adminCreatedDriverOnly: 'Only admin-created drivers can login. Please contact the administrator to create your driver account.',
   },
   booking: {
     createFailed: 'Failed to create booking.',
