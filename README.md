@@ -162,6 +162,12 @@ The Admin Dashboard provides a comprehensive overview of the platform with the f
    npm start
    ```
 
+## Auth Flow (Multi-Role)
+
+- Start at Role Entry screen to choose: Customer, Driver, or Admin.
+- Login respects the chosen role when multiple accounts exist.
+- Sign Up no longer asks for role; it uses the chosen role from Role Entry/Login.
+
 ## Environment Variables
 
 Create a `.env` file in the root directory with the following variables:
