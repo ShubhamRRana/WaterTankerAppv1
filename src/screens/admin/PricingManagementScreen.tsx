@@ -349,7 +349,8 @@ const PricingManagementScreen: React.FC = () => {
           <View style={{ width: 24 }} />
         </View>
 
-        <ScrollView style={styles.modalContent}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
           <Input
             label="Price per Kilometer (₹)"
             value={pricePerKm}
@@ -383,6 +384,7 @@ const PricingManagementScreen: React.FC = () => {
             style={styles.saveButton}
           />
         </ScrollView>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );

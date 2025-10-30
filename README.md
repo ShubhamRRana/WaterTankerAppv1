@@ -12,29 +12,31 @@ src/
 │   │   ├── Input.tsx
 │   │   ├── Card.tsx
 │   │   ├── LoadingSpinner.tsx
+│   │   ├── Typography.tsx
 │   │   └── index.ts
-│   ├── customer/        # Customer-specific components
-│   ├── driver/          # Driver-specific components
-│   └── admin/           # Admin-specific components
+│   ├── customer/
+│   ├── driver/
+│   └── admin/
 ├── screens/
-│   ├── auth/            # Authentication screens
+│   ├── auth/
+│   │   ├── RoleEntryScreen.tsx
 │   │   ├── LoginScreen.tsx
 │   │   ├── RegisterScreen.tsx
-│   │   └── OTPScreen.tsx
-│   ├── customer/        # Customer screens
+│   │   ├── RoleSelectionScreen.tsx
+│   ├── customer/
 │   │   ├── CustomerHomeScreen.tsx
 │   │   ├── BookingScreen.tsx
 │   │   ├── OrderTrackingScreen.tsx
 │   │   ├── OrderHistoryScreen.tsx
 │   │   ├── ProfileScreen.tsx
 │   │   └── SavedAddressesScreen.tsx
-│   ├── driver/          # Driver screens
-│   │   ├── DriverDashboardScreen.tsx
+│   ├── driver/
+│   │   ├── OrdersScreen.tsx
 │   │   ├── AvailableOrdersScreen.tsx
 │   │   ├── ActiveOrderScreen.tsx
 │   │   ├── DriverEarningsScreen.tsx
 │   │   └── DriverProfileScreen.tsx
-│   └── admin/           # Admin screens
+│   └── admin/
 │       ├── AdminDashboardScreen.tsx
 │       ├── AllBookingsScreen.tsx
 │       ├── DriverManagementScreen.tsx
@@ -47,7 +49,7 @@ src/
 │   ├── DriverNavigator.tsx
 │   └── AdminNavigator.tsx
 ├── services/
-│   ├── localStorage.ts    # Local storage service
+│   ├── localStorage.ts
 │   ├── auth.service.ts
 │   ├── booking.service.ts
 │   ├── payment.service.ts
@@ -59,10 +61,11 @@ src/
 │   ├── userStore.ts
 │   └── index.ts
 ├── types/
-│   └── index.ts         # TypeScript interfaces
+│   └── index.ts
 ├── utils/
-│   ├── pricing.ts
 │   ├── distance.ts
+│   ├── loginRestrictionTest.ts
+│   ├── pricing.ts
 │   ├── validation.ts
 │   └── index.ts
 └── constants/

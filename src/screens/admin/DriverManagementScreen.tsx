@@ -8,7 +8,9 @@ import {
   RefreshControl,
   Modal,
   TextInput,
-  Switch
+  Switch,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,6 +29,10 @@ interface AddDriverModalProps {
     phone: string;
     password: string;
     confirmPassword: string;
+    emergencyContactName: string;
+    emergencyContactPhone: string;
+    licenseNumber: string;
+    licenseExpiry: string;
   };
   formErrors: {[key: string]: string};
   isSubmitting: boolean;
@@ -48,7 +54,9 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
   <Modal
     visible={visible}
     animationType="slide"
-    presentationStyle="pageSheet"
+    presentationStyle="fullScreen"
+    transparent={false}
+    onRequestClose={onClose}
   >
     <SafeAreaView style={styles.modalContainer}>
       <View style={styles.modalHeader}>
@@ -66,7 +74,12 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.modalContent}>
+      {(Platform.OS === 'ios' || Platform.OS === 'android') ? (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
         <Card style={styles.detailCard}>
           <Typography variant="h3" style={styles.detailSectionTitle}>
             Driver Information
@@ -116,6 +129,52 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
               secureTextEntry
             />
           </View>
+
+          <View style={styles.formField}>
+            <Input
+              label="Emergency Contact Name *"
+              value={formData.emergencyContactName}
+              onChangeText={(text) => onFormChange('emergencyContactName', text)}
+              placeholder="Enter emergency contact name"
+              error={formErrors.emergencyContactName}
+              autoCapitalize="words"
+            />
+          </View>
+
+          <View style={styles.formField}>
+            <Input
+              label="Emergency Contact Number *"
+              value={formData.emergencyContactPhone}
+              onChangeText={(text) => onFormChange('emergencyContactPhone', text)}
+              placeholder="Enter 10-digit emergency contact number"
+              error={formErrors.emergencyContactPhone}
+              keyboardType="phone-pad"
+              maxLength={10}
+            />
+          </View>
+
+          <View style={styles.formField}>
+            <Input
+              label="License Number *"
+              value={formData.licenseNumber}
+              onChangeText={(text) => onFormChange('licenseNumber', text)}
+              placeholder="Enter driver's license number"
+              error={formErrors.licenseNumber}
+              autoCapitalize="characters"
+            />
+          </View>
+
+          <View style={styles.formField}>
+            <Input
+              label="License Expiry (DD/MM/YYYY) *"
+              value={formData.licenseExpiry}
+              onChangeText={(text) => onFormChange('licenseExpiry', text)}
+              placeholder="e.g., 31/12/2026"
+              error={formErrors.licenseExpiry}
+              keyboardType="numbers-and-punctuation"
+              maxLength={10}
+            />
+          </View>
         </Card>
 
         <View style={styles.modalActions}>
@@ -135,7 +194,128 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
             variant="outline"
           />
         </View>
-      </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      ) : (
+        <View style={{ flex: 1 }}>
+          <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
+          <Card style={styles.detailCard}>
+            <Typography variant="h3" style={styles.detailSectionTitle}>
+              Driver Information
+            </Typography>
+            
+            <View style={styles.formField}>
+              <Input
+                label="Full Name *"
+                value={formData.name}
+                onChangeText={(text) => onFormChange('name', text)}
+                placeholder="Enter driver's full name"
+                error={formErrors.name}
+                autoCapitalize="words"
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <Input
+                label="Phone Number *"
+                value={formData.phone}
+                onChangeText={(text) => onFormChange('phone', text)}
+                placeholder="Enter 10-digit phone number"
+                error={formErrors.phone}
+                keyboardType="phone-pad"
+                maxLength={10}
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <Input
+                label="Password *"
+                value={formData.password}
+                onChangeText={(text) => onFormChange('password', text)}
+                placeholder="Enter password (min 6 characters)"
+                error={formErrors.password}
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <Input
+                label="Confirm Password *"
+                value={formData.confirmPassword}
+                onChangeText={(text) => onFormChange('confirmPassword', text)}
+                placeholder="Confirm your password"
+                error={formErrors.confirmPassword}
+                secureTextEntry
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <Input
+                label="Emergency Contact Name *"
+                value={formData.emergencyContactName}
+                onChangeText={(text) => onFormChange('emergencyContactName', text)}
+                placeholder="Enter emergency contact name"
+                error={formErrors.emergencyContactName}
+                autoCapitalize="words"
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <Input
+                label="Emergency Contact Number *"
+                value={formData.emergencyContactPhone}
+                onChangeText={(text) => onFormChange('emergencyContactPhone', text)}
+                placeholder="Enter 10-digit emergency contact number"
+                error={formErrors.emergencyContactPhone}
+                keyboardType="phone-pad"
+                maxLength={10}
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <Input
+                label="License Number *"
+                value={formData.licenseNumber}
+                onChangeText={(text) => onFormChange('licenseNumber', text)}
+                placeholder="Enter driver's license number"
+                error={formErrors.licenseNumber}
+                autoCapitalize="characters"
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <Input
+                label="License Expiry (DD/MM/YYYY) *"
+                value={formData.licenseExpiry}
+                onChangeText={(text) => onFormChange('licenseExpiry', text)}
+                placeholder="e.g., 31/12/2026"
+                error={formErrors.licenseExpiry}
+                keyboardType="numbers-and-punctuation"
+                maxLength={10}
+              />
+            </View>
+          </Card>
+
+          <View style={styles.modalActions}>
+            <Button
+              title={isSubmitting ? "Adding Driver..." : "Add Driver"}
+              onPress={onSubmit}
+              disabled={isSubmitting}
+              style={styles.addDriverButton}
+            />
+            <Button
+              title="Cancel"
+              onPress={() => {
+                onClose();
+                onReset();
+              }}
+              style={styles.cancelButton}
+              variant="outline"
+            />
+          </View>
+          </ScrollView>
+        </View>
+      )}
     </SafeAreaView>
   </Modal>
 );
@@ -147,7 +327,8 @@ const DriverManagementScreen: React.FC = () => {
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [showAddDriverModal, setShowAddDriverModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'approved' | 'pending' | 'rejected'>('all');
+  
+  
   
   // Add Driver form state
   const [addDriverForm, setAddDriverForm] = useState({
@@ -155,6 +336,10 @@ const DriverManagementScreen: React.FC = () => {
     phone: '',
     password: '',
     confirmPassword: '',
+    emergencyContactName: '',
+    emergencyContactPhone: '',
+    licenseNumber: '',
+    licenseExpiry: '',
   });
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -259,6 +444,35 @@ const DriverManagementScreen: React.FC = () => {
       errors.confirmPassword = 'Passwords do not match';
     }
     
+    // Emergency contact validation
+    const ecNameValidation = ValidationUtils.validateName(addDriverForm.emergencyContactName);
+    if (!ecNameValidation.isValid) {
+      errors.emergencyContactName = ecNameValidation.error || 'Invalid name';
+    }
+    const ecPhoneValidation = ValidationUtils.validatePhone(addDriverForm.emergencyContactPhone);
+    if (!ecPhoneValidation.isValid) {
+      errors.emergencyContactPhone = ecPhoneValidation.error || 'Invalid phone';
+    }
+
+    // License number required
+    if (!addDriverForm.licenseNumber.trim()) {
+      errors.licenseNumber = 'License number is required';
+    }
+
+    // Validate license expiry: DD/MM/YYYY
+    const expiryMatch = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+    if (!expiryMatch) {
+      errors.licenseExpiry = 'Use DD/MM/YYYY format';
+    } else {
+      const day = parseInt(expiryMatch[1], 10);
+      const month = parseInt(expiryMatch[2], 10) - 1;
+      const year = parseInt(expiryMatch[3], 10);
+      const candidate = new Date(year, month, day);
+      if (isNaN(candidate.getTime())) {
+        errors.licenseExpiry = 'Invalid date';
+      }
+    }
+    
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -288,6 +502,17 @@ const DriverManagementScreen: React.FC = () => {
         totalEarnings: 0,
         completedOrders: 0,
         createdByAdmin: true, // Mark as created by admin
+        licenseNumber: addDriverForm.licenseNumber.trim(),
+        emergencyContactName: addDriverForm.emergencyContactName.trim(),
+        emergencyContactPhone: addDriverForm.emergencyContactPhone,
+        licenseExpiry: (() => {
+          const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+          if (!m) return undefined as any;
+          const d = parseInt(m[1], 10);
+          const mo = parseInt(m[2], 10) - 1;
+          const y = parseInt(m[3], 10);
+          return new Date(y, mo, d);
+        })(),
       });
       
       // Reset form
@@ -296,6 +521,10 @@ const DriverManagementScreen: React.FC = () => {
         phone: '',
         password: '',
         confirmPassword: '',
+        emergencyContactName: '',
+        emergencyContactPhone: '',
+        licenseNumber: '',
+        licenseExpiry: '',
       });
       setFormErrors({});
       setShowAddDriverModal(false);
@@ -314,6 +543,10 @@ const DriverManagementScreen: React.FC = () => {
       phone: '',
       password: '',
       confirmPassword: '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      licenseNumber: '',
+      licenseExpiry: '',
     });
     setFormErrors({});
   }, []);
@@ -330,13 +563,7 @@ const DriverManagementScreen: React.FC = () => {
     const matchesSearch = driver.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          driver.phone.includes(searchQuery) ||
                          driver.vehicleNumber?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesFilter = filterStatus === 'all' || 
-                         (filterStatus === 'approved' && driver.isApproved) ||
-                         (filterStatus === 'pending' && driver.isApproved === undefined) ||
-                         (filterStatus === 'rejected' && driver.isApproved === false);
-    
-    return matchesSearch && matchesFilter;
+    return matchesSearch;
   });
 
   const getStatusColor = (driver: User) => {
@@ -356,6 +583,7 @@ const DriverManagementScreen: React.FC = () => {
       <TouchableOpacity 
         style={styles.driverCardContent}
         onPress={() => {
+          if (showDriverModal) return;
           setSelectedDriver(driver);
           setShowDriverModal(true);
         }}
@@ -370,24 +598,25 @@ const DriverManagementScreen: React.FC = () => {
               {driver.phone}
             </Typography>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(driver) }]}>
-            <Typography variant="caption" style={styles.statusText}>
-              {getStatusText(driver)}
-            </Typography>
-          </View>
         </View>
 
         <View style={styles.driverDetails}>
           <View style={styles.detailRow}>
-            <Ionicons name="car-outline" size={16} color="#8E8E93" />
-            <Typography variant="caption" style={styles.detailText}>
-              {driver.vehicleNumber || 'Not provided'}
-            </Typography>
-          </View>
-          <View style={styles.detailRow}>
             <Ionicons name="card-outline" size={16} color="#8E8E93" />
             <Typography variant="caption" style={styles.detailText}>
               {driver.licenseNumber || 'Not provided'}
+            </Typography>
+          </View>
+          <View style={styles.detailRow}>
+            <Ionicons name="calendar-outline" size={16} color="#8E8E93" />
+            <Typography variant="caption" style={styles.detailText}>
+              {driver.licenseExpiry ? new Date(driver.licenseExpiry).toLocaleDateString() : 'Expiry not provided'}
+            </Typography>
+          </View>
+          <View style={styles.detailRow}>
+            <Ionicons name="call-outline" size={16} color="#8E8E93" />
+            <Typography variant="caption" style={styles.detailText}>
+              {driver.emergencyContactName ? `${driver.emergencyContactName} - ${driver.emergencyContactPhone}` : 'Emergency contact not provided'}
             </Typography>
           </View>
           <View style={styles.detailRow}>
@@ -399,18 +628,6 @@ const DriverManagementScreen: React.FC = () => {
         </View>
 
         <View style={styles.driverActions}>
-          <View style={styles.availabilityToggle}>
-            <Typography variant="caption" style={styles.availabilityLabel}>
-              Available
-            </Typography>
-            <Switch
-              value={driver.isAvailable || false}
-              onValueChange={() => toggleDriverAvailability(driver.uid, driver.isAvailable || false)}
-              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-              thumbColor={driver.isAvailable ? '#FFFFFF' : '#FFFFFF'}
-            />
-          </View>
-          
           {driver.isApproved === undefined && (
             <View style={styles.actionButtons}>
               <TouchableOpacity
@@ -442,7 +659,9 @@ const DriverManagementScreen: React.FC = () => {
     <Modal
       visible={showDriverModal}
       animationType="slide"
-      presentationStyle="pageSheet"
+      presentationStyle="fullScreen"
+      transparent={false}
+      onRequestClose={() => setShowDriverModal(false)}
     >
       <SafeAreaView style={styles.modalContainer}>
         <View style={styles.modalHeader}>
@@ -451,7 +670,9 @@ const DriverManagementScreen: React.FC = () => {
           </Typography>
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => setShowDriverModal(false)}
+            onPress={() => {
+              setShowDriverModal(false);
+            }}
           >
             <Ionicons name="close" size={24} color="#000000" />
           </TouchableOpacity>
@@ -459,98 +680,96 @@ const DriverManagementScreen: React.FC = () => {
 
         {selectedDriver && (
           <ScrollView style={styles.modalContent}>
-            <Card style={styles.detailCard}>
-              <Typography variant="h3" style={styles.detailSectionTitle}>
-                Personal Information
-              </Typography>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Name</Typography>
-                <Typography variant="body" style={styles.detailValue}>{selectedDriver.name}</Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Phone</Typography>
-                <Typography variant="body" style={styles.detailValue}>{selectedDriver.phone}</Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Email</Typography>
-                <Typography variant="body" style={styles.detailValue}>{selectedDriver.email || 'Not provided'}</Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Joined</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {new Date(selectedDriver.createdAt).toLocaleDateString()}
-                </Typography>
-              </View>
-            </Card>
+              <>
+                <Card style={styles.detailCard}>
+                  <Typography variant="h3" style={styles.detailSectionTitle}>
+                    Personal Information
+                  </Typography>
+                  <View style={styles.detailItem}>
+                    <Typography variant="body" style={styles.detailLabel}>Name</Typography>
+                    <Typography variant="body" style={styles.detailValue}>{selectedDriver.name}</Typography>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Typography variant="body" style={styles.detailLabel}>Phone</Typography>
+                    <Typography variant="body" style={styles.detailValue}>{selectedDriver.phone}</Typography>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Typography variant="body" style={styles.detailLabel}>Emergency Contact</Typography>
+                    <Typography variant="body" style={styles.detailValue}>
+                      {selectedDriver.emergencyContactName || 'Not provided'}
+                    </Typography>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Typography variant="body" style={styles.detailLabel}>Emergency Number</Typography>
+                    <Typography variant="body" style={styles.detailValue}>
+                      {selectedDriver.emergencyContactPhone || 'Not provided'}
+                    </Typography>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Typography variant="body" style={styles.detailLabel}>Joined</Typography>
+                    <Typography variant="body" style={styles.detailValue}>
+                      {new Date(selectedDriver.createdAt).toLocaleDateString()}
+                    </Typography>
+                  </View>
+                </Card>
 
-            <Card style={styles.detailCard}>
-              <Typography variant="h3" style={styles.detailSectionTitle}>
-                Vehicle Information
-              </Typography>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Vehicle Number</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {selectedDriver.vehicleNumber || 'Not provided'}
-                </Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>License Number</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {selectedDriver.licenseNumber || 'Not provided'}
-                </Typography>
-              </View>
-            </Card>
+                <Card style={styles.detailCard}>
+                  <Typography variant="h3" style={styles.detailSectionTitle}>
+                    License Information
+                  </Typography>
+                  <View style={styles.detailItem}>
+                    <Typography variant="body" style={styles.detailLabel}>License Number</Typography>
+                    <Typography variant="body" style={styles.detailValue}>
+                      {selectedDriver.licenseNumber || 'Not provided'}
+                    </Typography>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Typography variant="body" style={styles.detailLabel}>Expiry Date</Typography>
+                    <Typography variant="body" style={styles.detailValue}>
+                      {selectedDriver.licenseExpiry ? new Date(selectedDriver.licenseExpiry).toLocaleDateString() : 'Not provided'}
+                    </Typography>
+                  </View>
+                </Card>
 
-            <Card style={styles.detailCard}>
-              <Typography variant="h3" style={styles.detailSectionTitle}>
-                Performance
-              </Typography>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Total Earnings</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  ₹{selectedDriver.totalEarnings || 0}
-                </Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Completed Orders</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {selectedDriver.completedOrders || 0}
-                </Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Status</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {getStatusText(selectedDriver)}
-                </Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Available</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {selectedDriver.isAvailable ? 'Yes' : 'No'}
-                </Typography>
-              </View>
-            </Card>
+                <Card style={styles.detailCard}>
+                  <Typography variant="h3" style={styles.detailSectionTitle}>
+                    Performance
+                  </Typography>
+                  <View style={styles.detailItem}>
+                    <Typography variant="body" style={styles.detailLabel}>Total Earnings</Typography>
+                    <Typography variant="body" style={styles.detailValue}>
+                      ₹{selectedDriver.totalEarnings || 0}
+                    </Typography>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <Typography variant="body" style={styles.detailLabel}>Completed Orders</Typography>
+                    <Typography variant="body" style={styles.detailValue}>
+                      {selectedDriver.completedOrders || 0}
+                    </Typography>
+                  </View>
+                </Card>
 
-            {selectedDriver.isApproved === undefined && (
-              <View style={styles.modalActions}>
-                <Button
-                  title="Approve Driver"
-                  onPress={() => {
-                    setShowDriverModal(false);
-                    handleApproveDriver(selectedDriver.uid);
-                  }}
-                  style={styles.approveButtonLarge}
-                />
-                <Button
-                  title="Reject Driver"
-                  onPress={() => {
-                    setShowDriverModal(false);
-                    handleRejectDriver(selectedDriver.uid);
-                  }}
-                  style={styles.rejectButtonLarge}
-                />
-              </View>
-            )}
+                {selectedDriver.isApproved === undefined && (
+                  <View style={styles.modalActions}>
+                    <Button
+                      title="Approve Driver"
+                      onPress={() => {
+                        setShowDriverModal(false);
+                        handleApproveDriver(selectedDriver.uid);
+                      }}
+                      style={styles.approveButtonLarge}
+                    />
+                    <Button
+                      title="Reject Driver"
+                      onPress={() => {
+                        setShowDriverModal(false);
+                        handleRejectDriver(selectedDriver.uid);
+                      }}
+                      style={styles.rejectButtonLarge}
+                    />
+                  </View>
+                )}
+              </>
           </ScrollView>
         )}
       </SafeAreaView>
@@ -558,12 +777,7 @@ const DriverManagementScreen: React.FC = () => {
   );
 
 
-  const stats = {
-    total: drivers.length,
-    approved: drivers.filter(d => d.isApproved === true).length,
-    pending: drivers.filter(d => d.isApproved === undefined).length,
-    active: drivers.filter(d => d.isAvailable).length,
-  };
+  
 
   if (isLoading && drivers.length === 0) {
     return (
@@ -582,6 +796,8 @@ const DriverManagementScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView 
         style={styles.container}
+        scrollEnabled={!showDriverModal && !showAddDriverModal}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -596,29 +812,9 @@ const DriverManagementScreen: React.FC = () => {
           </Typography>
         </View>
 
-        {/* Statistics */}
-        <View style={styles.statsSection}>
-          <View style={styles.statsGrid}>
-            <Card style={styles.statCard}>
-              <Typography variant="h3" style={styles.statValue}>{stats.total}</Typography>
-              <Typography variant="caption" style={styles.statLabel}>Total Drivers</Typography>
-            </Card>
-            <Card style={styles.statCard}>
-              <Typography variant="h3" style={styles.statValue}>{stats.approved}</Typography>
-              <Typography variant="caption" style={styles.statLabel}>Approved</Typography>
-            </Card>
-            <Card style={styles.statCard}>
-              <Typography variant="h3" style={styles.statValue}>{stats.pending}</Typography>
-              <Typography variant="caption" style={styles.statLabel}>Pending</Typography>
-            </Card>
-            <Card style={styles.statCard}>
-              <Typography variant="h3" style={styles.statValue}>{stats.active}</Typography>
-              <Typography variant="caption" style={styles.statLabel}>Active</Typography>
-            </Card>
-          </View>
-        </View>
+        
 
-        {/* Search and Filter */}
+        {/* Search */}
         <View style={styles.filterSection}>
           <View style={styles.searchContainer}>
             <Ionicons name="search-outline" size={20} color="#8E8E93" />
@@ -630,33 +826,10 @@ const DriverManagementScreen: React.FC = () => {
               placeholderTextColor="#8E8E93"
             />
           </View>
-          
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-            {(['all', 'approved', 'pending', 'rejected'] as const).map((status) => (
-              <TouchableOpacity
-                key={status}
-                style={[
-                  styles.filterButton,
-                  filterStatus === status && styles.filterButtonActive
-                ]}
-                onPress={() => setFilterStatus(status)}
-              >
-                <Typography 
-                  variant="caption" 
-                  style={[
-                    styles.filterButtonText,
-                    filterStatus === status && styles.filterButtonTextActive
-                  ]}
-                >
-                  {status.charAt(0).toUpperCase() + status.slice(1)}
-                </Typography>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
         </View>
 
         {/* Drivers List */}
-        <View style={styles.driversSection}>
+        <View style={styles.driversSection} pointerEvents={(showDriverModal || showAddDriverModal) ? 'none' : 'auto'}>
           <Typography variant="h3" style={styles.sectionTitle}>
             Drivers ({filteredDrivers.length})
           </Typography>
@@ -665,7 +838,7 @@ const DriverManagementScreen: React.FC = () => {
             <Card style={styles.emptyState}>
               <Ionicons name="car-outline" size={48} color="#8E8E93" />
               <Typography variant="body" style={styles.emptyText}>
-                {searchQuery || filterStatus !== 'all' 
+                {searchQuery 
                   ? 'No drivers found matching your criteria'
                   : 'No drivers registered yet'
                 }
@@ -766,6 +939,7 @@ const styles = StyleSheet.create({
   },
   filterSection: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
+    marginTop: UI_CONFIG.spacing.lg,
     marginBottom: UI_CONFIG.spacing.md,
   },
   searchContainer: {

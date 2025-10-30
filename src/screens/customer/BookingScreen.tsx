@@ -35,12 +35,14 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const { createBooking, isLoading } = useBookingStore();
 
   const [selectedTankerSize, setSelectedTankerSize] = useState<number | null>(null);
+  const [selectedAgency, setSelectedAgency] = useState<{ id: string; name: string } | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<string>('');
   const [deliveryTime, setDeliveryTime] = useState<string>('');
   const [timePeriod, setTimePeriod] = useState<'AM' | 'PM'>('PM');
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [showTankerModal, setShowTankerModal] = useState(false);
+  const [showAgencyModal, setShowAgencyModal] = useState(false);
   const [showSavedAddressModal, setShowSavedAddressModal] = useState(false);
   const [priceBreakdown, setPriceBreakdown] = useState<any>(null);
   const [dateError, setDateError] = useState<string>('');
@@ -49,6 +51,13 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const tankerSizes: TankerSize[] = [
     { id: '1', size: 10000, basePrice: 600, isActive: true, displayName: '10000L Tanker' },
     { id: '2', size: 15000, basePrice: 900, isActive: true, displayName: '15000L Tanker' },
+  ];
+
+  // Tanker agencies (static list for now)
+  const tankerAgencies: Array<{ id: string; name: string }> = [
+    { id: 'a1', name: 'BlueWave Tankers' },
+    { id: 'a2', name: 'AquaFlow Supplies' },
+    { id: 'a3', name: 'RiverFresh Logistics' },
   ];
 
   // Default pricing
@@ -76,6 +85,11 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const handleTankerSelection = (size: number) => {
     setSelectedTankerSize(size);
     setShowTankerModal(false);
+  };
+
+  const handleAgencySelection = (agency: { id: string; name: string }) => {
+    setSelectedAgency(agency);
+    setShowAgencyModal(false);
   };
 
   const handleAddressSelection = (address: Address) => {
@@ -328,8 +342,8 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
 
   const handleBooking = async () => {
-    if (!selectedTankerSize || !deliveryAddress.trim() || !user) {
-      Alert.alert('Error', 'Please select tanker size and enter delivery address');
+    if (!selectedTankerSize || !selectedAgency || !deliveryAddress.trim() || !user) {
+      Alert.alert('Error', 'Please select agency, tanker size and enter delivery address');
       return;
     }
 
@@ -372,6 +386,8 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         customerId: user.uid,
         customerName: user.name,
         customerPhone: user.phone,
+        agencyId: selectedAgency.id,
+        agencyName: selectedAgency.name,
         status: 'pending' as const,
         tankerSize: selectedTankerSize,
         basePrice: priceBreakdown.basePrice,
@@ -389,7 +405,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       
       Alert.alert(
         'Booking Successful!',
-        `Your booking has been placed successfully.\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
+        `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
         [
           {
             text: 'OK',
@@ -434,6 +450,42 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                 name={selectedTankerSize === tanker.size ? "radio-button-on" : "radio-button-off"}
                 size={24}
                 color={selectedTankerSize === tanker.size ? "#007AFF" : "#8E8E93"}
+              />
+            </Card>
+          ))}
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+
+  const AgencySelectionModal = () => (
+    <Modal visible={showAgencyModal} animationType="slide" presentationStyle="pageSheet">
+      <View style={styles.modalContainer}>
+        <View style={styles.modalHeader}>
+          <TouchableOpacity onPress={() => setShowAgencyModal(false)}>
+            <Ionicons name="close" size={24} color="#000" />
+          </TouchableOpacity>
+          <Typography variant="h3" style={styles.modalTitle}>Select Tanker Agency</Typography>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <ScrollView style={styles.modalContent}>
+          {tankerAgencies.map((agency) => (
+            <Card
+              key={agency.id}
+              style={[
+                styles.tankerCard,
+                selectedAgency?.id === agency.id && styles.selectedTankerCard,
+              ]}
+              onPress={() => handleAgencySelection(agency)}
+            >
+              <View style={styles.tankerInfo}>
+                <Typography variant="body" style={styles.tankerName}>{agency.name}</Typography>
+              </View>
+              <Ionicons
+                name={selectedAgency?.id === agency.id ? 'radio-button-on' : 'radio-button-off'}
+                size={24}
+                color={selectedAgency?.id === agency.id ? '#007AFF' : '#8E8E93'}
               />
             </Card>
           ))}
@@ -523,6 +575,21 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Typography variant="h2" style={styles.title}>Book Water Tanker</Typography>
+      </View>
+
+      {/* Tanker Size Selection */}
+      <View style={styles.section}>
+        <Typography variant="h3" style={styles.sectionTitle}>Select Tanker Agency</Typography>
+        <Card style={styles.selectionCard} onPress={() => setShowAgencyModal(true)}>
+          <View style={styles.selectionContent}>
+            <View style={styles.selectionInfo}>
+              <Typography variant="body" style={styles.selectionLabel}>
+                {selectedAgency ? selectedAgency.name : 'Choose tanker agency'}
+              </Typography>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#8E8E93" />
+          </View>
+        </Card>
       </View>
 
       {/* Tanker Size Selection */}
@@ -654,6 +721,12 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         <View style={styles.section}>
           <Typography variant="h3" style={styles.sectionTitle}>Price Breakdown</Typography>
           <Card style={styles.priceCard}>
+            {selectedAgency && (
+              <View style={styles.priceRow}>
+                <Typography variant="body" style={styles.priceLabel}>Agency</Typography>
+                <Typography variant="body" style={styles.priceValue}>{selectedAgency.name}</Typography>
+              </View>
+            )}
             <View style={styles.priceRow}>
               <Typography variant="body" style={styles.priceLabel}>Tanker Size</Typography>
               <Typography variant="body" style={styles.priceValue}>{priceBreakdown.tankerSize}</Typography>

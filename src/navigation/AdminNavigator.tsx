@@ -2,18 +2,18 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
+import AdminProfileScreen from '../screens/admin/AdminProfileScreen';
 import AllBookingsScreen from '../screens/admin/AllBookingsScreen';
 import DriverManagementScreen from '../screens/admin/DriverManagementScreen';
 import PricingManagementScreen from '../screens/admin/PricingManagementScreen';
 import ReportsScreen from '../screens/admin/ReportsScreen';
 
 export type AdminTabParamList = {
-  Dashboard: undefined;
   Bookings: undefined;
   Drivers: undefined;
   Pricing: undefined;
   Reports: undefined;
+  Profile: undefined;
 };
 
 export type AdminStackParamList = {
@@ -44,16 +44,6 @@ const AdminTabs: React.FC = () => {
         },
       }}
     >
-      <Tab.Screen 
-        name="Dashboard" 
-        component={AdminDashboardScreen}
-        options={{ 
-          tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid-outline" size={size} color={color} />
-          ),
-        }}
-      />
       <Tab.Screen 
         name="Bookings" 
         component={AllBookingsScreen}
@@ -91,6 +81,16 @@ const AdminTabs: React.FC = () => {
           tabBarLabel: 'Reports',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="bar-chart-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={AdminProfileScreen}
+        options={{ 
+          tabBarLabel: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-circle-outline" size={size} color={color} />
           ),
         }}
       />

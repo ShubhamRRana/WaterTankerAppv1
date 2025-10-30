@@ -28,6 +28,7 @@ export interface User {
   // Driver specific
   vehicleNumber?: string;
   licenseNumber?: string;
+  licenseExpiry?: Date;
   driverLicenseImage?: string;
   vehicleRegistrationImage?: string;
   isApproved?: boolean;
@@ -35,6 +36,8 @@ export interface User {
   totalEarnings?: number;
   completedOrders?: number;
   createdByAdmin?: boolean; // Track if driver was created by admin
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
 }
 
 // Extended user interface for multi-role support
@@ -70,6 +73,9 @@ export interface Booking {
   customerId: string;
   customerName: string;
   customerPhone: string;
+  // Optional agency information for the booking
+  agencyId?: string;
+  agencyName?: string;
   driverId?: string;
   driverName?: string;
   driverPhone?: string;
@@ -139,7 +145,6 @@ export interface AuthStackParamList {
   RoleEntry: undefined;
   Login: { preferredRole?: 'customer' | 'driver' | 'admin' } | undefined;
   Register: { preferredRole?: 'customer' | 'driver' | 'admin' } | undefined;
-  OTP: { phone: string };
   RoleSelection: { phone: string; availableRoles: ('customer' | 'driver' | 'admin')[] };
   [key: string]:
     | undefined
@@ -172,12 +177,12 @@ export interface DriverStackParamList {
 }
 
 export interface AdminTabParamList {
-  Dashboard: undefined;
   Bookings: undefined;
   Drivers: undefined;
   Customers: undefined;
   Pricing: undefined;
   Reports: undefined;
+  Profile: undefined;
 }
 
 export interface AdminStackParamList {
