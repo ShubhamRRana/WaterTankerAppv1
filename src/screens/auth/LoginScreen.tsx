@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
 import { ValidationUtils } from '../../utils/validation';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../../constants/config';
@@ -31,6 +32,7 @@ interface Props {
 const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ phone?: string; password?: string }>({});
   
   const { login, loginWithRole, isLoading } = useAuthStore();
@@ -106,13 +108,25 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
 
           <View style={styles.inputContainer}>
             <Typography variant="body" style={styles.label}>Password</Typography>
-            <TextInput
-              style={[styles.input, errors.password && styles.inputError]}
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={[styles.input, styles.passwordInput, errors.password && styles.inputError]}
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+              />
+              <TouchableOpacity
+                style={styles.eyeIcon}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={24}
+                  color="#8E8E93"
+                />
+              </TouchableOpacity>
+            </View>
             {errors.password && <Typography variant="caption" style={styles.errorText}>{errors.password}</Typography>}
           </View>
 
@@ -188,6 +202,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#E5E5EA',
+  },
+  passwordInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  passwordInput: {
+    flex: 1,
+    paddingRight: 50,
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 16,
+    padding: 4,
   },
   inputError: {
     borderColor: '#FF3B30',
