@@ -41,7 +41,6 @@ src/
 │       ├── AllBookingsScreen.tsx
 │       ├── DriverManagementScreen.tsx
 │       ├── CustomerManagementScreen.tsx
-│       ├── PricingManagementScreen.tsx
 │       └── ReportsScreen.tsx
 ├── navigation/
 │   ├── AuthNavigator.tsx
@@ -111,7 +110,6 @@ src/
 - Manage all bookings
 - Approve/suspend drivers
 - View customer list
-- Update pricing rules
 - Generate reports
 
 ## Admin Dashboard Features
@@ -130,7 +128,6 @@ The Admin Dashboard provides a comprehensive overview of the platform with the f
 - **All Bookings**: Navigate to complete booking management
 - **Driver Management**: Access driver approval and management tools
 - **Customer Management**: View and manage customer accounts
-- **Pricing Management**: Configure pricing rules and tanker sizes
 - **Reports & Analytics**: Access detailed reporting tools
 
 ### 📱 **Recent Activity Feed**

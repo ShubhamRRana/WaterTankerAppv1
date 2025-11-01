@@ -8,172 +8,130 @@ import {
   Dimensions 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import { useBookingStore } from '../../store/bookingStore';
-import { useUserStore } from '../../store/userStore';
-import { Typography, Card, Button } from '../../components/common';
+import { Typography } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
-import { ReportData } from '../../types';
 
 const { width } = Dimensions.get('window');
 
 const ReportsScreen: React.FC = () => {
-  const { bookings, fetchAllBookings, isLoading: bookingsLoading } = useBookingStore();
-  const { users, fetchAllUsers, isLoading: usersLoading } = useUserStore();
+  const { bookings, fetchAllBookings } = useBookingStore();
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
-  const [reportData, setReportData] = useState<ReportData>({
-    totalBookings: 0,
-    totalRevenue: 0,
-    completedBookings: 0,
-    cancelledBookings: 0,
-    pendingBookings: 0,
-    activeDrivers: 0,
-    totalCustomers: 0,
-    averageOrderValue: 0,
-    topDrivers: [],
-    topCustomers: [],
-    bookingsByStatus: [],
-    revenueByMonth: [],
-  });
+  const [periodType, setPeriodType] = useState<'month' | 'year'>('month');
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const fullMonthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+  // Generate year options (current year + 4 previous years)
+  const getAvailableYears = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = 0; i < 5; i++) {
+      years.push(currentYear - i);
+    }
+    return years;
+  };
+
+  const availableYears = getAvailableYears();
 
   useEffect(() => {
     loadReportData();
   }, []);
 
-  useEffect(() => {
-    calculateReportData();
-  }, [bookings, users, selectedPeriod]);
 
   const loadReportData = async () => {
     try {
-      await Promise.all([
-        fetchAllBookings(),
-        fetchAllUsers(),
-      ]);
+      await fetchAllBookings();
     } catch (error) {
       console.error('Failed to load report data:', error);
     }
   };
 
-  const calculateReportData = () => {
-    const now = new Date();
-    const periodDays = selectedPeriod === '7d' ? 7 : selectedPeriod === '30d' ? 30 : selectedPeriod === '90d' ? 90 : 365;
-    const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+  const calculateMonthlyData = () => {
+    const monthStart = new Date(selectedYear, selectedMonth, 1);
+    const monthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
 
-    // Filter data by selected period
-    const filteredBookings = bookings.filter(booking => 
-      new Date(booking.createdAt) >= startDate
-    );
+    const monthBookings = bookings.filter(booking => {
+      const bookingDate = new Date(booking.createdAt);
+      return bookingDate >= monthStart && bookingDate <= monthEnd;
+    });
 
-    const customers = users.filter(user => user.role === 'customer');
-    const drivers = users.filter(user => user.role === 'driver');
-    const activeDrivers = drivers.filter(driver => driver.isAvailable);
+    const completedBookings = monthBookings.filter(b => b.status === 'delivered');
+    const totalRevenue = completedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+    const totalOrders = completedBookings.length;
 
-    // Calculate basic metrics
-    const totalBookings = filteredBookings.length;
-    const completedBookings = filteredBookings.filter(b => b.status === 'delivered').length;
-    const cancelledBookings = filteredBookings.filter(b => b.status === 'cancelled').length;
-    const pendingBookings = filteredBookings.filter(b => b.status === 'pending').length;
-    
-    const totalRevenue = filteredBookings
-      .filter(b => b.status === 'delivered')
-      .reduce((sum, b) => sum + b.totalPrice, 0);
-    
-    const averageOrderValue = completedBookings > 0 ? totalRevenue / completedBookings : 0;
+    return { totalRevenue, totalOrders };
+  };
 
-    // Calculate top drivers
-    const driverEarnings = new Map<string, { name: string; earnings: number; orders: number }>();
-    filteredBookings
-      .filter(b => b.status === 'delivered' && b.driverId)
-      .forEach(booking => {
-        const existing = driverEarnings.get(booking.driverId!) || { 
-          name: booking.driverName || 'Unknown', 
-          earnings: 0, 
-          orders: 0 
-        };
-        driverEarnings.set(booking.driverId!, {
-          name: booking.driverName || 'Unknown',
-          earnings: existing.earnings + (booking.totalPrice * 0.7), // Assuming 70% driver commission
-          orders: existing.orders + 1
-        });
+  const calculateDailyBreakdown = () => {
+    const monthStart = new Date(selectedYear, selectedMonth, 1);
+    const monthEnd = new Date(selectedYear, selectedMonth + 1, 0);
+    const daysInMonth = monthEnd.getDate();
+
+    const dailyData = [];
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayStart = new Date(selectedYear, selectedMonth, day, 0, 0, 0, 0);
+      const dayEnd = new Date(selectedYear, selectedMonth, day, 23, 59, 59, 999);
+
+      const dayBookings = bookings.filter(booking => {
+        const bookingDate = new Date(booking.createdAt);
+        return bookingDate >= dayStart && bookingDate <= dayEnd && booking.status === 'delivered';
       });
 
-    const topDrivers = Array.from(driverEarnings.values())
-      .sort((a, b) => b.earnings - a.earnings)
-      .slice(0, 5);
+      const dayRevenue = dayBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+      const dayOrders = dayBookings.length;
 
-    // Calculate top customers
-    const customerStats = new Map<string, { name: string; orders: number; totalSpent: number }>();
-    filteredBookings
-      .filter(b => b.status === 'delivered')
-      .forEach(booking => {
-        const existing = customerStats.get(booking.customerId) || { 
-          name: booking.customerName, 
-          orders: 0, 
-          totalSpent: 0 
-        };
-        customerStats.set(booking.customerId, {
-          name: booking.customerName,
-          orders: existing.orders + 1,
-          totalSpent: existing.totalSpent + booking.totalPrice
-        });
-      });
-
-    const topCustomers = Array.from(customerStats.values())
-      .sort((a, b) => b.totalSpent - a.totalSpent)
-      .slice(0, 5);
-
-    // Calculate bookings by status
-    const statusCounts = {
-      pending: pendingBookings,
-      accepted: filteredBookings.filter(b => b.status === 'accepted').length,
-      in_transit: filteredBookings.filter(b => b.status === 'in_transit').length,
-      delivered: completedBookings,
-      cancelled: cancelledBookings,
-    };
-
-    const bookingsByStatus = Object.entries(statusCounts).map(([status, count]) => ({
-      status: status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' '),
-      count,
-      percentage: totalBookings > 0 ? (count / totalBookings) * 100 : 0
-    }));
-
-    // Calculate revenue by month (last 6 months)
-    const revenueByMonth = [];
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
-      const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
-      const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-      
-      const monthRevenue = filteredBookings
-        .filter(b => {
-          const bookingDate = new Date(b.createdAt);
-          return bookingDate >= monthStart && bookingDate <= monthEnd && b.status === 'delivered';
-        })
-        .reduce((sum, b) => sum + b.totalPrice, 0);
-
-      revenueByMonth.push({
-        month: monthName,
-        revenue: monthRevenue
+      dailyData.push({
+        day,
+        revenue: dayRevenue,
+        orders: dayOrders,
       });
     }
 
-    setReportData({
-      totalBookings,
-      totalRevenue,
-      completedBookings,
-      cancelledBookings,
-      pendingBookings,
-      activeDrivers: activeDrivers.length,
-      totalCustomers: customers.length,
-      averageOrderValue,
-      topDrivers,
-      topCustomers,
-      bookingsByStatus,
-      revenueByMonth,
+    return dailyData;
+  };
+
+  const calculateYearlyData = () => {
+    const yearStart = new Date(selectedYear, 0, 1);
+    const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
+
+    const yearBookings = bookings.filter(booking => {
+      const bookingDate = new Date(booking.createdAt);
+      return bookingDate >= yearStart && bookingDate <= yearEnd;
     });
+
+    const completedBookings = yearBookings.filter(b => b.status === 'delivered');
+    const totalRevenue = completedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+    const totalOrders = completedBookings.length;
+
+    return { totalRevenue, totalOrders };
+  };
+
+  const calculateMonthlyBreakdown = () => {
+    const monthlyData = [];
+    
+    for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
+      const monthStart = new Date(selectedYear, monthIndex, 1);
+      const monthEnd = new Date(selectedYear, monthIndex + 1, 0, 23, 59, 59, 999);
+
+      const monthBookings = bookings.filter(booking => {
+        const bookingDate = new Date(booking.createdAt);
+        return bookingDate >= monthStart && bookingDate <= monthEnd && booking.status === 'delivered';
+      });
+
+      const monthRevenue = monthBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+      const monthOrders = monthBookings.length;
+
+      monthlyData.push({
+        month: fullMonthNames[monthIndex],
+        revenue: monthRevenue,
+        orders: monthOrders,
+      });
+    }
+
+    return monthlyData;
   };
 
   const onRefresh = async () => {
@@ -182,116 +140,11 @@ const ReportsScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const StatCard: React.FC<{
-    title: string;
-    value: string | number;
-    icon: string;
-    color: string;
-    subtitle?: string;
-    trend?: 'up' | 'down' | 'neutral';
-  }> = ({ title, value, icon, color, subtitle, trend }) => (
-    <Card style={styles.statCard}>
-      <View style={styles.statCardContent}>
-        <View style={[styles.statIcon, { backgroundColor: color }]}>
-          <Ionicons name={icon as any} size={20} color="#FFFFFF" />
-        </View>
-        <View style={styles.statText}>
-          <Typography variant="h3" style={styles.statValue}>
-            {value}
-          </Typography>
-          <Typography variant="body" style={styles.statTitle}>
-            {title}
-          </Typography>
-          {subtitle && (
-            <Typography variant="caption" style={styles.statSubtitle}>
-              {subtitle}
-            </Typography>
-          )}
-        </View>
-        {trend && (
-          <Ionicons 
-            name={trend === 'up' ? 'trending-up' : trend === 'down' ? 'trending-down' : 'remove'} 
-            size={16} 
-            color={trend === 'up' ? '#34C759' : trend === 'down' ? '#FF3B30' : '#8E8E93'} 
-          />
-        )}
-      </View>
-    </Card>
-  );
-
-  const PeriodSelector: React.FC = () => (
-    <View style={styles.periodSelector}>
-      {(['7d', '30d', '90d', '1y'] as const).map((period) => (
-        <TouchableOpacity
-          key={period}
-          style={[
-            styles.periodButton,
-            selectedPeriod === period && styles.periodButtonActive
-          ]}
-          onPress={() => setSelectedPeriod(period)}
-        >
-          <Typography 
-            variant="body" 
-            style={[
-              styles.periodButtonText,
-              selectedPeriod === period && styles.periodButtonTextActive
-            ]}
-          >
-            {period === '7d' ? '7 Days' : period === '30d' ? '30 Days' : period === '90d' ? '90 Days' : '1 Year'}
-          </Typography>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-
-  const SimpleBarChart: React.FC<{ data: Array<{ month: string; revenue: number }> }> = ({ data }) => {
-    const maxValue = Math.max(...data.map(d => d.revenue));
-    
-    return (
-      <View style={styles.chartContainer}>
-        <View style={styles.chart}>
-          {data.map((item, index) => (
-            <View key={index} style={styles.barContainer}>
-              <View 
-                style={[
-                  styles.bar, 
-                  { 
-                    height: maxValue > 0 ? (item.revenue / maxValue) * 100 : 0,
-                    backgroundColor: '#007AFF'
-                  }
-                ]} 
-              />
-              <Typography variant="caption" style={styles.barLabel}>
-                {item.month}
-              </Typography>
-              <Typography variant="caption" style={styles.barValue}>
-                ₹{item.revenue.toLocaleString()}
-              </Typography>
-            </View>
-          ))}
-        </View>
-      </View>
-    );
-  };
-
-  const PieChart: React.FC<{ data: Array<{ status: string; count: number; percentage: number }> }> = ({ data }) => {
-    const colors = ['#007AFF', '#34C759', '#FF9500', '#FF3B30', '#5856D6'];
-    
-    return (
-      <View style={styles.pieChartContainer}>
-        <View style={styles.pieChart}>
-          {data.map((item, index) => (
-            <View key={index} style={styles.pieItem}>
-              <View style={[styles.pieColor, { backgroundColor: colors[index % colors.length] }]} />
-              <Typography variant="caption" style={styles.pieLabel}>
-                {item.status}: {item.count} ({item.percentage.toFixed(1)}%)
-              </Typography>
-            </View>
-          ))}
-        </View>
-      </View>
-    );
-  };
+  const monthlyData = periodType === 'month' ? calculateMonthlyData() : calculateYearlyData();
+  const totalRevenue = monthlyData.totalRevenue;
+  const totalOrders = monthlyData.totalOrders;
+  const dailyBreakdown = periodType === 'month' ? calculateDailyBreakdown() : [];
+  const monthlyBreakdown = periodType === 'year' ? calculateMonthlyBreakdown() : [];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -311,143 +164,206 @@ const ReportsScreen: React.FC = () => {
           </Typography>
         </View>
 
-        {/* Period Selector */}
-        <View style={styles.periodSection}>
-          <Typography variant="h3" style={styles.sectionTitle}>
-            Time Period
-          </Typography>
-          <PeriodSelector />
+        {/* Period Type Toggle */}
+        <View style={styles.periodTypeToggle}>
+          <TouchableOpacity
+            style={[
+              styles.periodTypeButton,
+              periodType === 'month' && styles.periodTypeButtonActive
+            ]}
+            onPress={() => setPeriodType('month')}
+          >
+            <Typography 
+              variant="body" 
+              style={[
+                styles.periodTypeText,
+                periodType === 'month' && styles.periodTypeTextActive
+              ]}
+            >
+              Month
+            </Typography>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.periodTypeButton,
+              periodType === 'year' && styles.periodTypeButtonActive
+            ]}
+            onPress={() => setPeriodType('year')}
+          >
+            <Typography 
+              variant="body" 
+              style={[
+                styles.periodTypeText,
+                periodType === 'year' && styles.periodTypeTextActive
+              ]}
+            >
+              Year
+            </Typography>
+          </TouchableOpacity>
         </View>
 
-        {/* Key Metrics */}
-        <View style={styles.metricsSection}>
-          <Typography variant="h3" style={styles.sectionTitle}>
-            Key Metrics
+        {/* Month Selector */}
+        {periodType === 'month' && (
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.monthSelector}
+            contentContainerStyle={styles.monthSelectorContent}
+          >
+            {months.map((month, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.monthButton,
+                  selectedMonth === index && styles.monthButtonActive
+                ]}
+                onPress={() => setSelectedMonth(index)}
+              >
+                <Typography 
+                  variant="body" 
+                  style={[
+                    styles.monthButtonText,
+                    selectedMonth === index && styles.monthButtonTextActive
+                  ]}
+                >
+                  {month}
+                </Typography>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* Year Selector */}
+        {periodType === 'year' && (
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            style={styles.monthSelector}
+            contentContainerStyle={styles.monthSelectorContent}
+          >
+            {availableYears.map((year) => (
+              <TouchableOpacity
+                key={year}
+                style={[
+                  styles.monthButton,
+                  selectedYear === year && styles.monthButtonActive
+                ]}
+                onPress={() => setSelectedYear(year)}
+              >
+                <Typography 
+                  variant="body" 
+                  style={[
+                    styles.monthButtonText,
+                    selectedYear === year && styles.monthButtonTextActive
+                  ]}
+                >
+                  {year}
+                </Typography>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+
+        {/* Summary */}
+        <View style={styles.summarySection}>
+          <Typography variant="h2" style={styles.summaryTitle}>
+            {periodType === 'month' ? 'Monthly Summary' : `Yearly Summary - ${selectedYear}`}
           </Typography>
-          <View style={styles.metricsGrid}>
-            <StatCard
-              title="Total Bookings"
-              value={reportData.totalBookings}
-              icon="receipt-outline"
-              color="#007AFF"
-            />
-            <StatCard
-              title="Total Revenue"
-              value={`₹${reportData.totalRevenue.toLocaleString()}`}
-              icon="cash-outline"
-              color="#34C759"
-            />
-            <StatCard
-              title="Completed Orders"
-              value={reportData.completedBookings}
-              icon="checkmark-circle-outline"
-              color="#34C759"
-            />
-            <StatCard
-              title="Avg Order Value"
-              value={`₹${reportData.averageOrderValue.toFixed(0)}`}
-              icon="analytics-outline"
-              color="#5856D6"
-            />
-            <StatCard
-              title="Active Drivers"
-              value={reportData.activeDrivers}
-              icon="car-outline"
-              color="#FF9500"
-            />
-            <StatCard
-              title="Total Customers"
-              value={reportData.totalCustomers}
-              icon="people-outline"
-              color="#32D74B"
-            />
+          <View style={styles.summaryMetrics}>
+            <View style={styles.summaryMetric}>
+              <View style={styles.summaryValueContainer}>
+                <Typography 
+                  variant="h1" 
+                  style={styles.summaryValue} 
+                  numberOfLines={1} 
+                  adjustsFontSizeToFit 
+                  minimumFontScale={0.6}
+                >
+                  ₹{totalRevenue.toLocaleString()}
+                </Typography>
+              </View>
+              <Typography variant="body" style={styles.summaryLabel}>
+                Total Revenue
+              </Typography>
+            </View>
+            <View style={styles.summaryMetric}>
+              <View style={styles.summaryValueContainer}>
+                <Typography 
+                  variant="h1" 
+                  style={styles.summaryValue} 
+                  numberOfLines={1} 
+                  adjustsFontSizeToFit 
+                  minimumFontScale={0.6}
+                >
+                  {totalOrders.toLocaleString()}
+                </Typography>
+              </View>
+              <Typography variant="body" style={styles.summaryLabel}>
+                Total Orders
+              </Typography>
+            </View>
           </View>
         </View>
 
-        {/* Revenue Chart */}
-        <View style={styles.chartSection}>
-          <Typography variant="h3" style={styles.sectionTitle}>
-            Revenue Trend
-          </Typography>
-          <Card style={styles.chartCard}>
-            <SimpleBarChart data={reportData.revenueByMonth} />
-          </Card>
-        </View>
-
-        {/* Bookings Status */}
-        <View style={styles.statusSection}>
-          <Typography variant="h3" style={styles.sectionTitle}>
-            Bookings by Status
-          </Typography>
-          <Card style={styles.statusCard}>
-            <PieChart data={reportData.bookingsByStatus} />
-          </Card>
-        </View>
-
-        {/* Top Performers */}
-        <View style={styles.performersSection}>
-          <Typography variant="h3" style={styles.sectionTitle}>
-            Top Performers
-          </Typography>
-          
-          {/* Top Drivers */}
-          <Card style={styles.performerCard}>
-            <Typography variant="h3" style={styles.performerTitle}>
-              Top Drivers
-            </Typography>
-            {reportData.topDrivers.map((driver, index) => (
-              <View key={index} style={styles.performerItem}>
-                <View style={styles.performerRank}>
-                  <Typography variant="body" style={styles.rankNumber}>
-                    #{index + 1}
-                  </Typography>
-                </View>
-                <View style={styles.performerInfo}>
-                  <Typography variant="body" style={styles.performerName}>
-                    {driver.name}
-                  </Typography>
-                  <Typography variant="caption" style={styles.performerStats}>
-                    {driver.orders} orders • ₹{driver.earnings.toLocaleString()} earned
-                  </Typography>
-                </View>
+        {/* Daily Breakdown - Month View */}
+        {periodType === 'month' && (
+          <View style={styles.dailySection}>
+            <View style={styles.dailyHeader}>
+              <Typography variant="body" style={[styles.dailyHeaderText, styles.dailyHeaderLeft]}>
+                Day
+              </Typography>
+              <Typography variant="body" style={[styles.dailyHeaderText, styles.dailyHeaderCenter]}>
+                Revenue
+              </Typography>
+              <Typography variant="body" style={[styles.dailyHeaderText, styles.dailyHeaderRight]}>
+                Orders
+              </Typography>
+            </View>
+            {dailyBreakdown.map((item, index) => (
+              <View key={index} style={styles.dailyRow}>
+                <Typography variant="body" style={styles.dailyDay}>
+                  {item.day}
+                </Typography>
+                <Typography variant="body" style={styles.dailyRevenue}>
+                  ₹{item.revenue.toLocaleString()}
+                </Typography>
+                <Typography variant="body" style={styles.dailyOrders}>
+                  {item.orders}
+                </Typography>
               </View>
             ))}
-            {reportData.topDrivers.length === 0 && (
-              <Typography variant="body" style={styles.emptyText}>
-                No driver data available
-              </Typography>
-            )}
-          </Card>
+          </View>
+        )}
 
-          {/* Top Customers */}
-          <Card style={styles.performerCard}>
-            <Typography variant="h3" style={styles.performerTitle}>
-              Top Customers
-            </Typography>
-            {reportData.topCustomers.map((customer, index) => (
-              <View key={index} style={styles.performerItem}>
-                <View style={styles.performerRank}>
-                  <Typography variant="body" style={styles.rankNumber}>
-                    #{index + 1}
-                  </Typography>
-                </View>
-                <View style={styles.performerInfo}>
-                  <Typography variant="body" style={styles.performerName}>
-                    {customer.name}
-                  </Typography>
-                  <Typography variant="caption" style={styles.performerStats}>
-                    {customer.orders} orders • ₹{customer.totalSpent.toLocaleString()} spent
-                  </Typography>
-                </View>
+        {/* Monthly Breakdown - Year View */}
+        {periodType === 'year' && (
+          <View style={styles.dailySection}>
+            <View style={styles.dailyHeader}>
+              <Typography variant="body" style={[styles.dailyHeaderText, styles.dailyHeaderLeft]}>
+                Month
+              </Typography>
+              <Typography variant="body" style={[styles.dailyHeaderText, styles.dailyHeaderCenter]}>
+                Revenue
+              </Typography>
+              <Typography variant="body" style={[styles.dailyHeaderText, styles.dailyHeaderRight]}>
+                Orders
+              </Typography>
+            </View>
+            {monthlyBreakdown.map((item, index) => (
+              <View key={index} style={styles.dailyRow}>
+                <Typography variant="body" style={styles.dailyDay}>
+                  {item.month}
+                </Typography>
+                <Typography variant="body" style={styles.dailyRevenue}>
+                  ₹{item.revenue.toLocaleString()}
+                </Typography>
+                <Typography variant="body" style={styles.dailyOrders}>
+                  {item.orders}
+                </Typography>
               </View>
             ))}
-            {reportData.topCustomers.length === 0 && (
-              <Typography variant="body" style={styles.emptyText}>
-                No customer data available
-              </Typography>
-            )}
-          </Card>
-        </View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -456,11 +372,11 @@ const ReportsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: '#F2F2F7',
   },
   container: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: '#F2F2F7',
   },
   header: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
@@ -479,206 +395,153 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: UI_CONFIG.colors.textSecondary,
   },
-  periodSection: {
-    padding: UI_CONFIG.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.text,
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  periodSelector: {
+  periodTypeToggle: {
     flexDirection: 'row',
-    backgroundColor: '#F2F2F7',
-    borderRadius: 8,
-    padding: 4,
+    paddingHorizontal: UI_CONFIG.spacing.lg,
+    paddingVertical: UI_CONFIG.spacing.md,
   },
-  periodButton: {
+  periodTypeButton: {
     flex: 1,
     paddingVertical: UI_CONFIG.spacing.sm,
     paddingHorizontal: UI_CONFIG.spacing.md,
-    borderRadius: 6,
+    borderRadius: 8,
     alignItems: 'center',
+    backgroundColor: '#F2F2F7',
+    marginHorizontal: 4,
   },
-  periodButtonActive: {
+  periodTypeButtonActive: {
+    backgroundColor: '#007AFF',
+  },
+  periodTypeText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: UI_CONFIG.colors.text,
+  },
+  periodTypeTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  monthSelector: {
+    paddingVertical: UI_CONFIG.spacing.md,
+  },
+  monthSelectorContent: {
+    paddingHorizontal: UI_CONFIG.spacing.lg,
+  },
+  monthButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: '#F2F2F7',
+    marginRight: 8,
+  },
+  monthButtonActive: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
-  periodButtonText: {
+  monthButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: UI_CONFIG.colors.textSecondary,
+    color: UI_CONFIG.colors.text,
   },
-  periodButtonTextActive: {
+  monthButtonTextActive: {
     color: UI_CONFIG.colors.text,
     fontWeight: '600',
   },
-  metricsSection: {
+  summarySection: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
-    paddingBottom: UI_CONFIG.spacing.lg,
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    width: '48%',
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  statCardContent: {
-    flexDirection: 'row',
+    paddingVertical: UI_CONFIG.spacing.lg,
     alignItems: 'center',
   },
-  statIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: UI_CONFIG.spacing.md,
-  },
-  statText: {
-    flex: 1,
-  },
-  statValue: {
+  summaryTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: UI_CONFIG.colors.text,
-    marginBottom: 2,
+    marginBottom: UI_CONFIG.spacing.lg,
   },
-  statTitle: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
-    fontWeight: '500',
-  },
-  statSubtitle: {
-    fontSize: 10,
-    color: UI_CONFIG.colors.textSecondary,
-    marginTop: 2,
-  },
-  chartSection: {
-    paddingHorizontal: UI_CONFIG.spacing.lg,
-    paddingBottom: UI_CONFIG.spacing.lg,
-  },
-  chartCard: {
-    padding: UI_CONFIG.spacing.md,
-  },
-  chartContainer: {
-    height: 200,
-  },
-  chart: {
+  summaryMetrics: {
     flexDirection: 'row',
+    width: '100%',
     justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    height: 150,
-    marginBottom: UI_CONFIG.spacing.md,
   },
-  barContainer: {
+  summaryMetric: {
     alignItems: 'center',
     flex: 1,
+    paddingHorizontal: 8,
+    maxWidth: '50%',
   },
-  bar: {
-    width: 30,
-    borderRadius: 4,
-    marginBottom: UI_CONFIG.spacing.sm,
+  summaryValueContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+    paddingHorizontal: 4,
+    minHeight: 40,
   },
-  barLabel: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
-    marginBottom: 2,
-  },
-  barValue: {
-    fontSize: 10,
-    color: UI_CONFIG.colors.textSecondary,
+  summaryValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#007AFF',
     textAlign: 'center',
+    width: '100%',
   },
-  statusSection: {
+  summaryLabel: {
+    fontSize: 14,
+    color: UI_CONFIG.colors.text,
+    fontWeight: '500',
+  },
+  dailySection: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingBottom: UI_CONFIG.spacing.lg,
   },
-  statusCard: {
-    padding: UI_CONFIG.spacing.md,
-  },
-  pieChartContainer: {
+  dailyHeader: {
+    flexDirection: 'row',
     paddingVertical: UI_CONFIG.spacing.md,
-  },
-  pieChart: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  pieItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '48%',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
     marginBottom: UI_CONFIG.spacing.sm,
   },
-  pieColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: UI_CONFIG.spacing.sm,
-  },
-  pieLabel: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
-    flex: 1,
-  },
-  performersSection: {
-    paddingHorizontal: UI_CONFIG.spacing.lg,
-    paddingBottom: UI_CONFIG.spacing.xl,
-  },
-  performerCard: {
-    marginBottom: UI_CONFIG.spacing.md,
-    padding: UI_CONFIG.spacing.md,
-  },
-  performerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.text,
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  performerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: UI_CONFIG.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
-  },
-  performerRank: {
-    width: 30,
-    alignItems: 'center',
-  },
-  rankNumber: {
+  dailyHeaderText: {
     fontSize: 14,
     fontWeight: '600',
-    color: UI_CONFIG.colors.textSecondary,
+    color: UI_CONFIG.colors.text,
   },
-  performerInfo: {
+  dailyHeaderLeft: {
     flex: 1,
-    marginLeft: UI_CONFIG.spacing.md,
+    textAlign: 'left',
   },
-  performerName: {
+  dailyHeaderCenter: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  dailyHeaderRight: {
+    flex: 1,
+    textAlign: 'right',
+  },
+  dailyRow: {
+    flexDirection: 'row',
+    paddingVertical: UI_CONFIG.spacing.md,
+    paddingHorizontal: UI_CONFIG.spacing.sm,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 8,
+    marginBottom: 4,
+    alignItems: 'center',
+  },
+  dailyDay: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '500',
-    color: UI_CONFIG.colors.text,
-    marginBottom: 2,
+    color: '#007AFF',
   },
-  performerStats: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  emptyText: {
+  dailyRevenue: {
+    flex: 1,
     fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
+    color: UI_CONFIG.colors.text,
     textAlign: 'center',
-    paddingVertical: UI_CONFIG.spacing.lg,
+  },
+  dailyOrders: {
+    flex: 1,
+    fontSize: 14,
+    color: UI_CONFIG.colors.text,
+    textAlign: 'right',
   },
 });
 

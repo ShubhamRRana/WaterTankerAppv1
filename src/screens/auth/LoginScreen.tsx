@@ -33,7 +33,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ phone?: string; password?: string }>({});
   
-  const { login, isLoading } = useAuthStore();
+  const { login, loginWithRole, isLoading } = useAuthStore();
 
   const handleLogin = async () => {
     // Validate inputs
@@ -127,12 +127,14 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.footer}>
-          <Typography variant="body" style={styles.footerText}>Don't have an account? </Typography>
-          <TouchableOpacity onPress={() => navigation.navigate('Register', { preferredRole: route?.params?.preferredRole })}>
-            <Typography variant="body" style={styles.linkText}>Sign Up</Typography>
-          </TouchableOpacity>
-        </View>
+        {route?.params?.preferredRole !== 'driver' && (
+          <View style={styles.footer}>
+            <Typography variant="body" style={styles.footerText}>Don't have an account? </Typography>
+            <TouchableOpacity onPress={() => navigation.navigate('Register', { preferredRole: route?.params?.preferredRole })}>
+              <Typography variant="body" style={styles.linkText}>Sign Up</Typography>
+            </TouchableOpacity>
+          </View>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
     </SafeAreaView>

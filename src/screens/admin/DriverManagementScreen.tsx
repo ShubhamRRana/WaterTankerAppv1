@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '../../store/userStore';
+import { useAuthStore } from '../../store/authStore';
 import { Typography, Card, Button, LoadingSpinner, Input } from '../../components/common';
 import { User } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
@@ -39,6 +40,8 @@ interface AddDriverModalProps {
   onFormChange: (field: string, value: string) => void;
   onSubmit: () => void;
   onReset: () => void;
+  onDelete?: () => void;
+  isEditMode?: boolean;
 }
 
 const AddDriverModal: React.FC<AddDriverModalProps> = ({
@@ -50,6 +53,8 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
   onFormChange,
   onSubmit,
   onReset,
+  onDelete,
+  isEditMode = false,
 }) => (
   <Modal
     visible={visible}
@@ -61,17 +66,18 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
     <SafeAreaView style={styles.modalContainer}>
       <View style={styles.modalHeader}>
         <Typography variant="h2" style={styles.modalTitle}>
-          Add New Driver
+          {isEditMode ? 'Edit Driver' : 'Add New Driver'}
         </Typography>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => {
-            onClose();
-            onReset();
-          }}
-        >
-          <Ionicons name="close" size={24} color="#000000" />
-        </TouchableOpacity>
+        {isEditMode && onDelete && (
+          <TouchableOpacity
+            style={[styles.headerDeleteButton, isSubmitting && styles.headerDeleteButtonDisabled]}
+            onPress={onDelete}
+            disabled={isSubmitting}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="trash-outline" size={24} color={isSubmitting ? "#8E8E93" : "#FF3B30"} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {(Platform.OS === 'ios' || Platform.OS === 'android') ? (
@@ -110,25 +116,27 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 
           <View style={styles.formField}>
             <Input
-              label="Password *"
+              label={isEditMode ? "Password (leave blank to keep current)" : "Password *"}
               value={formData.password}
               onChangeText={(text) => onFormChange('password', text)}
-              placeholder="Enter password (min 6 characters)"
+              placeholder={isEditMode ? "Enter new password (optional)" : "Enter password (min 6 characters)"}
               error={formErrors.password}
               secureTextEntry
             />
           </View>
 
-          <View style={styles.formField}>
-            <Input
-              label="Confirm Password *"
-              value={formData.confirmPassword}
-              onChangeText={(text) => onFormChange('confirmPassword', text)}
-              placeholder="Confirm your password"
-              error={formErrors.confirmPassword}
-              secureTextEntry
-            />
-          </View>
+          {(!isEditMode || formData.password) && (
+            <View style={styles.formField}>
+              <Input
+                label="Confirm Password *"
+                value={formData.confirmPassword}
+                onChangeText={(text) => onFormChange('confirmPassword', text)}
+                placeholder="Confirm your password"
+                error={formErrors.confirmPassword}
+                secureTextEntry
+              />
+            </View>
+          )}
 
           <View style={styles.formField}>
             <Input
@@ -179,7 +187,7 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 
         <View style={styles.modalActions}>
           <Button
-            title={isSubmitting ? "Adding Driver..." : "Add Driver"}
+            title={isSubmitting ? (isEditMode ? "Updating Driver..." : "Adding Driver...") : (isEditMode ? "Update Driver" : "Add Driver")}
             onPress={onSubmit}
             disabled={isSubmitting}
             style={styles.addDriverButton}
@@ -229,25 +237,27 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 
             <View style={styles.formField}>
               <Input
-                label="Password *"
+                label={isEditMode ? "Password (leave blank to keep current)" : "Password *"}
                 value={formData.password}
                 onChangeText={(text) => onFormChange('password', text)}
-                placeholder="Enter password (min 6 characters)"
+                placeholder={isEditMode ? "Enter new password (optional)" : "Enter password (min 6 characters)"}
                 error={formErrors.password}
                 secureTextEntry
               />
             </View>
 
-            <View style={styles.formField}>
-              <Input
-                label="Confirm Password *"
-                value={formData.confirmPassword}
-                onChangeText={(text) => onFormChange('confirmPassword', text)}
-                placeholder="Confirm your password"
-                error={formErrors.confirmPassword}
-                secureTextEntry
-              />
-            </View>
+            {(!isEditMode || formData.password) && (
+              <View style={styles.formField}>
+                <Input
+                  label="Confirm Password *"
+                  value={formData.confirmPassword}
+                  onChangeText={(text) => onFormChange('confirmPassword', text)}
+                  placeholder="Confirm your password"
+                  error={formErrors.confirmPassword}
+                  secureTextEntry
+                />
+              </View>
+            )}
 
             <View style={styles.formField}>
               <Input
@@ -298,7 +308,7 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 
           <View style={styles.modalActions}>
             <Button
-              title={isSubmitting ? "Adding Driver..." : "Add Driver"}
+              title={isSubmitting ? (isEditMode ? "Updating Driver..." : "Adding Driver...") : (isEditMode ? "Update Driver" : "Add Driver")}
               onPress={onSubmit}
               disabled={isSubmitting}
               style={styles.addDriverButton}
@@ -321,16 +331,18 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 );
 
 const DriverManagementScreen: React.FC = () => {
-  const { users, fetchAllUsers, updateUser, addUser, isLoading } = useUserStore();
+  const { users, fetchAllUsers, updateUser, addUser, deleteUser, isLoading } = useUserStore();
+  const { user: currentUser, logout } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<User | null>(null);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [showAddDriverModal, setShowAddDriverModal] = useState(false);
+  const [editingDriver, setEditingDriver] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   
   
   
-  // Add Driver form state
+  // Add/Edit Driver form state
   const [addDriverForm, setAddDriverForm] = useState({
     name: '',
     phone: '',
@@ -416,7 +428,7 @@ const DriverManagementScreen: React.FC = () => {
     }
   };
 
-  const validateAddDriverForm = () => {
+  const validateAddDriverForm = (isEditMode: boolean = false) => {
     const errors: {[key: string]: string} = {};
     
     // Validate name
@@ -431,16 +443,22 @@ const DriverManagementScreen: React.FC = () => {
       errors.phone = phoneValidation.error || 'Invalid phone';
     }
     
-    // Validate password
-    const passwordValidation = ValidationUtils.validatePassword(addDriverForm.password);
-    if (!passwordValidation.isValid) {
-      errors.password = passwordValidation.error || 'Invalid password';
+    // Validate password (required for add, optional for edit)
+    if (!isEditMode || addDriverForm.password) {
+      const passwordValidation = ValidationUtils.validatePassword(addDriverForm.password);
+      if (!passwordValidation.isValid) {
+        errors.password = passwordValidation.error || 'Invalid password';
+      }
     }
     
-    // Validate confirm password
-    if (!addDriverForm.confirmPassword) {
-      errors.confirmPassword = 'Please confirm your password';
-    } else if (addDriverForm.password !== addDriverForm.confirmPassword) {
+    // Validate confirm password (only required when adding or when password is being changed)
+    if (!isEditMode) {
+      if (!addDriverForm.confirmPassword) {
+        errors.confirmPassword = 'Please confirm your password';
+      } else if (addDriverForm.password !== addDriverForm.confirmPassword) {
+        errors.confirmPassword = 'Passwords do not match';
+      }
+    } else if (addDriverForm.password && addDriverForm.password !== addDriverForm.confirmPassword) {
       errors.confirmPassword = 'Passwords do not match';
     }
     
@@ -478,42 +496,83 @@ const DriverManagementScreen: React.FC = () => {
   };
 
   const handleAddDriver = useCallback(async () => {
-    if (!validateAddDriverForm()) {
+    const isEditMode = editingDriver !== null;
+    if (!validateAddDriverForm(isEditMode)) {
       return;
     }
     
     setIsSubmitting(true);
     try {
-      // Check if phone number already exists
-      const existingUser = users.find(user => user.phone === addDriverForm.phone);
-      if (existingUser) {
-        Alert.alert('Error', 'A user with this phone number already exists');
-        setIsSubmitting(false);
-        return;
+      if (!isEditMode) {
+        // Check if phone number already exists (only for new drivers)
+        const existingUser = users.find(user => user.phone === addDriverForm.phone);
+        if (existingUser) {
+          Alert.alert('Error', 'A user with this phone number already exists');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        await addUser({
+          role: 'driver',
+          name: addDriverForm.name.trim(),
+          phone: addDriverForm.phone,
+          password: addDriverForm.password, // In real app, this should be hashed
+          isApproved: true, // Auto-approve when added by admin
+          isAvailable: true,
+          totalEarnings: 0,
+          completedOrders: 0,
+          createdByAdmin: true, // Mark as created by admin
+          licenseNumber: addDriverForm.licenseNumber.trim(),
+          emergencyContactName: addDriverForm.emergencyContactName.trim(),
+          emergencyContactPhone: addDriverForm.emergencyContactPhone,
+          licenseExpiry: (() => {
+            const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+            if (!m) return undefined as any;
+            const d = parseInt(m[1], 10);
+            const mo = parseInt(m[2], 10) - 1;
+            const y = parseInt(m[3], 10);
+            return new Date(y, mo, d);
+          })(),
+        });
+        
+        Alert.alert('Success', 'Driver added successfully');
+      } else {
+        // Check if phone number was changed and if it already exists for another user
+        if (addDriverForm.phone !== editingDriver.phone) {
+          const existingUser = users.find(user => user.phone === addDriverForm.phone && user.uid !== editingDriver.uid);
+          if (existingUser) {
+            Alert.alert('Error', 'A user with this phone number already exists');
+            setIsSubmitting(false);
+            return;
+          }
+        }
+        
+        // Update existing driver
+        const updateData: any = {
+          name: addDriverForm.name.trim(),
+          phone: addDriverForm.phone,
+          licenseNumber: addDriverForm.licenseNumber.trim(),
+          emergencyContactName: addDriverForm.emergencyContactName.trim(),
+          emergencyContactPhone: addDriverForm.emergencyContactPhone,
+          licenseExpiry: (() => {
+            const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+            if (!m) return undefined as any;
+            const d = parseInt(m[1], 10);
+            const mo = parseInt(m[2], 10) - 1;
+            const y = parseInt(m[3], 10);
+            return new Date(y, mo, d);
+          })(),
+        };
+        
+        // Only update password if provided
+        if (addDriverForm.password) {
+          updateData.password = addDriverForm.password; // In real app, this should be hashed
+        }
+        
+        await updateUser(editingDriver.uid, updateData);
+        
+        Alert.alert('Success', 'Driver updated successfully');
       }
-      
-      await addUser({
-        role: 'driver',
-        name: addDriverForm.name.trim(),
-        phone: addDriverForm.phone,
-        password: addDriverForm.password, // In real app, this should be hashed
-        isApproved: true, // Auto-approve when added by admin
-        isAvailable: true,
-        totalEarnings: 0,
-        completedOrders: 0,
-        createdByAdmin: true, // Mark as created by admin
-        licenseNumber: addDriverForm.licenseNumber.trim(),
-        emergencyContactName: addDriverForm.emergencyContactName.trim(),
-        emergencyContactPhone: addDriverForm.emergencyContactPhone,
-        licenseExpiry: (() => {
-          const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
-          if (!m) return undefined as any;
-          const d = parseInt(m[1], 10);
-          const mo = parseInt(m[2], 10) - 1;
-          const y = parseInt(m[3], 10);
-          return new Date(y, mo, d);
-        })(),
-      });
       
       // Reset form
       setAddDriverForm({
@@ -527,15 +586,14 @@ const DriverManagementScreen: React.FC = () => {
         licenseExpiry: '',
       });
       setFormErrors({});
+      setEditingDriver(null);
       setShowAddDriverModal(false);
-      
-      Alert.alert('Success', 'Driver added successfully');
     } catch (error) {
-      Alert.alert('Error', 'Failed to add driver. Please try again.');
+      Alert.alert('Error', isEditMode ? 'Failed to update driver. Please try again.' : 'Failed to add driver. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
-  }, [addDriverForm, users, addUser]);
+  }, [addDriverForm, users, addUser, updateUser, editingDriver]);
 
   const resetAddDriverForm = useCallback(() => {
     setAddDriverForm({
@@ -549,7 +607,74 @@ const DriverManagementScreen: React.FC = () => {
       licenseExpiry: '',
     });
     setFormErrors({});
+    setEditingDriver(null);
   }, []);
+
+  const handleEditDriver = useCallback((driver: User) => {
+    setEditingDriver(driver);
+    setAddDriverForm({
+      name: driver.name || '',
+      phone: driver.phone || '',
+      password: '',
+      confirmPassword: '',
+      emergencyContactName: driver.emergencyContactName || '',
+      emergencyContactPhone: driver.emergencyContactPhone || '',
+      licenseNumber: driver.licenseNumber || '',
+      licenseExpiry: driver.licenseExpiry ? (() => {
+        const date = new Date(driver.licenseExpiry);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      })() : '',
+    });
+    setFormErrors({});
+    setShowAddDriverModal(true);
+  }, []);
+
+  const handleDeleteDriver = useCallback(async () => {
+    if (!editingDriver) return;
+
+    Alert.alert(
+      'Delete Driver',
+      `Are you sure you want to delete ${editingDriver.name}? This action cannot be undone and the driver will no longer be able to login.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const driverId = editingDriver.uid;
+              const driverPhone = editingDriver.phone;
+              
+              // Delete the driver
+              await deleteUser(driverId);
+              
+              // Check if the deleted driver is currently logged in
+              if (currentUser && (currentUser.uid === driverId || currentUser.phone === driverPhone)) {
+                // Logout the deleted driver
+                await logout();
+                Alert.alert(
+                  'Driver Deleted',
+                  'The driver account has been deleted. You have been logged out as this account no longer exists.'
+                );
+              } else {
+                Alert.alert('Success', 'Driver deleted successfully');
+              }
+              
+              // Close modal and reset form
+              setEditingDriver(null);
+              setShowAddDriverModal(false);
+              resetAddDriverForm();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to delete driver. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  }, [editingDriver, deleteUser, currentUser, logout, resetAddDriverForm]);
 
   const handleFormChange = useCallback((field: string, value: string) => {
     setAddDriverForm(prev => ({ ...prev, [field]: value }));
@@ -598,6 +723,16 @@ const DriverManagementScreen: React.FC = () => {
               {driver.phone}
             </Typography>
           </View>
+          <TouchableOpacity
+            style={styles.editButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              handleEditDriver(driver);
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="pencil-outline" size={20} color="#34C759" />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.driverDetails}>
@@ -871,6 +1006,8 @@ const DriverManagementScreen: React.FC = () => {
         onFormChange={handleFormChange}
         onSubmit={handleAddDriver}
         onReset={resetAddDriverForm}
+        onDelete={handleDeleteDriver}
+        isEditMode={editingDriver !== null}
       />
     </SafeAreaView>
   );
@@ -1000,6 +1137,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: UI_CONFIG.spacing.md,
   },
+  editButton: {
+    padding: 8,
+    borderWidth: 1.5,
+    borderColor: '#34C759',
+    borderRadius: 8,
+    backgroundColor: 'transparent',
+  },
   driverInfo: {
     flex: 1,
   },
@@ -1092,7 +1236,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: UI_CONFIG.spacing.lg,
-    paddingVertical: UI_CONFIG.spacing.md,
+    paddingTop: UI_CONFIG.spacing.lg,
+    paddingBottom: UI_CONFIG.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
   },
@@ -1103,6 +1248,12 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: UI_CONFIG.spacing.sm,
+  },
+  headerDeleteButton: {
+    padding: UI_CONFIG.spacing.sm,
+  },
+  headerDeleteButtonDisabled: {
+    opacity: 0.5,
   },
   modalContent: {
     flex: 1,
@@ -1177,6 +1328,22 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: UI_CONFIG.colors.textSecondary,
+  },
+  deleteButton: {
+    backgroundColor: '#FF3B30',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: UI_CONFIG.spacing.md,
+  },
+  deleteButtonDisabled: {
+    backgroundColor: '#8E8E93',
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

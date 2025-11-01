@@ -249,7 +249,7 @@ const AllBookingsScreen: React.FC = () => {
   const BookingDetailsModal: React.FC = () => (
     <Modal
       visible={showBookingModal}
-      animationType="slide"
+      animationType='slide'
       presentationStyle="pageSheet"
     >
       <SafeAreaView style={styles.modalContainer}>

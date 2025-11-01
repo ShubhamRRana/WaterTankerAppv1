@@ -180,7 +180,6 @@ export interface AdminTabParamList {
   Bookings: undefined;
   Drivers: undefined;
   Customers: undefined;
-  Pricing: undefined;
   Reports: undefined;
   Profile: undefined;
 }

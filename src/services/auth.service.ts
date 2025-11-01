@@ -19,6 +19,14 @@ export class AuthService {
     additionalData?: Partial<AppUser>
   ): Promise<AuthResult> {
     try {
+      // Prevent driver self-registration - only admin-created drivers are allowed
+      if (role === 'driver' && !additionalData?.createdByAdmin) {
+        return {
+          success: false,
+          error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
+        };
+      }
+
       // Check if user already exists with same phone AND role
       const users = await LocalStorageService.getUsers();
       const existingUser = users.find(user => user.phone === phone && user.role === role);
