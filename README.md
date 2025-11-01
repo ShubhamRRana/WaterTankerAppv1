@@ -28,6 +28,7 @@ src/
 │   │   ├── BookingScreen.tsx
 │   │   ├── OrderTrackingScreen.tsx
 │   │   ├── OrderHistoryScreen.tsx
+│   │   ├── PastOrdersScreen.tsx
 │   │   ├── ProfileScreen.tsx
 │   │   └── SavedAddressesScreen.tsx
 │   ├── driver/
@@ -37,11 +38,12 @@ src/
 │   │   ├── DriverEarningsScreen.tsx
 │   │   └── DriverProfileScreen.tsx
 │   └── admin/
-│       ├── AdminDashboardScreen.tsx
 │       ├── AllBookingsScreen.tsx
 │       ├── DriverManagementScreen.tsx
+│       ├── VehicleManagementScreen.tsx
 │       ├── CustomerManagementScreen.tsx
-│       └── ReportsScreen.tsx
+│       ├── ReportsScreen.tsx
+│       └── AdminProfileScreen.tsx
 ├── navigation/
 │   ├── AuthNavigator.tsx
 │   ├── CustomerNavigator.tsx
@@ -58,6 +60,7 @@ src/
 │   ├── authStore.ts
 │   ├── bookingStore.ts
 │   ├── userStore.ts
+│   ├── vehicleStore.ts
 │   └── index.ts
 ├── types/
 │   └── index.ts
@@ -103,52 +106,13 @@ src/
 - Toggle availability status
 
 ### Admin Features
-- ✅ **Dashboard with key metrics** - Real-time platform overview with statistics
-- ✅ **Quick navigation** - Easy access to all management sections
-- ✅ **Recent activity feed** - Monitor latest bookings and platform activity
-- ✅ **Pull-to-refresh** - Update data in real-time
-- Manage all bookings
-- Approve/suspend drivers
-- View customer list
-- Generate reports
-
-## Admin Dashboard Features
-
-The Admin Dashboard provides a comprehensive overview of the platform with the following features:
-
-### 📊 **Real-time Statistics**
-- **Total Bookings**: Complete count of all platform bookings
-- **Pending Orders**: Orders awaiting driver assignment
-- **Completed Orders**: Successfully delivered orders
-- **Total Revenue**: Sum of all completed order payments
-- **Active Drivers**: Currently available drivers
-- **Total Customers**: Registered customer count
-
-### 🚀 **Quick Actions**
-- **All Bookings**: Navigate to complete booking management
-- **Driver Management**: Access driver approval and management tools
+- Tab-based navigation (Bookings, Drivers, Vehicles, Reports, Profile)
+- **All Bookings Management**: View, filter, and manage all platform bookings
+- **Driver Management**: Create, approve, suspend drivers with comprehensive profile management
+- **Vehicle Management**: Add, edit, delete vehicles with insurance and capacity tracking
 - **Customer Management**: View and manage customer accounts
-- **Reports & Analytics**: Access detailed reporting tools
-
-### 📱 **Recent Activity Feed**
-- Shows the latest 5 bookings with key details
-- Displays customer name, tanker size, status, price, and location
-- Includes timestamps for easy tracking
-- Empty state handling when no bookings exist
-
-### 🎨 **Modern UI Design**
-- iOS-style interface with clean, professional appearance
-- Color-coded statistics cards with intuitive icons
-- Pull-to-refresh functionality for real-time updates
-- Responsive layout optimized for mobile devices
-- Consistent spacing and typography following design system
-
-### 🔧 **Technical Implementation**
-- **State Management**: Integrated with Zustand stores for real-time data
-- **TypeScript**: Fully typed components with proper error handling
-- **Performance**: Optimized rendering with React hooks and memoization
-- **Navigation**: Seamless tab-based navigation between admin sections
-- **Error Handling**: Comprehensive error states and loading indicators
+- **Reports & Analytics**: View comprehensive platform statistics and analytics
+- **Profile Management**: Admin profile editing with photo upload
 
 ## Getting Started
 
@@ -170,24 +134,24 @@ The Admin Dashboard provides a comprehensive overview of the platform with the f
 
 ## Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+For MVP, the app uses local storage (AsyncStorage) and doesn't require external API keys. However, for production enhancements, you may need:
 
 ```
-EXPO_PUBLIC_FIREBASE_API_KEY=your_api_key
-EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
-EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
-EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
-EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_api_key
+EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_api_key  # Optional: For enhanced map features
 ```
 
-## Database Schema
+**Note**: The app currently works without API keys as it uses:
+- Local storage (AsyncStorage) for data persistence
+- React Native Maps for map display (works without API key in development)
+- Haversine formula for distance calculations (no API calls needed)
 
-The app uses Firestore with the following collections:
+## Data Storage
+
+The app uses AsyncStorage (local storage) with the following data structures:
 
 - `users` - User accounts (customers, drivers, admins)
 - `bookings` - Water tanker bookings
+- `vehicles` - Vehicle/agency fleet management
 - `tankerSizes` - Available tanker sizes and pricing
 - `pricing` - Distance-based pricing configuration
 - `driverApplications` - Driver registration requests
@@ -197,17 +161,20 @@ The app uses Firestore with the following collections:
 
 This MVP includes:
 - ✅ All three user roles in single mobile app
-- ✅ Phone + password authentication
+- ✅ Phone + password authentication with multi-role support
 - ✅ Scheduled bookings with date/time picker
 - ✅ Cash on delivery payment
 - ✅ Saved addresses for customers
 - ✅ Order tracking with status updates
-- ✅ Complete order history
-- ✅ Admin dashboard with comprehensive metrics and navigation
+- ✅ Complete order history (current and past orders)
+- ✅ Admin tab-based navigation with comprehensive management tools
+- ✅ Driver management (create, approve, suspend, edit)
+- ✅ Vehicle/agency fleet management
 - ✅ Driver earnings tracking
 - ✅ Distance-based pricing using Haversine formula
-- ✅ Modern UI with proper TypeScript support
-- ✅ State management with Zustand stores
+- ✅ Modern iOS-style UI with proper TypeScript support
+- ✅ State management with Zustand stores (auth, bookings, users, vehicles)
+- ✅ Profile management with photo upload for all roles
 
 ## Future Enhancements (v2)
 
@@ -223,23 +190,33 @@ This MVP includes:
 ## Development Status
 
 ### ✅ **Completed Features:**
-- **Admin Dashboard**: Fully implemented with real-time metrics, navigation cards, and activity feed
-- **Navigation System**: Complete tab-based navigation for all user roles
-- **TypeScript Support**: All components properly typed with no compilation errors
-- **State Management**: Zustand stores for authentication, bookings, and users
-- **UI Components**: Reusable components (Button, Card, Input, Typography, LoadingSpinner)
-- **Project Structure**: Complete directory structure with all core files
+- **Authentication System**: Complete multi-role authentication with role entry, login, register, and role selection
+- **Navigation System**: Complete tab-based navigation for all user roles (Customer, Driver, Admin)
+- **Customer Screens**: Home, Booking, Order Tracking, Order History, Past Orders, Profile, Saved Addresses
+- **Driver Screens**: Orders, Active Order, Earnings, Profile
+- **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Customer Management, Reports, Profile
+- **TypeScript Support**: All components properly typed with comprehensive type definitions
+- **State Management**: Zustand stores for authentication, bookings, users, and vehicles
+- **Services**: Local storage, auth, booking, payment, and location services
+- **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner)
+- **Utils**: Distance calculation, pricing, validation utilities
+- **Configuration**: Comprehensive app configuration with constants and error messages
 
-### 🚧 **In Progress:**
-- Individual screen implementations for customer and driver flows
-- Authentication flow integration
-- Local storage service implementation
-- Maps and location services integration
+### 🔧 **Current Implementation Details:**
+- **Local Storage**: All data persisted using AsyncStorage
+- **Maps**: React Native Maps integration for location selection
+- **Image Picker**: Expo Image Picker for profile photo uploads
+- **Document Picker**: Support for driver license and vehicle registration documents
+- **Location Services**: Expo Location for GPS and location services
+- **Notifications**: Expo Notifications setup (in-app notifications)
 
-### 📋 **Next Steps:**
-1. Implement customer booking flow
-2. Build driver management screens
-3. Add maps integration for location selection
-4. Implement real-time order tracking
-5. Add comprehensive testing
-6. Polish UI/UX and add animations
+### 📋 **Future Enhancements:**
+1. Online payment gateway integration (Razorpay/Stripe)
+2. Push notifications implementation
+3. Real-time GPS tracking
+4. Google Distance Matrix API integration
+5. Driver self-registration workflow
+6. Ratings and reviews system
+7. Immediate/ASAP bookings
+8. Comprehensive testing suite
+9. Performance optimization and animations
