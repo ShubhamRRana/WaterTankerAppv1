@@ -178,6 +178,10 @@ const DriverEarningsScreen: React.FC = () => {
     }).format(date);
   };
 
+  const formatDistance = (distance: number): string => {
+    return Number(distance).toFixed(2);
+  };
+
   if (isLoading && !earningsStats) {
     return (
       <View style={styles.loadingContainer}>
@@ -319,7 +323,7 @@ const DriverEarningsScreen: React.FC = () => {
                     {order.customerName}
                   </Typography>
                   <Typography variant="caption" style={styles.transactionDate}>
-                    {order.deliveredAt ? formatDate(new Date(order.deliveredAt)) : ''}
+                    {order.deliveredAt ? `${formatDate(new Date(order.deliveredAt))} at ${formatTime(new Date(order.deliveredAt))}` : ''}
                   </Typography>
                 </View>
                 <Typography variant="h3" style={styles.transactionAmount}>
@@ -342,7 +346,7 @@ const DriverEarningsScreen: React.FC = () => {
                     Distance
                   </Typography>
                   <Typography variant="body" style={styles.transactionDetailValue}>
-                    {order.distance} km
+                    {formatDistance(order.distance)} km
                   </Typography>
                 </View>
                 

@@ -12,13 +12,26 @@ import {
 } from 'react-native';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CompositeNavigationProp } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { Typography, Button, Card, LoadingSpinner } from '../../components/common';
 import { useAuthStore } from '../../store/authStore';
 import { User } from '../../types';
+import { CustomerTabParamList, CustomerStackParamList } from '../../navigation/CustomerNavigator';
 
 const { width } = Dimensions.get('window');
 
-const ProfileScreen: React.FC = () => {
+type ProfileScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<CustomerTabParamList, 'Profile'>,
+  StackNavigationProp<CustomerStackParamList>
+>;
+
+interface ProfileScreenProps {
+  navigation: ProfileScreenNavigationProp;
+}
+
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const { user, updateUser, logout, isLoading } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -231,41 +244,15 @@ const ProfileScreen: React.FC = () => {
           </Card>
         )}
 
-        {/* Account Statistics */}
-        <Card style={styles.statsCard}>
-          <Typography variant="h3" style={styles.sectionTitle}>
-            Account Statistics
-          </Typography>
-          
-          <View style={styles.statsList}>
-            <View style={styles.statRow}>
-              <Typography variant="body" style={styles.statLabelLeft}>
-                Total Orders
-              </Typography>
-              <Typography variant="h2" style={styles.statNumberRight}>
-                0
-              </Typography>
-            </View>
-            <View style={styles.separator} />
-            <View style={styles.statRow}>
-              <Typography variant="body" style={styles.statLabelLeft}>
-                Completed Orders
-              </Typography>
-              <Typography variant="h2" style={styles.statNumberRight}>
-                0
-              </Typography>
-            </View>
-            <View style={styles.separator} />
-            <View style={styles.statRow}>
-              <Typography variant="body" style={styles.statLabelLeft}>
-                Saved Addresses
-              </Typography>
-              <Typography variant="h2" style={styles.statNumberRight}>
-                0
-              </Typography>
-            </View>
-          </View>
-        </Card>
+        {/* Past Orders Button */}
+        <View style={styles.pastOrdersContainer}>
+          <Button
+            title="Past Orders"
+            onPress={() => navigation.navigate('PastOrders')}
+            variant="primary"
+            style={styles.pastOrdersButton}
+          />
+        </View>
 
         {/* Logout Button */}
         <View style={styles.logoutContainer}>
@@ -426,42 +413,12 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     marginTop: 4,
   },
-  statsCard: {
+  pastOrdersContainer: {
     margin: 16,
     marginTop: 0,
-    padding: 20,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 16,
-  },
-  statsList: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  statRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#E5E5EA',
-  },
-  statLabelLeft: {
-    fontSize: 16,
-    color: '#000000',
-    fontWeight: '600',
-  },
-  statNumberRight: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#007AFF',
+  pastOrdersButton: {
+    backgroundColor: '#007AFF',
   },
   logoutContainer: {
     margin: 16,

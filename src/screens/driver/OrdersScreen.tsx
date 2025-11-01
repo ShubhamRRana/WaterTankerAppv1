@@ -188,6 +188,10 @@ const OrdersScreen: React.FC = () => {
     });
   };
 
+  const formatDistance = (distance: number): string => {
+    return Number(distance).toFixed(2);
+  };
+
 
   const renderOrderCard = (order: Booking) => {
     const isProcessing = processingOrder === order.id;
@@ -199,8 +203,8 @@ const OrdersScreen: React.FC = () => {
             <Typography variant="body" style={styles.customerName}>
               {order.customerName}
             </Typography>
-            <Typography variant="caption" style={styles.orderId}>
-              Order #{order.id.slice(-6)}
+            <Typography variant="body" style={styles.orderId}>
+              {order.customerPhone}
             </Typography>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
@@ -218,12 +222,6 @@ const OrdersScreen: React.FC = () => {
             </Typography>
           </View>
           <View style={styles.orderDetail}>
-            <Ionicons name="location-outline" size={16} color="#8E8E93" />
-            <Typography variant="caption" style={styles.orderDetailText}>
-              {order.distance}km
-            </Typography>
-          </View>
-          <View style={styles.orderDetail}>
             <Ionicons name="cash-outline" size={16} color="#8E8E93" />
             <Typography variant="caption" style={styles.orderDetailText}>
               {PRICING_CONFIG.currencySymbol}{order.totalPrice}
@@ -231,13 +229,31 @@ const OrdersScreen: React.FC = () => {
           </View>
         </View>
 
-        <Typography variant="caption" style={styles.orderAddress}>
-          {order.deliveryAddress.street}, {order.deliveryAddress.city}
-        </Typography>
+        <TouchableOpacity 
+          onPress={() => {
+            // TODO: Open Google Maps with the address
+          }}
+          activeOpacity={0.7}
+          style={styles.addressContainer}
+        >
+          <Ionicons name="location" size={14} color="#007AFF" />
+          <Typography variant="caption" style={styles.orderAddress}>
+            {order.deliveryAddress.street}, {order.deliveryAddress.city}
+          </Typography>
+        </TouchableOpacity>
 
         <Typography variant="caption" style={styles.orderTime}>
           {order.isImmediate ? 'Immediate' : `Scheduled: ${formatDate(order.scheduledFor!)}`}
         </Typography>
+
+        {order.status === 'delivered' && order.deliveredAt && (
+          <View style={styles.deliveredInfo}>
+            <Ionicons name="checkmark-circle" size={16} color="#34C759" />
+            <Typography variant="caption" style={styles.deliveredText}>
+              Delivered: {formatDate(order.deliveredAt)}
+            </Typography>
+          </View>
+        )}
 
         {/* Action Buttons */}
         {activeTab === 'available' && (
@@ -317,7 +333,7 @@ const OrdersScreen: React.FC = () => {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Typography variant="h2" style={styles.title}>
-              Welcome back, {user?.name || 'Driver'}!
+              Welcome, {user?.name || 'Driver'}!
             </Typography>
             <Typography variant="body" style={styles.subtitle}>
               {isOnline ? 'You are online and available' : 'You are offline'}
@@ -534,7 +550,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   orderId: {
-    fontSize: 12,
+    fontSize: 16,
     color: '#8E8E93',
   },
   statusBadge: {
@@ -561,16 +577,40 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     marginLeft: 4,
   },
+  addressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0F8FF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  },
   orderAddress: {
     fontSize: 12,
-    color: '#8E8E93',
-    fontStyle: 'italic',
-    marginBottom: 4,
+    color: '#007AFF',
+    marginLeft: 6,
   },
   orderTime: {
     fontSize: 12,
     color: '#8E8E93',
+    marginBottom: 8,
+  },
+  deliveredInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E5E5EA',
+  },
+  deliveredText: {
+    fontSize: 12,
+    color: '#34C759',
+    marginLeft: 6,
+    fontWeight: '500',
   },
   actionButton: {
     marginTop: 8,

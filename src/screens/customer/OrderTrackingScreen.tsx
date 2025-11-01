@@ -221,7 +221,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
-        <Typography variant="h3" style={styles.title}>Track Order</Typography>
+        <Typography variant="h3" style={styles.title}>Order Details</Typography>
         <View style={{ width: 24 }} />
       </View>
 
@@ -275,6 +275,12 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
               <Typography variant="body" style={styles.detailValue}>{formatDate(booking.scheduledFor)}</Typography>
             </View>
           )}
+          {booking.status === 'delivered' && booking.deliveredAt && (
+            <View style={styles.detailRow}>
+              <Typography variant="body" style={styles.detailLabel}>Delivered At</Typography>
+              <Typography variant="body" style={styles.detailValue}>{formatDate(booking.deliveredAt)}</Typography>
+            </View>
+          )}
         </Card>
       </View>
 
@@ -287,9 +293,9 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
             <Typography variant="body" style={styles.addressTitle}>Delivery Location</Typography>
           </View>
           <Typography variant="body" style={styles.addressText}>{booking.deliveryAddress.street}</Typography>
-          <Typography variant="body" style={styles.addressText}>
+          {/* <Typography variant="body" style={styles.addressText}>
             {booking.deliveryAddress.city}, {booking.deliveryAddress.state} - {booking.deliveryAddress.pincode}
-          </Typography>
+          </Typography> */}
           {booking.deliveryAddress.landmark && (
             <Typography variant="caption" style={styles.landmarkText}>Near {booking.deliveryAddress.landmark}</Typography>
           )}
@@ -324,25 +330,6 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
         </View>
       )}
 
-      {/* Price Breakdown */}
-      <View style={styles.section}>
-        <Typography variant="h3" style={styles.sectionTitle}>Price Breakdown</Typography>
-        <Card style={styles.priceCard}>
-          <View style={styles.priceRow}>
-            <Typography variant="body" style={styles.priceLabel}>Base Price</Typography>
-            <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(booking.basePrice)}</Typography>
-          </View>
-          <View style={styles.priceRow}>
-            <Typography variant="body" style={styles.priceLabel}>Distance Charge ({booking.distance.toFixed(1)} km)</Typography>
-            <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(booking.distanceCharge)}</Typography>
-          </View>
-          <View style={[styles.priceRow, styles.totalRow]}>
-            <Typography variant="h3" style={styles.totalLabel}>Total Amount</Typography>
-            <Typography variant="h3" style={styles.totalValue}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
-          </View>
-        </Card>
-      </View>
-
       {/* Actions */}
       <View style={styles.section}>
         <View style={styles.actionsContainer}>
@@ -350,13 +337,6 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancelOrder}>
               <Ionicons name="close-outline" size={20} color="#FF3B30" />
               <Typography variant="body" style={styles.cancelButtonText}>Cancel Order</Typography>
-            </TouchableOpacity>
-          )}
-          
-          {trackingStatus === 'delivered' && (
-            <TouchableOpacity style={styles.rateButton}>
-              <Ionicons name="star-outline" size={20} color="#FF9500" />
-              <Typography variant="body" style={styles.rateButtonText}>Rate Delivery</Typography>
             </TouchableOpacity>
           )}
         </View>
@@ -603,23 +583,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FF3B30',
-    marginLeft: 8,
-  },
-  rateButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    backgroundColor: '#FFF8E1',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#FF9500',
-  },
-  rateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FF9500',
     marginLeft: 8,
   },
 });

@@ -5,11 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import AdminProfileScreen from '../screens/admin/AdminProfileScreen';
 import AllBookingsScreen from '../screens/admin/AllBookingsScreen';
 import DriverManagementScreen from '../screens/admin/DriverManagementScreen';
+import VehicleManagementScreen from '../screens/admin/VehicleManagementScreen';
 import ReportsScreen from '../screens/admin/ReportsScreen';
 
 export type AdminTabParamList = {
   Bookings: undefined;
   Drivers: undefined;
+  Vehicles: undefined;
   Reports: undefined;
   Profile: undefined;
 };
@@ -57,6 +59,16 @@ const AdminTabs: React.FC = () => {
         component={DriverManagementScreen}
         options={{ 
           tabBarLabel: 'Drivers',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Vehicles" 
+        component={VehicleManagementScreen}
+        options={{ 
+          tabBarLabel: 'Vehicles',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="car-outline" size={size} color={color} />
           ),

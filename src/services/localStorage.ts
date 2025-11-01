@@ -126,6 +126,48 @@ export class LocalStorageService {
     }
   }
 
+  // Vehicle management methods
+  static async saveVehicle(vehicle: any): Promise<void> {
+    const vehicles = await this.getVehicles();
+    const existingVehicleIndex = vehicles.findIndex(v => v.id === vehicle.id);
+    
+    if (existingVehicleIndex >= 0) {
+      vehicles[existingVehicleIndex] = { ...vehicle, updatedAt: new Date() };
+    } else {
+      vehicles.push({ ...vehicle, createdAt: new Date(), updatedAt: new Date() });
+    }
+    
+    await this.setItem('vehicles_collection', vehicles);
+  }
+
+  static async getVehicles(): Promise<any[]> {
+    const vehicles = await this.getItem<any[]>('vehicles_collection');
+    return vehicles || [];
+  }
+
+  static async getVehicleById(vehicleId: string): Promise<any | null> {
+    const vehicles = await this.getVehicles();
+    return vehicles.find(vehicle => vehicle.id === vehicleId) || null;
+  }
+
+  static async updateVehicle(vehicleId: string, updates: any): Promise<void> {
+    const vehicles = await this.getVehicles();
+    const vehicleIndex = vehicles.findIndex(vehicle => vehicle.id === vehicleId);
+    
+    if (vehicleIndex >= 0) {
+      vehicles[vehicleIndex] = { ...vehicles[vehicleIndex], ...updates, updatedAt: new Date() };
+      await this.setItem('vehicles_collection', vehicles);
+    } else {
+      throw new Error('Vehicle not found');
+    }
+  }
+
+  static async deleteVehicle(vehicleId: string): Promise<void> {
+    const vehicles = await this.getVehicles();
+    const updatedVehicles = vehicles.filter(vehicle => vehicle.id !== vehicleId);
+    await this.setItem('vehicles_collection', updatedVehicles);
+  }
+
   // Generate unique IDs
   static generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);

@@ -6,8 +6,7 @@ import {
   TouchableOpacity, 
   Alert, 
   ScrollView, 
-  RefreshControl,
-  Dimensions 
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,8 +22,6 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Typography } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
 import { CustomerTabParamList, CustomerStackParamList } from '../../navigation/CustomerNavigator';
-
-const { width } = Dimensions.get('window');
 
 type CustomerHomeScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<CustomerTabParamList, 'Home'>,
@@ -50,12 +47,6 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
   } = useUserStore();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState({
-    totalBookings: 0,
-    pendingBookings: 0,
-    completedBookings: 0,
-    totalSpent: 0,
-  });
 
   useEffect(() => {
     if (user?.uid) {
@@ -72,32 +63,6 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
       console.error('Failed to load customer data:', error);
     }
   };
-
-  const calculateStats = () => {
-    if (!bookings.length) return;
-
-    const totalBookings = bookings.length;
-    const pendingBookings = bookings.filter(b => 
-      ['pending', 'accepted', 'in_transit'].includes(b.status)
-    ).length;
-    const completedBookings = bookings.filter(b => 
-      b.status === 'delivered'
-    ).length;
-    const totalSpent = bookings
-      .filter(b => b.status === 'delivered')
-      .reduce((sum, b) => sum + b.totalPrice, 0);
-
-    setStats({
-      totalBookings,
-      pendingBookings,
-      completedBookings,
-      totalSpent,
-    });
-  };
-
-  useEffect(() => {
-    calculateStats();
-  }, [bookings]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -256,29 +221,6 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
         </View>
       </View>
 
-      {/* Statistics */}
-      <View style={styles.section}>
-        <Typography variant="h3" style={styles.sectionTitle}>Your Statistics</Typography>
-        <View style={styles.statsGrid}>
-          <Card style={styles.statCard}>
-            <Typography variant="h2" style={styles.statNumber}>{stats.totalBookings}</Typography>
-            <Typography variant="caption" style={styles.statLabel}>Total Bookings</Typography>
-          </Card>
-          <Card style={styles.statCard}>
-            <Typography variant="h2" style={styles.statNumber}>{stats.pendingBookings}</Typography>
-            <Typography variant="caption" style={styles.statLabel}>Active Orders</Typography>
-          </Card>
-          <Card style={styles.statCard}>
-            <Typography variant="h2" style={styles.statNumber}>{stats.completedBookings}</Typography>
-            <Typography variant="caption" style={styles.statLabel}>Completed</Typography>
-          </Card>
-          <Card style={styles.statCard}>
-            <Typography variant="h2" style={styles.statNumber}>{formatPrice(stats.totalSpent)}</Typography>
-            <Typography variant="caption" style={styles.statLabel}>Total Spent</Typography>
-          </Card>
-        </View>
-      </View>
-
       {/* Recent Orders */}
       <View style={styles.section}>
         <Typography variant="h3" style={styles.sectionTitle}>Recent Orders</Typography>
@@ -287,7 +229,6 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
             <Card 
               key={booking.id} 
               style={styles.orderCard}
-              onPress={() => navigation.navigate('OrderTracking', { orderId: booking.id })}
             >
               <View style={styles.orderHeader}>
                 <View style={styles.orderInfo}>
@@ -305,6 +246,11 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
               <Typography variant="caption" style={styles.deliveryAddress}>
                 {booking.deliveryAddress.street}, {booking.deliveryAddress.city}
               </Typography>
+              {booking.status === 'delivered' && booking.deliveredAt && (
+                <Typography variant="caption" style={styles.deliveredDate}>
+                  Delivered: {formatDate(booking.deliveredAt)}
+                </Typography>
+              )}
             </Card>
           ))
         ) : (
@@ -414,28 +360,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    width: (width - 60) / 2,
-    alignItems: 'center',
-    paddingVertical: 20,
-    marginBottom: 12,
-  },
-  statNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#007AFF',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#8E8E93',
-    textAlign: 'center',
-  },
   orderCard: {
     marginBottom: 12,
     padding: 16,
@@ -488,6 +412,12 @@ const styles = StyleSheet.create({
   deliveryAddress: {
     fontSize: 14,
     color: '#8E8E93',
+  },
+  deliveredDate: {
+    fontSize: 12,
+    color: '#34C759',
+    marginTop: 4,
+    fontWeight: '500',
   },
   emptyState: {
     alignItems: 'center',

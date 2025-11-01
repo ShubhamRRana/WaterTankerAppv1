@@ -38,6 +38,9 @@ export interface User {
   createdByAdmin?: boolean; // Track if driver was created by admin
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  
+  // Admin specific
+  businessName?: string;
 }
 
 // Extended user interface for multi-role support
@@ -129,6 +132,18 @@ export interface DriverApplication {
   rejectionReason?: string;
 }
 
+export interface Vehicle {
+  id: string;
+  agencyId: string; // Admin user uid (agency)
+  vehicleNumber: string;
+  insuranceCompanyName: string;
+  insuranceExpiryDate: Date;
+  vehicleCapacity: number; // in liters
+  amount: number; // in rupees
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface Notification {
   id: string;
   userId: string;
@@ -179,7 +194,7 @@ export interface DriverStackParamList {
 export interface AdminTabParamList {
   Bookings: undefined;
   Drivers: undefined;
-  Customers: undefined;
+  Vehicles: undefined;
   Reports: undefined;
   Profile: undefined;
 }

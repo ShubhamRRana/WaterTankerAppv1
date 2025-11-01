@@ -8,6 +8,7 @@ import OrderTrackingScreen from '../screens/customer/OrderTrackingScreen';
 import OrderHistoryScreen from '../screens/customer/OrderHistoryScreen';
 import ProfileScreen from '../screens/customer/ProfileScreen';
 import SavedAddressesScreen from '../screens/customer/SavedAddressesScreen';
+import PastOrdersScreen from '../screens/customer/PastOrdersScreen';
 
 export type CustomerTabParamList = {
   Home: undefined;
@@ -20,6 +21,7 @@ export type CustomerStackParamList = {
   Booking: undefined;
   OrderTracking: { orderId: string };
   SavedAddresses: undefined;
+  PastOrders: undefined;
 };
 
 const Tab = createBottomTabNavigator<CustomerTabParamList>();
@@ -74,6 +76,7 @@ const CustomerNavigator: React.FC = () => {
       <Stack.Screen name="Booking" component={BookingScreen} />
       <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
       <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
+      <Stack.Screen name="PastOrders" component={PastOrdersScreen} />
     </Stack.Navigator>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useUserStore } from '../../store/userStore';
 import { useAuthStore } from '../../store/authStore';
+import { useBookingStore } from '../../store/bookingStore';
 import { Typography, Card, Button, LoadingSpinner, Input } from '../../components/common';
 import { User } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
@@ -333,6 +334,7 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 const DriverManagementScreen: React.FC = () => {
   const { users, fetchAllUsers, updateUser, addUser, deleteUser, isLoading } = useUserStore();
   const { user: currentUser, logout } = useAuthStore();
+  const { bookings, fetchAllBookings } = useBookingStore();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<User | null>(null);
   const [showDriverModal, setShowDriverModal] = useState(false);
@@ -356,15 +358,56 @@ const DriverManagementScreen: React.FC = () => {
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const drivers = users.filter(user => user.role === 'driver');
+  // Calculate driver statistics from bookings
+  const calculateDriverStats = useCallback((driverId: string) => {
+    const driverBookings = bookings.filter(
+      booking => booking.driverId === driverId && booking.status === 'delivered'
+    );
+    
+    const totalEarnings = driverBookings.reduce((sum, booking) => sum + (booking.totalPrice || 0), 0);
+    const completedOrders = driverBookings.length;
+    
+    return { totalEarnings, completedOrders };
+  }, [bookings]);
+
+  // Enrich drivers with calculated statistics
+  const drivers = useMemo(() => {
+    return users
+      .filter(user => user.role === 'driver')
+      .map(driver => {
+        const stats = calculateDriverStats(driver.uid);
+        return {
+          ...driver,
+          totalEarnings: stats.totalEarnings,
+          completedOrders: stats.completedOrders,
+        };
+      });
+  }, [users, calculateDriverStats]);
 
   useEffect(() => {
     loadDrivers();
   }, []);
 
+  // Update selectedDriver with enriched data when drivers/bookings change
+  useEffect(() => {
+    if (selectedDriver) {
+      const updatedDriver = drivers.find(d => d.uid === selectedDriver.uid);
+      if (updatedDriver && (
+        updatedDriver.totalEarnings !== selectedDriver.totalEarnings ||
+        updatedDriver.completedOrders !== selectedDriver.completedOrders
+      )) {
+        setSelectedDriver(updatedDriver);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drivers, bookings]);
+
   const loadDrivers = async () => {
     try {
-      await fetchAllUsers();
+      await Promise.all([
+        fetchAllUsers(),
+        fetchAllBookings(),
+      ]);
     } catch (error) {
       console.error('Failed to load drivers:', error);
       Alert.alert('Error', 'Failed to load drivers. Please try again.');
@@ -373,8 +416,16 @@ const DriverManagementScreen: React.FC = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadDrivers();
-    setRefreshing(false);
+    try {
+      await Promise.all([
+        fetchAllUsers(),
+        fetchAllBookings(),
+      ]);
+    } catch (error) {
+      console.error('Failed to refresh:', error);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const handleApproveDriver = async (driverId: string) => {

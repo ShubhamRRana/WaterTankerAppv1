@@ -17,26 +17,56 @@ const AdminProfileScreen: React.FC = () => {
   const { user, updateUser, logout, isLoading } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
+    businessName: '',
     name: '',
     phone: '',
+    password: '',
+    confirmPassword: '',
   });
 
   useEffect(() => {
     if (user) {
       setEditForm({
+        businessName: user.businessName || '',
         name: user.name || '',
         phone: user.phone || '',
+        password: '',
+        confirmPassword: '',
       });
     }
   }, [user]);
 
   const handleSaveProfile = async () => {
     if (!user) return;
+    
+    // Validate password if provided
+    if (editForm.password || editForm.confirmPassword) {
+      if (!editForm.password) {
+        Alert.alert('Error', 'Please enter a new password');
+        return;
+      }
+      if (editForm.password.length < 6) {
+        Alert.alert('Error', 'Password must be at least 6 characters long');
+        return;
+      }
+      if (editForm.password !== editForm.confirmPassword) {
+        Alert.alert('Error', 'Passwords do not match');
+        return;
+      }
+    }
+    
     try {
       const updates: Partial<User> = {
+        businessName: editForm.businessName.trim(),
         name: editForm.name.trim(),
         phone: editForm.phone.trim(),
       };
+      
+      // Only update password if provided
+      if (editForm.password) {
+        updates.password = editForm.password; // In real app, this should be hashed
+      }
+      
       await updateUser(updates);
       setIsEditing(false);
       Alert.alert('Success', 'Profile updated successfully!');
@@ -55,6 +85,15 @@ const AdminProfileScreen: React.FC = () => {
 
   const getInitials = (name: string) => {
     return name
+      .split(' ')
+      .map(w => w.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getBusinessInitials = (businessName: string) => {
+    return businessName
       .split(' ')
       .map(w => w.charAt(0))
       .join('')
@@ -97,12 +136,12 @@ const AdminProfileScreen: React.FC = () => {
             ) : (
               <View style={styles.avatarPlaceholder}>
                 <Typography variant="h3" style={styles.avatarText}>
-                  {getInitials(user.name || 'A')}
+                  {getBusinessInitials(user.businessName || user.name || 'A')}
                 </Typography>
               </View>
             )}
             <View style={styles.profileInfo}>
-              <Typography variant="h3" style={styles.userName}>{user.name}</Typography>
+              <Typography variant="h3" style={styles.userName}>{user.businessName || user.name}</Typography>
               <Typography variant="body" style={styles.userPhone}>{user.phone}</Typography>
             </View>
           </View>
@@ -115,6 +154,16 @@ const AdminProfileScreen: React.FC = () => {
         {isEditing && (
           <Card style={styles.editCard}>
             <Typography variant="h3" style={styles.sectionTitle}>Edit Profile</Typography>
+            <View style={styles.inputContainer}>
+              <Typography variant="body" style={styles.inputLabel}>Business Name</Typography>
+              <TextInput
+                style={styles.textInput}
+                value={editForm.businessName}
+                onChangeText={(t) => setEditForm(prev => ({ ...prev, businessName: t }))}
+                placeholder="Enter business name"
+                placeholderTextColor="#8E8E93"
+              />
+            </View>
             <View style={styles.inputContainer}>
               <Typography variant="body" style={styles.inputLabel}>Full Name</Typography>
               <TextInput
@@ -136,8 +185,46 @@ const AdminProfileScreen: React.FC = () => {
                 keyboardType="phone-pad"
               />
             </View>
+            <View style={styles.inputContainer}>
+              <Typography variant="body" style={styles.inputLabel}>Password</Typography>
+              <TextInput
+                style={styles.textInput}
+                value={editForm.password}
+                onChangeText={(t) => setEditForm(prev => ({ ...prev, password: t }))}
+                placeholder="Leave blank to keep current"
+                placeholderTextColor="#8E8E93"
+                secureTextEntry
+              />
+            </View>
+            <View style={styles.inputContainer}>
+              <Typography variant="body" style={styles.inputLabel}>Confirm Password</Typography>
+              <TextInput
+                style={styles.textInput}
+                value={editForm.confirmPassword}
+                onChangeText={(t) => setEditForm(prev => ({ ...prev, confirmPassword: t }))}
+                placeholder="Confirm new password"
+                placeholderTextColor="#8E8E93"
+                secureTextEntry
+              />
+            </View>
             <View style={styles.row}>
-              <Button title="Cancel" onPress={() => setIsEditing(false)} variant="outline" style={styles.rowButton} />
+              <Button 
+                title="Cancel" 
+                onPress={() => {
+                  if (user) {
+                    setEditForm({
+                      businessName: user.businessName || '',
+                      name: user.name || '',
+                      phone: user.phone || '',
+                      password: '',
+                      confirmPassword: '',
+                    });
+                  }
+                  setIsEditing(false);
+                }} 
+                variant="outline" 
+                style={styles.rowButton} 
+              />
               <Button title="Save" onPress={handleSaveProfile} variant="primary" style={styles.rowButton} />
             </View>
           </Card>

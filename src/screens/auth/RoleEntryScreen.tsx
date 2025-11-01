@@ -16,8 +16,8 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
 
   const roles: Array<{ key: 'customer' | 'driver' | 'admin'; title: string; subtitle: string; icon: string }> = [
     { key: 'customer', title: 'Customer', subtitle: 'Book tankers and manage orders', icon: '👤' },
-    { key: 'driver', title: 'Driver', subtitle: 'Accept jobs and deliver', icon: '🚛' },
     { key: 'admin', title: 'Admin', subtitle: 'Manage platform operations', icon: '⚙️' },
+    { key: 'driver', title: 'Driver', subtitle: 'Accept jobs and deliver', icon: '🚛' },
   ];
 
   const continueToLogin = () => {

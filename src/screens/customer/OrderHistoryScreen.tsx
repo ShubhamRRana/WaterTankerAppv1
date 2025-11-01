@@ -10,17 +10,22 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { CompositeNavigationProp } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import Card from '../../components/common/Card';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Typography } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
-import { CustomerTabParamList } from '../../navigation/CustomerNavigator';
+import { CustomerTabParamList, CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
 
-type OrderHistoryScreenNavigationProp = BottomTabNavigationProp<CustomerTabParamList, 'Orders'>;
+type OrderHistoryScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<CustomerTabParamList, 'Orders'>,
+  StackNavigationProp<CustomerStackParamList>
+>;
 
 interface OrderHistoryScreenProps {
   navigation: OrderHistoryScreenNavigationProp;
@@ -299,7 +304,11 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
           </View>
         ) : (
           filteredBookings.map((booking) => (
-            <Card key={booking.id} style={styles.orderCard}>
+            <Card 
+              key={booking.id} 
+              style={styles.orderCard}
+              onPress={() => navigation.navigate('OrderTracking', { orderId: booking.id })}
+            >
               <View style={styles.orderHeader}>
                 <View style={styles.orderInfo}>
                   <Typography variant="body" style={styles.orderId}>Order #{booking.id.slice(-6)}</Typography>
@@ -331,6 +340,14 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                   <Ionicons name="cash" size={16} color="#FF9500" />
                   <Typography variant="body" style={styles.detailText}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
                 </View>
+                {booking.status === 'delivered' && booking.deliveredAt && (
+                  <View style={styles.detailRow}>
+                    <Ionicons name="checkmark-circle" size={16} color="#34C759" />
+                    <Typography variant="body" style={styles.detailText}>
+                      Delivered: {formatDate(booking.deliveredAt)}
+                    </Typography>
+                  </View>
+                )}
               </View>
 
               {booking.driverName && (
@@ -341,19 +358,8 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                 </View>
               )}
 
-              <View style={styles.orderActions}>
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => {
-                    // Navigate to order tracking
-                    // navigation.navigate('OrderTracking', { orderId: booking.id });
-                  }}
-                >
-                  <Ionicons name="eye-outline" size={16} color="#007AFF" />
-                  <Typography variant="caption" style={styles.actionText}>Track</Typography>
-                </TouchableOpacity>
-
-                {booking.canCancel && booking.status === 'pending' && (
+              {booking.canCancel && booking.status === 'pending' && (
+                <View style={styles.orderActions}>
                   <TouchableOpacity
                     style={[styles.actionButton, styles.cancelButton]}
                     onPress={() => handleCancelBooking(booking)}
@@ -361,20 +367,8 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                     <Ionicons name="close-outline" size={16} color="#FF3B30" />
                     <Typography variant="caption" style={[styles.actionText, styles.cancelText]}>Cancel</Typography>
                   </TouchableOpacity>
-                )}
-
-                {booking.status === 'delivered' && (
-                  <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => {
-                      Alert.alert('Rate Order', 'Rate your delivery experience');
-                    }}
-                  >
-                    <Ionicons name="star-outline" size={16} color="#FF9500" />
-                    <Typography variant="caption" style={styles.actionText}>Rate</Typography>
-                  </TouchableOpacity>
-                )}
-              </View>
+                </View>
+              )}
             </Card>
           ))
         )}

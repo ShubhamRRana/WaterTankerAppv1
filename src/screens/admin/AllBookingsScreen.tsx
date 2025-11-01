@@ -13,12 +13,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useBookingStore } from '../../store/bookingStore';
+import { useAuthStore } from '../../store/authStore';
 import { Typography, Card, Button, LoadingSpinner } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 
 const AllBookingsScreen: React.FC = () => {
   const { bookings, fetchAllBookings, updateBookingStatus, isLoading } = useBookingStore();
+  const { user: currentAdmin } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all');
@@ -49,10 +51,17 @@ const AllBookingsScreen: React.FC = () => {
 
   useEffect(() => {
     filterBookings();
-  }, [bookings, searchQuery, statusFilter]);
+  }, [bookings, searchQuery, statusFilter, currentAdmin]);
 
   const filterBookings = () => {
     let filtered = [...bookings];
+
+    // Filter by admin's agency (only show bookings for this admin's agency)
+    if (currentAdmin) {
+      filtered = filtered.filter(booking => 
+        booking.agencyId === currentAdmin.uid
+      );
+    }
 
     // Filter by search query
     if (searchQuery.trim()) {
@@ -73,15 +82,20 @@ const AllBookingsScreen: React.FC = () => {
     setFilteredBookings(filtered);
   };
 
-  // Calculate counts for each filter
+  // Calculate counts for each filter (only for this admin's bookings)
   const getFilterCounts = () => {
+    // First filter by admin's agency
+    const adminBookings = currentAdmin 
+      ? bookings.filter(booking => booking.agencyId === currentAdmin.uid)
+      : [];
+    
     const counts = {
-      all: bookings.length,
-      pending: bookings.filter(booking => booking.status === 'pending').length,
-      accepted: bookings.filter(booking => booking.status === 'accepted').length,
-      in_transit: bookings.filter(booking => booking.status === 'in_transit').length,
-      delivered: bookings.filter(booking => booking.status === 'delivered').length,
-      cancelled: bookings.filter(booking => booking.status === 'cancelled').length,
+      all: adminBookings.length,
+      pending: adminBookings.filter(booking => booking.status === 'pending').length,
+      accepted: adminBookings.filter(booking => booking.status === 'accepted').length,
+      in_transit: adminBookings.filter(booking => booking.status === 'in_transit').length,
+      delivered: adminBookings.filter(booking => booking.status === 'delivered').length,
+      cancelled: adminBookings.filter(booking => booking.status === 'cancelled').length,
     };
     return counts;
   };
@@ -174,7 +188,7 @@ const AllBookingsScreen: React.FC = () => {
           <View style={styles.detailRow}>
             <Ionicons name="location-outline" size={16} color="#8E8E93" />
             <Typography variant="body" style={styles.detailText}>
-              {booking.deliveryAddress.city}, {booking.deliveryAddress.state}
+              {booking.deliveryAddress.street}
             </Typography>
           </View>
           
@@ -197,6 +211,20 @@ const AllBookingsScreen: React.FC = () => {
               })}
             </Typography>
           </View>
+          {booking.status === 'delivered' && booking.deliveredAt && (
+            <View style={styles.detailRow}>
+              <Ionicons name="checkmark-circle" size={16} color="#34C759" />
+              <Typography variant="body" style={styles.detailText}>
+                Delivered: {new Date(booking.deliveredAt).toLocaleDateString('en-IN', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Typography>
+            </View>
+          )}
         </View>
 
         {booking.driverName && (
@@ -309,6 +337,20 @@ const AllBookingsScreen: React.FC = () => {
                   </Typography>
                 </View>
               </View>
+              {selectedBooking.status === 'delivered' && selectedBooking.deliveredAt && (
+                <View style={styles.detailItem}>
+                  <Typography variant="body" style={styles.detailLabel}>Delivered At:</Typography>
+                  <Typography variant="body" style={styles.detailValue}>
+                    {new Date(selectedBooking.deliveredAt).toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </Typography>
+                </View>
+              )}
               <View style={styles.detailItem}>
                 <Typography variant="body" style={styles.detailLabel}>Total Price:</Typography>
                 <Typography variant="body" style={styles.detailValue}>
@@ -323,12 +365,6 @@ const AllBookingsScreen: React.FC = () => {
               </Typography>
               <Typography variant="body" style={styles.addressText}>
                 {selectedBooking.deliveryAddress.street}
-              </Typography>
-              <Typography variant="body" style={styles.addressText}>
-                {selectedBooking.deliveryAddress.city}, {selectedBooking.deliveryAddress.state}
-              </Typography>
-              <Typography variant="body" style={styles.addressText}>
-                {selectedBooking.deliveryAddress.pincode}
               </Typography>
               {selectedBooking.deliveryAddress.landmark && (
                 <Typography variant="caption" style={styles.landmarkText}>
@@ -356,17 +392,6 @@ const AllBookingsScreen: React.FC = () => {
                 </View>
               </Card>
             )}
-
-            <View style={styles.modalActions}>
-              <Button
-                title="Update Status"
-                onPress={() => {
-                  setShowBookingModal(false);
-                  setShowStatusModal(true);
-                }}
-                style={styles.updateButton}
-              />
-            </View>
           </ScrollView>
         )}
       </SafeAreaView>

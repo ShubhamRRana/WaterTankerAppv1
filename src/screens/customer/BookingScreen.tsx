@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
+import { useUserStore } from '../../store/userStore';
+import { useVehicleStore } from '../../store/vehicleStore';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -33,9 +35,13 @@ interface BookingScreenProps {
 const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const { user } = useAuthStore();
   const { createBooking, isLoading } = useBookingStore();
+  const { fetchUsersByRole, users: allUsers, isLoading: usersLoading } = useUserStore();
+  const { fetchVehiclesByAgency } = useVehicleStore();
 
-  const [selectedTankerSize, setSelectedTankerSize] = useState<number | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<{ id: string; capacity: number; amount: number; vehicleNumber: string } | null>(null);
   const [selectedAgency, setSelectedAgency] = useState<{ id: string; name: string } | null>(null);
+  const [availableVehicles, setAvailableVehicles] = useState<any[]>([]);
+  const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<string>('');
   const [deliveryTime, setDeliveryTime] = useState<string>('');
@@ -47,43 +53,92 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const [priceBreakdown, setPriceBreakdown] = useState<any>(null);
   const [dateError, setDateError] = useState<string>('');
 
-  // Tanker sizes configuration
-  const tankerSizes: TankerSize[] = [
-    { id: '1', size: 10000, basePrice: 600, isActive: true, displayName: '10000L Tanker' },
-    { id: '2', size: 15000, basePrice: 900, isActive: true, displayName: '15000L Tanker' },
-  ];
+  // Load default address when user data is available
+  useEffect(() => {
+    if (user && user.savedAddresses && user.savedAddresses.length > 0) {
+      const defaultAddress = user.savedAddresses.find(addr => addr.isDefault);
+      if (defaultAddress && !deliveryAddress) {
+        setDeliveryAddress(defaultAddress.street);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
-  // Tanker agencies (static list for now)
-  const tankerAgencies: Array<{ id: string; name: string }> = [
-    { id: 'a1', name: 'BlueWave Tankers' },
-    { id: 'a2', name: 'AquaFlow Supplies' },
-    { id: 'a3', name: 'RiverFresh Logistics' },
-  ];
+  // Fetch admin users (agencies) with business names
+  useEffect(() => {
+    const loadAgencies = async () => {
+      try {
+        await fetchUsersByRole('admin');
+      } catch (error) {
+        console.error('Failed to load agencies:', error);
+      }
+    };
+    loadAgencies();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Default pricing
-  const pricing = PricingUtils.getDefaultPricing();
+  // Build tanker agencies list from admin users with business names
+  const tankerAgencies: Array<{ id: string; name: string }> = React.useMemo(() => {
+    return allUsers
+      .filter(user => user.role === 'admin' && (user.businessName || user.name))
+      .map(admin => ({
+        id: admin.uid,
+        name: admin.businessName || admin.name || 'Unnamed Agency'
+      }));
+  }, [allUsers]);
+
+  // Fetch vehicles when agency is selected
+  useEffect(() => {
+    const loadVehiclesForAgency = async () => {
+      if (selectedAgency) {
+        setVehiclesLoading(true);
+        try {
+          const vehicles = await fetchVehiclesByAgency(selectedAgency.id);
+          setAvailableVehicles(vehicles);
+          // Reset selected vehicle when agency changes
+          setSelectedVehicle(null);
+          setPriceBreakdown(null);
+        } catch (error) {
+          console.error('Failed to load vehicles:', error);
+          setAvailableVehicles([]);
+        } finally {
+          setVehiclesLoading(false);
+        }
+      } else {
+        setAvailableVehicles([]);
+        setSelectedVehicle(null);
+        setPriceBreakdown(null);
+      }
+    };
+    loadVehiclesForAgency();
+  }, [selectedAgency, fetchVehiclesByAgency]);
 
   useEffect(() => {
-    if (selectedTankerSize && deliveryAddress.trim()) {
+    if (selectedVehicle) {
       calculatePrice();
     }
-  }, [selectedTankerSize, deliveryAddress]);
+  }, [selectedVehicle]);
 
   const calculatePrice = () => {
-    if (!selectedTankerSize || !deliveryAddress.trim()) return;
+    if (!selectedVehicle) return;
 
-    const tanker = tankerSizes.find(t => t.size === selectedTankerSize);
-    if (!tanker) return;
-
-    // Mock distance calculation (in real app, use actual distance calculation)
-    const distance = Math.random() * 20 + 5; // Random distance between 5-25 km
-
-    const breakdown = PricingUtils.getPriceBreakdown(tanker, distance, pricing);
-    setPriceBreakdown({ ...breakdown, distance });
+    // Only show base price, no distance-based charges
+    const basePrice = selectedVehicle.amount;
+    
+    setPriceBreakdown({
+      tankerSize: `${selectedVehicle.capacity}L Tanker`,
+      basePrice: basePrice,
+      totalPrice: basePrice,
+    });
   };
 
-  const handleTankerSelection = (size: number) => {
-    setSelectedTankerSize(size);
+  const handleVehicleSelection = (vehicle: any) => {
+    setSelectedVehicle({
+      id: vehicle.id,
+      capacity: vehicle.vehicleCapacity,
+      amount: vehicle.amount,
+      vehicleNumber: vehicle.vehicleNumber
+    });
     setShowTankerModal(false);
   };
 
@@ -342,8 +397,8 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
 
   const handleBooking = async () => {
-    if (!selectedTankerSize || !selectedAgency || !deliveryAddress.trim() || !user) {
-      Alert.alert('Error', 'Please select agency, tanker size and enter delivery address');
+    if (!selectedVehicle || !selectedAgency || !deliveryAddress.trim() || !user) {
+      Alert.alert('Error', 'Please select agency, vehicle and enter delivery address');
       return;
     }
 
@@ -389,12 +444,12 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         agencyId: selectedAgency.id,
         agencyName: selectedAgency.name,
         status: 'pending' as const,
-        tankerSize: selectedTankerSize,
+        tankerSize: selectedVehicle.capacity,
         basePrice: priceBreakdown.basePrice,
-        distanceCharge: priceBreakdown.distanceCharge,
+        distanceCharge: 0, // No distance-based charges
         totalPrice: priceBreakdown.totalPrice,
         deliveryAddress: mockAddress,
-        distance: priceBreakdown.distance,
+        distance: 0, // Distance not used for pricing
         scheduledFor: deliveryDate && deliveryTime ? createScheduledDate(deliveryDate, deliveryTime, timePeriod) : undefined,
         isImmediate: false,
         paymentStatus: 'pending' as const,
@@ -426,33 +481,50 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           <TouchableOpacity onPress={() => setShowTankerModal(false)}>
             <Ionicons name="close" size={24} color="#000" />
           </TouchableOpacity>
-          <Typography variant="h3" style={styles.modalTitle}>Select Tanker Size</Typography>
+          <Typography variant="h3" style={styles.modalTitle}>Select Vehicle</Typography>
           <View style={{ width: 24 }} />
         </View>
 
         <ScrollView style={styles.modalContent}>
-          {tankerSizes.map((tanker) => (
-            <Card
-              key={tanker.id}
-              style={[
-                styles.tankerCard,
-                selectedTankerSize === tanker.size && styles.selectedTankerCard,
-              ]}
-              onPress={() => handleTankerSelection(tanker.size)}
-            >
-              <View style={styles.tankerInfo}>
-                <Typography variant="body" style={styles.tankerName}>{tanker.displayName}</Typography>
-                <Typography variant="caption" style={styles.tankerPrice}>
-                  {PricingUtils.formatPrice(tanker.basePrice)} base price
-                </Typography>
-              </View>
-              <Ionicons
-                name={selectedTankerSize === tanker.size ? "radio-button-on" : "radio-button-off"}
-                size={24}
-                color={selectedTankerSize === tanker.size ? "#007AFF" : "#8E8E93"}
-              />
-            </Card>
-          ))}
+          {vehiclesLoading ? (
+            <View style={styles.emptyState}>
+              <LoadingSpinner />
+              <Typography variant="body" style={styles.emptyStateText}>Loading vehicles...</Typography>
+            </View>
+          ) : availableVehicles.length > 0 ? (
+            availableVehicles.map((vehicle) => (
+              <Card
+                key={vehicle.id}
+                style={[
+                  styles.tankerCard,
+                  selectedVehicle?.id === vehicle.id && styles.selectedTankerCard,
+                ]}
+                onPress={() => handleVehicleSelection(vehicle)}
+              >
+                <View style={styles.tankerInfo}>
+                  <Typography variant="body" style={styles.tankerName}>
+                    {vehicle.vehicleCapacity}L Tanker - {vehicle.vehicleNumber}
+                  </Typography>
+                  <Typography variant="caption" style={styles.tankerPrice}>
+                    {PricingUtils.formatPrice(vehicle.amount)} base price
+                  </Typography>
+                </View>
+                <Ionicons
+                  name={selectedVehicle?.id === vehicle.id ? "radio-button-on" : "radio-button-off"}
+                  size={24}
+                  color={selectedVehicle?.id === vehicle.id ? "#007AFF" : "#8E8E93"}
+                />
+              </Card>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="car-outline" size={64} color="#8E8E93" />
+              <Typography variant="body" style={styles.emptyStateText}>No vehicles available</Typography>
+              <Typography variant="caption" style={styles.emptyStateSubtext}>
+                {selectedAgency ? 'This agency has no vehicles yet' : 'Please select an agency first'}
+              </Typography>
+            </View>
+          )}
         </ScrollView>
       </View>
     </Modal>
@@ -470,25 +542,38 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         </View>
 
         <ScrollView style={styles.modalContent}>
-          {tankerAgencies.map((agency) => (
-            <Card
-              key={agency.id}
-              style={[
-                styles.tankerCard,
-                selectedAgency?.id === agency.id && styles.selectedTankerCard,
-              ]}
-              onPress={() => handleAgencySelection(agency)}
-            >
-              <View style={styles.tankerInfo}>
-                <Typography variant="body" style={styles.tankerName}>{agency.name}</Typography>
-              </View>
-              <Ionicons
-                name={selectedAgency?.id === agency.id ? 'radio-button-on' : 'radio-button-off'}
-                size={24}
-                color={selectedAgency?.id === agency.id ? '#007AFF' : '#8E8E93'}
-              />
-            </Card>
-          ))}
+          {usersLoading ? (
+            <View style={styles.emptyState}>
+              <LoadingSpinner />
+              <Typography variant="body" style={styles.emptyStateText}>Loading agencies...</Typography>
+            </View>
+          ) : tankerAgencies.length > 0 ? (
+            tankerAgencies.map((agency) => (
+              <Card
+                key={agency.id}
+                style={[
+                  styles.tankerCard,
+                  selectedAgency?.id === agency.id && styles.selectedTankerCard,
+                ]}
+                onPress={() => handleAgencySelection(agency)}
+              >
+                <View style={styles.tankerInfo}>
+                  <Typography variant="body" style={styles.tankerName}>{agency.name}</Typography>
+                </View>
+                <Ionicons
+                  name={selectedAgency?.id === agency.id ? 'radio-button-on' : 'radio-button-off'}
+                  size={24}
+                  color={selectedAgency?.id === agency.id ? '#007AFF' : '#8E8E93'}
+                />
+              </Card>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Ionicons name="business-outline" size={64} color="#8E8E93" />
+              <Typography variant="body" style={styles.emptyStateText}>No agencies available</Typography>
+              <Typography variant="caption" style={styles.emptyStateSubtext}>Please contact support if you need assistance</Typography>
+            </View>
+          )}
         </ScrollView>
       </View>
     </Modal>
@@ -592,18 +677,31 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         </Card>
       </View>
 
-      {/* Tanker Size Selection */}
+      {/* Vehicle Selection */}
       <View style={styles.section}>
-        <Typography variant="h3" style={styles.sectionTitle}>Select Tanker Size</Typography>
-        <Card style={styles.selectionCard} onPress={() => setShowTankerModal(true)}>
+        <Typography variant="h3" style={styles.sectionTitle}>Select Vehicle</Typography>
+        <Card 
+          style={[styles.selectionCard, !selectedAgency && styles.selectionCardDisabled]} 
+          onPress={() => {
+            if (selectedAgency) {
+              setShowTankerModal(true);
+            } else {
+              Alert.alert('Info', 'Please select an agency first');
+            }
+          }}
+        >
           <View style={styles.selectionContent}>
             <View style={styles.selectionInfo}>
               <Typography variant="body" style={styles.selectionLabel}>
-                {selectedTankerSize ? `${selectedTankerSize}L Tanker` : 'Choose tanker size'}
+                {selectedVehicle 
+                  ? `${selectedVehicle.capacity}L Tanker - ${selectedVehicle.vehicleNumber}`
+                  : selectedAgency 
+                    ? 'Choose vehicle'
+                    : 'Select agency first'}
               </Typography>
-              {selectedTankerSize && (
+              {selectedVehicle && (
                 <Typography variant="caption" style={styles.selectionSubtext}>
-                  Base price: {PricingUtils.formatPrice(tankerSizes.find(t => t.size === selectedTankerSize)?.basePrice || 0)}
+                  Base price: {PricingUtils.formatPrice(selectedVehicle.amount)}
                 </Typography>
               )}
             </View>
@@ -728,16 +826,18 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
               </View>
             )}
             <View style={styles.priceRow}>
-              <Typography variant="body" style={styles.priceLabel}>Tanker Size</Typography>
-              <Typography variant="body" style={styles.priceValue}>{priceBreakdown.tankerSize}</Typography>
+              <Typography variant="body" style={styles.priceLabel}>Vehicle Capacity</Typography>
+              <Typography variant="body" style={styles.priceValue}>{selectedVehicle?.capacity}L</Typography>
             </View>
+            {selectedVehicle && (
+              <View style={styles.priceRow}>
+                <Typography variant="body" style={styles.priceLabel}>Vehicle Number</Typography>
+                <Typography variant="body" style={styles.priceValue}>{selectedVehicle.vehicleNumber}</Typography>
+              </View>
+            )}
             <View style={styles.priceRow}>
               <Typography variant="body" style={styles.priceLabel}>Base Price</Typography>
               <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(priceBreakdown.basePrice)}</Typography>
-            </View>
-            <View style={styles.priceRow}>
-              <Typography variant="body" style={styles.priceLabel}>Distance ({priceBreakdown.distance.toFixed(1)} km)</Typography>
-              <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(priceBreakdown.distanceCharge)}</Typography>
             </View>
             <View style={[styles.priceRow, styles.totalRow]}>
               <Typography variant="h3" style={styles.totalLabel}>Total Amount</Typography>
@@ -752,12 +852,13 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         <Button
           title="Book Now"
           onPress={handleBooking}
-          disabled={!selectedTankerSize || !deliveryAddress.trim() || !deliveryDate.trim() || !deliveryTime.trim() || !priceBreakdown}
+          disabled={!selectedVehicle || !selectedAgency || !deliveryAddress.trim() || !deliveryDate.trim() || !deliveryTime.trim() || !priceBreakdown}
           style={styles.bookButton}
         />
       </View>
 
       <TankerSelectionModal />
+      <AgencySelectionModal />
       <SavedAddressModal />
       </ScrollView>
     </SafeAreaView>
@@ -813,6 +914,9 @@ const styles = StyleSheet.create({
   },
   selectionCard: {
     marginBottom: 8,
+  },
+  selectionCardDisabled: {
+    opacity: 0.5,
   },
   selectionContent: {
     flexDirection: 'row',
