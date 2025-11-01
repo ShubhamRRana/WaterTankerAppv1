@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    fontSize: 24,
+    fontSize: 23,
     fontWeight: 'bold',
     color: '#000000',
     marginBottom: 4,

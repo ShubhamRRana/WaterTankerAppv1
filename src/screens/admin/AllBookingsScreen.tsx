@@ -594,6 +594,7 @@ const styles = StyleSheet.create({
   },
   bookingsList: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
+    paddingTop: UI_CONFIG.spacing.md,
     paddingBottom: UI_CONFIG.spacing.xl,
   },
   bookingCard: {

@@ -253,12 +253,6 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
               <Typography variant="body" style={styles.actionText}>Saved Addresses</Typography>
             </View>
           </Card>
-          <Card style={styles.actionCard} onPress={() => navigation.navigate('Orders')}>
-            <View style={styles.actionContent}>
-              <Ionicons name="list" size={32} color="#FF9500" />
-              <Typography variant="body" style={styles.actionText}>Order History</Typography>
-            </View>
-          </Card>
         </View>
       </View>
 
