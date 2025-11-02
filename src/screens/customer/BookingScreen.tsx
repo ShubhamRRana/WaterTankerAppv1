@@ -42,6 +42,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const [selectedAgency, setSelectedAgency] = useState<{ id: string; name: string } | null>(null);
   const [availableVehicles, setAvailableVehicles] = useState<any[]>([]);
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
+  const [quantity, setQuantity] = useState<number>(1);
   const [deliveryAddress, setDeliveryAddress] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<string>('');
   const [deliveryTime, setDeliveryTime] = useState<string>('');
@@ -98,6 +99,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           // Reset selected vehicle when agency changes
           setSelectedVehicle(null);
           setPriceBreakdown(null);
+          setQuantity(1); // Reset quantity when agency changes
         } catch (error) {
           console.error('Failed to load vehicles:', error);
           setAvailableVehicles([]);
@@ -108,6 +110,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         setAvailableVehicles([]);
         setSelectedVehicle(null);
         setPriceBreakdown(null);
+        setQuantity(1); // Reset quantity when agency is cleared
       }
     };
     loadVehiclesForAgency();
@@ -115,20 +118,29 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
   useEffect(() => {
     if (selectedVehicle) {
-      calculatePrice();
+      setQuantity(1); // Reset quantity when vehicle changes
     }
   }, [selectedVehicle]);
+
+  useEffect(() => {
+    if (selectedVehicle) {
+      calculatePrice();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedVehicle, quantity]);
 
   const calculatePrice = () => {
     if (!selectedVehicle) return;
 
     // Only show base price, no distance-based charges
     const basePrice = selectedVehicle.amount;
+    const totalPrice = basePrice * quantity;
     
     setPriceBreakdown({
       tankerSize: `${selectedVehicle.capacity}L Tanker`,
       basePrice: basePrice,
-      totalPrice: basePrice,
+      quantity: quantity,
+      totalPrice: totalPrice,
     });
   };
 
@@ -139,7 +151,18 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       amount: vehicle.amount,
       vehicleNumber: vehicle.vehicleNumber
     });
+    setQuantity(1); // Reset quantity when selecting a new vehicle
     setShowTankerModal(false);
+  };
+
+  const handleQuantityChange = (change: number) => {
+    setQuantity((prev) => {
+      const newQuantity = prev + change;
+      // Limit between 1 and 20 tankers
+      if (newQuantity < 1) return 1;
+      if (newQuantity > 20) return 20;
+      return newQuantity;
+    });
   };
 
   const handleAgencySelection = (agency: { id: string; name: string }) => {
@@ -445,6 +468,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         agencyName: selectedAgency.name,
         status: 'pending' as const,
         tankerSize: selectedVehicle.capacity,
+        quantity: quantity,
         basePrice: priceBreakdown.basePrice,
         distanceCharge: 0, // No distance-based charges
         totalPrice: priceBreakdown.totalPrice,
@@ -460,7 +484,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       
       Alert.alert(
         'Booking Successful!',
-        `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
+        `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nQuantity: ${quantity} tanker${quantity > 1 ? 's' : ''}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
         [
           {
             text: 'OK',
@@ -701,7 +725,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
               </Typography>
               {selectedVehicle && (
                 <Typography variant="caption" style={styles.selectionSubtext}>
-                  Base price: {PricingUtils.formatPrice(selectedVehicle.amount)}
+                  Base price: {PricingUtils.formatPrice(selectedVehicle.amount)} per tanker
                 </Typography>
               )}
             </View>
@@ -709,6 +733,47 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           </View>
         </Card>
       </View>
+
+      {/* Quantity Selection */}
+      {selectedVehicle && (
+        <View style={styles.section}>
+          <Typography variant="h3" style={styles.sectionTitle}>Quantity</Typography>
+          <Card style={styles.quantityCard}>
+            <View style={styles.quantityContainer}>
+              <TouchableOpacity
+                style={[styles.quantityButton, quantity <= 1 && styles.quantityButtonDisabled]}
+                onPress={() => handleQuantityChange(-1)}
+                disabled={quantity <= 1}
+              >
+                <Ionicons 
+                  name="remove" 
+                  size={24} 
+                  color={quantity <= 1 ? "#C7C7CC" : "#007AFF"} 
+                />
+              </TouchableOpacity>
+              
+              <View style={styles.quantityDisplay}>
+                <Typography variant="h3" style={styles.quantityText}>{quantity}</Typography>
+                <Typography variant="caption" style={styles.quantityLabel}>
+                  {quantity === 1 ? 'Tanker' : 'Tankers'}
+                </Typography>
+              </View>
+              
+              <TouchableOpacity
+                style={[styles.quantityButton, quantity >= 20 && styles.quantityButtonDisabled]}
+                onPress={() => handleQuantityChange(1)}
+                disabled={quantity >= 20}
+              >
+                <Ionicons 
+                  name="add" 
+                  size={24} 
+                  color={quantity >= 20 ? "#C7C7CC" : "#007AFF"} 
+                />
+              </TouchableOpacity>
+            </View>
+          </Card>
+        </View>
+      )}
 
       {/* Delivery Address */}
       <View style={styles.section}>
@@ -836,9 +901,15 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
               </View>
             )}
             <View style={styles.priceRow}>
-              <Typography variant="body" style={styles.priceLabel}>Base Price</Typography>
+              <Typography variant="body" style={styles.priceLabel}>Unit Price</Typography>
               <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(priceBreakdown.basePrice)}</Typography>
             </View>
+            {priceBreakdown.quantity > 1 && (
+              <View style={styles.priceRow}>
+                <Typography variant="body" style={styles.priceLabel}>Quantity</Typography>
+                <Typography variant="body" style={styles.priceValue}>{priceBreakdown.quantity} tankers</Typography>
+              </View>
+            )}
             <View style={[styles.priceRow, styles.totalRow]}>
               <Typography variant="h3" style={styles.totalLabel}>Total Amount</Typography>
               <Typography variant="h3" style={styles.totalValue}>{PricingUtils.formatPrice(priceBreakdown.totalPrice)}</Typography>
@@ -1202,6 +1273,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+  quantityCard: {
+    marginBottom: 8,
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  quantityButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#007AFF',
+  },
+  quantityButtonDisabled: {
+    backgroundColor: '#F2F2F7',
+    borderColor: '#C7C7CC',
+    opacity: 0.5,
+  },
+  quantityDisplay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  quantityText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 4,
+  },
+  quantityLabel: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });
 
