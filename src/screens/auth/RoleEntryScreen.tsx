@@ -13,6 +13,7 @@ interface Props {
 
 const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'driver' | 'admin' | null>(null);
+  const [isButtonPressed, setIsButtonPressed] = useState(false);
 
   const roles: Array<{ key: 'customer' | 'driver' | 'admin'; title: string; subtitle: string; icon: string }> = [
     { key: 'customer', title: 'Customer', subtitle: 'Book tankers and manage orders', icon: '👤' },
@@ -57,9 +58,11 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
           </View>
 
           <TouchableOpacity
-            style={[styles.button, !selectedRole && styles.buttonDisabled]}
+            style={[styles.button, !selectedRole && styles.buttonDisabled, isButtonPressed && styles.buttonPressed]}
             onPress={continueToLogin}
             disabled={!selectedRole}
+            onPressIn={() => setIsButtonPressed(true)}
+            onPressOut={() => setIsButtonPressed(false)}
           >
             <Typography variant="body" style={styles.buttonText}>Continue</Typography>
           </TouchableOpacity>
@@ -147,17 +150,39 @@ const styles = StyleSheet.create({
     color: '#1E3A8A',
   },
   button: {
-    backgroundColor: '#000000',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#e8e8e8',
+    borderRadius: 8,
+    paddingHorizontal: 27,
+    paddingVertical: 11,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#000000',
+    shadowColor: '#c5c5c5',
+    shadowOffset: {
+      width: 6,
+      height: 6,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    elevation: 6,
   },
   buttonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: '#c5c5c5',
+    borderColor: '#000000',
+    shadowOpacity: 0.3,
+  },
+  buttonPressed: {
+    shadowOffset: {
+      width: 4,
+      height: 4,
+    },
+    shadowRadius: 8,
+    shadowOpacity: 0.5,
+    elevation: 4,
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: '#090909',
+    fontSize: 18,
     fontWeight: '600',
   },
 });

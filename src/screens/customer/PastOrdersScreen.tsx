@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   View, 
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
   RefreshControl,
-  Dimensions 
+  Dimensions,
+  Animated
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -31,6 +32,16 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
   const [periodType, setPeriodType] = useState<'month' | 'year'>('month');
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  
+  // Animation values for glass gliders
+  const periodTypeGliderAnim = useRef(new Animated.Value(0)).current;
+  const monthGliderAnim = useRef(new Animated.Value(0)).current;
+  const yearGliderAnim = useRef(new Animated.Value(0)).current;
+  
+  // Width measurements for glider positioning
+  const [periodTypeOptionWidth, setPeriodTypeOptionWidth] = useState(0);
+  const [monthOptionWidth, setMonthOptionWidth] = useState(0);
+  const [yearOptionWidth, setYearOptionWidth] = useState(0);
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const fullMonthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -50,6 +61,43 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
   useEffect(() => {
     loadReportData();
   }, []);
+
+  // Animate glider when periodType changes
+  useEffect(() => {
+    if (periodTypeOptionWidth > 0) {
+      Animated.spring(periodTypeGliderAnim, {
+        toValue: periodType === 'month' ? 0 : periodTypeOptionWidth,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [periodType, periodTypeOptionWidth]);
+
+  // Animate glider when selectedMonth changes
+  useEffect(() => {
+    if (monthOptionWidth > 0) {
+      Animated.spring(monthGliderAnim, {
+        toValue: selectedMonth * monthOptionWidth,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [selectedMonth, monthOptionWidth]);
+
+  // Animate glider when selectedYear changes
+  useEffect(() => {
+    if (yearOptionWidth > 0) {
+      const yearIndex = availableYears.indexOf(selectedYear);
+      Animated.spring(yearGliderAnim, {
+        toValue: yearIndex >= 0 ? yearIndex * yearOptionWidth : 0,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [selectedYear, yearOptionWidth]);
 
   const loadReportData = async () => {
     if (!user?.uid) return;
@@ -183,102 +231,158 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
 
         {/* Period Type Toggle */}
         <View style={styles.periodTypeToggle}>
-          <TouchableOpacity
-            style={[
-              styles.periodTypeButton,
-              periodType === 'month' && styles.periodTypeButtonActive
-            ]}
-            onPress={() => setPeriodType('month')}
-          >
-            <Typography 
-              variant="body" 
-              style={[
-                styles.periodTypeText,
-                periodType === 'month' && styles.periodTypeTextActive
-              ]}
+          <View style={styles.glassRadioGroup}>
+            <TouchableOpacity
+              style={styles.glassRadioOption}
+              onPress={() => setPeriodType('month')}
+              activeOpacity={0.8}
+              onLayout={(e) => {
+                if (periodTypeOptionWidth === 0) {
+                  setPeriodTypeOptionWidth(e.nativeEvent.layout.width);
+                }
+              }}
             >
-              Month
-            </Typography>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.periodTypeButton,
-              periodType === 'year' && styles.periodTypeButtonActive
-            ]}
-            onPress={() => setPeriodType('year')}
-          >
-            <Typography 
-              variant="body" 
-              style={[
-                styles.periodTypeText,
-                periodType === 'year' && styles.periodTypeTextActive
-              ]}
+              <Typography 
+                variant="body" 
+                style={[
+                  styles.glassRadioLabel,
+                  periodType === 'month' && styles.glassRadioLabelActive
+                ]}
+              >
+                Month
+              </Typography>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.glassRadioOption}
+              onPress={() => setPeriodType('year')}
+              activeOpacity={0.8}
             >
-              Year
-            </Typography>
-          </TouchableOpacity>
+              <Typography 
+                variant="body" 
+                style={[
+                  styles.glassRadioLabel,
+                  periodType === 'year' && styles.glassRadioLabelActive
+                ]}
+              >
+                Year
+              </Typography>
+            </TouchableOpacity>
+            {periodTypeOptionWidth > 0 && (
+              <Animated.View
+                style={[
+                  styles.glassGlider,
+                  {
+                    width: periodTypeOptionWidth,
+                    transform: [{
+                      translateX: periodTypeGliderAnim,
+                    }],
+                  },
+                ]}
+              />
+            )}
+          </View>
         </View>
 
         {/* Month Selector */}
         {periodType === 'month' && (
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.monthSelector}
-            contentContainerStyle={styles.monthSelectorContent}
-          >
-            {months.map((month, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.monthButton,
-                  selectedMonth === index && styles.monthButtonActive
-                ]}
-                onPress={() => setSelectedMonth(index)}
-              >
-                <Typography 
-                  variant="body" 
-                  style={[
-                    styles.monthButtonText,
-                    selectedMonth === index && styles.monthButtonTextActive
-                  ]}
-                >
-                  {month}
-                </Typography>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={styles.filterContainer}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.monthSelector}
+              contentContainerStyle={styles.monthSelectorContent}
+            >
+              <View style={styles.glassRadioGroup}>
+                {months.map((month, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.glassRadioOption}
+                    onPress={() => setSelectedMonth(index)}
+                    activeOpacity={0.8}
+                    onLayout={(e) => {
+                      if (monthOptionWidth === 0 && index === 0) {
+                        setMonthOptionWidth(e.nativeEvent.layout.width);
+                      }
+                    }}
+                  >
+                    <Typography 
+                      variant="body" 
+                      style={[
+                        styles.glassRadioLabel,
+                        selectedMonth === index && styles.glassRadioLabelActive
+                      ]}
+                    >
+                      {month}
+                    </Typography>
+                  </TouchableOpacity>
+                ))}
+                {monthOptionWidth > 0 && (
+                  <Animated.View
+                    style={[
+                      styles.glassGlider,
+                      {
+                        width: monthOptionWidth,
+                        transform: [{
+                          translateX: monthGliderAnim,
+                        }],
+                      },
+                    ]}
+                  />
+                )}
+              </View>
+            </ScrollView>
+          </View>
         )}
 
         {/* Year Selector */}
         {periodType === 'year' && (
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.monthSelector}
-            contentContainerStyle={styles.monthSelectorContent}
-          >
-            {availableYears.map((year) => (
-              <TouchableOpacity
-                key={year}
-                style={[
-                  styles.monthButton,
-                  selectedYear === year && styles.monthButtonActive
-                ]}
-                onPress={() => setSelectedYear(year)}
-              >
-                <Typography 
-                  variant="body" 
-                  style={[
-                    styles.monthButtonText,
-                    selectedYear === year && styles.monthButtonTextActive
-                  ]}
-                >
-                  {year}
-                </Typography>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={styles.filterContainer}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.monthSelector}
+              contentContainerStyle={styles.monthSelectorContent}
+            >
+              <View style={styles.glassRadioGroup}>
+                {availableYears.map((year, index) => (
+                  <TouchableOpacity
+                    key={year}
+                    style={styles.glassRadioOption}
+                    onPress={() => setSelectedYear(year)}
+                    activeOpacity={0.8}
+                    onLayout={(e) => {
+                      if (yearOptionWidth === 0 && index === 0) {
+                        setYearOptionWidth(e.nativeEvent.layout.width);
+                      }
+                    }}
+                  >
+                    <Typography 
+                      variant="body" 
+                      style={[
+                        styles.glassRadioLabel,
+                        selectedYear === year && styles.glassRadioLabelActive
+                      ]}
+                    >
+                      {year}
+                    </Typography>
+                  </TouchableOpacity>
+                ))}
+                {yearOptionWidth > 0 && (
+                  <Animated.View
+                    style={[
+                      styles.glassGlider,
+                      {
+                        width: yearOptionWidth,
+                        transform: [{
+                          translateX: yearGliderAnim,
+                        }],
+                      },
+                    ]}
+                  />
+                )}
+              </View>
+            </ScrollView>
+          </View>
         )}
 
         {/* Summary */}
@@ -424,30 +528,12 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textSecondary,
   },
   periodTypeToggle: {
-    flexDirection: 'row',
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
-  },
-  periodTypeButton: {
-    flex: 1,
-    paddingVertical: UI_CONFIG.spacing.sm,
-    paddingHorizontal: UI_CONFIG.spacing.md,
-    borderRadius: 8,
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
-    marginHorizontal: 4,
   },
-  periodTypeButtonActive: {
-    backgroundColor: '#007AFF',
-  },
-  periodTypeText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: UI_CONFIG.colors.text,
-  },
-  periodTypeTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+  filterContainer: {
+    paddingVertical: UI_CONFIG.spacing.md,
   },
   monthSelector: {
     paddingVertical: UI_CONFIG.spacing.md,
@@ -455,24 +541,58 @@ const styles = StyleSheet.create({
   monthSelectorContent: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
   },
-  monthButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: '#F2F2F7',
-    marginRight: 8,
+  glassRadioGroup: {
+    position: 'relative',
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 16,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 0,
   },
-  monthButtonActive: {
-    backgroundColor: '#FFFFFF',
+  glassRadioOption: {
+    flex: 1,
+    minWidth: 80,
+    paddingVertical: 12.8,
+    paddingHorizontal: 25.6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
-  monthButtonText: {
+  glassRadioLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: UI_CONFIG.colors.text,
-  },
-  monthButtonTextActive: {
-    color: UI_CONFIG.colors.text,
     fontWeight: '600',
+    letterSpacing: 0.3,
+    color: '#000',
+  },
+  glassRadioLabelActive: {
+    color: '#000',
+  },
+  glassGlider: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 16,
+    zIndex: 1,
+    backgroundColor: '#a0d8ff',
+    shadowColor: '#a0d8ff',
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
+    elevation: 10,
+    height: '100%',
   },
   summarySection: {
     paddingHorizontal: UI_CONFIG.spacing.lg,

@@ -19,7 +19,7 @@ import { useVehicleStore } from '../../store/vehicleStore';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Typography } from '../../components/common';
+import { Typography, SuccessNotification } from '../../components/common';
 import { Address, BookingForm, TankerSize } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
@@ -53,6 +53,11 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const [showSavedAddressModal, setShowSavedAddressModal] = useState(false);
   const [priceBreakdown, setPriceBreakdown] = useState<any>(null);
   const [dateError, setDateError] = useState<string>('');
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [successNotificationData, setSuccessNotificationData] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
 
   // Load default address when user data is available
   useEffect(() => {
@@ -482,16 +487,12 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
       await createBooking(bookingData);
       
-      Alert.alert(
-        'Booking Successful!',
-        `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nQuantity: ${quantity} tanker${quantity > 1 ? 's' : ''}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      );
+      // Set success notification data
+      setSuccessNotificationData({
+        title: 'Booking Successful!',
+        message: `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nQuantity: ${quantity} tanker${quantity > 1 ? 's' : ''}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
+      });
+      setShowSuccessNotification(true);
     } catch (error) {
       Alert.alert('Error', 'Failed to create booking. Please try again.');
     }
@@ -931,6 +932,22 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       <TankerSelectionModal />
       <AgencySelectionModal />
       <SavedAddressModal />
+      {successNotificationData && (
+        <SuccessNotification
+          visible={showSuccessNotification}
+          title={successNotificationData.title}
+          message={successNotificationData.message}
+          primaryButtonText="OK"
+          onPrimaryPress={() => {
+            setShowSuccessNotification(false);
+            navigation.goBack();
+          }}
+          onClose={() => {
+            setShowSuccessNotification(false);
+            navigation.goBack();
+          }}
+        />
+      )}
       </ScrollView>
     </SafeAreaView>
   );

@@ -34,6 +34,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ phone?: string; password?: string }>({});
+  const [isButtonPressed, setIsButtonPressed] = useState(false);
   
   const { login, loginWithRole, isLoading } = useAuthStore();
 
@@ -53,8 +54,18 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     setErrors({});
 
     try {
-      await login(phone, password);
-      // Navigation will be handled by the auth store
+      // If preferredRole is provided, we need to validate role match
+      const preferredRole = route?.params?.preferredRole;
+      
+      if (preferredRole) {
+        // For role-specific login, use loginWithRole directly to ensure role match
+        await loginWithRole(phone, preferredRole);
+        // Navigation will be handled by the auth store
+      } else {
+        // No preferred role - proceed with normal login
+        await login(phone, password);
+        // Navigation will be handled by the auth store
+      }
     } catch (error) {
       if (error instanceof Error && error.message === 'ROLE_SELECTION_REQUIRED') {
         // Get available roles and act on preferred role if provided
@@ -75,7 +86,13 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
           });
         }
       } else {
-        Alert.alert('Login Failed', ERROR_MESSAGES.auth.invalidCredentials);
+        // Check if error is due to role mismatch
+        const errorMessage = error instanceof Error ? error.message : 'Login failed';
+        if (errorMessage.includes('not found with selected role') || errorMessage.includes('User not found with selected role')) {
+          Alert.alert('Login Failed', ERROR_MESSAGES.auth.roleMismatch);
+        } else {
+          Alert.alert('Login Failed', ERROR_MESSAGES.auth.invalidCredentials);
+        }
       }
     }
   };
@@ -131,9 +148,11 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
+            style={[styles.button, isLoading && styles.buttonDisabled, isButtonPressed && styles.buttonPressed]}
             onPress={handleLogin}
             disabled={isLoading}
+            onPressIn={() => setIsButtonPressed(true)}
+            onPressOut={() => setIsButtonPressed(false)}
           >
             <Typography variant="body" style={styles.buttonText}>
               {isLoading ? 'Signing In...' : 'Sign In'}
@@ -226,18 +245,40 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   button: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: '#e8e8e8',
+    borderRadius: 8,
+    paddingHorizontal: 27,
+    paddingVertical: 11,
     alignItems: 'center',
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#000000',
+    shadowColor: '#c5c5c5',
+    shadowOffset: {
+      width: 6,
+      height: 6,
+    },
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    elevation: 6,
   },
   buttonDisabled: {
-    backgroundColor: '#8E8E93',
+    backgroundColor: '#c5c5c5',
+    borderColor: '#000000',
+    shadowOpacity: 0.3,
+  },
+  buttonPressed: {
+    shadowOffset: {
+      width: 4,
+      height: 4,
+    },
+    shadowRadius: 8,
+    shadowOpacity: 0.5,
+    elevation: 4,
   },
   buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: '#090909',
+    fontSize: 18,
     fontWeight: '600',
   },
   footer: {

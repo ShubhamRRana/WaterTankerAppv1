@@ -145,6 +145,7 @@ export const ERROR_MESSAGES = {
     weakPassword: 'Password is too weak.',
     networkError: 'Network error during authentication.',
     adminCreatedDriverOnly: 'Only admin-created drivers can login. Please contact the administrator to create your driver account.',
+    roleMismatch: 'Invalid credentials for this account type. Please use the correct login page for your account.',
   },
   booking: {
     createFailed: 'Failed to create booking.',
