@@ -6,8 +6,7 @@ import {
   ScrollView, 
   RefreshControl,
   Alert,
-  Dimensions,
-  Switch
+  Dimensions
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,7 +27,6 @@ const OrdersScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<OrderTab>('available');
   const [refreshing, setRefreshing] = useState(false);
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState(true);
 
   useEffect(() => {
     loadOrdersData();
@@ -175,10 +173,6 @@ const OrdersScreen: React.FC = () => {
     );
   };
 
-  const toggleOnlineStatus = () => {
-    setIsOnline(!isOnline);
-  };
-
   const formatDate = (date: Date): string => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
@@ -218,7 +212,7 @@ const OrdersScreen: React.FC = () => {
           <View style={styles.orderDetail}>
             <Ionicons name="water-outline" size={16} color="#8E8E93" />
             <Typography variant="caption" style={styles.orderDetailText}>
-              {order.tankerSize}L Tanker
+              {order.tankerSize}L Tanker{order.quantity && order.quantity > 1 ? ` x ${order.quantity}` : ''}
             </Typography>
           </View>
           <View style={styles.orderDetail}>
@@ -336,7 +330,7 @@ const OrdersScreen: React.FC = () => {
               Welcome, {user?.name || 'Driver'}!
             </Typography>
             <Typography variant="body" style={styles.subtitle}>
-              {isOnline ? 'You are online and available' : 'You are offline'}
+              Manage your orders and deliveries
             </Typography>
           </View>
           <TouchableOpacity 
@@ -347,26 +341,6 @@ const OrdersScreen: React.FC = () => {
             <Ionicons name="log-out-outline" size={24} color="#DC2626" />
           </TouchableOpacity>
         </View>
-
-        {/* Online Status Toggle */}
-        <Card style={styles.statusCard}>
-          <View style={styles.statusRow}>
-            <View style={styles.statusInfo}>
-              <Typography variant="h3" style={styles.statusTitle}>
-                Driver Status
-              </Typography>
-              <Typography variant="body" style={styles.statusSubtitle}>
-                {isOnline ? 'Available for new orders' : 'Not accepting orders'}
-              </Typography>
-            </View>
-            <Switch
-              value={isOnline}
-              onValueChange={toggleOnlineStatus}
-              trackColor={{ false: '#E5E5EA', true: '#34C759' }}
-              thumbColor={isOnline ? '#FFFFFF' : '#FFFFFF'}
-            />
-          </View>
-        </Card>
 
         {/* Tab Navigation */}
         <View style={styles.tabContainer}>
@@ -472,28 +446,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
-  },
-  statusCard: {
-    marginHorizontal: 16,
-    marginVertical: 16,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statusInfo: {
-    flex: 1,
-  },
-  statusTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    marginBottom: 4,
-  },
-  statusSubtitle: {
-    fontSize: 14,
-    color: '#8E8E93',
   },
   tabContainer: {
     flexDirection: 'row',

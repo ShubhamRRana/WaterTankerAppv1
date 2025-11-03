@@ -178,10 +178,6 @@ const DriverEarningsScreen: React.FC = () => {
     }).format(date);
   };
 
-  const formatDistance = (distance: number): string => {
-    return Number(distance).toFixed(2);
-  };
-
   if (isLoading && !earningsStats) {
     return (
       <View style={styles.loadingContainer}>
@@ -251,53 +247,6 @@ const DriverEarningsScreen: React.FC = () => {
         <Typography variant="h1" style={styles.earningsAmount}>
           {formatCurrency(currentEarnings)}
         </Typography>
-        
-        <View style={styles.earningsStats}>
-          <View style={styles.statItem}>
-            <Typography variant="caption" style={styles.statLabel}>
-              Completed Orders
-            </Typography>
-            <Typography variant="body" style={styles.statValue}>
-              {completedOrders.length}
-            </Typography>
-          </View>
-          <View style={styles.statItem}>
-            <Typography variant="caption" style={styles.statLabel}>
-              Average per Order
-            </Typography>
-            <Typography variant="body" style={styles.statValue}>
-              {completedOrders.length > 0 ? formatCurrency(currentEarnings / completedOrders.length) : '₹0'}
-            </Typography>
-          </View>
-        </View>
-      </Card>
-
-      {/* Total Earnings Summary */}
-      <Card style={styles.summaryCard}>
-        <Typography variant="h3" style={styles.summaryTitle}>
-          Total Earnings Summary
-        </Typography>
-
-        <View style={styles.summaryGrid}>
-          <View style={styles.summaryItem}>
-            <Typography variant="caption" style={styles.summaryLabel}>
-              Total Earnings
-            </Typography>
-            <Typography variant="h3" style={styles.summaryValue}>
-              {formatCurrency(earningsStats?.totalEarnings || 0)}
-            </Typography>
-          </View>
-          
-          <View style={styles.summaryItem}>
-            <Typography variant="caption" style={styles.summaryLabel}>
-              Total Orders
-            </Typography>
-            <Typography variant="h3" style={styles.summaryValue}>
-              {earningsStats?.completedOrders || 0}
-            </Typography>
-          </View>
-
-        </View>
       </Card>
 
       {/* Transaction History */}
@@ -343,15 +292,6 @@ const DriverEarningsScreen: React.FC = () => {
                 
                 <View style={styles.transactionDetail}>
                   <Typography variant="caption" style={styles.transactionDetailLabel}>
-                    Distance
-                  </Typography>
-                  <Typography variant="body" style={styles.transactionDetailValue}>
-                    {formatDistance(order.distance)} km
-                  </Typography>
-                </View>
-                
-                <View style={styles.transactionDetail}>
-                  <Typography variant="caption" style={styles.transactionDetailLabel}>
                     Time
                   </Typography>
                   <Typography variant="body" style={styles.transactionDetailValue}>
@@ -385,6 +325,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 24,
+    paddingTop: 60,
     paddingBottom: 16,
   },
   headerTitle: {
@@ -438,55 +379,6 @@ const styles = StyleSheet.create({
   },
   earningsAmount: {
     color: '#D4AF37',
-    marginBottom: 16,
-  },
-  earningsStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statLabel: {
-    color: '#8E8E93',
-    marginBottom: 4,
-  },
-  statValue: {
-    color: '#000000',
-    fontWeight: '600',
-  },
-  summaryCard: {
-    marginHorizontal: 24,
-    marginBottom: 16,
-    padding: 14,
-  },
-  summaryTitle: {
-    color: '#000000',
-    marginBottom: 16,
-  },
-  summaryGrid: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 10,
-  },
-  summaryItem: {
-    flex: 1,
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    marginHorizontal: 2,
-  },
-  summaryLabel: {
-    color: '#8E8E93',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  summaryValue: {
-    color: '#000000',
-    fontWeight: '600',
-    textAlign: 'center',
   },
   historySection: {
     paddingHorizontal: 24,

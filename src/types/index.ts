@@ -84,6 +84,7 @@ export interface Booking {
   driverPhone?: string;
   status: BookingStatus;
   tankerSize: number; // in liters
+  quantity?: number; // number of tankers (defaults to 1 if not provided)
   basePrice: number;
   distanceCharge: number;
   totalPrice: number;

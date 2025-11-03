@@ -1305,10 +1305,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   quantityText: {
-    fontSize: 32,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#000000',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   quantityLabel: {
     fontSize: 14,

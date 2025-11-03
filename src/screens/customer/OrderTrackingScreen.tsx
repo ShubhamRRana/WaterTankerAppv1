@@ -259,8 +259,16 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
           </View>
           <View style={styles.detailRow}>
             <Typography variant="body" style={styles.detailLabel}>Tanker Size</Typography>
-            <Typography variant="body" style={styles.detailValue}>{booking.tankerSize}L</Typography>
+            <Typography variant="body" style={styles.detailValue}>
+              {booking.tankerSize}L{booking.quantity && booking.quantity > 1 ? ` x ${booking.quantity}` : ''}
+            </Typography>
           </View>
+          {booking.quantity && booking.quantity > 1 && (
+            <View style={styles.detailRow}>
+              <Typography variant="body" style={styles.detailLabel}>Quantity</Typography>
+              <Typography variant="body" style={styles.detailValue}>{booking.quantity} tankers</Typography>
+            </View>
+          )}
           <View style={styles.detailRow}>
             <Typography variant="body" style={styles.detailLabel}>Total Amount</Typography>
             <Typography variant="body" style={styles.detailValue}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>

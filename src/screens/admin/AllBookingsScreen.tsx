@@ -181,7 +181,7 @@ const AllBookingsScreen: React.FC = () => {
           <View style={styles.detailRow}>
             <Ionicons name="water-outline" size={16} color="#8E8E93" />
             <Typography variant="body" style={styles.detailText}>
-              {booking.tankerSize}L Tanker
+              {booking.tankerSize}L Tanker{booking.quantity && booking.quantity > 1 ? ` x ${booking.quantity}` : ''}
             </Typography>
           </View>
           
@@ -326,9 +326,17 @@ const AllBookingsScreen: React.FC = () => {
               <View style={styles.detailItem}>
                 <Typography variant="body" style={styles.detailLabel}>Tanker Size:</Typography>
                 <Typography variant="body" style={styles.detailValue}>
-                  {selectedBooking.tankerSize}L
+                  {selectedBooking.tankerSize}L{selectedBooking.quantity && selectedBooking.quantity > 1 ? ` x ${selectedBooking.quantity}` : ''}
                 </Typography>
               </View>
+              {selectedBooking.quantity && selectedBooking.quantity > 1 && (
+                <View style={styles.detailItem}>
+                  <Typography variant="body" style={styles.detailLabel}>Quantity:</Typography>
+                  <Typography variant="body" style={styles.detailValue}>
+                    {selectedBooking.quantity} tankers
+                  </Typography>
+                </View>
+              )}
               <View style={styles.detailItem}>
                 <Typography variant="body" style={styles.detailLabel}>Status:</Typography>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(selectedBooking.status) }]}>
