@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import { UI_CONFIG } from '../constants/config';
 import AdminProfileScreen from '../screens/admin/AdminProfileScreen';
 import AllBookingsScreen from '../screens/admin/AllBookingsScreen';
 import DriverManagementScreen from '../screens/admin/DriverManagementScreen';
@@ -28,12 +29,12 @@ const AdminTabs: React.FC = () => {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#D4AF37', // Champagne Gold
-        tabBarInactiveTintColor: '#8E8E93',
+        tabBarActiveTintColor: UI_CONFIG.colors.accent,
+        tabBarInactiveTintColor: UI_CONFIG.colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: UI_CONFIG.colors.surface,
           borderTopWidth: 1,
-          borderTopColor: '#E5E5EA',
+          borderTopColor: UI_CONFIG.colors.border,
           paddingBottom: 8,
           paddingTop: 8,
           height: 60,

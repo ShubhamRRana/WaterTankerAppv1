@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Typography, Button, Card, LoadingSpinner } from '../../components/common';
 import { useAuthStore } from '../../store/authStore';
 import { User } from '../../types';
+import { UI_CONFIG } from '../../constants/config';
 
 const AdminProfileScreen: React.FC = () => {
   const { user, updateUser, logout, isLoading } = useAuthStore();
@@ -161,7 +162,7 @@ const AdminProfileScreen: React.FC = () => {
                 value={editForm.businessName}
                 onChangeText={(t) => setEditForm(prev => ({ ...prev, businessName: t }))}
                 placeholder="Enter business name"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={UI_CONFIG.colors.textSecondary}
               />
             </View>
             <View style={styles.inputContainer}>
@@ -171,7 +172,7 @@ const AdminProfileScreen: React.FC = () => {
                 value={editForm.name}
                 onChangeText={(t) => setEditForm(prev => ({ ...prev, name: t }))}
                 placeholder="Enter full name"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={UI_CONFIG.colors.textSecondary}
               />
             </View>
             <View style={styles.inputContainer}>
@@ -181,7 +182,7 @@ const AdminProfileScreen: React.FC = () => {
                 value={editForm.phone}
                 onChangeText={(t) => setEditForm(prev => ({ ...prev, phone: t }))}
                 placeholder="Enter phone number"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={UI_CONFIG.colors.textSecondary}
                 keyboardType="phone-pad"
               />
             </View>
@@ -192,7 +193,7 @@ const AdminProfileScreen: React.FC = () => {
                 value={editForm.password}
                 onChangeText={(t) => setEditForm(prev => ({ ...prev, password: t }))}
                 placeholder="Leave blank to keep current"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={UI_CONFIG.colors.textSecondary}
                 secureTextEntry
               />
             </View>
@@ -203,7 +204,7 @@ const AdminProfileScreen: React.FC = () => {
                 value={editForm.confirmPassword}
                 onChangeText={(t) => setEditForm(prev => ({ ...prev, confirmPassword: t }))}
                 placeholder="Confirm new password"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={UI_CONFIG.colors.textSecondary}
                 secureTextEntry
               />
             </View>
@@ -242,11 +243,11 @@ const AdminProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   contentContainer: {
     paddingBottom: 32,
@@ -259,7 +260,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   profileCard: {
     margin: 16,
@@ -280,13 +281,13 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#007AFF',
+    backgroundColor: UI_CONFIG.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
   },
   avatarText: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
     fontWeight: 'bold',
   },
   profileInfo: {
@@ -295,11 +296,11 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
   },
   userPhone: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   editCard: {
     marginHorizontal: 16,
@@ -308,7 +309,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 16,
   },
   inputContainer: {
@@ -317,17 +318,17 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#D1D1D6',
+    borderColor: UI_CONFIG.colors.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#000000',
-    backgroundColor: '#FFFFFF',
+    color: UI_CONFIG.colors.text,
+    backgroundColor: UI_CONFIG.colors.surface,
   },
   row: {
     flexDirection: 'row',

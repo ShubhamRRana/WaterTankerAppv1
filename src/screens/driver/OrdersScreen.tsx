@@ -14,7 +14,7 @@ import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { Typography, Card, Button, LoadingSpinner } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
-import { PRICING_CONFIG } from '../../constants/config';
+import { PRICING_CONFIG, UI_CONFIG } from '../../constants/config';
 
 const { width } = Dimensions.get('window');
 
@@ -128,12 +128,12 @@ const OrdersScreen: React.FC = () => {
 
   const getStatusColor = (status: BookingStatus): string => {
     switch (status) {
-      case 'pending': return '#D97706';
-      case 'accepted': return '#007AFF';
-      case 'in_transit': return '#34C759';
-      case 'delivered': return '#059669';
-      case 'cancelled': return '#DC2626';
-      default: return '#8E8E93';
+      case 'pending': return UI_CONFIG.colors.warning;
+      case 'accepted': return UI_CONFIG.colors.primary;
+      case 'in_transit': return UI_CONFIG.colors.success;
+      case 'delivered': return UI_CONFIG.colors.success;
+      case 'cancelled': return UI_CONFIG.colors.error;
+      default: return UI_CONFIG.colors.textSecondary;
     }
   };
 
@@ -210,13 +210,13 @@ const OrdersScreen: React.FC = () => {
 
         <View style={styles.orderDetails}>
           <View style={styles.orderDetail}>
-            <Ionicons name="water-outline" size={16} color="#8E8E93" />
+              <Ionicons name="water-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.orderDetailText}>
               {order.tankerSize}L Tanker{order.quantity && order.quantity > 1 ? ` x ${order.quantity}` : ''}
             </Typography>
           </View>
           <View style={styles.orderDetail}>
-            <Ionicons name="cash-outline" size={16} color="#8E8E93" />
+            <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.orderDetailText}>
               {PRICING_CONFIG.currencySymbol}{order.totalPrice}
             </Typography>
@@ -230,7 +230,7 @@ const OrdersScreen: React.FC = () => {
           activeOpacity={0.7}
           style={styles.addressContainer}
         >
-          <Ionicons name="location" size={14} color="#007AFF" />
+          <Ionicons name="location" size={14} color={UI_CONFIG.colors.primary} />
           <Typography variant="caption" style={styles.orderAddress}>
             {order.deliveryAddress.street}, {order.deliveryAddress.city}
           </Typography>
@@ -242,7 +242,7 @@ const OrdersScreen: React.FC = () => {
 
         {order.status === 'delivered' && order.deliveredAt && (
           <View style={styles.deliveredInfo}>
-            <Ionicons name="checkmark-circle" size={16} color="#34C759" />
+            <Ionicons name="checkmark-circle" size={16} color={UI_CONFIG.colors.success} />
             <Typography variant="caption" style={styles.deliveredText}>
               Delivered: {formatDate(order.deliveredAt)}
             </Typography>
@@ -288,7 +288,7 @@ const OrdersScreen: React.FC = () => {
       <Ionicons 
         name={activeTab === 'available' ? 'list-outline' : 'checkmark-circle-outline'} 
         size={48} 
-        color="#8E8E93" 
+        color={UI_CONFIG.colors.textSecondary} 
       />
       <Typography variant="body" style={styles.emptyText}>
         {activeTab === 'available' && 'No available orders'}
@@ -338,7 +338,7 @@ const OrdersScreen: React.FC = () => {
             onPress={handleLogout}
             activeOpacity={0.7}
           >
-            <Ionicons name="log-out-outline" size={24} color="#DC2626" />
+            <Ionicons name="log-out-outline" size={24} color={UI_CONFIG.colors.error} />
           </TouchableOpacity>
         </View>
 
@@ -357,7 +357,7 @@ const OrdersScreen: React.FC = () => {
               <Ionicons 
                 name={tab.icon as any} 
                 size={20} 
-                color={activeTab === tab.key ? '#FFFFFF' : '#8E8E93'} 
+                color={activeTab === tab.key ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.textSecondary} 
               />
               <Typography 
                 variant="caption" 
@@ -395,21 +395,21 @@ const OrdersScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingText: {
     marginTop: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
@@ -417,9 +417,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   headerLeft: {
     flex: 1,
@@ -427,18 +427,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   logoutButton: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
+    backgroundColor: UI_CONFIG.colors.surface,
+    shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 0,
       height: 1,
@@ -449,11 +449,11 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   tab: {
     flex: 1,
@@ -466,16 +466,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
   activeTab: {
-    backgroundColor: '#007AFF',
+    backgroundColor: UI_CONFIG.colors.primary,
   },
   tabLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginLeft: 8,
   },
   activeTabLabel: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   scrollView: {
     flex: 1,
@@ -498,12 +498,12 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   orderId: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   orderDetails: {
     flexDirection: 'row',
@@ -526,28 +526,28 @@ const styles = StyleSheet.create({
   },
   orderDetailText: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginLeft: 4,
   },
   addressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F8FF',
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: UI_CONFIG.colors.primary,
   },
   orderAddress: {
     fontSize: 12,
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
     marginLeft: 6,
   },
   orderTime: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginBottom: 8,
   },
   deliveredInfo: {
@@ -556,11 +556,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: UI_CONFIG.colors.border,
   },
   deliveredText: {
     fontSize: 12,
-    color: '#34C759',
+    color: UI_CONFIG.colors.success,
     marginLeft: 6,
     fontWeight: '500',
   },
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   completeButton: {
-    backgroundColor: '#059669',
+    backgroundColor: UI_CONFIG.colors.success,
   },
   emptyCard: {
     alignItems: 'center',
@@ -577,14 +577,14 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginTop: 16,
     marginBottom: 8,
     fontWeight: '500',
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Typography } from '../../components/common';
+import { UI_CONFIG } from '../../constants/config';
 
 const ActiveOrderScreen: React.FC = () => {
   return (
@@ -14,7 +15,7 @@ const ActiveOrderScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -22,12 +23,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
   },
 });

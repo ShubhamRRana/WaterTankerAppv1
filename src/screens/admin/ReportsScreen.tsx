@@ -476,18 +476,18 @@ const ReportsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   header: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   title: {
     fontSize: 24,
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     alignSelf: 'center',
-    shadowColor: '#000',
+    shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -543,10 +543,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.3,
-    color: '#000',
+    color: UI_CONFIG.colors.text,
   },
   glassRadioLabelActive: {
-    color: '#000',
+    color: UI_CONFIG.colors.text,
   },
   glassGlider: {
     position: 'absolute',
@@ -555,8 +555,8 @@ const styles = StyleSheet.create({
     left: 0,
     borderRadius: 16,
     zIndex: 1,
-    backgroundColor: '#a0d8ff',
-    shadowColor: '#a0d8ff',
+    backgroundColor: UI_CONFIG.colors.primary,
+    shadowColor: UI_CONFIG.colors.primary,
     shadowOffset: {
       width: 0,
       height: 0,
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
     textAlign: 'center',
     width: '100%',
   },
@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: UI_CONFIG.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
     marginBottom: UI_CONFIG.spacing.sm,
   },
   dailyHeaderText: {
@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: UI_CONFIG.spacing.md,
     paddingHorizontal: UI_CONFIG.spacing.sm,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     borderRadius: 8,
     marginBottom: 4,
     alignItems: 'center',
@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
   },
   dailyRevenue: {
     flex: 1,

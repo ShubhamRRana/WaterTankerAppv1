@@ -19,6 +19,7 @@ import { AuthStackParamList } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Typography } from '../../components/common';
+import { UI_CONFIG } from '../../constants/config';
 
 type RegisterScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Register'>;
 type RegisterScreenRouteProp = RouteProp<AuthStackParamList, 'Register'>;
@@ -140,7 +141,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={24}
-                  color="#8E8E93"
+                  color={UI_CONFIG.colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -164,7 +165,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                 <Ionicons
                   name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={24}
-                  color="#8E8E93"
+                  color={UI_CONFIG.colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -201,11 +202,11 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -219,12 +220,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   form: {
     marginBottom: 32,
@@ -235,16 +236,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: UI_CONFIG.colors.border,
+    color: UI_CONFIG.colors.text,
   },
   passwordInputContainer: {
     flexDirection: 'row',
@@ -261,24 +263,24 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   inputError: {
-    borderColor: '#FF3B30',
+    borderColor: UI_CONFIG.colors.error,
   },
   errorText: {
-    color: '#FF3B30',
+    color: UI_CONFIG.colors.error,
     fontSize: 14,
     marginTop: 4,
   },
   
   button: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: UI_CONFIG.colors.primary,
     borderRadius: 8,
     paddingHorizontal: 27,
     paddingVertical: 11,
     alignItems: 'center',
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#000000',
-    shadowColor: '#c5c5c5',
+    borderColor: UI_CONFIG.colors.primary,
+    shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 6,
       height: 6,
@@ -288,8 +290,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   buttonDisabled: {
-    backgroundColor: '#c5c5c5',
-    borderColor: '#000000',
+    backgroundColor: UI_CONFIG.colors.disabled,
+    borderColor: UI_CONFIG.colors.disabled,
     shadowOpacity: 0.3,
   },
   buttonPressed: {
@@ -302,7 +304,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonText: {
-    color: '#090909',
+    color: UI_CONFIG.colors.textLight,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -313,11 +315,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   linkText: {
     fontSize: 16,
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
     fontWeight: '600',
   },
 });

@@ -23,6 +23,7 @@ import { Typography, SuccessNotification } from '../../components/common';
 import { Address, BookingForm, TankerSize } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
+import { UI_CONFIG } from '../../constants/config';
 
 const { width } = Dimensions.get('window');
 
@@ -504,7 +505,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={() => setShowTankerModal(false)}>
-            <Ionicons name="close" size={24} color="#000" />
+            <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
           </TouchableOpacity>
           <Typography variant="h3" style={styles.modalTitle}>Select Vehicle</Typography>
           <View style={{ width: 24 }} />
@@ -537,13 +538,13 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                 <Ionicons
                   name={selectedVehicle?.id === vehicle.id ? "radio-button-on" : "radio-button-off"}
                   size={24}
-                  color={selectedVehicle?.id === vehicle.id ? "#007AFF" : "#8E8E93"}
+                  color={selectedVehicle?.id === vehicle.id ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary}
                 />
               </Card>
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="car-outline" size={64} color="#8E8E93" />
+              <Ionicons name="car-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="body" style={styles.emptyStateText}>No vehicles available</Typography>
               <Typography variant="caption" style={styles.emptyStateSubtext}>
                 {selectedAgency ? 'This agency has no vehicles yet' : 'Please select an agency first'}
@@ -560,7 +561,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={() => setShowAgencyModal(false)}>
-            <Ionicons name="close" size={24} color="#000" />
+            <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
           </TouchableOpacity>
           <Typography variant="h3" style={styles.modalTitle}>Select Tanker Agency</Typography>
           <View style={{ width: 24 }} />
@@ -588,13 +589,13 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                 <Ionicons
                   name={selectedAgency?.id === agency.id ? 'radio-button-on' : 'radio-button-off'}
                   size={24}
-                  color={selectedAgency?.id === agency.id ? '#007AFF' : '#8E8E93'}
+                  color={selectedAgency?.id === agency.id ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary}
                 />
               </Card>
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="business-outline" size={64} color="#8E8E93" />
+              <Ionicons name="business-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="body" style={styles.emptyStateText}>No agencies available</Typography>
               <Typography variant="caption" style={styles.emptyStateSubtext}>Please contact support if you need assistance</Typography>
             </View>
@@ -609,11 +610,11 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={() => setShowSavedAddressModal(false)}>
-            <Ionicons name="close" size={24} color="#000" />
+            <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
           </TouchableOpacity>
           <Typography variant="h3" style={styles.modalTitle}>Select Saved Address</Typography>
           <TouchableOpacity onPress={() => navigation.navigate('SavedAddresses')}>
-            <Ionicons name="add" size={24} color="#007AFF" />
+            <Ionicons name="add" size={24} color={UI_CONFIG.colors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -645,12 +646,12 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                     </Typography>
                   )}
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#8E8E93" />
+                <Ionicons name="chevron-forward" size={20} color={UI_CONFIG.colors.textSecondary} />
               </Card>
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="location-outline" size={64} color="#8E8E93" />
+              <Ionicons name="location-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="body" style={styles.emptyStateText}>No saved addresses</Typography>
               <Typography variant="caption" style={styles.emptyStateSubtext}>Add your first address to get started</Typography>
               <TouchableOpacity
@@ -682,7 +683,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+          <Ionicons name="arrow-back" size={24} color={UI_CONFIG.colors.text} />
         </TouchableOpacity>
         <Typography variant="h2" style={styles.title}>Book Water Tanker</Typography>
       </View>
@@ -697,7 +698,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                 {selectedAgency ? selectedAgency.name : 'Choose tanker agency'}
               </Typography>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#8E8E93" />
+            <Ionicons name="chevron-forward" size={20} color={UI_CONFIG.colors.textSecondary} />
           </View>
         </Card>
       </View>
@@ -730,7 +731,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                 </Typography>
               )}
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#8E8E93" />
+            <Ionicons name="chevron-forward" size={20} color={UI_CONFIG.colors.textSecondary} />
           </View>
         </Card>
       </View>
@@ -749,7 +750,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                 <Ionicons 
                   name="remove" 
                   size={24} 
-                  color={quantity <= 1 ? "#C7C7CC" : "#007AFF"} 
+                  color={quantity <= 1 ? UI_CONFIG.colors.disabled : UI_CONFIG.colors.primary} 
                 />
               </TouchableOpacity>
               
@@ -768,7 +769,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
                 <Ionicons 
                   name="add" 
                   size={24} 
-                  color={quantity >= 20 ? "#C7C7CC" : "#007AFF"} 
+                  color={quantity >= 20 ? UI_CONFIG.colors.disabled : UI_CONFIG.colors.primary} 
                 />
               </TouchableOpacity>
             </View>
@@ -793,9 +794,9 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           style={styles.savedAddressButton}
           onPress={() => setShowSavedAddressModal(true)}
         >
-          <Ionicons name="location-outline" size={20} color="#007AFF" />
+          <Ionicons name="location-outline" size={20} color={UI_CONFIG.colors.primary} />
           <Typography variant="body" style={styles.savedAddressButtonText}>Select from Saved Addresses</Typography>
-          <Ionicons name="chevron-forward" size={16} color="#8E8E93" />
+              <Ionicons name="chevron-forward" size={16} color={UI_CONFIG.colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -956,31 +957,31 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   backButton: {
     marginRight: 16,
@@ -988,7 +989,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
   },
   section: {
     paddingHorizontal: 20,
@@ -997,7 +998,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 12,
   },
   selectionCard: {
@@ -1017,12 +1018,12 @@ const styles = StyleSheet.create({
   selectionLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   selectionSubtext: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   dateTimeContainer: {
     marginBottom: 8,
@@ -1037,12 +1038,12 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginBottom: 8,
   },
   dateTimeInput: {
     fontSize: 16,
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     paddingVertical: 12,
     flex: 1,
   },
@@ -1052,18 +1053,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   inputCardError: {
-    borderColor: '#FF3B30',
+    borderColor: UI_CONFIG.colors.error,
     borderWidth: 1,
   },
   errorText: {
     fontSize: 12,
-    color: '#FF3B30',
+    color: UI_CONFIG.colors.error,
     marginTop: 4,
     marginLeft: 4,
   },
   textArea: {
     fontSize: 16,
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     textAlignVertical: 'top',
   },
   priceCard: {
@@ -1077,35 +1078,35 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   priceValue: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
   },
   totalRow: {
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: UI_CONFIG.colors.border,
     marginTop: 8,
     paddingTop: 16,
   },
   totalLabel: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
   },
   totalValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
   },
   bookButton: {
     marginTop: 8,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1113,14 +1114,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
   },
   modalContent: {
     flex: 1,
@@ -1134,8 +1135,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   selectedTankerCard: {
-    backgroundColor: '#F0F8FF',
-    borderColor: '#007AFF',
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
+    borderColor: UI_CONFIG.colors.primary,
     borderWidth: 1,
   },
   tankerInfo: {
@@ -1144,12 +1145,12 @@ const styles = StyleSheet.create({
   tankerName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   tankerPrice: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   timeInputContainer: {
     flexDirection: 'row',
@@ -1166,13 +1167,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderWidth: 1.5,
-    borderColor: '#E1E5E9',
+    borderColor: UI_CONFIG.colors.border,
     minWidth: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 0,
       height: 1,
@@ -1182,9 +1183,9 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   timePeriodButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-    shadowColor: '#007AFF',
+    backgroundColor: UI_CONFIG.colors.primary,
+    borderColor: UI_CONFIG.colors.primary,
+    shadowColor: UI_CONFIG.colors.primary,
     shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
@@ -1192,11 +1193,11 @@ const styles = StyleSheet.create({
   timePeriodText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6B7280',
+    color: UI_CONFIG.colors.textSecondary,
     letterSpacing: 0.5,
   },
   timePeriodTextActive: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
     fontWeight: '700',
   },
   savedAddressButton: {
@@ -1205,16 +1206,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: UI_CONFIG.colors.border,
     marginTop: 8,
   },
   savedAddressButtonText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
     flex: 1,
     marginLeft: 8,
   },
@@ -1236,11 +1237,11 @@ const styles = StyleSheet.create({
   addressTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     flex: 1,
   },
   defaultBadge: {
-    backgroundColor: '#34C759',
+    backgroundColor: UI_CONFIG.colors.success,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
@@ -1249,16 +1250,16 @@ const styles = StyleSheet.create({
   defaultText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   addressDetails: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginBottom: 4,
   },
   landmark: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     fontStyle: 'italic',
   },
   emptyState: {
@@ -1270,26 +1271,26 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateSubtext: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
   },
   emptyStateButton: {
     paddingHorizontal: 32,
     paddingVertical: 12,
-    backgroundColor: '#007AFF',
+    backgroundColor: UI_CONFIG.colors.primary,
     borderRadius: 8,
   },
   emptyStateButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   quantityCard: {
     marginBottom: 8,
@@ -1304,15 +1305,15 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#007AFF',
+    borderColor: UI_CONFIG.colors.primary,
   },
   quantityButtonDisabled: {
-    backgroundColor: '#F2F2F7',
-    borderColor: '#C7C7CC',
+    backgroundColor: UI_CONFIG.colors.background,
+    borderColor: UI_CONFIG.colors.disabled,
     opacity: 0.5,
   },
   quantityDisplay: {
@@ -1324,12 +1325,12 @@ const styles = StyleSheet.create({
   quantityText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 2,
   },
   quantityLabel: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

@@ -4,6 +4,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
+import { UI_CONFIG } from '../../constants/config';
 import Typography from './Typography';
 
 interface LoadingSpinnerProps {
@@ -14,7 +15,7 @@ interface LoadingSpinnerProps {
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'large',
-  color = '#007AFF',
+  color = UI_CONFIG.colors.primary,
   text,
 }) => {
   return (
@@ -35,7 +36,7 @@ const styles = StyleSheet.create({
   text: {
     marginTop: 16,
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
   },
 });

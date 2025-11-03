@@ -130,7 +130,7 @@ const CustomerManagementScreen: React.FC = () => {
               )}
             </View>
             <View style={[styles.statusBadge, { 
-              backgroundColor: hasRecentActivity ? '#34C759' : '#8E8E93' 
+              backgroundColor: hasRecentActivity ? UI_CONFIG.colors.success : UI_CONFIG.colors.textSecondary 
             }]}>
               <Typography variant="caption" style={styles.statusText}>
                 {hasRecentActivity ? 'Active' : 'Inactive'}
@@ -140,25 +140,25 @@ const CustomerManagementScreen: React.FC = () => {
 
           <View style={styles.customerDetails}>
             <View style={styles.detailRow}>
-              <Ionicons name="receipt-outline" size={16} color="#8E8E93" />
+              <Ionicons name="receipt-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="caption" style={styles.detailText}>
                 {stats.totalBookings} total orders
               </Typography>
             </View>
             <View style={styles.detailRow}>
-              <Ionicons name="checkmark-circle-outline" size={16} color="#8E8E93" />
+              <Ionicons name="checkmark-circle-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="caption" style={styles.detailText}>
                 {stats.completedBookings} completed
               </Typography>
             </View>
             <View style={styles.detailRow}>
-              <Ionicons name="cash-outline" size={16} color="#8E8E93" />
+              <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="caption" style={styles.detailText}>
                 ₹{stats.totalSpent.toFixed(0)} spent
               </Typography>
             </View>
             <View style={styles.detailRow}>
-              <Ionicons name="location-outline" size={16} color="#8E8E93" />
+              <Ionicons name="location-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="caption" style={styles.detailText}>
                 {customer.savedAddresses?.length || 0} saved addresses
               </Typography>
@@ -170,7 +170,7 @@ const CustomerManagementScreen: React.FC = () => {
               style={styles.actionButton}
               onPress={() => handleCallCustomer(customer.phone)}
             >
-              <Ionicons name="call-outline" size={16} color="#007AFF" />
+              <Ionicons name="call-outline" size={16} color={UI_CONFIG.colors.primary} />
               <Typography variant="caption" style={styles.actionButtonText}>
                 Call
               </Typography>
@@ -202,7 +202,7 @@ const CustomerManagementScreen: React.FC = () => {
               style={styles.closeButton}
               onPress={() => setShowCustomerModal(false)}
             >
-              <Ionicons name="close" size={24} color="#000000" />
+              <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -406,13 +406,13 @@ const CustomerManagementScreen: React.FC = () => {
         {/* Search and Filter */}
         <View style={styles.filterSection}>
           <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={20} color="#8E8E93" />
+            <Ionicons name="search-outline" size={20} color={UI_CONFIG.colors.textSecondary} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search customers..."
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={UI_CONFIG.colors.textSecondary}
             />
           </View>
           
@@ -448,7 +448,7 @@ const CustomerManagementScreen: React.FC = () => {
           
           {filteredCustomers.length === 0 ? (
             <Card style={styles.emptyState}>
-              <Ionicons name="people-outline" size={48} color="#8E8E93" />
+              <Ionicons name="people-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="body" style={styles.emptyText}>
                 {searchQuery || filterStatus !== 'all' 
                   ? 'No customers found matching your criteria'
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
     paddingVertical: UI_CONFIG.spacing.md,
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   title: {
     fontSize: 24,
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterButtonTextActive: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   customersSection: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
     fontWeight: '600',
   },
   customerDetails: {
@@ -646,11 +646,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: UI_CONFIG.spacing.sm,
     paddingVertical: UI_CONFIG.spacing.xs,
     borderRadius: 6,
-    backgroundColor: '#F0F8FF',
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
   },
   actionButtonText: {
     fontSize: 12,
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
     fontWeight: '600',
     marginLeft: 4,
   },
@@ -675,7 +675,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   modalTitle: {
     fontSize: 24,
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: UI_CONFIG.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: UI_CONFIG.colors.background,
   },
   detailLabel: {
     fontSize: 16,
@@ -721,7 +721,7 @@ const styles = StyleSheet.create({
   addressItem: {
     paddingVertical: UI_CONFIG.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: UI_CONFIG.colors.background,
   },
   addressText: {
     fontSize: 14,
@@ -741,7 +741,7 @@ const styles = StyleSheet.create({
   orderItem: {
     paddingVertical: UI_CONFIG.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: UI_CONFIG.colors.background,
   },
   orderHeader: {
     flexDirection: 'row',
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
     marginTop: UI_CONFIG.spacing.lg,
   },
   callButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: UI_CONFIG.colors.primary,
   },
 });
 

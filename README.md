@@ -35,8 +35,7 @@ src/
 │   │   ├── OrdersScreen.tsx
 │   │   ├── AvailableOrdersScreen.tsx
 │   │   ├── ActiveOrderScreen.tsx
-│   │   ├── DriverEarningsScreen.tsx
-│   │   └── DriverProfileScreen.tsx
+│   │   └── DriverEarningsScreen.tsx
 │   └── admin/
 │       ├── AllBookingsScreen.tsx
 │       ├── DriverManagementScreen.tsx
@@ -82,7 +81,7 @@ src/
 - **Navigation**: React Navigation v6
 - **Maps**: React Native Maps
 - **Payment**: Cash on Delivery (COD) for MVP
-- **UI Design**: iOS-style design system with consistent colors and spacing
+- **UI Design**: iOS-style design system with centralized color configuration (UI_CONFIG)
 - **Icons**: Expo Vector Icons (Ionicons)
 
 ## Key Features
@@ -200,7 +199,7 @@ This MVP includes:
 - **Services**: Local storage, auth, booking, payment, and location services
 - **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner)
 - **Utils**: Distance calculation, pricing, validation utilities
-- **Configuration**: Comprehensive app configuration with constants and error messages
+- **Configuration**: Comprehensive app configuration with constants, error messages, and centralized UI_CONFIG color system
 
 ### 🔧 **Current Implementation Details:**
 - **Local Storage**: All data persisted using AsyncStorage

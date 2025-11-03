@@ -56,7 +56,7 @@ const Button: React.FC<ButtonProps> = ({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' || variant === 'secondary' ? '#090909' : '#007AFF'}
+          color={variant === 'primary' || variant === 'secondary' ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.primary}
           size="small"
         />
       ) : (
@@ -71,11 +71,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#e8e8e8',
+    backgroundColor: UI_CONFIG.colors.primary,
     borderWidth: 1,
-    borderColor: '#000000',
-    // Neumorphic shadow effect - approximating dual shadows
-    shadowColor: '#c5c5c5',
+    borderColor: UI_CONFIG.colors.primary,
+    shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 6,
       height: 6,
@@ -84,19 +83,19 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
   },
-  // Variants - keeping variant support but with neumorphic base
+  // Variants
   primary: {
-    backgroundColor: '#e8e8e8',
-    borderColor: '#000000',
+    backgroundColor: UI_CONFIG.colors.primary,
+    borderColor: UI_CONFIG.colors.primary,
   },
   secondary: {
-    backgroundColor: '#e8e8e8',
-    borderColor: '#000000',
+    backgroundColor: UI_CONFIG.colors.secondary,
+    borderColor: UI_CONFIG.colors.secondary,
   },
   outline: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: UI_CONFIG.colors.primary,
   },
   // Sizes
   small: {
@@ -113,8 +112,8 @@ const styles = StyleSheet.create({
   },
   // States
   disabled: {
-    backgroundColor: '#c5c5c5',
-    borderColor: '#000000',
+    backgroundColor: UI_CONFIG.colors.disabled,
+    borderColor: UI_CONFIG.colors.disabled,
     shadowOpacity: 0.3,
   },
   buttonPressed: {
@@ -132,13 +131,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   primaryText: {
-    color: '#090909',
+    color: UI_CONFIG.colors.textLight,
   },
   secondaryText: {
-    color: '#090909',
+    color: UI_CONFIG.colors.textLight,
   },
   outlineText: {
-    color: '#090909',
+    color: UI_CONFIG.colors.primary,
   },
   smallText: {
     fontSize: 18,
@@ -150,7 +149,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   disabledText: {
-    color: '#666666',
+    color: UI_CONFIG.colors.textSecondary,
   },
 });
 

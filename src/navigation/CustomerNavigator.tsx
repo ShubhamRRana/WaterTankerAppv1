@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import { UI_CONFIG } from '../constants/config';
 import CustomerHomeScreen from '../screens/customer/CustomerHomeScreen';
 import BookingScreen from '../screens/customer/BookingScreen';
 import OrderTrackingScreen from '../screens/customer/OrderTrackingScreen';
@@ -32,7 +33,7 @@ const CustomerTabs: React.FC = () => {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: '#007AFF',
+        tabBarActiveTintColor: UI_CONFIG.colors.primary,
         tabBarIcon: ({ color, size, focused }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
           if (route.name === 'Home') {

@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: UI_CONFIG.colors.surface,
     borderRadius: UI_CONFIG.borderRadius.lg,
-    shadowColor: '#000000',
+    shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 0,
       height: 2,

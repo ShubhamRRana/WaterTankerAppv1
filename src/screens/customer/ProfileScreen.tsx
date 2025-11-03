@@ -19,6 +19,7 @@ import { Typography, Button, Card, LoadingSpinner } from '../../components/commo
 import { useAuthStore } from '../../store/authStore';
 import { User } from '../../types';
 import { CustomerTabParamList, CustomerStackParamList } from '../../navigation/CustomerNavigator';
+import { UI_CONFIG } from '../../constants/config';
 
 const { width } = Dimensions.get('window');
 
@@ -224,7 +225,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 value={editForm.name}
                 onChangeText={(text) => setEditForm(prev => ({ ...prev, name: text }))}
                 placeholder="Enter your full name"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={UI_CONFIG.colors.textSecondary}
               />
             </View>
 
@@ -237,7 +238,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 value={editForm.phone}
                 onChangeText={(text) => setEditForm(prev => ({ ...prev, phone: text }))}
                 placeholder="Enter your phone number"
-                placeholderTextColor="#8E8E93"
+                placeholderTextColor={UI_CONFIG.colors.textSecondary}
                 keyboardType="phone-pad"
               />
             </View>
@@ -275,11 +276,11 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   contentContainer: {
     paddingBottom: 32,
@@ -292,7 +293,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
@@ -303,12 +304,12 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FF3B30',
+    color: UI_CONFIG.colors.error,
     marginBottom: 8,
   },
   errorText: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
   },
   profileCard: {
@@ -332,12 +333,12 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#007AFF',
+    backgroundColor: UI_CONFIG.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
     fontWeight: 'bold',
   },
   profileInfo: {
@@ -346,22 +347,22 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 23,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   userPhone: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginBottom: 2,
   },
   userEmail: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginBottom: 4,
   },
   memberSince: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   editButtonContainer: {
     flexDirection: 'row',
@@ -383,7 +384,7 @@ const styles = StyleSheet.create({
   editTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 20,
   },
   inputContainer: {
@@ -392,25 +393,25 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#D1D1D6',
+    borderColor: UI_CONFIG.colors.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: '#000000',
-    backgroundColor: '#FFFFFF',
+    color: UI_CONFIG.colors.text,
+    backgroundColor: UI_CONFIG.colors.surface,
   },
   disabledInput: {
-    backgroundColor: '#F2F2F7',
-    color: '#8E8E93',
+    backgroundColor: UI_CONFIG.colors.background,
+    color: UI_CONFIG.colors.textSecondary,
   },
   disabledNote: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginTop: 4,
   },
   pastOrdersContainer: {
@@ -418,14 +419,14 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   pastOrdersButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: UI_CONFIG.colors.primary,
   },
   logoutContainer: {
     margin: 16,
     marginTop: 0,
   },
   logoutButton: {
-    borderColor: '#FF3B30',
+    borderColor: UI_CONFIG.colors.error,
   },
   bottomSpacing: {
     height: 40,

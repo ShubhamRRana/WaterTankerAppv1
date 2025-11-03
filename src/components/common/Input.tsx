@@ -26,7 +26,7 @@ const Input: React.FC<InputProps> = ({
       {label && <Typography variant="body" style={styles.label}>{label}</Typography>}
       <TextInput
         style={[styles.input, error && styles.inputError, style]}
-        placeholderTextColor="#8E8E93"
+        placeholderTextColor={UI_CONFIG.colors.textSecondary}
         {...props}
       />
       {error && <Typography variant="caption" style={styles.errorText}>{error}</Typography>}
@@ -50,7 +50,8 @@ const styles = StyleSheet.create({
     padding: UI_CONFIG.spacing.md,
     fontSize: UI_CONFIG.fontSize.md,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: UI_CONFIG.colors.border,
+    color: UI_CONFIG.colors.text,
   },
   inputError: {
     borderColor: UI_CONFIG.colors.error,

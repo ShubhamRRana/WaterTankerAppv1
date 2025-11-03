@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, LoadingSpinner } from '../../components/common';
+import { UI_CONFIG } from '../../constants/config';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { Booking, DriverDashboardStats } from '../../types';
@@ -241,7 +242,7 @@ const DriverEarningsScreen: React.FC = () => {
              selectedPeriod === 'weekly' ? 'This Week\'s Earnings' : 
              'This Month\'s Earnings'}
           </Typography>
-          <Ionicons name="cash-outline" size={24} color="#D4AF37" />
+          <Ionicons name="cash-outline" size={24} color={UI_CONFIG.colors.warning} />
         </View>
         
         <Typography variant="h1" style={styles.earningsAmount}>
@@ -257,7 +258,7 @@ const DriverEarningsScreen: React.FC = () => {
         
         {completedOrders.length === 0 ? (
           <Card style={styles.emptyCard}>
-            <Ionicons name="receipt-outline" size={48} color="#8E8E93" />
+            <Ionicons name="receipt-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="body" style={styles.emptyText}>
               No completed orders for {selectedPeriod === 'daily' ? 'today' : 
               selectedPeriod === 'weekly' ? 'this week' : 'this month'}
@@ -310,18 +311,18 @@ const DriverEarningsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   loadingText: {
     marginTop: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   header: {
     padding: 24,
@@ -329,11 +330,11 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
   },
   headerTitle: {
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   headerSubtitle: {
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   periodSelector: {
     flexDirection: 'row',
@@ -345,22 +346,22 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: UI_CONFIG.colors.border,
     alignItems: 'center',
   },
   periodButtonActive: {
-    backgroundColor: '#D4AF37',
-    borderColor: '#D4AF37',
+    backgroundColor: UI_CONFIG.colors.warning,
+    borderColor: UI_CONFIG.colors.warning,
   },
   periodButtonText: {
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     fontWeight: '500',
   },
   periodButtonTextActive: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   earningsCard: {
     marginHorizontal: 24,
@@ -374,18 +375,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   earningsTitle: {
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     flex: 1,
   },
   earningsAmount: {
-    color: '#D4AF37',
+    color: UI_CONFIG.colors.accent,
   },
   historySection: {
     paddingHorizontal: 24,
     paddingBottom: 24,
   },
   historyTitle: {
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 16,
   },
   emptyCard: {
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
     marginTop: 12,
   },
@@ -411,15 +412,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   transactionCustomer: {
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     fontWeight: '600',
     marginBottom: 4,
   },
   transactionDate: {
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   transactionAmount: {
-    color: '#059669',
+    color: UI_CONFIG.colors.success,
     fontWeight: '600',
   },
   transactionDetails: {
@@ -430,11 +431,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   transactionDetailLabel: {
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginBottom: 4,
   },
   transactionDetailValue: {
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     fontWeight: '500',
   },
 });

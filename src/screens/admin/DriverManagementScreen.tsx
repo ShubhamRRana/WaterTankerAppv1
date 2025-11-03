@@ -18,8 +18,8 @@ import { useUserStore } from '../../store/userStore';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { Typography, Card, Button, LoadingSpinner, Input } from '../../components/common';
-import { User } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
+import { User } from '../../types';
 import { ValidationUtils } from '../../utils/validation';
 
 // AddDriverModal component moved outside to prevent re-creation on every render
@@ -76,7 +76,7 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
             disabled={isSubmitting}
             activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={24} color={isSubmitting ? "#8E8E93" : "#FF3B30"} />
+            <Ionicons name="trash-outline" size={24} color={isSubmitting ? UI_CONFIG.colors.textSecondary : UI_CONFIG.colors.error} />
           </TouchableOpacity>
         )}
       </View>
@@ -743,9 +743,9 @@ const DriverManagementScreen: React.FC = () => {
   });
 
   const getStatusColor = (driver: User) => {
-    if (driver.isApproved === true) return '#34C759';
-    if (driver.isApproved === false) return '#FF3B30';
-    return '#FF9500';
+    if (driver.isApproved === true) return UI_CONFIG.colors.success;
+    if (driver.isApproved === false) return UI_CONFIG.colors.error;
+    return UI_CONFIG.colors.warning;
   };
 
   const getStatusText = (driver: User) => {
@@ -782,31 +782,31 @@ const DriverManagementScreen: React.FC = () => {
             }}
             activeOpacity={0.7}
           >
-            <Ionicons name="pencil-outline" size={20} color="#34C759" />
+            <Ionicons name="pencil-outline" size={20} color={UI_CONFIG.colors.success} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.driverDetails}>
           <View style={styles.detailRow}>
-            <Ionicons name="card-outline" size={16} color="#8E8E93" />
+            <Ionicons name="card-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.detailText}>
               {driver.licenseNumber || 'Not provided'}
             </Typography>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons name="calendar-outline" size={16} color="#8E8E93" />
+            <Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.detailText}>
               {driver.licenseExpiry ? new Date(driver.licenseExpiry).toLocaleDateString() : 'Expiry not provided'}
             </Typography>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons name="call-outline" size={16} color="#8E8E93" />
+            <Ionicons name="call-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.detailText}>
               {driver.emergencyContactName ? `${driver.emergencyContactName} - ${driver.emergencyContactPhone}` : 'Emergency contact not provided'}
             </Typography>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons name="cash-outline" size={16} color="#8E8E93" />
+            <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.detailText}>
               ₹{driver.totalEarnings || 0} earned
             </Typography>
@@ -820,7 +820,7 @@ const DriverManagementScreen: React.FC = () => {
                 style={[styles.actionButton, styles.approveButton]}
                 onPress={() => handleApproveDriver(driver.uid)}
               >
-                <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                <Ionicons name="checkmark" size={16} color={UI_CONFIG.colors.textLight} />
                 <Typography variant="caption" style={styles.actionButtonText}>
                   Approve
                 </Typography>
@@ -829,7 +829,7 @@ const DriverManagementScreen: React.FC = () => {
                 style={[styles.actionButton, styles.rejectButton]}
                 onPress={() => handleRejectDriver(driver.uid)}
               >
-                <Ionicons name="close" size={16} color="#FFFFFF" />
+                <Ionicons name="close" size={16} color={UI_CONFIG.colors.textLight} />
                 <Typography variant="caption" style={styles.actionButtonText}>
                   Reject
                 </Typography>
@@ -860,7 +860,7 @@ const DriverManagementScreen: React.FC = () => {
               setShowDriverModal(false);
             }}
           >
-            <Ionicons name="close" size={24} color="#000000" />
+            <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -1003,13 +1003,13 @@ const DriverManagementScreen: React.FC = () => {
         {/* Search */}
         <View style={styles.filterSection}>
           <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={20} color="#8E8E93" />
+            <Ionicons name="search-outline" size={20} color={UI_CONFIG.colors.textSecondary} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search drivers..."
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor="#8E8E93"
+              placeholderTextColor={UI_CONFIG.colors.textSecondary}
             />
           </View>
         </View>
@@ -1022,7 +1022,7 @@ const DriverManagementScreen: React.FC = () => {
           
           {filteredDrivers.length === 0 ? (
             <Card style={styles.emptyState}>
-              <Ionicons name="car-outline" size={48} color="#8E8E93" />
+              <Ionicons name="car-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="body" style={styles.emptyText}>
                 {searchQuery 
                   ? 'No drivers found matching your criteria'
@@ -1044,7 +1044,7 @@ const DriverManagementScreen: React.FC = () => {
         onPress={() => setShowAddDriverModal(true)}
         activeOpacity={0.8}
       >
-        <Ionicons name="add" size={24} color="#FFFFFF" />
+        <Ionicons name="add" size={24} color={UI_CONFIG.colors.textLight} />
       </TouchableOpacity>
 
       <DriverModal />
@@ -1087,7 +1087,7 @@ const styles = StyleSheet.create({
     paddingVertical: UI_CONFIG.spacing.md,
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   title: {
     fontSize: 24,
@@ -1164,7 +1164,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterButtonTextActive: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   driversSection: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
@@ -1191,7 +1191,7 @@ const styles = StyleSheet.create({
   editButton: {
     padding: 8,
     borderWidth: 1.5,
-    borderColor: '#34C759',
+    borderColor: UI_CONFIG.colors.success,
     borderRadius: 8,
     backgroundColor: 'transparent',
   },
@@ -1215,7 +1215,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
     fontWeight: '600',
   },
   driverDetails: {
@@ -1257,14 +1257,14 @@ const styles = StyleSheet.create({
     marginLeft: UI_CONFIG.spacing.sm,
   },
   approveButton: {
-    backgroundColor: '#34C759',
+    backgroundColor: UI_CONFIG.colors.success,
   },
   rejectButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: UI_CONFIG.colors.error,
   },
   actionButtonText: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
     fontWeight: '600',
     marginLeft: 4,
   },
@@ -1290,7 +1290,7 @@ const styles = StyleSheet.create({
     paddingTop: UI_CONFIG.spacing.lg,
     paddingBottom: UI_CONFIG.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   modalTitle: {
     fontSize: 24,
@@ -1325,7 +1325,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: UI_CONFIG.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: UI_CONFIG.colors.background,
   },
   detailLabel: {
     fontSize: 16,
@@ -1343,11 +1343,11 @@ const styles = StyleSheet.create({
     marginTop: UI_CONFIG.spacing.lg,
   },
   approveButtonLarge: {
-    backgroundColor: '#34C759',
+    backgroundColor: UI_CONFIG.colors.success,
     marginBottom: UI_CONFIG.spacing.md,
   },
   rejectButtonLarge: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: UI_CONFIG.colors.error,
   },
   floatingAddButton: {
     position: 'absolute',
@@ -1360,7 +1360,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: '#000',
+    shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1381,7 +1381,7 @@ const styles = StyleSheet.create({
     borderColor: UI_CONFIG.colors.textSecondary,
   },
   deleteButton: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: UI_CONFIG.colors.error,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -1389,10 +1389,10 @@ const styles = StyleSheet.create({
     marginBottom: UI_CONFIG.spacing.md,
   },
   deleteButtonDisabled: {
-    backgroundColor: '#8E8E93',
+    backgroundColor: UI_CONFIG.colors.textSecondary,
   },
   deleteButtonText: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
     fontSize: 16,
     fontWeight: '600',
   },

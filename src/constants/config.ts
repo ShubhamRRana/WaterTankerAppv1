@@ -65,15 +65,28 @@ export const UI_CONFIG = {
     fallback: ['System'],
   },
   colors: {
-    primary: '#007AFF',
-    secondary: '#5856D6',
-    success: '#34C759',
-    warning: '#FF9500',
-    error: '#FF3B30',
-    background: '#F2F2F7',
-    surface: '#FFFFFF',
-    text: '#000000',
-    textSecondary: '#8E8E93',
+    // Brand colors
+    primary: '#3e5c76', // Medium Blue - for buttons, links, interactive elements (30%)
+    secondary: '#2d4a5f', // Darker Blue - for secondary actions
+    accent: '#fca311', // Gold - for highlights, emphasis (10%)
+    // Background and surfaces (60% - Light Cream)
+    background: '#f0ebd8', // Light Cream/Beige - main backgrounds
+    surface: '#FFFFFF', // White - for cards, inputs on cream background
+    surfaceLight: '#f8f6f0', // Lighter cream - for subtle backgrounds
+    // Text colors
+    text: '#0d1321', // Deep Navy - primary text on light backgrounds
+    textSecondary: '#5a5a5a', // Medium gray - secondary text
+    textLight: '#FFFFFF', // White text for dark backgrounds
+    // Border colors
+    border: '#d4c9b0', // Light beige border
+    borderLight: '#e8e0d0', // Lighter border
+    // Status colors (adjusted to work with new palette)
+    success: '#2d8659', // Green - adjusted for cream background
+    warning: '#d68910', // Orange - adjusted for cream background
+    error: '#c0392b', // Red - adjusted for cream background
+    // Additional utility colors
+    disabled: '#b0b0b0', // Gray for disabled states
+    shadow: '#d4c9b0', // Shadow color for cream backgrounds
   },
   spacing: {
     xs: 4,

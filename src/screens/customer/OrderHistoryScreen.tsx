@@ -21,6 +21,7 @@ import { Typography } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
 import { CustomerTabParamList, CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
+import { UI_CONFIG } from '../../constants/config';
 
 type OrderHistoryScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<CustomerTabParamList, 'Orders'>,
@@ -145,12 +146,12 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
 
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {
-      case 'pending': return '#FF9500';
-      case 'accepted': return '#007AFF';
-      case 'in_transit': return '#5856D6';
-      case 'delivered': return '#34C759';
-      case 'cancelled': return '#FF3B30';
-      default: return '#8E8E93';
+      case 'pending': return UI_CONFIG.colors.warning;
+      case 'accepted': return UI_CONFIG.colors.primary;
+      case 'in_transit': return UI_CONFIG.colors.secondary;
+      case 'delivered': return UI_CONFIG.colors.success;
+      case 'cancelled': return UI_CONFIG.colors.error;
+      default: return UI_CONFIG.colors.textSecondary;
     }
   };
 
@@ -223,7 +224,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={20} color="#8E8E93" />
+          <Ionicons name="search" size={20} color={UI_CONFIG.colors.textSecondary} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search orders..."
@@ -232,7 +233,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#8E8E93" />
+              <Ionicons name="close-circle" size={20} color={UI_CONFIG.colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -257,7 +258,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
               <Ionicons 
                 name={filter.icon as any} 
                 size={16} 
-                color={selectedFilter === filter.key ? '#FFFFFF' : '#007AFF'} 
+                color={selectedFilter === filter.key ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.primary} 
               />
               <Typography variant="caption" style={[
                 styles.filterButtonText,
@@ -291,7 +292,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       >
         {filteredBookings.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={64} color="#8E8E93" />
+            <Ionicons name="receipt-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="h3" style={styles.emptyStateText}>
               {searchQuery || selectedFilter !== 'all' ? 'No matching orders' : 'No orders yet'}
             </Typography>
@@ -318,7 +319,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                   <Ionicons 
                     name={getStatusIcon(booking.status)} 
                     size={16} 
-                    color="#FFFFFF" 
+                    color={UI_CONFIG.colors.textLight} 
                     style={styles.statusIcon}
                   />
                   <Typography variant="caption" style={styles.statusText}>{getStatusText(booking.status)}</Typography>
@@ -327,24 +328,24 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
 
               <View style={styles.orderDetails}>
                 <View style={styles.detailRow}>
-                  <Ionicons name="water" size={16} color="#007AFF" />
+                  <Ionicons name="water" size={16} color={UI_CONFIG.colors.primary} />
                   <Typography variant="body" style={styles.detailText}>
                     {booking.tankerSize}L Tanker{booking.quantity && booking.quantity > 1 ? ` x ${booking.quantity}` : ''}
                   </Typography>
                 </View>
                 <View style={styles.detailRow}>
-                  <Ionicons name="location" size={16} color="#34C759" />
+                  <Ionicons name="location" size={16} color={UI_CONFIG.colors.success} />
                   <Typography variant="body" style={styles.detailText}>
                     {booking.deliveryAddress.street}, {booking.deliveryAddress.city}
                   </Typography>
                 </View>
                 <View style={styles.detailRow}>
-                  <Ionicons name="cash" size={16} color="#FF9500" />
+                  <Ionicons name="cash" size={16} color={UI_CONFIG.colors.warning} />
                   <Typography variant="body" style={styles.detailText}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
                 </View>
                 {booking.status === 'delivered' && booking.deliveredAt && (
                   <View style={styles.detailRow}>
-                    <Ionicons name="checkmark-circle" size={16} color="#34C759" />
+                    <Ionicons name="checkmark-circle" size={16} color={UI_CONFIG.colors.success} />
                     <Typography variant="body" style={styles.detailText}>
                       Delivered: {formatDate(booking.deliveredAt)}
                     </Typography>
@@ -354,7 +355,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
 
               {booking.driverName && (
                 <View style={styles.driverInfo}>
-                  <Ionicons name="person" size={16} color="#5856D6" />
+                  <Ionicons name="person" size={16} color={UI_CONFIG.colors.secondary} />
                   <Typography variant="body" style={styles.driverText}>Driver: {booking.driverName}</Typography>
                   <Typography variant="caption" style={styles.driverPhone}>{booking.driverPhone}</Typography>
                 </View>
@@ -366,7 +367,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                     style={[styles.actionButton, styles.cancelButton]}
                     onPress={() => handleCancelBooking(booking)}
                   >
-                    <Ionicons name="close-outline" size={16} color="#FF3B30" />
+                    <Ionicons name="close-outline" size={16} color={UI_CONFIG.colors.error} />
                     <Typography variant="caption" style={[styles.actionText, styles.cancelText]}>Cancel</Typography>
                   </TouchableOpacity>
                 </View>
@@ -383,51 +384,51 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   searchContainer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -435,13 +436,13 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginLeft: 12,
   },
   filterSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
     minHeight: 60,
   },
   filterContainer: {
@@ -454,26 +455,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: UI_CONFIG.colors.border,
     marginRight: 12,
   },
   filterButtonActive: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: UI_CONFIG.colors.primary,
+    borderColor: UI_CONFIG.colors.primary,
   },
   filterButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
     marginLeft: 6,
   },
   filterButtonTextActive: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   countBadge: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: UI_CONFIG.colors.border,
     borderRadius: 10,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -487,10 +488,10 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   countTextActive: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   ordersContainer: {
     flex: 1,
@@ -506,13 +507,13 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateSubtext: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
   },
   orderCard: {
@@ -531,12 +532,12 @@ const styles = StyleSheet.create({
   orderId: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   orderDate: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -551,7 +552,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   orderDetails: {
     marginBottom: 12,
@@ -563,7 +564,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 14,
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginLeft: 8,
     flex: 1,
   },
@@ -573,17 +574,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: UI_CONFIG.colors.border,
   },
   driverText: {
     fontSize: 14,
-    color: '#5856D6',
+    color: UI_CONFIG.colors.secondary,
     marginLeft: 8,
     fontWeight: '500',
   },
   driverPhone: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginLeft: 8,
   },
   orderActions: {
@@ -592,27 +593,27 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: UI_CONFIG.colors.border,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     borderRadius: 16,
   },
   cancelButton: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
   },
   actionText: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
     marginLeft: 4,
   },
   cancelText: {
-    color: '#FF3B30',
+    color: UI_CONFIG.colors.error,
   },
 });
 

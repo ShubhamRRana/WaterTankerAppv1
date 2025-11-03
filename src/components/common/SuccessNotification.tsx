@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { UI_CONFIG } from '../../constants/config';
 import Typography from './Typography';
 
 interface SuccessNotificationProps {
@@ -36,7 +37,7 @@ const SuccessNotification: React.FC<SuccessNotificationProps> = ({
           <View style={styles.success}>
             <View style={styles.flex}>
               <View style={styles.flexShrink0}>
-                <Ionicons name="checkmark-circle" size={20} color="#4ADE80" />
+                <Ionicons name="checkmark-circle" size={20} color={UI_CONFIG.colors.success} />
               </View>
               <View style={styles.successPromptWrap}>
                 <Typography variant="h3" style={styles.successPromptHeading}>
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   success: {
     padding: 16,
     borderRadius: 6,
-    backgroundColor: 'rgb(240, 253, 244)',
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
   },
   successPromptWrap: {
     marginLeft: 12,
@@ -114,13 +115,13 @@ const styles = StyleSheet.create({
   },
   successPromptHeading: {
     fontWeight: 'bold',
-    color: 'rgb(22, 101, 52)',
+    color: UI_CONFIG.colors.success,
     fontSize: 16,
     marginBottom: 0,
   },
   successPromptPrompt: {
     marginTop: 8,
-    color: 'rgb(21, 128, 61)',
+    color: UI_CONFIG.colors.success,
     fontSize: 14,
     lineHeight: 20,
   },
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     paddingLeft: 8,
     paddingRight: 8,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderRadius: 6,
     borderWidth: 0,
     alignItems: 'center',
@@ -148,7 +149,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   successButtonMainText: {
-    color: 'rgb(22, 101, 52)',
+    color: UI_CONFIG.colors.success,
     fontSize: 14,
     lineHeight: 20,
     fontWeight: 'bold',
@@ -159,12 +160,12 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
     paddingRight: 8,
     marginLeft: 12,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderRadius: 6,
     borderWidth: 0,
   },
   successButtonSecondaryText: {
-    color: '#065F46',
+    color: UI_CONFIG.colors.success,
     fontSize: 14,
     lineHeight: 20,
   },

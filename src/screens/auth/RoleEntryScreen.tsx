@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Typography } from '../../components/common';
+import { UI_CONFIG } from '../../constants/config';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../types';
 
@@ -75,11 +76,11 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -93,34 +94,34 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: '#4B5563',
+    color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
   },
   roleContainer: {
     marginBottom: 32,
   },
   roleCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
+    borderColor: UI_CONFIG.colors.border,
+    shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
   },
   roleCardSelected: {
-    borderColor: '#D4AF37',
-    backgroundColor: '#FFF8E6',
+    borderColor: UI_CONFIG.colors.accent,
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
   },
   roleHeader: {
     flexDirection: 'row',
@@ -136,28 +137,28 @@ const styles = StyleSheet.create({
   roleTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   roleTitleSelected: {
-    color: '#D4AF37',
+    color: UI_CONFIG.colors.accent,
   },
   roleDescription: {
     fontSize: 14,
-    color: '#6B7280',
+    color: UI_CONFIG.colors.textSecondary,
   },
   roleDescriptionSelected: {
-    color: '#1E3A8A',
+    color: UI_CONFIG.colors.primary,
   },
   button: {
-    backgroundColor: '#e8e8e8',
+    backgroundColor: UI_CONFIG.colors.primary,
     borderRadius: 8,
     paddingHorizontal: 27,
     paddingVertical: 11,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#000000',
-    shadowColor: '#c5c5c5',
+    borderColor: UI_CONFIG.colors.primary,
+    shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 6,
       height: 6,
@@ -167,8 +168,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   buttonDisabled: {
-    backgroundColor: '#c5c5c5',
-    borderColor: '#000000',
+    backgroundColor: UI_CONFIG.colors.disabled,
+    borderColor: UI_CONFIG.colors.disabled,
     shadowOpacity: 0.3,
   },
   buttonPressed: {
@@ -181,7 +182,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonText: {
-    color: '#090909',
+    color: UI_CONFIG.colors.textLight,
     fontSize: 18,
     fontWeight: '600',
   },

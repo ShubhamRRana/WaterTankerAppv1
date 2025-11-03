@@ -18,6 +18,7 @@ import { Typography } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
+import { UI_CONFIG } from '../../constants/config';
 
 const { width } = Dimensions.get('window');
 
@@ -89,12 +90,12 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
 
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {
-      case 'pending': return '#FF9500';
-      case 'accepted': return '#007AFF';
-      case 'in_transit': return '#5856D6';
-      case 'delivered': return '#34C759';
-      case 'cancelled': return '#FF3B30';
-      default: return '#8E8E93';
+      case 'pending': return UI_CONFIG.colors.warning;
+      case 'accepted': return UI_CONFIG.colors.primary;
+      case 'in_transit': return UI_CONFIG.colors.secondary;
+      case 'delivered': return UI_CONFIG.colors.success;
+      case 'cancelled': return UI_CONFIG.colors.error;
+      default: return UI_CONFIG.colors.textSecondary;
     }
   };
 
@@ -219,7 +220,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+            <Ionicons name="arrow-back" size={24} color={UI_CONFIG.colors.text} />
         </TouchableOpacity>
         <Typography variant="h3" style={styles.title}>Order Details</Typography>
         <View style={{ width: 24 }} />
@@ -230,7 +231,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
         <Card style={styles.statusCard}>
           <View style={styles.statusHeader}>
             <View style={[styles.statusIconContainer, { backgroundColor: getStatusColor(trackingStatus) }]}>
-              <Ionicons name={getStatusIcon(trackingStatus)} size={32} color="#FFFFFF" />
+              <Ionicons name={getStatusIcon(trackingStatus)} size={32} color={UI_CONFIG.colors.textLight} />
             </View>
             <View style={styles.statusInfo}>
               <Typography variant="h3" style={styles.statusTitle}>{getStatusText(trackingStatus)}</Typography>
@@ -240,7 +241,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
           
           {estimatedDeliveryTime && trackingStatus === 'in_transit' && (
             <View style={styles.estimatedTime}>
-              <Ionicons name="time-outline" size={16} color="#007AFF" />
+              <Ionicons name="time-outline" size={16} color={UI_CONFIG.colors.primary} />
               <Typography variant="body" style={styles.estimatedTimeText}>
                 Estimated delivery: {formatTime(estimatedDeliveryTime)}
               </Typography>
@@ -297,7 +298,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
         <Typography variant="h3" style={styles.sectionTitle}>Delivery Address</Typography>
         <Card style={styles.addressCard}>
           <View style={styles.addressHeader}>
-            <Ionicons name="location" size={20} color="#34C759" />
+            <Ionicons name="location" size={20} color={UI_CONFIG.colors.success} />
             <Typography variant="body" style={styles.addressTitle}>Delivery Location</Typography>
           </View>
           <Typography variant="body" style={styles.addressText}>{booking.deliveryAddress.street}</Typography>
@@ -317,20 +318,20 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
           <Card style={styles.driverCard}>
             <View style={styles.driverHeader}>
               <View style={styles.driverAvatar}>
-                <Ionicons name="person" size={24} color="#5856D6" />
+                <Ionicons name="person" size={24} color={UI_CONFIG.colors.secondary} />
               </View>
               <View style={styles.driverInfo}>
                 <Typography variant="body" style={styles.driverName}>{booking.driverName}</Typography>
                 <Typography variant="caption" style={styles.driverPhone}>{booking.driverPhone}</Typography>
               </View>
               <TouchableOpacity style={styles.callButton} onPress={handleCallDriver}>
-                <Ionicons name="call" size={20} color="#34C759" />
+                <Ionicons name="call" size={20} color={UI_CONFIG.colors.success} />
               </TouchableOpacity>
             </View>
             
             {driverLocation && (
               <View style={styles.locationInfo}>
-                <Ionicons name="navigate" size={16} color="#007AFF" />
+                <Ionicons name="navigate" size={16} color={UI_CONFIG.colors.primary} />
                 <Typography variant="caption" style={styles.locationText}>Driver is on the way</Typography>
               </View>
             )}
@@ -343,7 +344,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
         <View style={styles.actionsContainer}>
           {booking.canCancel && trackingStatus === 'pending' && (
             <TouchableOpacity style={styles.cancelButton} onPress={handleCancelOrder}>
-              <Ionicons name="close-outline" size={20} color="#FF3B30" />
+              <Ionicons name="close-outline" size={20} color={UI_CONFIG.colors.error} />
               <Typography variant="body" style={styles.cancelButtonText}>Cancel Order</Typography>
             </TouchableOpacity>
           )}
@@ -357,22 +358,22 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
@@ -380,9 +381,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   backButton: {
     marginRight: 16,
@@ -390,7 +391,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
   },
   statusSection: {
     paddingHorizontal: 20,
@@ -418,23 +419,23 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   statusDescription: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   estimatedTime: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: UI_CONFIG.colors.border,
   },
   estimatedTimeText: {
     fontSize: 16,
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
     marginLeft: 8,
     fontWeight: '500',
   },
@@ -445,7 +446,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 12,
   },
   detailsCard: {
@@ -459,12 +460,12 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   detailValue: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
   },
   addressCard: {
     padding: 16,
@@ -477,17 +478,17 @@ const styles = StyleSheet.create({
   addressTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginLeft: 8,
   },
   addressText: {
     fontSize: 16,
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   landmarkText: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     fontStyle: 'italic',
   },
   driverCard: {
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -513,16 +514,16 @@ const styles = StyleSheet.create({
   driverName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     marginBottom: 4,
   },
   driverPhone: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   callButton: {
     padding: 12,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     borderRadius: 24,
   },
   locationInfo: {
@@ -530,11 +531,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: UI_CONFIG.colors.border,
   },
   locationText: {
     fontSize: 14,
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
     marginLeft: 8,
     fontWeight: '500',
   },
@@ -549,28 +550,28 @@ const styles = StyleSheet.create({
   },
   priceLabel: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   priceValue: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
   },
   totalRow: {
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: UI_CONFIG.colors.border,
     marginTop: 8,
     paddingTop: 16,
   },
   totalLabel: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
   },
   totalValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
   },
   actionsContainer: {
     flexDirection: 'row',
@@ -582,15 +583,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    backgroundColor: '#FFEBEE',
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#FF3B30',
+    borderColor: UI_CONFIG.colors.error,
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FF3B30',
+    color: UI_CONFIG.colors.error,
     marginLeft: 8,
   },
 });

@@ -113,12 +113,12 @@ const AllBookingsScreen: React.FC = () => {
 
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {
-      case 'pending': return '#FF9500';
-      case 'accepted': return '#007AFF';
-      case 'in_transit': return '#5856D6';
-      case 'delivered': return '#34C759';
-      case 'cancelled': return '#FF3B30';
-      default: return '#8E8E93';
+      case 'pending': return UI_CONFIG.colors.warning;
+      case 'accepted': return UI_CONFIG.colors.primary;
+      case 'in_transit': return UI_CONFIG.colors.secondary;
+      case 'delivered': return UI_CONFIG.colors.success;
+      case 'cancelled': return UI_CONFIG.colors.error;
+      default: return UI_CONFIG.colors.textSecondary;
     }
   };
 
@@ -169,7 +169,7 @@ const AllBookingsScreen: React.FC = () => {
             <Ionicons 
               name={getStatusIcon(booking.status) as any} 
               size={16} 
-              color="#FFFFFF" 
+              color={UI_CONFIG.colors.textLight} 
             />
             <Typography variant="caption" style={styles.statusText}>
               {booking.status.replace('_', ' ').toUpperCase()}
@@ -179,28 +179,28 @@ const AllBookingsScreen: React.FC = () => {
 
         <View style={styles.bookingDetails}>
           <View style={styles.detailRow}>
-            <Ionicons name="water-outline" size={16} color="#8E8E93" />
+            <Ionicons name="water-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="body" style={styles.detailText}>
               {booking.tankerSize}L Tanker{booking.quantity && booking.quantity > 1 ? ` x ${booking.quantity}` : ''}
             </Typography>
           </View>
           
           <View style={styles.detailRow}>
-            <Ionicons name="location-outline" size={16} color="#8E8E93" />
+            <Ionicons name="location-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="body" style={styles.detailText}>
               {booking.deliveryAddress.street}
             </Typography>
           </View>
           
           <View style={styles.detailRow}>
-            <Ionicons name="cash-outline" size={16} color="#8E8E93" />
+            <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="body" style={styles.detailText}>
               ₹{booking.totalPrice}
             </Typography>
           </View>
           
           <View style={styles.detailRow}>
-            <Ionicons name="calendar-outline" size={16} color="#8E8E93" />
+            <Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="body" style={styles.detailText}>
               {new Date(booking.createdAt).toLocaleDateString('en-IN', {
                 day: '2-digit',
@@ -213,7 +213,7 @@ const AllBookingsScreen: React.FC = () => {
           </View>
           {booking.status === 'delivered' && booking.deliveredAt && (
             <View style={styles.detailRow}>
-              <Ionicons name="checkmark-circle" size={16} color="#34C759" />
+              <Ionicons name="checkmark-circle" size={16} color={UI_CONFIG.colors.success} />
               <Typography variant="body" style={styles.detailText}>
                 Delivered: {new Date(booking.deliveredAt).toLocaleDateString('en-IN', {
                   day: '2-digit',
@@ -249,7 +249,7 @@ const AllBookingsScreen: React.FC = () => {
       <Ionicons 
         name={filter.icon as any} 
         size={16} 
-        color={statusFilter === filter.key ? '#FFFFFF' : '#007AFF'} 
+        color={statusFilter === filter.key ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.primary} 
       />
       <Typography 
         variant="caption" 
@@ -289,7 +289,7 @@ const AllBookingsScreen: React.FC = () => {
             onPress={() => setShowBookingModal(false)}
             style={styles.closeButton}
           >
-            <Ionicons name="close" size={24} color="#8E8E93" />
+            <Ionicons name="close" size={24} color={UI_CONFIG.colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -421,7 +421,7 @@ const AllBookingsScreen: React.FC = () => {
             onPress={() => setShowStatusModal(false)}
             style={styles.closeButton}
           >
-            <Ionicons name="close" size={24} color="#8E8E93" />
+            <Ionicons name="close" size={24} color={UI_CONFIG.colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -433,7 +433,7 @@ const AllBookingsScreen: React.FC = () => {
               onPress={() => selectedBooking && handleStatusUpdate(selectedBooking.id, status)}
             >
               <View style={[styles.statusIcon, { backgroundColor: getStatusColor(status) }]}>
-                <Ionicons name={getStatusIcon(status) as any} size={20} color="#FFFFFF" />
+                <Ionicons name={getStatusIcon(status) as any} size={20} color={UI_CONFIG.colors.textLight} />
               </View>
               <Typography variant="body" style={styles.statusOptionText}>
                 {status.replace('_', ' ').toUpperCase()}
@@ -468,17 +468,17 @@ const AllBookingsScreen: React.FC = () => {
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Ionicons name="search-outline" size={20} color="#8E8E93" />
+            <Ionicons name="search-outline" size={20} color={UI_CONFIG.colors.textSecondary} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search bookings..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#8E8E93"
+            placeholderTextColor={UI_CONFIG.colors.textSecondary}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#8E8E93" />
+              <Ionicons name="close-circle" size={20} color={UI_CONFIG.colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -508,7 +508,7 @@ const AllBookingsScreen: React.FC = () => {
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={64} color="#8E8E93" />
+            <Ionicons name="receipt-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="h3" style={styles.emptyTitle}>
               {searchQuery || statusFilter !== 'all' ? 'No matching bookings' : 'No bookings yet'}
             </Typography>
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     paddingVertical: UI_CONFIG.spacing.md,
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   title: {
     fontSize: 24,
@@ -555,12 +555,12 @@ const styles = StyleSheet.create({
     paddingVertical: UI_CONFIG.spacing.md,
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     borderRadius: 12,
     paddingHorizontal: UI_CONFIG.spacing.md,
     paddingVertical: UI_CONFIG.spacing.sm,
@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
   filterSection: {
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
     minHeight: 60,
   },
   filterContainer: {
@@ -587,9 +587,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: UI_CONFIG.spacing.md,
     paddingVertical: UI_CONFIG.spacing.sm,
     borderRadius: 20,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: UI_CONFIG.colors.border,
     marginRight: UI_CONFIG.spacing.sm,
   },
   filterButtonActive: {
@@ -603,10 +603,10 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   filterButtonTextActive: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   countBadge: {
-    backgroundColor: '#E5E5EA',
+    backgroundColor: UI_CONFIG.colors.border,
     borderRadius: 10,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -620,10 +620,10 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   countTextActive: {
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   bookingsList: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
@@ -663,7 +663,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
     marginLeft: 4,
   },
   bookingDetails: {
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
   driverInfo: {
     paddingTop: UI_CONFIG.spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: '#F2F2F7',
+    borderTopColor: UI_CONFIG.colors.background,
   },
   driverLabel: {
     fontSize: 12,
@@ -717,7 +717,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   modalTitle: {
     fontSize: 20,
@@ -783,7 +783,7 @@ const styles = StyleSheet.create({
     paddingVertical: UI_CONFIG.spacing.md,
     paddingHorizontal: UI_CONFIG.spacing.md,
     borderRadius: 12,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     marginBottom: UI_CONFIG.spacing.sm,
   },
   statusIcon: {

@@ -18,6 +18,7 @@ import { Typography } from '../../components/common';
 import { Address } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { LocalStorageService } from '../../services/localStorage';
+import { UI_CONFIG } from '../../constants/config';
 
 type SavedAddressesScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'SavedAddresses'>;
 
@@ -196,7 +197,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
       <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+            <Ionicons name="arrow-back" size={24} color={UI_CONFIG.colors.text} />
         </TouchableOpacity>
         <Typography variant="h3" style={styles.title}>Saved Addresses</Typography>
         <View style={{ width: 24 }} />
@@ -209,7 +210,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
             <View style={styles.editModeHeader}>
               <Typography variant="caption" style={styles.editModeText}>Editing Address</Typography>
               <TouchableOpacity onPress={handleCancelEdit} style={styles.cancelButton}>
-                <Ionicons name="close" size={20} color="#FF3B30" />
+                <Ionicons name="close" size={20} color={UI_CONFIG.colors.error} />
                 <Typography variant="caption" style={styles.cancelButtonText}>Cancel</Typography>
               </TouchableOpacity>
             </View>
@@ -231,11 +232,11 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
               <Ionicons 
                 name={editingAddress ? "checkmark" : "add"} 
                 size={20} 
-                color={newAddressText.trim() ? "#007AFF" : "#8E8E93"} 
+                color={newAddressText.trim() ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary} 
               />
               <Typography variant="body" style={[
                 styles.addButtonText,
-                { color: newAddressText.trim() ? "#007AFF" : "#8E8E93" }
+                { color: newAddressText.trim() ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary }
               ]}>
                 {editingAddress ? 'Update' : 'Add'}
               </Typography>
@@ -247,7 +248,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
       <ScrollView style={styles.content}>
         {addresses.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="location-outline" size={64} color="#8E8E93" />
+            <Ionicons name="location-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="h3" style={styles.emptyStateText}>No saved addresses</Typography>
             <Typography variant="body" style={styles.emptyStateSubtext}>Add your first address using the input above</Typography>
           </View>
@@ -283,13 +284,13 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
                       style={styles.actionButton}
                       onPress={() => handleEditAddress(address)}
                     >
-                      <Ionicons name="create-outline" size={20} color="#007AFF" />
+                      <Ionicons name="create-outline" size={20} color={UI_CONFIG.colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.actionButton}
                       onPress={() => handleDeleteAddress(address.id!)}
                     >
-                      <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+                      <Ionicons name="trash-outline" size={20} color={UI_CONFIG.colors.error} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -299,7 +300,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
                     style={styles.setDefaultButton}
                     onPress={() => handleSetDefault(address.id!)}
                   >
-                    <Ionicons name="star-outline" size={16} color="#FF9500" />
+                    <Ionicons name="star-outline" size={16} color={UI_CONFIG.colors.warning} />
                     <Typography variant="caption" style={styles.setDefaultText}>Set as Default</Typography>
                   </TouchableOpacity>
                 )}
@@ -316,22 +317,22 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
@@ -339,9 +340,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   backButton: {
     marginRight: 16,
@@ -349,15 +350,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     flex: 1,
   },
   addAddressContainer: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   inputRow: {
     flexDirection: 'row',
@@ -373,12 +374,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   editModeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#007AFF',
+    color: UI_CONFIG.colors.primary,
   },
   cancelButton: {
     flexDirection: 'row',
@@ -387,18 +388,18 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#FF3B30',
+    color: UI_CONFIG.colors.error,
     marginLeft: 4,
   },
   addressInput: {
     fontSize: 16,
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: UI_CONFIG.colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: UI_CONFIG.colors.surface,
     minHeight: 60,
     textAlignVertical: 'top',
     flex: 1,
@@ -410,7 +411,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     borderRadius: 8,
     minWidth: 60,
   },
@@ -433,13 +434,13 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateSubtext: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -469,11 +470,11 @@ const styles = StyleSheet.create({
   addressTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000000',
+    color: UI_CONFIG.colors.text,
     flex: 1,
   },
   defaultBadge: {
-    backgroundColor: '#34C759',
+    backgroundColor: UI_CONFIG.colors.success,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
@@ -482,16 +483,16 @@ const styles = StyleSheet.create({
   defaultText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: UI_CONFIG.colors.textLight,
   },
   addressDetails: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     marginBottom: 4,
   },
   landmark: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: UI_CONFIG.colors.textSecondary,
     fontStyle: 'italic',
   },
   addressActions: {
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: UI_CONFIG.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -513,12 +514,12 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+    borderTopColor: UI_CONFIG.colors.border,
   },
   setDefaultText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#FF9500',
+    color: UI_CONFIG.colors.warning,
     marginLeft: 4,
   },
 });
