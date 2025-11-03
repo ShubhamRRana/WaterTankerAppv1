@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
   Dimensions,
-  RefreshControl
+  RefreshControl,
+  Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, LoadingSpinner } from '../../components/common';
@@ -27,6 +28,11 @@ const DriverEarningsScreen: React.FC = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const [refreshing, setRefreshing] = useState(false);
   const [earningsStats, setEarningsStats] = useState<DriverDashboardStats | null>(null);
+  
+  // Animation values for glass glider
+  const periodGliderAnim = useRef(new Animated.Value(0)).current;
+  const [periodOptionWidth, setPeriodOptionWidth] = useState(0);
+  const isInitialRender = useRef(true);
 
   const periods: EarningsPeriod[] = [
     { label: 'Today', value: 'daily' },
@@ -39,6 +45,32 @@ const DriverEarningsScreen: React.FC = () => {
       loadDriverData();
     }
   }, [user?.uid, selectedPeriod]);
+
+  // Animate glider when selectedPeriod changes
+  useEffect(() => {
+    if (periodOptionWidth > 0) {
+      let periodIndex = 0;
+      if (selectedPeriod === 'daily') periodIndex = 0;
+      else if (selectedPeriod === 'weekly') periodIndex = 1;
+      else if (selectedPeriod === 'monthly') periodIndex = 2;
+      
+      const targetValue = periodIndex * periodOptionWidth;
+      
+      if (isInitialRender.current) {
+        // Initial render, set position immediately without animation
+        periodGliderAnim.setValue(targetValue);
+        isInitialRender.current = false;
+      } else {
+        // Animate to new position
+        Animated.spring(periodGliderAnim, {
+          toValue: targetValue,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }).start();
+      }
+    }
+  }, [selectedPeriod, periodOptionWidth]);
 
   const loadDriverData = async () => {
     if (!user?.uid) return;
@@ -212,26 +244,45 @@ const DriverEarningsScreen: React.FC = () => {
 
       {/* Period Selector */}
       <View style={styles.periodSelector}>
-        {periods.map((period) => (
-          <TouchableOpacity
-            key={period.value}
-            style={[
-              styles.periodButton,
-              selectedPeriod === period.value && styles.periodButtonActive
-            ]}
-            onPress={() => setSelectedPeriod(period.value)}
-          >
-            <Typography 
-              variant="body" 
-              style={[
-                styles.periodButtonText,
-                selectedPeriod === period.value && styles.periodButtonTextActive
-              ]}
+        <View style={styles.glassRadioGroup}>
+          {periods.map((period, index) => (
+            <TouchableOpacity
+              key={period.value}
+              style={styles.glassRadioOption}
+              onPress={() => setSelectedPeriod(period.value)}
+              activeOpacity={0.8}
+              onLayout={(e) => {
+                if (index === 0 && periodOptionWidth === 0) {
+                  const width = e.nativeEvent.layout.width;
+                  setPeriodOptionWidth(width);
+                }
+              }}
             >
-              {period.label}
-            </Typography>
-          </TouchableOpacity>
-        ))}
+              <Typography 
+                variant="body" 
+                style={[
+                  styles.glassRadioLabel,
+                  selectedPeriod === period.value && styles.glassRadioLabelActive
+                ]}
+              >
+                {period.label}
+              </Typography>
+            </TouchableOpacity>
+          ))}
+          {periodOptionWidth > 0 && (
+            <Animated.View
+              style={[
+                styles.glassGlider,
+                {
+                  width: periodOptionWidth,
+                  transform: [{
+                    translateX: periodGliderAnim,
+                  }],
+                },
+              ]}
+            />
+          )}
+        </View>
       </View>
 
       {/* Earnings Overview */}
@@ -328,6 +379,8 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingTop: 60,
     paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   headerTitle: {
     color: UI_CONFIG.colors.text,
@@ -337,31 +390,65 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textSecondary,
   },
   periodSelector: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
+    paddingHorizontal: UI_CONFIG.spacing.lg,
+    paddingVertical: UI_CONFIG.spacing.md,
     marginBottom: 16,
-    gap: 8,
-  },
-  periodButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: UI_CONFIG.colors.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
     alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: UI_CONFIG.colors.border,
   },
-  periodButtonActive: {
-    backgroundColor: UI_CONFIG.colors.warning,
-    borderColor: UI_CONFIG.colors.warning,
+  glassRadioGroup: {
+    position: 'relative',
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 16,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 0,
   },
-  periodButtonText: {
-    color: UI_CONFIG.colors.textSecondary,
-    fontWeight: '500',
+  glassRadioOption: {
+    flex: 1,
+    minWidth: 80,
+    paddingVertical: 12.8,
+    paddingHorizontal: 25.6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
-  periodButtonTextActive: {
-    color: UI_CONFIG.colors.textLight,
+  glassRadioLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    color: UI_CONFIG.colors.text,
+  },
+  glassRadioLabelActive: {
+    color: UI_CONFIG.colors.text,
+  },
+  glassGlider: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 16,
+    zIndex: 1,
+    backgroundColor: UI_CONFIG.colors.accent,
+    shadowColor: UI_CONFIG.colors.accent,
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
+    elevation: 10,
+    height: '100%',
   },
   earningsCard: {
     marginHorizontal: 24,

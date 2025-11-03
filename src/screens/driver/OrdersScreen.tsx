@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -6,7 +6,8 @@ import {
   ScrollView, 
   RefreshControl,
   Alert,
-  Dimensions
+  Dimensions,
+  Animated
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,10 +28,33 @@ const OrdersScreen: React.FC = () => {
   const [activeTab, setActiveTab] = useState<OrderTab>('available');
   const [refreshing, setRefreshing] = useState(false);
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
+  
+  // Animation values for glass glider
+  const tabGliderAnim = useRef(new Animated.Value(0)).current;
+  const [tabOptionWidth, setTabOptionWidth] = useState(0);
 
   useEffect(() => {
     loadOrdersData();
   }, []);
+
+  const tabs = [
+    { key: 'available', label: 'Available', icon: 'list-outline' },
+    { key: 'active', label: 'Active', icon: 'navigate-outline' },
+    { key: 'completed', label: 'Completed', icon: 'checkmark-circle-outline' },
+  ] as const;
+
+  // Animate glider when activeTab changes
+  useEffect(() => {
+    if (tabOptionWidth > 0) {
+      const tabIndex = tabs.findIndex(tab => tab.key === activeTab);
+      Animated.spring(tabGliderAnim, {
+        toValue: tabIndex >= 0 ? tabIndex * tabOptionWidth : 0,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [activeTab, tabOptionWidth]);
 
   const loadOrdersData = async () => {
     if (!user?.uid) return;
@@ -303,12 +327,6 @@ const OrdersScreen: React.FC = () => {
     </Card>
   );
 
-  const tabs = [
-    { key: 'available', label: 'Available', icon: 'list-outline' },
-    { key: 'active', label: 'Active', icon: 'navigate-outline' },
-    { key: 'completed', label: 'Completed', icon: 'checkmark-circle-outline' },
-  ] as const;
-
   if (isLoading && !refreshing) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -344,32 +362,53 @@ const OrdersScreen: React.FC = () => {
 
         {/* Tab Navigation */}
         <View style={styles.tabContainer}>
-          {tabs.map((tab) => (
-            <TouchableOpacity
-              key={tab.key}
-              style={[
-                styles.tab,
-                activeTab === tab.key && styles.activeTab
-              ]}
-              onPress={() => setActiveTab(tab.key)}
-              activeOpacity={0.7}
-            >
-              <Ionicons 
-                name={tab.icon as any} 
-                size={20} 
-                color={activeTab === tab.key ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.textSecondary} 
-              />
-              <Typography 
-                variant="caption" 
-                style={[
-                  styles.tabLabel,
-                  activeTab === tab.key && styles.activeTabLabel
-                ]}
+          <View style={styles.glassRadioGroup}>
+            {tabs.map((tab, index) => (
+              <TouchableOpacity
+                key={tab.key}
+                style={styles.glassRadioOption}
+                onPress={() => setActiveTab(tab.key)}
+                activeOpacity={0.8}
+                onLayout={(e) => {
+                  if (index === 0) {
+                    const width = e.nativeEvent.layout.width;
+                    if (tabOptionWidth !== width) {
+                      setTabOptionWidth(width);
+                    }
+                  }
+                }}
               >
-                {tab.label}
-              </Typography>
-            </TouchableOpacity>
-          ))}
+                <Ionicons 
+                  name={tab.icon as any} 
+                  size={20} 
+                  color={UI_CONFIG.colors.text}
+                  style={{ marginRight: 8 }}
+                />
+                <Typography 
+                  variant="body" 
+                  style={[
+                    styles.glassRadioLabel,
+                    activeTab === tab.key && styles.glassRadioLabelActive
+                  ]}
+                >
+                  {tab.label}
+                </Typography>
+              </TouchableOpacity>
+            ))}
+            {tabOptionWidth > 0 && (
+              <Animated.View
+                style={[
+                  styles.glassGlider,
+                  {
+                    width: tabOptionWidth,
+                    transform: [{
+                      translateX: tabGliderAnim,
+                    }],
+                  },
+                ]}
+              />
+            )}
+          </View>
         </View>
 
         {/* Orders List */}
@@ -417,7 +456,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: UI_CONFIG.colors.background,
     borderBottomWidth: 1,
     borderBottomColor: UI_CONFIG.colors.border,
   },
@@ -448,34 +487,66 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: UI_CONFIG.colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: UI_CONFIG.spacing.lg,
+    paddingVertical: UI_CONFIG.spacing.md,
+    alignItems: 'center',
+    backgroundColor: UI_CONFIG.colors.background,
     borderBottomWidth: 1,
     borderBottomColor: UI_CONFIG.colors.border,
   },
-  tab: {
-    flex: 1,
+  glassRadioGroup: {
+    position: 'relative',
     flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 16,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 0,
+  },
+  glassRadioOption: {
+    flex: 1,
+    minWidth: 80,
+    paddingVertical: 12.8,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginHorizontal: 4,
+    zIndex: 2,
+    flexDirection: 'row',
   },
-  activeTab: {
-    backgroundColor: UI_CONFIG.colors.primary,
-  },
-  tabLabel: {
+  glassRadioLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: UI_CONFIG.colors.textSecondary,
-    marginLeft: 8,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    color: UI_CONFIG.colors.text,
   },
-  activeTabLabel: {
-    color: UI_CONFIG.colors.textLight,
+  glassRadioLabelActive: {
+    color: UI_CONFIG.colors.text,
+  },
+  glassGlider: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 16,
+    zIndex: 1,
+    backgroundColor: UI_CONFIG.colors.accent,
+    shadowColor: UI_CONFIG.colors.accent,
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
+    elevation: 10,
+    height: '100%',
   },
   scrollView: {
     flex: 1,

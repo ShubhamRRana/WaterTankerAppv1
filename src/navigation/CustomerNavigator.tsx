@@ -34,6 +34,19 @@ const CustomerTabs: React.FC = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: UI_CONFIG.colors.primary,
+        tabBarInactiveTintColor: UI_CONFIG.colors.textSecondary,
+        tabBarStyle: {
+          backgroundColor: UI_CONFIG.colors.surface,
+          borderTopWidth: 1,
+          borderTopColor: UI_CONFIG.colors.border,
+          paddingBottom: 8,
+          paddingTop: 8,
+          height: 60,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
         tabBarIcon: ({ color, size, focused }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
           if (route.name === 'Home') {

@@ -4,7 +4,6 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { UI_CONFIG } from '../constants/config';
 import OrdersScreen from '../screens/driver/OrdersScreen';
-import ActiveOrderScreen from '../screens/driver/ActiveOrderScreen';
 import DriverEarningsScreen from '../screens/driver/DriverEarningsScreen';
 
 export type DriverTabParamList = {
@@ -14,7 +13,6 @@ export type DriverTabParamList = {
 
 export type DriverStackParamList = {
   DriverTabs: undefined;
-  ActiveOrder: { orderId: string };
 };
 
 const Tab = createBottomTabNavigator<DriverTabParamList>();
@@ -73,7 +71,6 @@ const DriverNavigator: React.FC = () => {
       }}
     >
       <Stack.Screen name="DriverTabs" component={DriverTabs} />
-      <Stack.Screen name="ActiveOrder" component={ActiveOrderScreen} />
     </Stack.Navigator>
   );
 };

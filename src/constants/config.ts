@@ -71,7 +71,7 @@ export const UI_CONFIG = {
     accent: '#fca311', // Gold - for highlights, emphasis (10%)
     // Background and surfaces (60% - Light Cream)
     background: '#f0ebd8', // Light Cream/Beige - main backgrounds
-    surface: '#FFFFFF', // White - for cards, inputs on cream background
+    surface: '#f5f0e0', // Warm Beige - for cards, inputs on cream background (blends with background)
     surfaceLight: '#f8f6f0', // Lighter cream - for subtle backgrounds
     // Text colors
     text: '#0d1321', // Deep Navy - primary text on light backgrounds

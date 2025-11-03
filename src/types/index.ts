@@ -189,7 +189,6 @@ export interface DriverTabParamList {
 
 export interface DriverStackParamList {
   DriverTabs: undefined;
-  ActiveOrder: { orderId: string };
 }
 
 export interface AdminTabParamList {
