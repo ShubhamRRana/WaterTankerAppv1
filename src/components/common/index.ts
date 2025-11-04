@@ -9,3 +9,4 @@ export { default as DriverIcon } from './DriverIcon';
 export { default as AdminIcon } from './AdminIcon';
 export { default as CustomerIcon } from './CustomerIcon';
 export { default as CustomerMenuDrawer } from './CustomerMenuDrawer';
+export { default as AdminMenuDrawer } from './AdminMenuDrawer';

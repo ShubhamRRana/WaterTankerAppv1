@@ -14,14 +14,19 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { useUserStore } from '../../store/userStore';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
-import { Typography, Card, Button, LoadingSpinner, Input } from '../../components/common';
+import { Typography, Card, Button, LoadingSpinner, Input, AdminMenuDrawer } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 import { User } from '../../types';
 import { ValidationUtils } from '../../utils/validation';
 import { PricingUtils } from '../../utils/pricing';
+import { AdminStackParamList } from '../../navigation/AdminNavigator';
+
+type DriverManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Drivers'>;
 
 // AddDriverModal component moved outside to prevent re-creation on every render
 interface AddDriverModalProps {
@@ -333,6 +338,7 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 );
 
 const DriverManagementScreen: React.FC = () => {
+  const navigation = useNavigation<DriverManagementScreenNavigationProp>();
   const { users, fetchAllUsers, updateUser, addUser, deleteUser, isLoading } = useUserStore();
   const { user: currentUser, logout } = useAuthStore();
   const { bookings, fetchAllBookings } = useBookingStore();
@@ -342,6 +348,7 @@ const DriverManagementScreen: React.FC = () => {
   const [showAddDriverModal, setShowAddDriverModal] = useState(false);
   const [editingDriver, setEditingDriver] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [menuVisible, setMenuVisible] = useState(false);
   
   
   
@@ -755,6 +762,22 @@ const DriverManagementScreen: React.FC = () => {
     return 'Pending';
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
+  const handleMenuNavigate = (route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile') => {
+    if (route === 'Drivers') {
+      // Already on Drivers, just close menu
+      return;
+    }
+    navigation.navigate(route);
+  };
+
   const DriverCard: React.FC<{ driver: User }> = ({ driver }) => (
     <Card style={styles.driverCard}>
       <TouchableOpacity 
@@ -991,12 +1014,23 @@ const DriverManagementScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Typography variant="h2" style={styles.title}>
-            Driver Management
-          </Typography>
-          <Typography variant="body" style={styles.subtitle}>
-            Manage driver accounts and approvals
-          </Typography>
+          <View style={styles.headerContent}>
+            <TouchableOpacity 
+              style={styles.menuButton} 
+              onPress={() => setMenuVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+            </TouchableOpacity>
+            <View style={styles.headerTextContainer}>
+              <Typography variant="h2" style={styles.title}>
+                Driver Management
+              </Typography>
+              <Typography variant="body" style={styles.subtitle}>
+                Manage driver accounts and approvals
+              </Typography>
+            </View>
+          </View>
         </View>
 
         
@@ -1061,6 +1095,13 @@ const DriverManagementScreen: React.FC = () => {
         onDelete={handleDeleteDriver}
         isEditMode={editingDriver !== null}
       />
+      <AdminMenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
+        currentRoute="Drivers"
+      />
     </SafeAreaView>
   );
 };
@@ -1089,6 +1130,17 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: UI_CONFIG.colors.border,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   title: {
     fontSize: 24,

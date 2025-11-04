@@ -12,22 +12,29 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { useBookingStore } from '../../store/bookingStore';
 import { useAuthStore } from '../../store/authStore';
-import { Typography, Card, Button, LoadingSpinner } from '../../components/common';
+import { Typography, Card, Button, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
+import { AdminStackParamList } from '../../navigation/AdminNavigator';
+
+type AllBookingsScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Bookings'>;
 
 const AllBookingsScreen: React.FC = () => {
+  const navigation = useNavigation<AllBookingsScreenNavigationProp>();
   const { bookings, fetchAllBookings, updateBookingStatus, isLoading } = useBookingStore();
-  const { user: currentAdmin } = useAuthStore();
+  const { user: currentAdmin, logout } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     loadBookings();
@@ -144,6 +151,22 @@ const AllBookingsScreen: React.FC = () => {
       console.error('Failed to update status:', error);
       Alert.alert('Error', 'Failed to update booking status. Please try again.');
     }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
+  const handleMenuNavigate = (route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile') => {
+    if (route === 'Bookings') {
+      // Already on Bookings, just close menu
+      return;
+    }
+    navigation.navigate(route);
   };
 
   const openBookingDetails = (booking: Booking) => {
@@ -458,12 +481,23 @@ const AllBookingsScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Typography variant="h2" style={styles.title}>
-          All Bookings
-        </Typography>
-        <Typography variant="body" style={styles.subtitle}>
-          {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
-        </Typography>
+        <View style={styles.headerContent}>
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={() => setMenuVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerTextContainer}>
+            <Typography variant="h2" style={styles.title}>
+              All Bookings
+            </Typography>
+            <Typography variant="body" style={styles.subtitle}>
+              {filteredBookings.length} booking{filteredBookings.length !== 1 ? 's' : ''}
+            </Typography>
+          </View>
+        </View>
       </View>
 
       {/* Search Bar */}
@@ -525,6 +559,13 @@ const AllBookingsScreen: React.FC = () => {
 
       <BookingDetailsModal />
       <StatusUpdateModal />
+      <AdminMenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
+        currentRoute="Bookings"
+      />
     </SafeAreaView>
   );
 };
@@ -540,6 +581,17 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: UI_CONFIG.colors.border,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   title: {
     fontSize: 24,

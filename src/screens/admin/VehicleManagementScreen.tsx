@@ -13,12 +13,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { useAuthStore } from '../../store/authStore';
-import { Typography, Card, Button, LoadingSpinner, Input } from '../../components/common';
+import { Typography, Card, Button, LoadingSpinner, Input, AdminMenuDrawer } from '../../components/common';
 import { Vehicle } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
+import { AdminStackParamList } from '../../navigation/AdminNavigator';
+
+type VehicleManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Vehicles'>;
 
 interface AddVehicleModalProps {
   visible: boolean;
@@ -252,14 +257,16 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 );
 
 const VehicleManagementScreen: React.FC = () => {
+  const navigation = useNavigation<VehicleManagementScreenNavigationProp>();
   const { vehicles, fetchAllVehicles, updateVehicle, addVehicle, deleteVehicle, isLoading } = useVehicleStore();
-  const { user: currentUser } = useAuthStore();
+  const { user: currentUser, logout } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [showVehicleModal, setShowVehicleModal] = useState(false);
   const [showAddVehicleModal, setShowAddVehicleModal] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [menuVisible, setMenuVisible] = useState(false);
   
   // Add/Edit Vehicle form state
   const [addVehicleForm, setAddVehicleForm] = useState({
@@ -487,6 +494,22 @@ const VehicleManagementScreen: React.FC = () => {
     }
   }, [formErrors]);
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
+  const handleMenuNavigate = (route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile') => {
+    if (route === 'Vehicles') {
+      // Already on Vehicles, just close menu
+      return;
+    }
+    navigation.navigate(route);
+  };
+
   const filteredVehicles = vehicles.filter(vehicle => {
     // Show only vehicles for current admin
     const belongsToCurrentAdmin = currentUser && currentUser.role === 'admin' && vehicle.agencyId === currentUser.uid;
@@ -644,12 +667,23 @@ const VehicleManagementScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Typography variant="h2" style={styles.title}>
-            Vehicle Management
-          </Typography>
-          <Typography variant="body" style={styles.subtitle}>
-            Manage vehicle details and insurance
-          </Typography>
+          <View style={styles.headerContent}>
+            <TouchableOpacity 
+              style={styles.menuButton} 
+              onPress={() => setMenuVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+            </TouchableOpacity>
+            <View style={styles.headerTextContainer}>
+              <Typography variant="h2" style={styles.title}>
+                Vehicle Management
+              </Typography>
+              <Typography variant="body" style={styles.subtitle}>
+                Manage vehicle details and insurance
+              </Typography>
+            </View>
+          </View>
         </View>
 
         {/* Search */}
@@ -712,6 +746,13 @@ const VehicleManagementScreen: React.FC = () => {
         onDelete={handleDeleteVehicle}
         isEditMode={editingVehicle !== null}
       />
+      <AdminMenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
+        currentRoute="Vehicles"
+      />
     </SafeAreaView>
   );
 };
@@ -740,6 +781,17 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: UI_CONFIG.colors.border,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   title: {
     fontSize: 24,

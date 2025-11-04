@@ -6,22 +6,33 @@ import {
   TouchableOpacity, 
   RefreshControl,
   Dimensions,
-  Animated
+  Animated,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import { useBookingStore } from '../../store/bookingStore';
-import { Typography } from '../../components/common';
+import { useAuthStore } from '../../store/authStore';
+import { Typography, AdminMenuDrawer } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
+import { AdminStackParamList } from '../../navigation/AdminNavigator';
+
+type ReportsScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Reports'>;
 
 const { width } = Dimensions.get('window');
 
 const ReportsScreen: React.FC = () => {
+  const navigation = useNavigation<ReportsScreenNavigationProp>();
   const { bookings, fetchAllBookings } = useBookingStore();
+  const { logout } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [periodType, setPeriodType] = useState<'month' | 'year'>('month');
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [menuVisible, setMenuVisible] = useState(false);
   
   // Animation values for glass gliders
   const periodTypeGliderAnim = useRef(new Animated.Value(0)).current;
@@ -195,6 +206,22 @@ const ReportsScreen: React.FC = () => {
   const dailyBreakdown = periodType === 'month' ? calculateDailyBreakdown() : [];
   const monthlyBreakdown = periodType === 'year' ? calculateMonthlyBreakdown() : [];
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
+  const handleMenuNavigate = (route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile') => {
+    if (route === 'Reports') {
+      // Already on Reports, just close menu
+      return;
+    }
+    navigation.navigate(route);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView 
@@ -205,12 +232,23 @@ const ReportsScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Typography variant="h2" style={styles.title}>
-            Reports & Analytics
-          </Typography>
-          <Typography variant="body" style={styles.subtitle}>
-            Comprehensive business insights
-          </Typography>
+          <View style={styles.headerContent}>
+            <TouchableOpacity 
+              style={styles.menuButton} 
+              onPress={() => setMenuVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+            </TouchableOpacity>
+            <View style={styles.headerTextContainer}>
+              <Typography variant="h2" style={styles.title}>
+                Reports & Analytics
+              </Typography>
+              <Typography variant="body" style={styles.subtitle}>
+                Comprehensive business insights
+              </Typography>
+            </View>
+          </View>
         </View>
 
         {/* Period Type Toggle */}
@@ -470,6 +508,13 @@ const ReportsScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
+      <AdminMenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
+        currentRoute="Reports"
+      />
     </SafeAreaView>
   );
 };
@@ -489,6 +534,17 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: UI_CONFIG.colors.border,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   title: {
     fontSize: 24,

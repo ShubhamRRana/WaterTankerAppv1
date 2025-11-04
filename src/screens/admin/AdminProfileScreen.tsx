@@ -6,15 +6,23 @@ import {
   Alert, 
   Image,
   TextInput,
+  TouchableOpacity,
 } from 'react-native';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Typography, Button, Card, LoadingSpinner } from '../../components/common';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { Typography, Button, Card, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
 import { useAuthStore } from '../../store/authStore';
 import { User } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
+import { AdminStackParamList } from '../../navigation/AdminNavigator';
+
+type AdminProfileScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Profile'>;
 
 const AdminProfileScreen: React.FC = () => {
+  const navigation = useNavigation<AdminProfileScreenNavigationProp>();
   const { user, updateUser, logout, isLoading } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -24,6 +32,7 @@ const AdminProfileScreen: React.FC = () => {
     password: '',
     confirmPassword: '',
   });
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -84,6 +93,14 @@ const AdminProfileScreen: React.FC = () => {
     }
   };
 
+  const handleMenuNavigate = (route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile') => {
+    if (route === 'Profile') {
+      // Already on Profile, just close menu
+      return;
+    }
+    navigation.navigate(route);
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -130,6 +147,22 @@ const AdminProfileScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <TouchableOpacity 
+              style={styles.menuButton} 
+              onPress={() => setMenuVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+            </TouchableOpacity>
+            <View style={styles.headerTextContainer}>
+              <Typography variant="h2" style={styles.headerTitle}>Profile</Typography>
+            </View>
+          </View>
+        </View>
+
         <Card style={styles.profileCard}>
           <View style={styles.profileHeader}>
             {user.profileImage ? (
@@ -231,11 +264,15 @@ const AdminProfileScreen: React.FC = () => {
           </Card>
         )}
 
-        <View style={styles.logoutContainer}>
-          <Button title="Logout" onPress={handleLogout} variant="outline" />
-        </View>
       </ScrollView>
       </KeyboardAvoidingView>
+      <AdminMenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
+        currentRoute="Profile"
+      />
     </SafeAreaView>
   );
 };
@@ -251,6 +288,29 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingBottom: 32,
+  },
+  header: {
+    paddingHorizontal: UI_CONFIG.spacing.lg,
+    paddingVertical: UI_CONFIG.spacing.md,
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_CONFIG.colors.border,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: UI_CONFIG.colors.text,
   },
   loadingContainer: {
     flex: 1,
@@ -337,9 +397,6 @@ const styles = StyleSheet.create({
   rowButton: {
     flex: 1,
     marginHorizontal: 4,
-  },
-  logoutContainer: {
-    margin: 16,
   },
 });
 

@@ -180,17 +180,7 @@ export interface DriverStackParamList {
   DriverTabs: undefined;
 }
 
-export interface AdminTabParamList {
-  Bookings: undefined;
-  Drivers: undefined;
-  Vehicles: undefined;
-  Reports: undefined;
-  Profile: undefined;
-}
-
-export interface AdminStackParamList {
-  AdminTabs: undefined;
-}
+// AdminStackParamList is now exported from AdminNavigator.tsx
 
 // Form types
 export interface LoginForm {
