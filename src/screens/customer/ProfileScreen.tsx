@@ -12,21 +12,17 @@ import {
 } from 'react-native';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { Typography, Button, Card, LoadingSpinner } from '../../components/common';
+import { Typography, Button, Card, LoadingSpinner, CustomerMenuDrawer } from '../../components/common';
 import { useAuthStore } from '../../store/authStore';
 import { User } from '../../types';
-import { CustomerTabParamList, CustomerStackParamList } from '../../navigation/CustomerNavigator';
+import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { UI_CONFIG } from '../../constants/config';
 
 const { width } = Dimensions.get('window');
 
-type ProfileScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<CustomerTabParamList, 'Profile'>,
-  StackNavigationProp<CustomerStackParamList>
->;
+type ProfileScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Profile'>;
 
 interface ProfileScreenProps {
   navigation: ProfileScreenNavigationProp;
@@ -40,6 +36,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     phone: '',
   });
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -159,10 +156,30 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     );
   }
 
+  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile') => {
+    if (route === 'Profile') {
+      // Already on Profile, just close menu
+      return;
+    }
+    navigation.navigate(route);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        {/* Header with Menu */}
+        <View style={styles.header}>
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={() => setMenuVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+          </TouchableOpacity>
+          <Typography variant="h2" style={styles.headerTitle}>Profile</Typography>
+        </View>
+
         {/* Profile Header */}
         <Card style={styles.profileCard}>
           <View style={styles.profileHeader}>
@@ -269,6 +286,12 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <View style={styles.bottomSpacing} />
       </ScrollView>
       </KeyboardAvoidingView>
+      <CustomerMenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onNavigate={handleMenuNavigate}
+        currentRoute="Profile"
+      />
     </SafeAreaView>
   );
 };
@@ -281,6 +304,25 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: UI_CONFIG.colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_CONFIG.colors.border,
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: UI_CONFIG.colors.text,
   },
   contentContainer: {
     paddingBottom: 32,

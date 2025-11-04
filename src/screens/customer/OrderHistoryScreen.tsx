@@ -10,23 +10,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import Card from '../../components/common/Card';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Typography } from '../../components/common';
+import { Typography, CustomerMenuDrawer } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
-import { CustomerTabParamList, CustomerStackParamList } from '../../navigation/CustomerNavigator';
+import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
 import { UI_CONFIG } from '../../constants/config';
 
-type OrderHistoryScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<CustomerTabParamList, 'Orders'>,
-  StackNavigationProp<CustomerStackParamList>
->;
+type OrderHistoryScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Orders'>;
 
 interface OrderHistoryScreenProps {
   navigation: OrderHistoryScreenNavigationProp;
@@ -40,6 +35,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<BookingStatus | 'all'>('all');
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     if (user?.uid) {
@@ -212,13 +208,30 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
     );
   }
 
+  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile') => {
+    if (route === 'Orders') {
+      // Already on Orders, just close menu
+      return;
+    }
+    navigation.navigate(route);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Typography variant="h2" style={styles.title}>Order History</Typography>
-        <Typography variant="body" style={styles.subtitle}>{bookings.length} total orders</Typography>
+        <TouchableOpacity 
+          style={styles.menuButton} 
+          onPress={() => setMenuVisible(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+        </TouchableOpacity>
+        <View style={styles.headerTextContainer}>
+          <Typography variant="h2" style={styles.title}>Order History</Typography>
+          <Typography variant="body" style={styles.subtitle}>{bookings.length} total orders</Typography>
+        </View>
       </View>
 
       {/* Search Bar */}
@@ -377,6 +390,12 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
         )}
       </ScrollView>
       </View>
+      <CustomerMenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onNavigate={handleMenuNavigate}
+        currentRoute="Orders"
+      />
     </SafeAreaView>
   );
 };
@@ -402,11 +421,20 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textSecondary,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: UI_CONFIG.colors.border,
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   title: {
     fontSize: 24,

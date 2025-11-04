@@ -10,8 +10,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { CompositeNavigationProp } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
@@ -19,15 +17,12 @@ import { useUserStore } from '../../store/userStore';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Typography } from '../../components/common';
+import { Typography, CustomerMenuDrawer } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
-import { CustomerTabParamList, CustomerStackParamList } from '../../navigation/CustomerNavigator';
+import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { UI_CONFIG } from '../../constants/config';
 
-type CustomerHomeScreenNavigationProp = CompositeNavigationProp<
-  BottomTabNavigationProp<CustomerTabParamList, 'Home'>,
-  StackNavigationProp<CustomerStackParamList>
->;
+type CustomerHomeScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Home'>;
 
 interface CustomerHomeScreenProps {
   navigation: CustomerHomeScreenNavigationProp;
@@ -48,6 +43,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
   } = useUserStore();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     if (user?.uid) {
@@ -99,6 +95,14 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
         },
       ]
     );
+  };
+
+  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile') => {
+    if (route === 'Home') {
+      // Already on Home, just close menu
+      return;
+    }
+    navigation.navigate(route);
   };
 
   const getStatusColor = (status: BookingStatus) => {
@@ -189,7 +193,14 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <View>
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={() => setMenuVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerTextContainer}>
             <Typography variant="body" style={styles.greeting}>Good {getGreeting()},</Typography>
             <Typography variant="h2" style={styles.userName}>Hi, {user?.name || 'User'}</Typography>
           </View>
@@ -274,6 +285,12 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
         </View>
       )}
       </ScrollView>
+      <CustomerMenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onNavigate={handleMenuNavigate}
+        currentRoute="Home"
+      />
     </SafeAreaView>
   );
 };
@@ -315,8 +332,14 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  menuButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   greeting: {
     fontSize: 16,

@@ -169,18 +169,7 @@ export interface AuthStackParamList {
     | { preferredRole?: 'customer' | 'driver' | 'admin' };
 }
 
-export interface CustomerTabParamList {
-  Home: undefined;
-  Orders: undefined;
-  Profile: undefined;
-}
-
-export interface CustomerStackParamList {
-  CustomerTabs: undefined;
-  Booking: undefined;
-  OrderTracking: { orderId: string };
-  SavedAddresses: undefined;
-}
+// Customer navigation types moved to CustomerNavigator.tsx
 
 export interface DriverTabParamList {
   Orders: undefined;
