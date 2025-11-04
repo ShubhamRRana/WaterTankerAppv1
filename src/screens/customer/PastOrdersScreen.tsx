@@ -16,6 +16,7 @@ import { useAuthStore } from '../../store/authStore';
 import { Typography } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
+import { PricingUtils } from '../../utils/pricing';
 
 const { width } = Dimensions.get('window');
 
@@ -400,7 +401,7 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
                   adjustsFontSizeToFit 
                   minimumFontScale={0.6}
                 >
-                  ₹{totalRevenue.toLocaleString()}
+                  {PricingUtils.formatPrice(totalRevenue)}
                 </Typography>
               </View>
               <Typography variant="body" style={styles.summaryLabel}>
@@ -416,7 +417,7 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
                   adjustsFontSizeToFit 
                   minimumFontScale={0.6}
                 >
-                  {totalOrders.toLocaleString()}
+                  {PricingUtils.formatNumber(totalOrders)}
                 </Typography>
               </View>
               <Typography variant="body" style={styles.summaryLabel}>
@@ -446,7 +447,7 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
                   {item.day}
                 </Typography>
                 <Typography variant="body" style={styles.dailyRevenue}>
-                  ₹{item.revenue.toLocaleString()}
+                  {PricingUtils.formatPrice(item.revenue)}
                 </Typography>
                 <Typography variant="body" style={styles.dailyOrders}>
                   {item.orders}
@@ -476,7 +477,7 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
                   {item.month}
                 </Typography>
                 <Typography variant="body" style={styles.dailyRevenue}>
-                  ₹{item.revenue.toLocaleString()}
+                  {PricingUtils.formatPrice(item.revenue)}
                 </Typography>
                 <Typography variant="body" style={styles.dailyOrders}>
                   {item.orders}

@@ -66,7 +66,7 @@ src/
 │   └── index.ts
 ├── utils/
 │   ├── loginRestrictionTest.ts
-│   ├── pricing.ts
+│   ├── pricing.ts          # Pricing calculations and Indian numbering system formatting
 │   ├── validation.ts
 │   └── index.ts
 └── constants/
@@ -83,6 +83,7 @@ src/
 - **Payment**: Cash on Delivery (COD) for MVP
 - **UI Design**: iOS-style design system with centralized color configuration (UI_CONFIG)
 - **Icons**: Expo Vector Icons (Ionicons)
+- **Number Formatting**: Indian numbering system (lakhs/crores) for amounts and quantities
 
 ## Key Features
 
@@ -188,6 +189,20 @@ This MVP includes:
 - Google Distance Matrix API integration
 - Automated driver assignment
 
+## Number Formatting
+
+The app implements the **Indian numbering system** for displaying amounts and quantities throughout the application. This ensures proper comma placement according to Indian standards:
+
+- **Format**: Last 3 digits grouped, then groups of 2 digits
+- **Example**: `1234567` displays as `12,34,567` (not `1,234,567`)
+- **Implementation**: Custom formatter in `PricingUtils.formatPrice()` and `PricingUtils.formatNumber()`
+- **Applied to**: All amounts (prices, earnings, revenue) and quantities (tanker quantities, order counts) across all screens
+
+This formatting is applied consistently across:
+- Customer screens (booking prices, order history, past orders)
+- Driver screens (earnings, order details)
+- Admin screens (revenue, bookings, customer stats, vehicle prices)
+
 ## Development Status
 
 ### ✅ **Completed Features:**
@@ -204,6 +219,7 @@ This MVP includes:
 - **Services**: Local storage, auth, booking, payment, and location services
 - **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner, CustomerMenuDrawer)
 - **Utils**: Distance calculation, pricing, validation utilities
+- **Number Formatting**: Indian numbering system implementation for all amounts and quantities (e.g., ₹12,34,567 instead of ₹1,234,567)
 - **Configuration**: Comprehensive app configuration with constants, error messages, and centralized UI_CONFIG color system
 
 ### 🔧 **Current Implementation Details:**

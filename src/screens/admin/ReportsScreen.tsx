@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBookingStore } from '../../store/bookingStore';
 import { Typography } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
+import { PricingUtils } from '../../utils/pricing';
 
 const { width } = Dimensions.get('window');
 
@@ -383,7 +384,7 @@ const ReportsScreen: React.FC = () => {
                   adjustsFontSizeToFit 
                   minimumFontScale={0.6}
                 >
-                  ₹{totalRevenue.toLocaleString()}
+                  {PricingUtils.formatPrice(totalRevenue)}
                 </Typography>
               </View>
               <Typography variant="body" style={styles.summaryLabel}>
@@ -399,7 +400,7 @@ const ReportsScreen: React.FC = () => {
                   adjustsFontSizeToFit 
                   minimumFontScale={0.6}
                 >
-                  {totalOrders.toLocaleString()}
+                  {PricingUtils.formatNumber(totalOrders)}
                 </Typography>
               </View>
               <Typography variant="body" style={styles.summaryLabel}>
@@ -429,7 +430,7 @@ const ReportsScreen: React.FC = () => {
                   {item.day}
                 </Typography>
                 <Typography variant="body" style={styles.dailyRevenue}>
-                  ₹{item.revenue.toLocaleString()}
+                  {PricingUtils.formatPrice(item.revenue)}
                 </Typography>
                 <Typography variant="body" style={styles.dailyOrders}>
                   {item.orders}
@@ -459,7 +460,7 @@ const ReportsScreen: React.FC = () => {
                   {item.month}
                 </Typography>
                 <Typography variant="body" style={styles.dailyRevenue}>
-                  ₹{item.revenue.toLocaleString()}
+                  {PricingUtils.formatPrice(item.revenue)}
                 </Typography>
                 <Typography variant="body" style={styles.dailyOrders}>
                   {item.orders}

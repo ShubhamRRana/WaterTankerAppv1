@@ -21,6 +21,7 @@ import { Typography, Card, Button, LoadingSpinner, Input } from '../../component
 import { UI_CONFIG } from '../../constants/config';
 import { User } from '../../types';
 import { ValidationUtils } from '../../utils/validation';
+import { PricingUtils } from '../../utils/pricing';
 
 // AddDriverModal component moved outside to prevent re-creation on every render
 interface AddDriverModalProps {
@@ -808,7 +809,7 @@ const DriverManagementScreen: React.FC = () => {
           <View style={styles.detailRow}>
             <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.detailText}>
-              ₹{driver.totalEarnings || 0} earned
+              {PricingUtils.formatPrice(driver.totalEarnings || 0)} earned
             </Typography>
           </View>
         </View>
@@ -924,7 +925,7 @@ const DriverManagementScreen: React.FC = () => {
                   <View style={styles.detailItem}>
                     <Typography variant="body" style={styles.detailLabel}>Total Earnings</Typography>
                     <Typography variant="body" style={styles.detailValue}>
-                      ₹{selectedDriver.totalEarnings || 0}
+                      {PricingUtils.formatPrice(selectedDriver.totalEarnings || 0)}
                     </Typography>
                   </View>
                   <View style={styles.detailItem}>

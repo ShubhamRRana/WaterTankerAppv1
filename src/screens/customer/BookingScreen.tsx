@@ -491,7 +491,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       // Set success notification data
       setSuccessNotificationData({
         title: 'Booking Successful!',
-        message: `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nQuantity: ${quantity} tanker${quantity > 1 ? 's' : ''}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
+        message: `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nQuantity: ${PricingUtils.formatNumber(quantity)} tanker${quantity > 1 ? 's' : ''}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
       });
       setShowSuccessNotification(true);
     } catch (error) {
@@ -755,7 +755,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
               </TouchableOpacity>
               
               <View style={styles.quantityDisplay}>
-                <Typography variant="h3" style={styles.quantityText}>{quantity}</Typography>
+                <Typography variant="h3" style={styles.quantityText}>{PricingUtils.formatNumber(quantity)}</Typography>
                 <Typography variant="caption" style={styles.quantityLabel}>
                   {quantity === 1 ? 'Tanker' : 'Tankers'}
                 </Typography>
@@ -909,7 +909,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
             {priceBreakdown.quantity > 1 && (
               <View style={styles.priceRow}>
                 <Typography variant="body" style={styles.priceLabel}>Quantity</Typography>
-                <Typography variant="body" style={styles.priceValue}>{priceBreakdown.quantity} tankers</Typography>
+                <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatNumber(priceBreakdown.quantity)} tankers</Typography>
               </View>
             )}
             <View style={[styles.priceRow, styles.totalRow]}>

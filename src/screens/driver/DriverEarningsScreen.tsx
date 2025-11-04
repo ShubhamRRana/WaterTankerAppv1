@@ -14,6 +14,7 @@ import { UI_CONFIG } from '../../constants/config';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { Booking, DriverDashboardStats } from '../../types';
+import { PricingUtils } from '../../utils/pricing';
 
 const { width } = Dimensions.get('window');
 
@@ -193,7 +194,7 @@ const DriverEarningsScreen: React.FC = () => {
   };
 
   const formatCurrency = (amount: number) => {
-    return `₹${amount.toLocaleString('en-IN')}`;
+    return PricingUtils.formatPrice(amount);
   };
 
   const formatDate = (date: Date) => {

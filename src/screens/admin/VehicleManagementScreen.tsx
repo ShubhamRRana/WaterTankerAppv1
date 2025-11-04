@@ -18,6 +18,7 @@ import { useAuthStore } from '../../store/authStore';
 import { Typography, Card, Button, LoadingSpinner, Input } from '../../components/common';
 import { Vehicle } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
+import { PricingUtils } from '../../utils/pricing';
 
 interface AddVehicleModalProps {
   visible: boolean;
@@ -542,7 +543,7 @@ const VehicleManagementScreen: React.FC = () => {
           <View style={styles.detailRow}>
             <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.detailText}>
-              Amount: ₹{vehicle.amount}
+              Amount: {PricingUtils.formatPrice(vehicle.amount)}
             </Typography>
           </View>
         </View>
@@ -602,7 +603,7 @@ const VehicleManagementScreen: React.FC = () => {
               <View style={styles.detailItem}>
                 <Typography variant="body" style={styles.detailLabel}>Amount</Typography>
                 <Typography variant="body" style={styles.detailValue}>
-                  ₹{selectedVehicle.amount}
+                  {PricingUtils.formatPrice(selectedVehicle.amount)}
                 </Typography>
               </View>
               <View style={styles.detailItem}>

@@ -16,6 +16,7 @@ import { useBookingStore } from '../../store/bookingStore';
 import { Typography, Card, Button, LoadingSpinner } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
 import { PRICING_CONFIG, UI_CONFIG } from '../../constants/config';
+import { PricingUtils } from '../../utils/pricing';
 
 const { width } = Dimensions.get('window');
 
@@ -236,13 +237,13 @@ const OrdersScreen: React.FC = () => {
           <View style={styles.orderDetail}>
               <Ionicons name="water-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.orderDetailText}>
-              {order.tankerSize}L Tanker{order.quantity && order.quantity > 1 ? ` x ${order.quantity}` : ''}
+              {order.tankerSize}L Tanker{order.quantity && order.quantity > 1 ? ` x ${PricingUtils.formatNumber(order.quantity)}` : ''}
             </Typography>
           </View>
           <View style={styles.orderDetail}>
             <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.orderDetailText}>
-              {PRICING_CONFIG.currencySymbol}{order.totalPrice}
+              {PricingUtils.formatPrice(order.totalPrice)}
             </Typography>
           </View>
         </View>

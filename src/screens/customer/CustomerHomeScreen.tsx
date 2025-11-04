@@ -21,6 +21,7 @@ import { Typography, CustomerMenuDrawer } from '../../components/common';
 import { Booking, BookingStatus } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { UI_CONFIG } from '../../constants/config';
+import { PricingUtils } from '../../utils/pricing';
 
 type CustomerHomeScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Home'>;
 
@@ -151,7 +152,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
   };
 
   const formatPrice = (price: number) => {
-    return `₹${price.toFixed(0)}`;
+    return PricingUtils.formatPrice(price);
   };
 
   if (bookingsLoading && !bookings.length) {
@@ -218,29 +219,25 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
               key={booking.id} 
               style={styles.orderCard}
             >
-              <View style={styles.orderHeader}>
-                <View style={styles.orderInfo}>
-                  <Typography variant="body" style={styles.orderId}>Order #{booking.id.slice(-6)}</Typography>
-                  <Typography variant="caption" style={styles.orderDate}>{formatDate(booking.scheduledFor || booking.createdAt)}</Typography>
-                </View>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) }]}>
-                  <Typography variant="caption" style={styles.statusText}>{getStatusText(booking.status)}</Typography>
-                </View>
-              </View>
               <View style={styles.orderDetails}>
                 <Typography variant="body" style={styles.tankerSize}>
-                  {booking.tankerSize}L Tanker{booking.quantity && booking.quantity > 1 ? ` x ${booking.quantity}` : ''}
+                  {booking.tankerSize}L Tanker{booking.quantity && booking.quantity > 1 ? ` x ${PricingUtils.formatNumber(booking.quantity)}` : ''}
                 </Typography>
                 <Typography variant="body" style={styles.orderPrice}>{formatPrice(booking.totalPrice)}</Typography>
               </View>
               <Typography variant="caption" style={styles.deliveryAddress}>
                 {booking.deliveryAddress.street}, {booking.deliveryAddress.city}
               </Typography>
-              {booking.status === 'delivered' && booking.deliveredAt && (
+              <View style={styles.orderFooter}>
                 <Typography variant="caption" style={styles.deliveredDate}>
-                  Delivered: {formatDate(booking.deliveredAt)}
+                  {booking.status === 'delivered' && booking.deliveredAt 
+                    ? `Delivered: ${formatDate(booking.deliveredAt)}` 
+                    : `Delivery Date: ${formatDate(booking.scheduledFor || booking.createdAt)}`}
                 </Typography>
-              )}
+                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) }]}>
+                  <Typography variant="caption" style={styles.statusText}>{getStatusText(booking.status)}</Typography>
+                </View>
+              </View>
             </Card>
           ))
         ) : (
@@ -362,11 +359,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 16,
   },
-  orderHeader: {
+  orderFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 12,
   },
   orderInfo: {
     flex: 1,
@@ -410,11 +407,11 @@ const styles = StyleSheet.create({
   deliveryAddress: {
     fontSize: 14,
     color: UI_CONFIG.colors.textSecondary,
+    marginTop: 8,
   },
   deliveredDate: {
     fontSize: 12,
-    color: UI_CONFIG.colors.success,
-    marginTop: 4,
+    color: UI_CONFIG.colors.textSecondary,
     fontWeight: '500',
   },
   emptyState: {

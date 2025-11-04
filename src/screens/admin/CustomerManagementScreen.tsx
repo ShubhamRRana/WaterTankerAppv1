@@ -17,6 +17,7 @@ import { useBookingStore } from '../../store/bookingStore';
 import { Typography, Card, Button, LoadingSpinner } from '../../components/common';
 import { User, Booking } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
+import { PricingUtils } from '../../utils/pricing';
 
 const CustomerManagementScreen: React.FC = () => {
   const { users, fetchAllUsers, isLoading: usersLoading } = useUserStore();
@@ -154,7 +155,7 @@ const CustomerManagementScreen: React.FC = () => {
             <View style={styles.detailRow}>
               <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="caption" style={styles.detailText}>
-                ₹{stats.totalSpent.toFixed(0)} spent
+                {PricingUtils.formatPrice(stats.totalSpent)} spent
               </Typography>
             </View>
             <View style={styles.detailRow}>
@@ -245,11 +246,11 @@ const CustomerManagementScreen: React.FC = () => {
               </View>
               <View style={styles.detailItem}>
                 <Typography variant="body" style={styles.detailLabel}>Total Spent</Typography>
-                <Typography variant="body" style={styles.detailValue}>₹{stats.totalSpent.toFixed(0)}</Typography>
+                <Typography variant="body" style={styles.detailValue}>{PricingUtils.formatPrice(stats.totalSpent)}</Typography>
               </View>
               <View style={styles.detailItem}>
                 <Typography variant="body" style={styles.detailLabel}>Average Order Value</Typography>
-                <Typography variant="body" style={styles.detailValue}>₹{stats.averageOrderValue.toFixed(0)}</Typography>
+                <Typography variant="body" style={styles.detailValue}>{PricingUtils.formatPrice(stats.averageOrderValue)}</Typography>
               </View>
             </Card>
 
@@ -292,7 +293,7 @@ const CustomerManagementScreen: React.FC = () => {
                     </Typography>
                   </View>
                   <Typography variant="caption" style={styles.orderDetails}>
-                    {booking.tankerSize}L Tanker • ₹{booking.totalPrice} • {booking.status}
+                    {booking.tankerSize}L Tanker • {PricingUtils.formatPrice(booking.totalPrice)} • {booking.status}
                   </Typography>
                   <Typography variant="caption" style={styles.orderAddress}>
                     {booking.deliveryAddress.city}, {booking.deliveryAddress.state}
@@ -397,7 +398,7 @@ const CustomerManagementScreen: React.FC = () => {
               <Typography variant="caption" style={styles.statLabel}>Inactive</Typography>
             </Card>
             <Card style={styles.statCard}>
-              <Typography variant="h3" style={styles.statValue}>₹{stats.totalRevenue.toFixed(0)}</Typography>
+              <Typography variant="h3" style={styles.statValue}>{PricingUtils.formatPrice(stats.totalRevenue)}</Typography>
               <Typography variant="caption" style={styles.statLabel}>Total Revenue</Typography>
             </Card>
           </View>
