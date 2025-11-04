@@ -13,7 +13,7 @@ import { useAuthStore } from '../../store/authStore';
 import { AuthStackParamList } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { Typography } from '../../components/common';
+import { Typography, DriverIcon, AdminIcon, CustomerIcon } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 
 type RoleSelectionScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'RoleSelection'>;
@@ -74,18 +74,6 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-  const getRoleIcon = (role: 'customer' | 'driver' | 'admin') => {
-    switch (role) {
-      case 'customer':
-        return '👤';
-      case 'driver':
-        return '🚛';
-      case 'admin':
-        return '⚙️';
-      default:
-        return '👤';
-    }
-  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -112,7 +100,6 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
               onPress={() => setSelectedRole(role)}
             >
               <View style={styles.roleHeader}>
-                <Typography variant="body" style={styles.roleIcon}>{getRoleIcon(role)}</Typography>
                 <View style={styles.roleInfo}>
                   <Typography variant="h3" style={[
                     styles.roleTitle,
@@ -127,6 +114,21 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
                     {getRoleDescription(role)}
                   </Typography>
                 </View>
+                {role === 'driver' && (
+                  <View style={styles.iconContainer}>
+                    <DriverIcon size={32} color={selectedRole === role ? UI_CONFIG.colors.primary : UI_CONFIG.colors.text} />
+                  </View>
+                )}
+                {role === 'admin' && (
+                  <View style={styles.iconContainer}>
+                    <AdminIcon size={32} color={selectedRole === role ? UI_CONFIG.colors.primary : UI_CONFIG.colors.text} />
+                  </View>
+                )}
+                {role === 'customer' && (
+                  <View style={styles.iconContainer}>
+                    <CustomerIcon size={32} color={selectedRole === role ? UI_CONFIG.colors.primary : UI_CONFIG.colors.text} />
+                  </View>
+                )}
               </View>
             </TouchableOpacity>
           ))}
@@ -214,6 +216,9 @@ const styles = StyleSheet.create({
   roleHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  iconContainer: {
+    marginLeft: 16,
   },
   roleIcon: {
     fontSize: 32,

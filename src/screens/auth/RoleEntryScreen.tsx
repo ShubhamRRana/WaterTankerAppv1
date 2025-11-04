@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Typography } from '../../components/common';
+import { Typography, DriverIcon, AdminIcon, CustomerIcon } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../../types';
@@ -16,10 +16,10 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
   const [selectedRole, setSelectedRole] = useState<'customer' | 'driver' | 'admin' | null>(null);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
 
-  const roles: Array<{ key: 'customer' | 'driver' | 'admin'; title: string; subtitle: string; icon: string }> = [
-    { key: 'customer', title: 'Customer', subtitle: 'Book tankers and manage orders', icon: '👤' },
-    { key: 'admin', title: 'Admin', subtitle: 'Manage platform operations', icon: '⚙️' },
-    { key: 'driver', title: 'Driver', subtitle: 'Accept jobs and deliver', icon: '🚛' },
+  const roles: Array<{ key: 'customer' | 'driver' | 'admin'; title: string; subtitle: string }> = [
+    { key: 'customer', title: 'Customer', subtitle: 'Book tankers and manage orders' },
+    { key: 'admin', title: 'Admin', subtitle: 'Manage platform operations' },
+    { key: 'driver', title: 'Driver', subtitle: 'Accept jobs and deliver' },
   ];
 
   const continueToLogin = () => {
@@ -44,7 +44,6 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
                 onPress={() => setSelectedRole(role.key)}
               >
                 <View style={styles.roleHeader}>
-                  <Typography variant="body" style={styles.roleIcon}>{role.icon}</Typography>
                   <View style={styles.roleInfo}>
                     <Typography variant="h3" style={[styles.roleTitle, selectedRole === role.key && styles.roleTitleSelected]}>
                       {role.title}
@@ -53,6 +52,21 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
                       {role.subtitle}
                     </Typography>
                   </View>
+                  {role.key === 'driver' && (
+                    <View style={styles.iconContainer}>
+                      <DriverIcon size={32} color={selectedRole === role.key ? UI_CONFIG.colors.accent : UI_CONFIG.colors.text} />
+                    </View>
+                  )}
+                  {role.key === 'admin' && (
+                    <View style={styles.iconContainer}>
+                      <AdminIcon size={32} color={selectedRole === role.key ? UI_CONFIG.colors.accent : UI_CONFIG.colors.text} />
+                    </View>
+                  )}
+                  {role.key === 'customer' && (
+                    <View style={styles.iconContainer}>
+                      <CustomerIcon size={32} color={selectedRole === role.key ? UI_CONFIG.colors.accent : UI_CONFIG.colors.text} />
+                    </View>
+                  )}
                 </View>
               </TouchableOpacity>
             ))}
@@ -126,6 +140,9 @@ const styles = StyleSheet.create({
   roleHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  iconContainer: {
+    marginLeft: 16,
   },
   roleIcon: {
     fontSize: 32,
