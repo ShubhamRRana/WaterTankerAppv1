@@ -64,7 +64,6 @@ src/
 ├── types/
 │   └── index.ts
 ├── utils/
-│   ├── distance.ts
 │   ├── loginRestrictionTest.ts
 │   ├── pricing.ts
 │   ├── validation.ts
