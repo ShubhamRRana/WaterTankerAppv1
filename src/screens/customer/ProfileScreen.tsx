@@ -35,7 +35,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     name: '',
     phone: '',
   });
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
@@ -81,21 +80,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const handleLogout = async () => {
     try {
       await logout();
-      setShowLogoutModal(false);
     } catch (error) {
       Alert.alert('Error', 'Failed to logout. Please try again.');
     }
-  };
-
-  const confirmLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: handleLogout },
-      ]
-    );
   };
 
   const getInitials = (name: string) => {
@@ -272,16 +259,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           />
         </View>
 
-        {/* Logout Button */}
-        <View style={styles.logoutContainer}>
-          <Button
-            title="Logout"
-            onPress={confirmLogout}
-            variant="outline"
-            style={styles.logoutButton}
-          />
-        </View>
-
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
@@ -290,6 +267,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
         onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
         currentRoute="Profile"
       />
     </SafeAreaView>
@@ -462,13 +440,6 @@ const styles = StyleSheet.create({
   },
   pastOrdersButton: {
     backgroundColor: UI_CONFIG.colors.primary,
-  },
-  logoutContainer: {
-    margin: 16,
-    marginTop: 0,
-  },
-  logoutButton: {
-    borderColor: UI_CONFIG.colors.error,
   },
   bottomSpacing: {
     height: 40,

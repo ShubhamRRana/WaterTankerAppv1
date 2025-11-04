@@ -72,29 +72,12 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-            } catch (error) {
-              console.error('Logout failed:', error);
-              Alert.alert('Error', 'Failed to logout. Please try again.');
-            }
-          },
-        },
-      ]
-    );
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
   };
 
   const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile') => {
@@ -204,13 +187,6 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
             <Typography variant="body" style={styles.greeting}>Good {getGreeting()},</Typography>
             <Typography variant="h2" style={styles.userName}>Hi, {user?.name || 'User'}</Typography>
           </View>
-          <TouchableOpacity 
-            style={styles.logoutButton} 
-            onPress={handleLogout}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="log-out-outline" size={24} color={UI_CONFIG.colors.error} />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -289,6 +265,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
         onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
         currentRoute="Home"
       />
     </SafeAreaView>
@@ -350,11 +327,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: UI_CONFIG.colors.text,
-  },
-  logoutButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: UI_CONFIG.colors.background,
   },
   section: {
     paddingHorizontal: 20,

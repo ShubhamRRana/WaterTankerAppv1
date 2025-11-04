@@ -28,7 +28,7 @@ interface OrderHistoryScreenProps {
 }
 
 const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) => {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { bookings, isLoading, fetchCustomerBookings, cancelBooking } = useBookingStore();
   
   const [refreshing, setRefreshing] = useState(false);
@@ -36,6 +36,14 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
   const [selectedFilter, setSelectedFilter] = useState<BookingStatus | 'all'>('all');
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [menuVisible, setMenuVisible] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
 
   useEffect(() => {
     if (user?.uid) {
@@ -394,6 +402,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
         onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
         currentRoute="Orders"
       />
     </SafeAreaView>

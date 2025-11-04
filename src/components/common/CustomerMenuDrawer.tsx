@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Typography from './Typography';
@@ -16,6 +16,7 @@ interface CustomerMenuDrawerProps {
   visible: boolean;
   onClose: () => void;
   onNavigate: (route: 'Home' | 'Orders' | 'Profile') => void;
+  onLogout: () => void;
   currentRoute?: 'Home' | 'Orders' | 'Profile';
 }
 
@@ -23,6 +24,7 @@ const CustomerMenuDrawer: React.FC<CustomerMenuDrawerProps> = ({
   visible,
   onClose,
   onNavigate,
+  onLogout,
   currentRoute,
 }) => {
   const menuItems: MenuItem[] = [
@@ -66,7 +68,7 @@ const CustomerMenuDrawer: React.FC<CustomerMenuDrawerProps> = ({
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
             <View style={styles.drawer}>
-              <SafeAreaView edges={['top']} style={styles.safeArea}>
+              <SafeAreaView edges={['top', 'bottom']} style={styles.safeArea}>
                 <View style={styles.header}>
                   <Typography variant="h3" style={styles.headerTitle}>Menu</Typography>
                   <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -104,6 +106,44 @@ const CustomerMenuDrawer: React.FC<CustomerMenuDrawerProps> = ({
                       </TouchableOpacity>
                     );
                   })}
+                </View>
+
+                {/* Logout Button */}
+                <View style={styles.logoutSection}>
+                  <View style={styles.divider} />
+                  <TouchableOpacity
+                    style={styles.logoutItem}
+                    onPress={() => {
+                      Alert.alert(
+                        'Logout',
+                        'Are you sure you want to logout?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { 
+                            text: 'Logout', 
+                            style: 'destructive', 
+                            onPress: () => {
+                              onLogout();
+                              onClose();
+                            }
+                          },
+                        ]
+                      );
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name="log-out-outline"
+                      size={24}
+                      color={UI_CONFIG.colors.error}
+                    />
+                    <Typography
+                      variant="body"
+                      style={styles.logoutText}
+                    >
+                      Logout
+                    </Typography>
+                  </TouchableOpacity>
                 </View>
               </SafeAreaView>
             </View>
@@ -186,6 +226,29 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 4,
     backgroundColor: UI_CONFIG.colors.primary,
+  },
+  logoutSection: {
+    marginTop: 'auto',
+    paddingTop: 16,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: UI_CONFIG.colors.border,
+    marginHorizontal: 20,
+    marginBottom: 8,
+  },
+  logoutItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  logoutText: {
+    fontSize: 16,
+    color: UI_CONFIG.colors.error,
+    marginLeft: 8,
+    fontWeight: '500',
   },
 });
 

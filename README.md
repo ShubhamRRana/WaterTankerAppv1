@@ -13,6 +13,7 @@ src/
 │   │   ├── Card.tsx
 │   │   ├── LoadingSpinner.tsx
 │   │   ├── Typography.tsx
+│   │   ├── CustomerMenuDrawer.tsx
 │   │   └── index.ts
 │   ├── customer/
 │   ├── driver/
@@ -87,6 +88,7 @@ src/
 
 ### Customer Features
 - Phone + password authentication
+- Burger menu navigation (Home, Orders, Profile) in header
 - Browse tanker sizes and prices
 - Select delivery location on map
 - View price estimate based on distance
@@ -165,6 +167,7 @@ This MVP includes:
 - ✅ Saved addresses for customers
 - ✅ Order tracking with status updates
 - ✅ Complete order history (current and past orders)
+- ✅ Customer burger menu navigation with drawer interface
 - ✅ Admin tab-based navigation with comprehensive management tools
 - ✅ Driver management (create, approve, suspend, edit)
 - ✅ Vehicle/agency fleet management
@@ -189,14 +192,17 @@ This MVP includes:
 
 ### ✅ **Completed Features:**
 - **Authentication System**: Complete multi-role authentication with role entry, login, register, and role selection
-- **Navigation System**: Complete tab-based navigation for all user roles (Customer, Driver, Admin)
+- **Navigation System**: 
+  - Customer: Burger menu navigation in header (Home, Orders, Profile)
+  - Driver: Bottom tab navigation (Orders, Earnings)
+  - Admin: Bottom tab navigation (Bookings, Drivers, Vehicles, Reports, Profile)
 - **Customer Screens**: Home, Booking, Order Tracking, Order History, Past Orders, Profile, Saved Addresses
 - **Driver Screens**: Orders, Active Order, Earnings, Profile
 - **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Customer Management, Reports, Profile
 - **TypeScript Support**: All components properly typed with comprehensive type definitions
 - **State Management**: Zustand stores for authentication, bookings, users, and vehicles
 - **Services**: Local storage, auth, booking, payment, and location services
-- **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner)
+- **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner, CustomerMenuDrawer)
 - **Utils**: Distance calculation, pricing, validation utilities
 - **Configuration**: Comprehensive app configuration with constants, error messages, and centralized UI_CONFIG color system
 
