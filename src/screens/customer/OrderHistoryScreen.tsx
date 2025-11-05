@@ -351,7 +351,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                 <View style={styles.detailRow}>
                   <Ionicons name="water" size={16} color={UI_CONFIG.colors.primary} />
                   <Typography variant="body" style={styles.detailText}>
-                    {booking.tankerSize}L Tanker{booking.quantity && booking.quantity > 1 ? ` x ${PricingUtils.formatNumber(booking.quantity)}` : ''}
+                    {booking.tankerSize}L Tanker
                   </Typography>
                 </View>
                 <View style={styles.detailRow}>

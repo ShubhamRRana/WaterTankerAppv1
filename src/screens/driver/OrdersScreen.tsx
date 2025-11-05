@@ -237,7 +237,7 @@ const OrdersScreen: React.FC = () => {
           <View style={styles.orderDetail}>
               <Ionicons name="water-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.orderDetailText}>
-              {order.tankerSize}L Tanker{order.quantity && order.quantity > 1 ? ` x ${PricingUtils.formatNumber(order.quantity)}` : ''}
+              {order.tankerSize}L Tanker
             </Typography>
           </View>
           <View style={styles.orderDetail}>

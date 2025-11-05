@@ -1,26 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   StyleSheet, 
   ScrollView, 
   TouchableOpacity, 
   Alert, 
-  Image,
   TextInput,
-  Modal,
-  Dimensions
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { Typography, Button, Card, LoadingSpinner, CustomerMenuDrawer } from '../../components/common';
+import { useFocusEffect } from '@react-navigation/native';
+import { Typography, LoadingSpinner, CustomerMenuDrawer } from '../../components/common';
 import { useAuthStore } from '../../store/authStore';
 import { User } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { UI_CONFIG } from '../../constants/config';
-
-const { width } = Dimensions.get('window');
 
 type ProfileScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Profile'>;
 
@@ -37,6 +36,13 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   });
   const [menuVisible, setMenuVisible] = useState(false);
 
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const editFormOpacity = useRef(new Animated.Value(0)).current;
+  const editFormTranslateY = useRef(new Animated.Value(20)).current;
+
   useEffect(() => {
     if (user) {
       setEditForm({
@@ -45,6 +51,73 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       });
     }
   }, [user]);
+
+  // Reset and replay animations when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset animation values
+      fadeAnim.setValue(0);
+      slideAnim.setValue(50);
+      scaleAnim.setValue(0.95);
+      
+      // Reset edit form animation values if not editing
+      if (!isEditing) {
+        editFormOpacity.setValue(0);
+        editFormTranslateY.setValue(20);
+      }
+
+      // Start animations
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, [fadeAnim, slideAnim, scaleAnim, editFormOpacity, editFormTranslateY, isEditing])
+  );
+
+  useEffect(() => {
+    if (isEditing) {
+      Animated.parallel([
+        Animated.timing(editFormOpacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.spring(editFormTranslateY, {
+          toValue: 0,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(editFormOpacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(editFormTranslateY, {
+          toValue: 20,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isEditing]);
 
   const handleEditProfile = () => {
     setIsEditing(true);
@@ -85,21 +158,10 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     }
   };
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   const formatDate = (date: Date | string) => {
     try {
-      // Handle both Date objects and date strings
       const dateObj = typeof date === 'string' ? new Date(date) : date;
       
-      // Check if the date is valid
       if (isNaN(dateObj.getTime())) {
         return 'Unknown date';
       }
@@ -145,114 +207,193 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
 
   const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile' | 'PastOrders') => {
     if (route === 'Profile') {
-      // Already on Profile, just close menu
       return;
     }
     navigation.navigate(route);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        {/* Header with Menu */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.menuButton} 
-            onPress={() => setMenuVisible(true)}
-            activeOpacity={0.7}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView 
+          style={styles.container} 
+          contentContainerStyle={styles.contentContainer} 
+          showsVerticalScrollIndicator={false} 
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header with Gradient */}
+          <LinearGradient
+            colors={[UI_CONFIG.colors.primary, UI_CONFIG.colors.secondary]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.headerGradient}
           >
-            <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
-          </TouchableOpacity>
-          <Typography variant="h2" style={styles.headerTitle}>Profile</Typography>
-        </View>
-
-        {/* Profile Header */}
-        <Card style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              {user.profileImage ? (
-                <Image source={{ uri: user.profileImage }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Typography variant="h3" style={styles.avatarText}>
-                    {getInitials(user.name)}
-                  </Typography>
-                </View>
-              )}
+            <View style={styles.header}>
+              <TouchableOpacity 
+                style={styles.menuButton} 
+                onPress={() => setMenuVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="menu" size={24} color={UI_CONFIG.colors.textLight} />
+              </TouchableOpacity>
+              <Typography variant="h2" style={styles.headerTitle}>Profile</Typography>
+              <View style={styles.headerSpacer} />
             </View>
-            
-            <View style={styles.profileInfo}>
-              <Typography variant="h3" style={styles.userName}>
+
+            {/* Profile Section */}
+            <Animated.View 
+              style={[
+                styles.profileSection,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ translateY: slideAnim }, { scale: scaleAnim }],
+                },
+              ]}
+            >
+              <Typography variant="h2" style={styles.userName}>
                 {user.name}
               </Typography>
               <Typography variant="body" style={styles.userPhone}>
                 {user.phone}
               </Typography>
-              <Typography variant="caption" style={styles.memberSince}>
-                Member since {formatDate(user.createdAt)}
-              </Typography>
-            </View>
-          </View>
+            </Animated.View>
+          </LinearGradient>
 
-          <View style={styles.editButtonContainer}>
-            <Button
-              title={isEditing ? "Cancel" : "Edit Profile"}
+          {/* Profile Info Card */}
+          <Animated.View
+            style={[
+              styles.infoCard,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.infoRow}>
+              <View style={styles.infoIconContainer}>
+                <Ionicons name="calendar-outline" size={20} color={UI_CONFIG.colors.primary} />
+              </View>
+              <View style={styles.infoContent}>
+                <Typography variant="caption" style={styles.infoLabel}>
+                  Member Since
+                </Typography>
+                <Typography variant="body" style={styles.infoValue}>
+                  {formatDate(user.createdAt)}
+                </Typography>
+              </View>
+            </View>
+          </Animated.View>
+
+          {/* Action Buttons */}
+          <Animated.View
+            style={[
+              styles.actionButtonsContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={[styles.actionButton, isEditing && styles.actionButtonActive]}
               onPress={isEditing ? handleCancelEdit : handleEditProfile}
-              variant={isEditing ? "outline" : "primary"}
-              style={styles.editButton}
-            />
-            {isEditing && (
-              <Button
-                title="Save"
-                onPress={handleSaveProfile}
-                variant="primary"
-                style={styles.saveButton}
+              activeOpacity={0.8}
+            >
+              <Ionicons 
+                name={isEditing ? "close-circle" : "create-outline"} 
+                size={22} 
+                color={isEditing ? UI_CONFIG.colors.error : UI_CONFIG.colors.primary} 
               />
-            )}
-          </View>
-        </Card>
-
-        {/* Edit Profile Form */}
-        {isEditing && (
-          <Card style={styles.editCard}>
-            <Typography variant="h3" style={styles.editTitle}>
-              Edit Profile Information
-            </Typography>
-            
-            <View style={styles.inputContainer}>
-              <Typography variant="body" style={styles.inputLabel}>
-                Full Name
+              <Typography variant="body" style={[
+                styles.actionButtonText,
+                isEditing && styles.actionButtonTextActive
+              ]}>
+                {isEditing ? "Cancel" : "Edit Profile"}
               </Typography>
-              <TextInput
-                style={styles.textInput}
-                value={editForm.name}
-                onChangeText={(text) => setEditForm(prev => ({ ...prev, name: text }))}
-                placeholder="Enter your full name"
-                placeholderTextColor={UI_CONFIG.colors.textSecondary}
-              />
-            </View>
+            </TouchableOpacity>
+          </Animated.View>
 
-            <View style={styles.inputContainer}>
-              <Typography variant="body" style={styles.inputLabel}>
-                Phone Number
-              </Typography>
-              <TextInput
-                style={styles.textInput}
-                value={editForm.phone}
-                onChangeText={(text) => setEditForm(prev => ({ ...prev, phone: text }))}
-                placeholder="Enter your phone number"
-                placeholderTextColor={UI_CONFIG.colors.textSecondary}
-                keyboardType="phone-pad"
-              />
-            </View>
-          </Card>
-        )}
+          {/* Edit Profile Form */}
+          {isEditing && (
+            <Animated.View
+              style={[
+                styles.editFormContainer,
+                {
+                  opacity: editFormOpacity,
+                  transform: [{ translateY: editFormTranslateY }],
+                },
+              ]}
+            >
+              <View style={styles.editCard}>
+                <View style={styles.editHeader}>
+                  <Ionicons name="person-outline" size={24} color={UI_CONFIG.colors.primary} />
+                  <Typography variant="h3" style={styles.editTitle}>
+                    Edit Profile Information
+                  </Typography>
+                </View>
+                
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputLabelContainer}>
+                    <Ionicons name="person" size={16} color={UI_CONFIG.colors.textSecondary} />
+                    <Typography variant="body" style={styles.inputLabel}>
+                      Full Name
+                    </Typography>
+                  </View>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.name}
+                    onChangeText={(text) => setEditForm(prev => ({ ...prev, name: text }))}
+                    placeholder="Enter your full name"
+                    placeholderTextColor={UI_CONFIG.colors.textSecondary}
+                  />
+                </View>
 
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
+                <View style={styles.inputContainer}>
+                  <View style={styles.inputLabelContainer}>
+                    <Ionicons name="call" size={16} color={UI_CONFIG.colors.textSecondary} />
+                    <Typography variant="body" style={styles.inputLabel}>
+                      Phone Number
+                    </Typography>
+                  </View>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.phone}
+                    onChangeText={(text) => setEditForm(prev => ({ ...prev, phone: text }))}
+                    placeholder="Enter your phone number"
+                    placeholderTextColor={UI_CONFIG.colors.textSecondary}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={handleSaveProfile}
+                  activeOpacity={0.8}
+                >
+                  <LinearGradient
+                    colors={[UI_CONFIG.colors.primary, UI_CONFIG.colors.secondary]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.saveButtonGradient}
+                  >
+                    <Ionicons name="checkmark-circle" size={20} color={UI_CONFIG.colors.textLight} />
+                    <Typography variant="body" style={styles.saveButtonText}>
+                      Save Changes
+                    </Typography>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          )}
+
+          {/* Bottom Spacing */}
+          <View style={styles.bottomSpacing} />
+        </ScrollView>
       </KeyboardAvoidingView>
+      
       <CustomerMenuDrawer
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
@@ -272,25 +413,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: UI_CONFIG.colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 12,
-    backgroundColor: UI_CONFIG.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
-  },
-  menuButton: {
-    padding: 8,
-    marginRight: 12,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
   },
   contentContainer: {
     paddingBottom: 32,
@@ -322,107 +444,211 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
   },
-  profileCard: {
-    margin: 16,
-    padding: 20,
+  headerGradient: {
+    paddingTop: 8,
+    paddingBottom: 32,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  profileHeader: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
-  avatarContainer: {
-    marginRight: 16,
+  menuButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: UI_CONFIG.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    color: UI_CONFIG.colors.textLight,
+  headerTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
+    color: UI_CONFIG.colors.textLight,
   },
-  profileInfo: {
-    flex: 1,
+  headerSpacer: {
+    width: 40,
+  },
+  profileSection: {
+    alignItems: 'center',
+    paddingTop: 40,
+    paddingBottom: 40,
   },
   userName: {
-    fontSize: 23,
+    fontSize: 25,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: UI_CONFIG.colors.accent,
     marginBottom: 4,
+    textAlign: 'center',
   },
   userPhone: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
-    marginBottom: 2,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
   },
-  userEmail: {
-    fontSize: 16,
+  infoCard: {
+    backgroundColor: UI_CONFIG.colors.surface,
+    marginHorizontal: 20,
+    marginTop: -20,
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  infoIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: `${UI_CONFIG.colors.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: 12,
     color: UI_CONFIG.colors.textSecondary,
     marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  memberSince: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
+  infoValue: {
+    fontSize: 16,
+    color: UI_CONFIG.colors.text,
+    fontWeight: '600',
   },
-  editButtonContainer: {
+  actionButtonsContainer: {
+    paddingHorizontal: 20,
+    marginTop: 24,
+  },
+  actionButton: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: UI_CONFIG.colors.border,
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  editButton: {
-    flex: 1,
-    marginRight: 8,
+  actionButtonActive: {
+    borderColor: UI_CONFIG.colors.error,
+    backgroundColor: `${UI_CONFIG.colors.error}10`,
   },
-  saveButton: {
-    flex: 1,
+  actionButtonText: {
     marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    color: UI_CONFIG.colors.primary,
+  },
+  actionButtonTextActive: {
+    color: UI_CONFIG.colors.error,
+  },
+  editFormContainer: {
+    paddingHorizontal: 20,
+    marginTop: 20,
   },
   editCard: {
-    margin: 16,
-    marginTop: 0,
-    padding: 20,
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  editHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   editTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: UI_CONFIG.colors.text,
-    marginBottom: 20,
+    marginLeft: 12,
   },
   inputContainer: {
     marginBottom: 20,
   },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.text,
+  inputLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 8,
   },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: UI_CONFIG.colors.text,
+    marginLeft: 8,
+  },
   textInput: {
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: UI_CONFIG.colors.border,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
     color: UI_CONFIG.colors.text,
-    backgroundColor: UI_CONFIG.colors.surface,
-  },
-  disabledInput: {
     backgroundColor: UI_CONFIG.colors.background,
-    color: UI_CONFIG.colors.textSecondary,
   },
-  disabledNote: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
-    marginTop: 4,
+  saveButton: {
+    marginTop: 8,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  saveButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  saveButtonText: {
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    color: UI_CONFIG.colors.textLight,
   },
   bottomSpacing: {
     height: 40,

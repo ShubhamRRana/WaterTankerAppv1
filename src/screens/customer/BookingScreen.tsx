@@ -43,7 +43,6 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const [selectedAgency, setSelectedAgency] = useState<{ id: string; name: string } | null>(null);
   const [availableVehicles, setAvailableVehicles] = useState<any[]>([]);
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
-  const [quantity, setQuantity] = useState<number>(1);
   const [deliveryAddress, setDeliveryAddress] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<string>('');
   const [deliveryTime, setDeliveryTime] = useState<string>('');
@@ -105,7 +104,6 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           // Reset selected vehicle when agency changes
           setSelectedVehicle(null);
           setPriceBreakdown(null);
-          setQuantity(1); // Reset quantity when agency changes
         } catch (error) {
           console.error('Failed to load vehicles:', error);
           setAvailableVehicles([]);
@@ -116,7 +114,6 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         setAvailableVehicles([]);
         setSelectedVehicle(null);
         setPriceBreakdown(null);
-        setQuantity(1); // Reset quantity when agency is cleared
       }
     };
     loadVehiclesForAgency();
@@ -124,28 +121,21 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
   useEffect(() => {
     if (selectedVehicle) {
-      setQuantity(1); // Reset quantity when vehicle changes
-    }
-  }, [selectedVehicle]);
-
-  useEffect(() => {
-    if (selectedVehicle) {
       calculatePrice();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVehicle, quantity]);
+  }, [selectedVehicle]);
 
   const calculatePrice = () => {
     if (!selectedVehicle) return;
 
     // Only show base price, no distance-based charges
     const basePrice = selectedVehicle.amount;
-    const totalPrice = basePrice * quantity;
+    const totalPrice = basePrice;
     
     setPriceBreakdown({
       tankerSize: `${selectedVehicle.capacity}L Tanker`,
       basePrice: basePrice,
-      quantity: quantity,
       totalPrice: totalPrice,
     });
   };
@@ -157,18 +147,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       amount: vehicle.amount,
       vehicleNumber: vehicle.vehicleNumber
     });
-    setQuantity(1); // Reset quantity when selecting a new vehicle
     setShowTankerModal(false);
-  };
-
-  const handleQuantityChange = (change: number) => {
-    setQuantity((prev) => {
-      const newQuantity = prev + change;
-      // Limit between 1 and 20 tankers
-      if (newQuantity < 1) return 1;
-      if (newQuantity > 20) return 20;
-      return newQuantity;
-    });
   };
 
   const handleAgencySelection = (agency: { id: string; name: string }) => {
@@ -474,7 +453,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         agencyName: selectedAgency.name,
         status: 'pending' as const,
         tankerSize: selectedVehicle.capacity,
-        quantity: quantity,
+        quantity: 1,
         basePrice: priceBreakdown.basePrice,
         distanceCharge: 0, // No distance-based charges
         totalPrice: priceBreakdown.totalPrice,
@@ -491,7 +470,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       // Set success notification data
       setSuccessNotificationData({
         title: 'Booking Successful!',
-        message: `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nQuantity: ${PricingUtils.formatNumber(quantity)} tanker${quantity > 1 ? 's' : ''}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
+        message: `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
       });
       setShowSuccessNotification(true);
     } catch (error) {
@@ -736,47 +715,6 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         </Card>
       </View>
 
-      {/* Quantity Selection */}
-      {selectedVehicle && (
-        <View style={styles.section}>
-          <Typography variant="h3" style={styles.sectionTitle}>Quantity</Typography>
-          <Card style={styles.quantityCard}>
-            <View style={styles.quantityContainer}>
-              <TouchableOpacity
-                style={[styles.quantityButton, quantity <= 1 && styles.quantityButtonDisabled]}
-                onPress={() => handleQuantityChange(-1)}
-                disabled={quantity <= 1}
-              >
-                <Ionicons 
-                  name="remove" 
-                  size={24} 
-                  color={quantity <= 1 ? UI_CONFIG.colors.disabled : UI_CONFIG.colors.primary} 
-                />
-              </TouchableOpacity>
-              
-              <View style={styles.quantityDisplay}>
-                <Typography variant="h3" style={styles.quantityText}>{PricingUtils.formatNumber(quantity)}</Typography>
-                <Typography variant="caption" style={styles.quantityLabel}>
-                  {quantity === 1 ? 'Tanker' : 'Tankers'}
-                </Typography>
-              </View>
-              
-              <TouchableOpacity
-                style={[styles.quantityButton, quantity >= 20 && styles.quantityButtonDisabled]}
-                onPress={() => handleQuantityChange(1)}
-                disabled={quantity >= 20}
-              >
-                <Ionicons 
-                  name="add" 
-                  size={24} 
-                  color={quantity >= 20 ? UI_CONFIG.colors.disabled : UI_CONFIG.colors.primary} 
-                />
-              </TouchableOpacity>
-            </View>
-          </Card>
-        </View>
-      )}
-
       {/* Delivery Address */}
       <View style={styles.section}>
         <Typography variant="h3" style={styles.sectionTitle}>Delivery Address</Typography>
@@ -906,12 +844,6 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
               <Typography variant="body" style={styles.priceLabel}>Unit Price</Typography>
               <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(priceBreakdown.basePrice)}</Typography>
             </View>
-            {priceBreakdown.quantity > 1 && (
-              <View style={styles.priceRow}>
-                <Typography variant="body" style={styles.priceLabel}>Quantity</Typography>
-                <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatNumber(priceBreakdown.quantity)} tankers</Typography>
-              </View>
-            )}
             <View style={[styles.priceRow, styles.totalRow]}>
               <Typography variant="h3" style={styles.totalLabel}>Total Amount</Typography>
               <Typography variant="h3" style={styles.totalValue}>{PricingUtils.formatPrice(priceBreakdown.totalPrice)}</Typography>
@@ -1291,48 +1223,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: UI_CONFIG.colors.textLight,
-  },
-  quantityCard: {
-    marginBottom: 8,
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
-  quantityButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: UI_CONFIG.colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: UI_CONFIG.colors.primary,
-  },
-  quantityButtonDisabled: {
-    backgroundColor: UI_CONFIG.colors.background,
-    borderColor: UI_CONFIG.colors.disabled,
-    opacity: 0.5,
-  },
-  quantityDisplay: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  quantityText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
-    marginBottom: 2,
-  },
-  quantityLabel: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
 });
 

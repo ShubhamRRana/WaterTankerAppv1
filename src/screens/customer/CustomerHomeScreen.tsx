@@ -221,7 +221,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
             >
               <View style={styles.orderDetails}>
                 <Typography variant="body" style={styles.tankerSize}>
-                  {booking.tankerSize}L Tanker{booking.quantity && booking.quantity > 1 ? ` x ${PricingUtils.formatNumber(booking.quantity)}` : ''}
+                  {booking.tankerSize}L Tanker
                 </Typography>
                 <Typography variant="body" style={styles.orderPrice}>{formatPrice(booking.totalPrice)}</Typography>
               </View>
