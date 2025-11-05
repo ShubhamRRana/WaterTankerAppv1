@@ -36,6 +36,7 @@ src/
 │   │   ├── OrdersScreen.tsx
 │   │   ├── AvailableOrdersScreen.tsx
 │   │   ├── ActiveOrderScreen.tsx
+│   │   ├── CollectPaymentScreen.tsx
 │   │   └── DriverEarningsScreen.tsx
 │   └── admin/
 │       ├── AllBookingsScreen.tsx
@@ -102,7 +103,8 @@ src/
 - Phone + password authentication
 - View available booking requests
 - Accept/reject bookings
-- Update order status
+- Start delivery and update order status
+- Collect payment workflow with dedicated payment screen
 - View earnings and completed orders
 - Toggle availability status
 
@@ -173,6 +175,7 @@ This MVP includes:
 - ✅ Driver management (create, approve, suspend, edit)
 - ✅ Vehicle/agency fleet management
 - ✅ Driver earnings tracking
+- ✅ Driver payment collection workflow (Collect Payment screen)
 - ✅ Distance-based pricing using Haversine formula
 - ✅ Modern iOS-style UI with proper TypeScript support
 - ✅ State management with Zustand stores (auth, bookings, users, vehicles)
@@ -212,7 +215,7 @@ This formatting is applied consistently across:
   - Driver: Bottom tab navigation (Orders, Earnings)
   - Admin: Bottom tab navigation (Bookings, Drivers, Vehicles, Reports, Profile)
 - **Customer Screens**: Home, Booking, Order Tracking, Order History, Past Orders, Profile, Saved Addresses
-- **Driver Screens**: Orders, Active Order, Earnings, Profile
+- **Driver Screens**: Orders, Active Order, Collect Payment, Earnings, Profile
 - **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Customer Management, Reports, Profile
 - **TypeScript Support**: All components properly typed with comprehensive type definitions
 - **State Management**: Zustand stores for authentication, bookings, users, and vehicles
