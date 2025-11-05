@@ -143,7 +143,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     );
   }
 
-  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile') => {
+  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile' | 'PastOrders') => {
     if (route === 'Profile') {
       // Already on Profile, just close menu
       return;
@@ -248,16 +248,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
             </View>
           </Card>
         )}
-
-        {/* Past Orders Button */}
-        <View style={styles.pastOrdersContainer}>
-          <Button
-            title="Past Orders"
-            onPress={() => navigation.navigate('PastOrders')}
-            variant="primary"
-            style={styles.pastOrdersButton}
-          />
-        </View>
 
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
@@ -433,13 +423,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: UI_CONFIG.colors.textSecondary,
     marginTop: 4,
-  },
-  pastOrdersContainer: {
-    margin: 16,
-    marginTop: 0,
-  },
-  pastOrdersButton: {
-    backgroundColor: UI_CONFIG.colors.primary,
   },
   bottomSpacing: {
     height: 40,

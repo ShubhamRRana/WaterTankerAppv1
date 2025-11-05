@@ -216,7 +216,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
     );
   }
 
-  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile') => {
+  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile' | 'PastOrders') => {
     if (route === 'Orders') {
       // Already on Orders, just close menu
       return;

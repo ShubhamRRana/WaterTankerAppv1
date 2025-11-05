@@ -6,14 +6,15 @@ import {
   TouchableOpacity, 
   RefreshControl,
   Dimensions,
-  Animated
+  Animated,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useBookingStore } from '../../store/bookingStore';
 import { useAuthStore } from '../../store/authStore';
-import { Typography } from '../../components/common';
+import { Typography, CustomerMenuDrawer } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
@@ -27,9 +28,10 @@ interface PastOrdersScreenProps {
 }
 
 const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { bookings, fetchCustomerBookings } = useBookingStore();
   const [refreshing, setRefreshing] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
   const [periodType, setPeriodType] = useState<'month' | 'year'>('month');
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
@@ -200,6 +202,22 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
     setRefreshing(false);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
+  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile' | 'PastOrders') => {
+    if (route === 'PastOrders') {
+      // Already on PastOrders, just close menu
+      return;
+    }
+    navigation.navigate(route);
+  };
+
   const monthlyData = periodType === 'month' ? calculateMonthlyData() : calculateYearlyData();
   const totalRevenue = monthlyData.totalRevenue;
   const totalOrders = monthlyData.totalOrders;
@@ -216,8 +234,12 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={UI_CONFIG.colors.text} />
+          <TouchableOpacity 
+            style={styles.menuButton} 
+            onPress={() => setMenuVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <Typography variant="h2" style={styles.title}>
@@ -490,6 +512,13 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
+      <CustomerMenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
+        currentRoute="PastOrders"
+      />
     </SafeAreaView>
   );
 };
@@ -512,7 +541,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: UI_CONFIG.colors.border,
   },
-  backButton: {
+  menuButton: {
     marginRight: 12,
   },
   headerContent: {

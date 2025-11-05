@@ -81,7 +81,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
     }
   };
 
-  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile') => {
+  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile' | 'PastOrders') => {
     if (route === 'Home') {
       // Already on Home, just close menu
       return;

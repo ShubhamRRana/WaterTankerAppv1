@@ -8,16 +8,16 @@ import { UI_CONFIG } from '../../constants/config';
 interface MenuItem {
   label: string;
   icon: keyof typeof Ionicons.glyphMap;
-  route: 'Home' | 'Orders' | 'Profile';
+  route: 'Home' | 'Orders' | 'Profile' | 'PastOrders';
   onPress: () => void;
 }
 
 interface CustomerMenuDrawerProps {
   visible: boolean;
   onClose: () => void;
-  onNavigate: (route: 'Home' | 'Orders' | 'Profile') => void;
+  onNavigate: (route: 'Home' | 'Orders' | 'Profile' | 'PastOrders') => void;
   onLogout: () => void;
-  currentRoute?: 'Home' | 'Orders' | 'Profile';
+  currentRoute?: 'Home' | 'Orders' | 'Profile' | 'PastOrders';
 }
 
 const CustomerMenuDrawer: React.FC<CustomerMenuDrawerProps> = ({
@@ -43,6 +43,15 @@ const CustomerMenuDrawer: React.FC<CustomerMenuDrawerProps> = ({
       route: 'Orders',
       onPress: () => {
         onNavigate('Orders');
+        onClose();
+      },
+    },
+    {
+      label: 'Past Orders',
+      icon: 'time-outline',
+      route: 'PastOrders',
+      onPress: () => {
+        onNavigate('PastOrders');
         onClose();
       },
     },
