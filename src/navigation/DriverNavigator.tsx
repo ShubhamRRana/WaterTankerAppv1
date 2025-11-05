@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { UI_CONFIG } from '../constants/config';
 import OrdersScreen from '../screens/driver/OrdersScreen';
 import DriverEarningsScreen from '../screens/driver/DriverEarningsScreen';
+import CollectPaymentScreen from '../screens/driver/CollectPaymentScreen';
 
 export type DriverTabParamList = {
   Orders: undefined;
@@ -13,6 +14,7 @@ export type DriverTabParamList = {
 
 export type DriverStackParamList = {
   DriverTabs: undefined;
+  CollectPayment: { orderId: string };
 };
 
 const Tab = createBottomTabNavigator<DriverTabParamList>();
@@ -71,6 +73,7 @@ const DriverNavigator: React.FC = () => {
       }}
     >
       <Stack.Screen name="DriverTabs" component={DriverTabs} />
+      <Stack.Screen name="CollectPayment" component={CollectPaymentScreen} />
     </Stack.Navigator>
   );
 };

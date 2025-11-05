@@ -10,6 +10,9 @@ import {
   Animated
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
@@ -17,12 +20,18 @@ import { Typography, Card, Button, LoadingSpinner } from '../../components/commo
 import { Booking, BookingStatus } from '../../types';
 import { PRICING_CONFIG, UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
+import { DriverStackParamList, DriverTabParamList } from '../../navigation/DriverNavigator';
 
 const { width } = Dimensions.get('window');
 
 type OrderTab = 'available' | 'active' | 'completed';
+type OrdersScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<DriverTabParamList, 'Orders'>,
+  StackNavigationProp<DriverStackParamList>
+>;
 
 const OrdersScreen: React.FC = () => {
+  const navigation = useNavigation<OrdersScreenNavigationProp>();
   const { user, logout } = useAuthStore();
   const { bookings, isLoading, fetchAvailableBookings, fetchDriverBookings, updateBookingStatus } = useBookingStore();
   
@@ -37,6 +46,13 @@ const OrdersScreen: React.FC = () => {
   useEffect(() => {
     loadOrdersData();
   }, []);
+
+  // Reload orders when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadOrdersData();
+    }, [activeTab, user?.uid])
+  );
 
   const tabs = [
     { key: 'available', label: 'Available', icon: 'list-outline' },
@@ -113,19 +129,12 @@ const OrdersScreen: React.FC = () => {
     }
   };
 
-  const handleCompleteDelivery = async (orderId: string) => {
-    setProcessingOrder(orderId);
+  const handleCollectPayment = (orderId: string) => {
     try {
-      await updateBookingStatus(orderId, 'delivered', {
-        deliveredAt: new Date(),
-      });
-      Alert.alert('Success', 'Delivery completed successfully!');
-      await loadOrdersData();
+      navigation.navigate('CollectPayment', { orderId });
     } catch (error) {
-      console.error('Failed to complete delivery:', error);
-      Alert.alert('Error', 'Failed to complete delivery. Please try again.');
-    } finally {
-      setProcessingOrder(null);
+      console.error('Navigation error:', error);
+      Alert.alert('Error', 'Failed to open payment screen. Please try again.');
     }
   };
 
@@ -297,8 +306,8 @@ const OrdersScreen: React.FC = () => {
 
         {activeTab === 'active' && order.status === 'in_transit' && (
           <Button
-            title="Complete Delivery"
-            onPress={() => handleCompleteDelivery(order.id)}
+            title="Collect Payment"
+            onPress={() => handleCollectPayment(order.id)}
             loading={isProcessing}
             disabled={isProcessing}
             style={[styles.actionButton, styles.completeButton]}
