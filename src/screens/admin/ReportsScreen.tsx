@@ -612,8 +612,8 @@ const styles = StyleSheet.create({
     left: 0,
     borderRadius: 16,
     zIndex: 1,
-    backgroundColor: UI_CONFIG.colors.primary,
-    shadowColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
+    shadowColor: UI_CONFIG.colors.accent,
     shadowOffset: {
       width: 0,
       height: 0,

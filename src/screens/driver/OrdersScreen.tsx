@@ -29,6 +29,8 @@ const OrdersScreen: React.FC = () => {
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
+  const previousTabRef = useRef<OrderTab>('available');
+  const tabChangeTimeRef = useRef<number>(0);
   
   // Cache for storing fetched data per tab to avoid unnecessary refetches
   const dataCache = useRef<{
@@ -92,6 +94,17 @@ const OrdersScreen: React.FC = () => {
 
   // Load data when tab changes (only once, not on focus)
   useEffect(() => {
+    // Track tab change time to distinguish from navigation returns
+    const previousTab = previousTabRef.current;
+    const isTabChange = previousTab !== activeTab;
+    
+    if (isTabChange) {
+      tabChangeTimeRef.current = Date.now();
+    }
+    
+    // Update previous tab after checking
+    previousTabRef.current = activeTab;
+    
     setIsInitialLoading(true);
     loadOrdersData().finally(() => {
       setIsInitialLoading(false);
@@ -114,15 +127,32 @@ const OrdersScreen: React.FC = () => {
   // Reload orders when screen comes into focus (with cache check)
   useFocusEffect(
     React.useCallback(() => {
-      // Only refresh if cache is expired or doesn't exist
       const cacheKey = activeTab as 'available' | 'active' | 'completed';
       const cached = dataCache.current[cacheKey];
       const now = Date.now();
       
-      if (!cached || (now - cached.timestamp) >= CACHE_EXPIRY) {
+      // Check if we just switched tabs (within last 500ms) - if so, skip refresh
+      // The useEffect above already handles tab switching
+      const timeSinceTabChange = now - tabChangeTimeRef.current;
+      const isTabSwitch = timeSinceTabChange < 500;
+      
+      if (isTabSwitch) {
+        // Tab was just switched, useEffect already handled the data load
+        return;
+      }
+      
+      // We're returning from navigation (like CollectPaymentScreen)
+      // Refresh active tab to ensure status changes are reflected
+      // This fixes the issue where "Collect Payment" button appears twice after returning from CollectPaymentScreen
+      if (activeTab === 'active') {
+        // Invalidate cache and refresh for active tab to ensure status changes are reflected
+        dataCache.current.active = null;
+        loadOrdersData(true);
+      } else if (!cached || (now - cached.timestamp) >= CACHE_EXPIRY) {
+        // For other tabs, use normal cache expiry logic
         loadOrdersData(true);
       }
-    }, [activeTab, user?.uid]) // Minimal dependencies
+    }, [activeTab, user?.uid, loadOrdersData])
   );
   
   // Cleanup on unmount
