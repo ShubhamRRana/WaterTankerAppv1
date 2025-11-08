@@ -5,6 +5,7 @@ import AllBookingsScreen from '../screens/admin/AllBookingsScreen';
 import DriverManagementScreen from '../screens/admin/DriverManagementScreen';
 import VehicleManagementScreen from '../screens/admin/VehicleManagementScreen';
 import ReportsScreen from '../screens/admin/ReportsScreen';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 export type AdminStackParamList = {
   Bookings: undefined;
@@ -18,18 +19,20 @@ const Stack = createStackNavigator<AdminStackParamList>();
 
 const AdminNavigator: React.FC = () => {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}
-      initialRouteName="Bookings"
-    >
-      <Stack.Screen name="Bookings" component={AllBookingsScreen} />
-      <Stack.Screen name="Drivers" component={DriverManagementScreen} />
-      <Stack.Screen name="Vehicles" component={VehicleManagementScreen} />
-      <Stack.Screen name="Reports" component={ReportsScreen} />
-      <Stack.Screen name="Profile" component={AdminProfileScreen} />
-    </Stack.Navigator>
+    <ErrorBoundary resetKeys={['Admin']}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}
+        initialRouteName="Bookings"
+      >
+        <Stack.Screen name="Bookings" component={AllBookingsScreen} />
+        <Stack.Screen name="Drivers" component={DriverManagementScreen} />
+        <Stack.Screen name="Vehicles" component={VehicleManagementScreen} />
+        <Stack.Screen name="Reports" component={ReportsScreen} />
+        <Stack.Screen name="Profile" component={AdminProfileScreen} />
+      </Stack.Navigator>
+    </ErrorBoundary>
   );
 };
 

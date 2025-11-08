@@ -7,6 +7,7 @@ import OrderHistoryScreen from '../screens/customer/OrderHistoryScreen';
 import ProfileScreen from '../screens/customer/ProfileScreen';
 import SavedAddressesScreen from '../screens/customer/SavedAddressesScreen';
 import PastOrdersScreen from '../screens/customer/PastOrdersScreen';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 export type CustomerStackParamList = {
   Home: undefined;
@@ -22,19 +23,21 @@ const Stack = createStackNavigator<CustomerStackParamList>();
 
 const CustomerNavigator: React.FC = () => {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen name="Home" component={CustomerHomeScreen} />
-      <Stack.Screen name="Orders" component={OrderHistoryScreen} />
-      <Stack.Screen name="Profile" component={ProfileScreen} />
-      <Stack.Screen name="Booking" component={BookingScreen} />
-      <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
-      <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
-      <Stack.Screen name="PastOrders" component={PastOrdersScreen} />
-    </Stack.Navigator>
+    <ErrorBoundary resetKeys={['Customer']}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="Home" component={CustomerHomeScreen} />
+        <Stack.Screen name="Orders" component={OrderHistoryScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="Booking" component={BookingScreen} />
+        <Stack.Screen name="OrderTracking" component={OrderTrackingScreen} />
+        <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
+        <Stack.Screen name="PastOrders" component={PastOrdersScreen} />
+      </Stack.Navigator>
+    </ErrorBoundary>
   );
 };
 

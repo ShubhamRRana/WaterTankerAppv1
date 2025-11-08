@@ -14,6 +14,9 @@ import AdminNavigator from './src/navigation/AdminNavigator';
 // Store imports
 import { useAuthStore } from './src/store/authStore';
 
+// Components
+import ErrorBoundary from './src/components/common/ErrorBoundary';
+
 // Types
 import { User } from './src/types';
 
@@ -77,18 +80,20 @@ const App: React.FC = () => {
   };
 
   return (
-    <SafeAreaProvider>
-      <NavigationContainer>
-        <StatusBar style="auto" />
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-          }}
-        >
-          {renderNavigator()}
-        </Stack.Navigator>
-      </NavigationContainer>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <StatusBar style="auto" />
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            {renderNavigator()}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 };
 

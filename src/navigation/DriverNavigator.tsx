@@ -6,6 +6,7 @@ import { UI_CONFIG } from '../constants/config';
 import OrdersScreen from '../screens/driver/OrdersScreen';
 import DriverEarningsScreen from '../screens/driver/DriverEarningsScreen';
 import CollectPaymentScreen from '../screens/driver/CollectPaymentScreen';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 export type DriverTabParamList = {
   Orders: undefined;
@@ -67,14 +68,16 @@ const DriverTabs: React.FC = () => {
 
 const DriverNavigator: React.FC = () => {
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Stack.Screen name="DriverTabs" component={DriverTabs} />
-      <Stack.Screen name="CollectPayment" component={CollectPaymentScreen} />
-    </Stack.Navigator>
+    <ErrorBoundary resetKeys={['Driver']}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="DriverTabs" component={DriverTabs} />
+        <Stack.Screen name="CollectPayment" component={CollectPaymentScreen} />
+      </Stack.Navigator>
+    </ErrorBoundary>
   );
 };
 
