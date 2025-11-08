@@ -16,6 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Typography, Button, Card, LoadingSpinner, AdminMenuDrawer, SuccessNotification } from '../../components/common';
+import ProfileHeader from '../../components/admin/ProfileHeader';
+import EditProfileForm from '../../components/admin/EditProfileForm';
 import { useAuthStore } from '../../store/authStore';
 import { User } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
@@ -170,11 +172,6 @@ const AdminProfileScreen: React.FC = () => {
   const navigation = useNavigation<AdminProfileScreenNavigationProp>();
   const { user, updateUser, logout, isLoading } = useAuthStore();
   const [state, dispatch] = useReducer(appReducer, initialState);
-  const businessNameInputRef = useRef<TextInput>(null);
-  const nameInputRef = useRef<TextInput>(null);
-  const phoneInputRef = useRef<TextInput>(null);
-  const passwordInputRef = useRef<TextInput>(null);
-  const confirmPasswordInputRef = useRef<TextInput>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
@@ -270,14 +267,6 @@ const AdminProfileScreen: React.FC = () => {
     dispatch({ type: 'SET_ERRORS', payload: errors });
   }, [debouncedBusinessName, debouncedName, debouncedPhone, debouncedPassword, state.editForm.password, state.editForm.confirmPassword, state.isEditing]);
 
-  // Auto-focus first input when entering edit mode
-  useEffect(() => {
-    if (state.isEditing && businessNameInputRef.current) {
-      setTimeout(() => {
-        businessNameInputRef.current?.focus();
-      }, 100);
-    }
-  }, [state.isEditing]);
 
   // Success animation
   useEffect(() => {
@@ -477,35 +466,6 @@ const AdminProfileScreen: React.FC = () => {
     navigation.navigate(route);
   }, [navigation]);
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(w => w.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  const getBusinessInitials = (businessName: string) => {
-    return businessName
-      .split(' ')
-      .map(w => w.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
-  // Character count helpers
-  const getCharacterCount = (text: string, maxLength: number) => {
-    return `${text.length}/${maxLength}`;
-  };
-
-  const getCharacterCountColor = (text: string, maxLength: number) => {
-    const percentage = (text.length / maxLength) * 100;
-    if (percentage >= 90) return UI_CONFIG.colors.error;
-    if (percentage >= 75) return UI_CONFIG.colors.warning;
-    return UI_CONFIG.colors.textSecondary;
-  };
 
   const handleImageLoad = () => {
     dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
@@ -520,6 +480,13 @@ const AdminProfileScreen: React.FC = () => {
   const handleRetryImage = () => {
     dispatch({ type: 'SET_IMAGE_ERROR', payload: false });
     dispatch({ type: 'SET_IMAGE_LOADING', payload: true });
+    // Trigger image reload by updating user state
+    if (user?.profileImage) {
+      // Force re-render by updating a dummy state
+      setTimeout(() => {
+        dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
+      }, 100);
+    }
   };
 
   if (isLoading) {
@@ -569,51 +536,14 @@ const AdminProfileScreen: React.FC = () => {
           </View>
         </View>
 
-        <Card style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              {user.profileImage && !state.imageError ? (
-                <>
-                  {state.imageLoading && (
-                    <View style={styles.imageLoadingOverlay}>
-                      <LoadingSpinner size="small" />
-                    </View>
-                  )}
-                  <Image 
-                    source={{ uri: user.profileImage }} 
-                    style={styles.avatar}
-                    onLoadStart={() => dispatch({ type: 'SET_IMAGE_LOADING', payload: true })}
-                    onLoad={handleImageLoad}
-                    onError={handleImageError}
-                    accessibilityLabel="Profile image"
-                    accessibilityRole="image"
-                  />
-                </>
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Typography variant="h3" style={styles.avatarText}>
-                    {getBusinessInitials(user.businessName || user.name || 'A')}
-                  </Typography>
-                </View>
-              )}
-              {state.imageError && user.profileImage && (
-                <TouchableOpacity
-                  style={styles.retryButton}
-                  onPress={handleRetryImage}
-                  accessibilityLabel="Retry loading profile image"
-                  accessibilityRole="button"
-                >
-                  <Ionicons name="refresh" size={16} color={UI_CONFIG.colors.primary} />
-                </TouchableOpacity>
-              )}
-            </View>
-            <View style={styles.profileInfo}>
-              <Typography variant="h3" style={styles.userName}>{user.businessName || user.name}</Typography>
-              <Typography variant="body" style={styles.userPhone}>{user.phone}</Typography>
-            </View>
-          </View>
-
-          {!state.isEditing && (
+        <ProfileHeader
+          user={user}
+          imageError={state.imageError}
+          imageLoading={state.imageLoading}
+          onRetryImage={handleRetryImage}
+        />
+        {!state.isEditing && (
+          <View style={styles.editButtonContainer}>
             <Button 
               title="Edit Profile" 
               onPress={() => {
@@ -623,8 +553,8 @@ const AdminProfileScreen: React.FC = () => {
               }} 
               variant="primary"
             />
-          )}
-        </Card>
+          </View>
+        )}
 
         {state.networkError && (
           <Card style={styles.errorCard}>
@@ -638,203 +568,19 @@ const AdminProfileScreen: React.FC = () => {
         )}
 
         {state.isEditing && (
-          <Card style={styles.editCard}>
-            <Typography variant="h3" style={styles.sectionTitle}>Edit Profile</Typography>
-            <View style={styles.inputContainer}>
-              <View style={styles.labelRow}>
-                <Typography variant="body" style={styles.inputLabel}>Business Name</Typography>
-                <Typography 
-                  variant="caption" 
-                  style={[
-                    styles.characterCount, 
-                    { color: getCharacterCountColor(state.editForm.businessName, 100) }
-                  ]}
-                >
-                  {getCharacterCount(state.editForm.businessName, 100)}
-                </Typography>
-              </View>
-              <TextInput
-                ref={businessNameInputRef}
-                style={[styles.textInput, state.formErrors.businessName && styles.textInputError]}
-                value={state.editForm.businessName}
-                onChangeText={(t) => handleInputChange('businessName', t)}
-                placeholder="Enter business name"
-                placeholderTextColor={UI_CONFIG.colors.textSecondary}
-                accessibilityLabel="Business name input"
-                accessibilityHint="Enter your business name. Maximum 100 characters."
-                maxLength={100}
-                autoCapitalize="words"
-                returnKeyType="next"
-                onSubmitEditing={() => nameInputRef.current?.focus()}
-              />
-              {state.formErrors.businessName && (
-                <Typography variant="caption" style={styles.errorText}>
-                  {state.formErrors.businessName}
-                </Typography>
-              )}
-            </View>
-            <View style={styles.inputContainer}>
-              <View style={styles.labelRow}>
-                <Typography variant="body" style={styles.inputLabel}>Full Name</Typography>
-                <Typography 
-                  variant="caption" 
-                  style={[
-                    styles.characterCount, 
-                    { color: getCharacterCountColor(state.editForm.name, 50) }
-                  ]}
-                >
-                  {getCharacterCount(state.editForm.name, 50)}
-                </Typography>
-              </View>
-              <TextInput
-                ref={nameInputRef}
-                style={[styles.textInput, state.formErrors.name && styles.textInputError]}
-                value={state.editForm.name}
-                onChangeText={(t) => handleInputChange('name', t)}
-                placeholder="Enter full name"
-                placeholderTextColor={UI_CONFIG.colors.textSecondary}
-                accessibilityLabel="Full name input"
-                accessibilityHint="Enter your full name. Maximum 50 characters."
-                maxLength={50}
-                autoCapitalize="words"
-                returnKeyType="next"
-                onSubmitEditing={() => phoneInputRef.current?.focus()}
-              />
-              {state.formErrors.name && (
-                <Typography variant="caption" style={styles.errorText}>
-                  {state.formErrors.name}
-                </Typography>
-              )}
-            </View>
-            <View style={styles.inputContainer}>
-              <View style={styles.labelRow}>
-                <Typography variant="body" style={styles.inputLabel}>Phone Number</Typography>
-                <Typography 
-                  variant="caption" 
-                  style={[
-                    styles.characterCount, 
-                    { color: getCharacterCountColor(state.editForm.phone, 10) }
-                  ]}
-                >
-                  {getCharacterCount(state.editForm.phone, 10)}
-                </Typography>
-              </View>
-              <TextInput
-                ref={phoneInputRef}
-                style={[styles.textInput, state.formErrors.phone && styles.textInputError]}
-                value={state.editForm.phone}
-                onChangeText={(t) => handleInputChange('phone', t)}
-                placeholder="Enter phone number"
-                placeholderTextColor={UI_CONFIG.colors.textSecondary}
-                keyboardType="phone-pad"
-                maxLength={10}
-                accessibilityLabel="Phone number input"
-                accessibilityHint="Enter your 10-digit phone number starting with 6-9"
-                returnKeyType="next"
-                onSubmitEditing={() => passwordInputRef.current?.focus()}
-              />
-              {state.formErrors.phone && (
-                <Typography variant="caption" style={styles.errorText}>
-                  {state.formErrors.phone}
-                </Typography>
-              )}
-            </View>
-            <View style={styles.inputContainer}>
-              <Typography variant="body" style={styles.inputLabel}>Password</Typography>
-              <View style={[
-                styles.passwordInputContainer,
-                state.formErrors.password && styles.textInputError
-              ]}>
-                <TextInput
-                  ref={passwordInputRef}
-                  style={styles.passwordInput}
-                  value={state.editForm.password}
-                  onChangeText={(t) => handleInputChange('password', t)}
-                  placeholder="Leave blank to keep current"
-                  placeholderTextColor={UI_CONFIG.colors.textSecondary}
-                  secureTextEntry={!state.showPassword}
-                  accessibilityLabel="Password input"
-                  accessibilityHint="Enter new password or leave blank to keep current. Minimum 6 characters."
-                  returnKeyType="next"
-                  onSubmitEditing={() => confirmPasswordInputRef.current?.focus()}
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => dispatch({ type: 'TOGGLE_PASSWORD_VISIBILITY' })}
-                  accessibilityLabel={state.showPassword ? "Hide password" : "Show password"}
-                  accessibilityRole="button"
-                  accessibilityHint="Toggles password visibility"
-                >
-                  <Ionicons
-                    name={state.showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={24}
-                    color={UI_CONFIG.colors.textSecondary}
-                  />
-                </TouchableOpacity>
-              </View>
-              {state.formErrors.password && (
-                <Typography variant="caption" style={styles.errorText}>
-                  {state.formErrors.password}
-                </Typography>
-              )}
-            </View>
-            <View style={styles.inputContainer}>
-              <Typography variant="body" style={styles.inputLabel}>Confirm Password</Typography>
-              <View style={[
-                styles.passwordInputContainer,
-                state.formErrors.confirmPassword && styles.textInputError
-              ]}>
-                <TextInput
-                  ref={confirmPasswordInputRef}
-                  style={styles.passwordInput}
-                  value={state.editForm.confirmPassword}
-                  onChangeText={(t) => handleInputChange('confirmPassword', t)}
-                  placeholder="Confirm new password"
-                  placeholderTextColor={UI_CONFIG.colors.textSecondary}
-                  secureTextEntry={!state.showConfirmPassword}
-                  accessibilityLabel="Confirm password input"
-                  accessibilityHint="Confirm your new password. Must match the password above."
-                  returnKeyType="done"
-                  onSubmitEditing={handleSaveProfile}
-                />
-                <TouchableOpacity
-                  style={styles.eyeIcon}
-                  onPress={() => dispatch({ type: 'TOGGLE_CONFIRM_PASSWORD_VISIBILITY' })}
-                  accessibilityLabel={state.showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                  accessibilityRole="button"
-                  accessibilityHint="Toggles confirm password visibility"
-                >
-                  <Ionicons
-                    name={state.showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={24}
-                    color={UI_CONFIG.colors.textSecondary}
-                  />
-                </TouchableOpacity>
-              </View>
-              {state.formErrors.confirmPassword && (
-                <Typography variant="caption" style={styles.errorText}>
-                  {state.formErrors.confirmPassword}
-                </Typography>
-              )}
-            </View>
-            <View style={styles.row}>
-              <Button 
-                title="Cancel" 
-                onPress={handleCancelEdit}
-                variant="outline" 
-                style={styles.rowButton}
-                disabled={state.isSaving}
-              />
-              <Button 
-                title={state.isSaving ? "Saving..." : "Save"} 
-                onPress={handleSaveProfile} 
-                variant="primary" 
-                style={styles.rowButton}
-                disabled={state.isSaving || !state.isDirty}
-                loading={state.isSaving}
-              />
-            </View>
-          </Card>
+          <EditProfileForm
+            formData={state.editForm}
+            formErrors={state.formErrors}
+            showPassword={state.showPassword}
+            showConfirmPassword={state.showConfirmPassword}
+            isSaving={state.isSaving}
+            isDirty={state.isDirty}
+            onFieldChange={handleInputChange}
+            onTogglePasswordVisibility={() => dispatch({ type: 'TOGGLE_PASSWORD_VISIBILITY' })}
+            onToggleConfirmPasswordVisibility={() => dispatch({ type: 'TOGGLE_CONFIRM_PASSWORD_VISIBILITY' })}
+            onSave={handleSaveProfile}
+            onCancel={handleCancelEdit}
+          />
         )}
 
         <SuccessNotification
@@ -902,144 +648,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
     color: UI_CONFIG.colors.textSecondary,
   },
-  profileCard: {
-    margin: 16,
-    padding: 20,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginRight: 16,
-  },
-  avatarPlaceholder: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: UI_CONFIG.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  avatarText: {
-    color: UI_CONFIG.colors.textLight,
-    fontWeight: 'bold',
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
-  },
-  userPhone: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  editCard: {
+  editButtonContainer: {
     marginHorizontal: 16,
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    marginTop: -8,
     marginBottom: 16,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.text,
-    marginBottom: 8,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: UI_CONFIG.colors.text,
-    backgroundColor: UI_CONFIG.colors.surface,
-  },
-  textInputError: {
-    borderColor: '#EF4444',
-    borderWidth: 1.5,
-  },
-  passwordInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
-    borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.surface,
-  },
-  passwordInput: {
-    flex: 1,
-    padding: 12,
-    fontSize: 16,
-    color: UI_CONFIG.colors.text,
-  },
-  eyeIcon: {
-    padding: 12,
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  rowButton: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  avatarContainer: {
-    position: 'relative',
-    marginRight: 16,
-  },
-  imageLoadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  retryButton: {
-    position: 'absolute',
-    bottom: -4,
-    right: -4,
-    backgroundColor: UI_CONFIG.colors.surface,
-    borderRadius: 12,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
-    zIndex: 2,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  characterCount: {
-    fontSize: 12,
-    fontWeight: '500',
   },
   errorCard: {
     marginHorizontal: 16,

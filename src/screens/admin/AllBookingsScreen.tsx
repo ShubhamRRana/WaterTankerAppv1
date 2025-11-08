@@ -7,7 +7,6 @@ import {
   Alert, 
   RefreshControl,
   TextInput,
-  Modal,
   FlatList
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,10 +15,12 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useBookingStore } from '../../store/bookingStore';
 import { useAuthStore } from '../../store/authStore';
-import { Typography, Card, Button, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
+import { Typography, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
+import BookingCard from '../../components/admin/BookingCard';
+import BookingDetailsModal from '../../components/admin/BookingDetailsModal';
+import StatusUpdateModal from '../../components/admin/StatusUpdateModal';
 import { Booking, BookingStatus } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
-import { PricingUtils } from '../../utils/pricing';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 
 type AllBookingsScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Bookings'>;
@@ -174,93 +175,6 @@ const AllBookingsScreen: React.FC = () => {
     setShowBookingModal(true);
   };
 
-  const BookingCard: React.FC<{ booking: Booking }> = ({ booking }) => (
-    <Card style={styles.bookingCard}>
-      <TouchableOpacity 
-        onPress={() => openBookingDetails(booking)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.bookingHeader}>
-          <View style={styles.bookingInfo}>
-            <Typography variant="h3" style={styles.customerName}>
-              {booking.customerName}
-            </Typography>
-            <Typography variant="caption" style={styles.bookingId}>
-              #{booking.id.slice(-8)}
-            </Typography>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) }]}>
-            <Ionicons 
-              name={getStatusIcon(booking.status) as any} 
-              size={16} 
-              color={UI_CONFIG.colors.textLight} 
-            />
-            <Typography variant="caption" style={styles.statusText}>
-              {booking.status.replace('_', ' ').toUpperCase()}
-            </Typography>
-          </View>
-        </View>
-
-        <View style={styles.bookingDetails}>
-          <View style={styles.detailRow}>
-            <Ionicons name="water-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="body" style={styles.detailText}>
-              {booking.tankerSize}L Tanker
-            </Typography>
-          </View>
-          
-          <View style={styles.detailRow}>
-            <Ionicons name="location-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="body" style={styles.detailText}>
-              {booking.deliveryAddress.street}
-            </Typography>
-          </View>
-          
-          <View style={styles.detailRow}>
-            <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="body" style={styles.detailText}>
-              {PricingUtils.formatPrice(booking.totalPrice)}
-            </Typography>
-          </View>
-          
-          <View style={styles.detailRow}>
-            <Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="body" style={styles.detailText}>
-              {new Date(booking.createdAt).toLocaleDateString('en-IN', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
-            </Typography>
-          </View>
-          {booking.status === 'delivered' && booking.deliveredAt && (
-            <View style={styles.detailRow}>
-              <Ionicons name="checkmark-circle" size={16} color={UI_CONFIG.colors.success} />
-              <Typography variant="body" style={styles.detailText}>
-                Delivered: {new Date(booking.deliveredAt).toLocaleDateString('en-IN', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </Typography>
-            </View>
-          )}
-        </View>
-
-        {booking.driverName && (
-          <View style={styles.driverInfo}>
-            <Typography variant="caption" style={styles.driverLabel}>
-              Driver: {booking.driverName}
-            </Typography>
-          </View>
-        )}
-      </TouchableOpacity>
-    </Card>
-  );
 
   const StatusFilterButton: React.FC<{ filter: { key: string; label: string; icon: string; count: number } }> = ({ filter }) => (
     <TouchableOpacity
@@ -298,168 +212,6 @@ const AllBookingsScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
-  const BookingDetailsModal: React.FC = () => (
-    <Modal
-      visible={showBookingModal}
-      animationType='slide'
-      presentationStyle="pageSheet"
-    >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <Typography variant="h2" style={styles.modalTitle}>
-            Booking Details
-          </Typography>
-          <TouchableOpacity
-            onPress={() => setShowBookingModal(false)}
-            style={styles.closeButton}
-          >
-            <Ionicons name="close" size={24} color={UI_CONFIG.colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        {selectedBooking && (
-          <ScrollView style={styles.modalContent}>
-            <Card style={styles.detailCard}>
-              <Typography variant="h3" style={styles.detailSectionTitle}>
-                Customer Information
-              </Typography>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Name:</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {selectedBooking.customerName}
-                </Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Phone:</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {selectedBooking.customerPhone}
-                </Typography>
-              </View>
-            </Card>
-
-            <Card style={styles.detailCard}>
-              <Typography variant="h3" style={styles.detailSectionTitle}>
-                Booking Information
-              </Typography>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Booking ID:</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  #{selectedBooking.id.slice(-8)}
-                </Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Tanker Size:</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {selectedBooking.tankerSize}L
-                </Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Status:</Typography>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(selectedBooking.status) }]}>
-                  <Typography variant="caption" style={styles.statusText}>
-                    {selectedBooking.status.replace('_', ' ').toUpperCase()}
-                  </Typography>
-                </View>
-              </View>
-              {selectedBooking.status === 'delivered' && selectedBooking.deliveredAt && (
-                <View style={styles.detailItem}>
-                  <Typography variant="body" style={styles.detailLabel}>Delivered At:</Typography>
-                  <Typography variant="body" style={styles.detailValue}>
-                    {new Date(selectedBooking.deliveredAt).toLocaleDateString('en-IN', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </Typography>
-                </View>
-              )}
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Total Price:</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {PricingUtils.formatPrice(selectedBooking.totalPrice)}
-                </Typography>
-              </View>
-            </Card>
-
-            <Card style={styles.detailCard}>
-              <Typography variant="h3" style={styles.detailSectionTitle}>
-                Delivery Address
-              </Typography>
-              <Typography variant="body" style={styles.addressText}>
-                {selectedBooking.deliveryAddress.street}
-              </Typography>
-              {selectedBooking.deliveryAddress.landmark && (
-                <Typography variant="caption" style={styles.landmarkText}>
-                  Landmark: {selectedBooking.deliveryAddress.landmark}
-                </Typography>
-              )}
-            </Card>
-
-            {selectedBooking.driverName && (
-              <Card style={styles.detailCard}>
-                <Typography variant="h3" style={styles.detailSectionTitle}>
-                  Driver Information
-                </Typography>
-                <View style={styles.detailItem}>
-                  <Typography variant="body" style={styles.detailLabel}>Name:</Typography>
-                  <Typography variant="body" style={styles.detailValue}>
-                    {selectedBooking.driverName}
-                  </Typography>
-                </View>
-                <View style={styles.detailItem}>
-                  <Typography variant="body" style={styles.detailLabel}>Phone:</Typography>
-                  <Typography variant="body" style={styles.detailValue}>
-                    {selectedBooking.driverPhone}
-                  </Typography>
-                </View>
-              </Card>
-            )}
-          </ScrollView>
-        )}
-      </SafeAreaView>
-    </Modal>
-  );
-
-  const StatusUpdateModal: React.FC = () => (
-    <Modal
-      visible={showStatusModal}
-      animationType="slide"
-      presentationStyle="pageSheet"
-    >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <Typography variant="h2" style={styles.modalTitle}>
-            Update Status
-          </Typography>
-          <TouchableOpacity
-            onPress={() => setShowStatusModal(false)}
-            style={styles.closeButton}
-          >
-            <Ionicons name="close" size={24} color={UI_CONFIG.colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.statusOptions}>
-          {(['pending', 'accepted', 'in_transit', 'delivered', 'cancelled'] as BookingStatus[]).map((status) => (
-            <TouchableOpacity
-              key={status}
-              style={styles.statusOption}
-              onPress={() => selectedBooking && handleStatusUpdate(selectedBooking.id, status)}
-            >
-              <View style={[styles.statusIcon, { backgroundColor: getStatusColor(status) }]}>
-                <Ionicons name={getStatusIcon(status) as any} size={20} color={UI_CONFIG.colors.textLight} />
-              </View>
-              <Typography variant="body" style={styles.statusOptionText}>
-                {status.replace('_', ' ').toUpperCase()}
-              </Typography>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </SafeAreaView>
-    </Modal>
-  );
 
   if (isLoading && bookings.length === 0) {
     return (
@@ -528,7 +280,14 @@ const AllBookingsScreen: React.FC = () => {
       <FlatList
         data={filteredBookings}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <BookingCard booking={item} />}
+        renderItem={({ item }) => (
+          <BookingCard 
+            booking={item}
+            onPress={openBookingDetails}
+            getStatusColor={getStatusColor}
+            getStatusIcon={getStatusIcon}
+          />
+        )}
         contentContainerStyle={styles.bookingsList}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -549,8 +308,20 @@ const AllBookingsScreen: React.FC = () => {
         }
       />
 
-      <BookingDetailsModal />
-      <StatusUpdateModal />
+      <BookingDetailsModal 
+        visible={showBookingModal}
+        onClose={() => setShowBookingModal(false)}
+        booking={selectedBooking}
+        getStatusColor={getStatusColor}
+      />
+      <StatusUpdateModal 
+        visible={showStatusModal}
+        onClose={() => setShowStatusModal(false)}
+        bookingId={selectedBooking?.id || null}
+        onStatusUpdate={handleStatusUpdate}
+        getStatusColor={getStatusColor}
+        getStatusIcon={getStatusIcon}
+      />
       <AdminMenuDrawer
         visible={menuVisible}
         onClose={() => setMenuVisible(false)}
@@ -675,65 +446,6 @@ const styles = StyleSheet.create({
     paddingTop: UI_CONFIG.spacing.md,
     paddingBottom: UI_CONFIG.spacing.xl,
   },
-  bookingCard: {
-    marginBottom: UI_CONFIG.spacing.md,
-    padding: UI_CONFIG.spacing.md,
-  },
-  bookingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  bookingInfo: {
-    flex: 1,
-  },
-  customerName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.text,
-    marginBottom: 2,
-  },
-  bookingId: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: UI_CONFIG.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.textLight,
-    marginLeft: 4,
-  },
-  bookingDetails: {
-    marginBottom: UI_CONFIG.spacing.sm,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: UI_CONFIG.spacing.xs,
-  },
-  detailText: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.text,
-    marginLeft: UI_CONFIG.spacing.sm,
-  },
-  driverInfo: {
-    paddingTop: UI_CONFIG.spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: UI_CONFIG.colors.background,
-  },
-  driverLabel: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
-    fontWeight: '500',
-  },
   emptyState: {
     alignItems: 'center',
     paddingVertical: UI_CONFIG.spacing.xl * 2,
@@ -750,99 +462,6 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: UI_CONFIG.spacing.lg,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: UI_CONFIG.spacing.lg,
-    paddingVertical: UI_CONFIG.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
-  },
-  closeButton: {
-    padding: UI_CONFIG.spacing.sm,
-  },
-  modalContent: {
-    flex: 1,
-    paddingHorizontal: UI_CONFIG.spacing.lg,
-  },
-  detailCard: {
-    marginVertical: UI_CONFIG.spacing.sm,
-    padding: UI_CONFIG.spacing.md,
-  },
-  detailSectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.text,
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: UI_CONFIG.spacing.sm,
-  },
-  detailLabel: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-    fontWeight: '500',
-  },
-  detailValue: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.text,
-    fontWeight: '400',
-  },
-  addressText: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.text,
-    marginBottom: UI_CONFIG.spacing.xs,
-  },
-  landmarkText: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
-    fontStyle: 'italic',
-    marginTop: UI_CONFIG.spacing.xs,
-  },
-  modalActions: {
-    paddingVertical: UI_CONFIG.spacing.lg,
-  },
-  updateButton: {
-    backgroundColor: UI_CONFIG.colors.primary,
-  },
-  statusOptions: {
-    padding: UI_CONFIG.spacing.lg,
-  },
-  statusOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: UI_CONFIG.spacing.md,
-    paddingHorizontal: UI_CONFIG.spacing.md,
-    borderRadius: 12,
-    backgroundColor: UI_CONFIG.colors.background,
-    marginBottom: UI_CONFIG.spacing.sm,
-  },
-  statusIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: UI_CONFIG.spacing.md,
-  },
-  statusOptionText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: UI_CONFIG.colors.text,
   },
 });
 

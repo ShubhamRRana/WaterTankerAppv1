@@ -20,6 +20,11 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Typography, SuccessNotification } from '../../components/common';
+import TankerSelectionModal from '../../components/customer/TankerSelectionModal';
+import AgencySelectionModal from '../../components/customer/AgencySelectionModal';
+import SavedAddressModal from '../../components/customer/SavedAddressModal';
+import DateTimeInput from '../../components/customer/DateTimeInput';
+import PriceBreakdown from '../../components/customer/PriceBreakdown';
 import { Address, BookingForm, TankerSize } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
@@ -479,172 +484,6 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   };
 
 
-  const TankerSelectionModal = () => (
-    <Modal visible={showTankerModal} animationType="slide" presentationStyle="pageSheet">
-      <View style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={() => setShowTankerModal(false)}>
-            <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
-          </TouchableOpacity>
-          <Typography variant="h3" style={styles.modalTitle}>Select Vehicle</Typography>
-          <View style={{ width: 24 }} />
-        </View>
-
-        <ScrollView style={styles.modalContent}>
-          {vehiclesLoading ? (
-            <View style={styles.emptyState}>
-              <LoadingSpinner />
-              <Typography variant="body" style={styles.emptyStateText}>Loading vehicles...</Typography>
-            </View>
-          ) : availableVehicles.length > 0 ? (
-            availableVehicles.map((vehicle) => (
-              <Card
-                key={vehicle.id}
-                style={[
-                  styles.tankerCard,
-                  selectedVehicle?.id === vehicle.id && styles.selectedTankerCard,
-                ]}
-                onPress={() => handleVehicleSelection(vehicle)}
-              >
-                <View style={styles.tankerInfo}>
-                  <Typography variant="body" style={styles.tankerName}>
-                    {vehicle.vehicleCapacity}L Tanker - {vehicle.vehicleNumber}
-                  </Typography>
-                  <Typography variant="caption" style={styles.tankerPrice}>
-                    {PricingUtils.formatPrice(vehicle.amount)} base price
-                  </Typography>
-                </View>
-                <Ionicons
-                  name={selectedVehicle?.id === vehicle.id ? "radio-button-on" : "radio-button-off"}
-                  size={24}
-                  color={selectedVehicle?.id === vehicle.id ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary}
-                />
-              </Card>
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="car-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
-              <Typography variant="body" style={styles.emptyStateText}>No vehicles available</Typography>
-              <Typography variant="caption" style={styles.emptyStateSubtext}>
-                {selectedAgency ? 'This agency has no vehicles yet' : 'Please select an agency first'}
-              </Typography>
-            </View>
-          )}
-        </ScrollView>
-      </View>
-    </Modal>
-  );
-
-  const AgencySelectionModal = () => (
-    <Modal visible={showAgencyModal} animationType="slide" presentationStyle="pageSheet">
-      <View style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={() => setShowAgencyModal(false)}>
-            <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
-          </TouchableOpacity>
-          <Typography variant="h3" style={styles.modalTitle}>Select Tanker Agency</Typography>
-          <View style={{ width: 24 }} />
-        </View>
-
-        <ScrollView style={styles.modalContent}>
-          {usersLoading ? (
-            <View style={styles.emptyState}>
-              <LoadingSpinner />
-              <Typography variant="body" style={styles.emptyStateText}>Loading agencies...</Typography>
-            </View>
-          ) : tankerAgencies.length > 0 ? (
-            tankerAgencies.map((agency) => (
-              <Card
-                key={agency.id}
-                style={[
-                  styles.tankerCard,
-                  selectedAgency?.id === agency.id && styles.selectedTankerCard,
-                ]}
-                onPress={() => handleAgencySelection(agency)}
-              >
-                <View style={styles.tankerInfo}>
-                  <Typography variant="body" style={styles.tankerName}>{agency.name}</Typography>
-                </View>
-                <Ionicons
-                  name={selectedAgency?.id === agency.id ? 'radio-button-on' : 'radio-button-off'}
-                  size={24}
-                  color={selectedAgency?.id === agency.id ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary}
-                />
-              </Card>
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="business-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
-              <Typography variant="body" style={styles.emptyStateText}>No agencies available</Typography>
-              <Typography variant="caption" style={styles.emptyStateSubtext}>Please contact support if you need assistance</Typography>
-            </View>
-          )}
-        </ScrollView>
-      </View>
-    </Modal>
-  );
-
-  const SavedAddressModal = () => (
-    <Modal visible={showSavedAddressModal} animationType="slide" presentationStyle="pageSheet">
-      <View style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity onPress={() => setShowSavedAddressModal(false)}>
-            <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
-          </TouchableOpacity>
-          <Typography variant="h3" style={styles.modalTitle}>Select Saved Address</Typography>
-          <TouchableOpacity onPress={() => navigation.navigate('SavedAddresses')}>
-            <Ionicons name="add" size={24} color={UI_CONFIG.colors.primary} />
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView style={styles.modalContent}>
-          {user?.savedAddresses && user.savedAddresses.length > 0 ? (
-            user.savedAddresses.map((address) => (
-              <Card
-                key={address.id}
-                style={styles.addressCard}
-                onPress={() => handleAddressSelection(address)}
-              >
-                <View style={styles.addressInfo}>
-                  <View style={styles.addressTitleRow}>
-                    <Typography variant="body" style={styles.addressTitle}>{address.street}</Typography>
-                    {address.isDefault && (
-                      <View style={styles.defaultBadge}>
-                        <Typography variant="caption" style={styles.defaultText}>DEFAULT</Typography>
-                      </View>
-                    )}
-                  </View>
-                  {(address.city || address.state || address.pincode) && (
-                    <Typography variant="caption" style={styles.addressDetails}>
-                      {[address.city, address.state, address.pincode].filter(Boolean).join(', ')}
-                    </Typography>
-                  )}
-                  {address.landmark && (
-                    <Typography variant="caption" style={styles.landmark}>
-                      Near {address.landmark}
-                    </Typography>
-                  )}
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={UI_CONFIG.colors.textSecondary} />
-              </Card>
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="location-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
-              <Typography variant="body" style={styles.emptyStateText}>No saved addresses</Typography>
-              <Typography variant="caption" style={styles.emptyStateSubtext}>Add your first address to get started</Typography>
-              <TouchableOpacity
-                style={styles.emptyStateButton}
-                onPress={() => navigation.navigate('SavedAddresses')}
-              >
-                <Typography variant="body" style={styles.emptyStateButtonText}>Add Address</Typography>
-              </TouchableOpacity>
-            </View>
-          )}
-        </ScrollView>
-      </View>
-    </Modal>
-  );
 
   if (isLoading) {
     return (
@@ -741,67 +580,15 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       {/* Delivery Timing */}
       <View style={styles.section}>
         <Typography variant="h3" style={styles.sectionTitle}>Delivery Timing</Typography>
-        <View style={styles.dateTimeContainer}>
-          <View style={styles.dateTimeRow}>
-            <View style={styles.dateTimeInputContainer}>
-              <Typography variant="body" style={styles.inputLabel}>Date</Typography>
-              <Card style={[styles.inputCard, dateError && styles.inputCardError]}>
-                <TextInput
-                  style={styles.dateTimeInput}
-                  placeholder="DD-MM-YYYY"
-                  value={deliveryDate}
-                  onChangeText={handleDateChange}
-                  keyboardType="numeric"
-                  maxLength={10}
-                />
-              </Card>
-              {dateError && (
-                <Typography variant="caption" style={styles.errorText}>{dateError}</Typography>
-              )}
-            </View>
-            <View style={styles.dateTimeInputContainer}>
-              <Typography variant="body" style={styles.inputLabel}>Time</Typography>
-              <Card style={styles.inputCard}>
-                <View style={styles.timeInputContainer}>
-                  <TextInput
-                    style={styles.dateTimeInput}
-                    placeholder="HH:MM"
-                    value={deliveryTime}
-                    onChangeText={handleTimeChange}
-                    keyboardType="numeric"
-                    maxLength={5}
-                  />
-                  <View style={styles.timePeriodContainer}>
-                    <TouchableOpacity
-                      style={[
-                        styles.timePeriodButton,
-                        timePeriod === 'AM' && styles.timePeriodButtonActive
-                      ]}
-                      onPress={() => handleTimePeriodChange('AM')}
-                    >
-                      <Typography variant="body" style={[
-                        styles.timePeriodText,
-                        timePeriod === 'AM' && styles.timePeriodTextActive
-                      ]}>AM</Typography>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.timePeriodButton,
-                        timePeriod === 'PM' && styles.timePeriodButtonActive
-                      ]}
-                      onPress={() => handleTimePeriodChange('PM')}
-                    >
-                      <Typography variant="body" style={[
-                        styles.timePeriodText,
-                        timePeriod === 'PM' && styles.timePeriodTextActive
-                      ]}>PM</Typography>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </Card>
-            </View>
-          </View>
-        </View>
+        <DateTimeInput
+          date={deliveryDate}
+          time={deliveryTime}
+          timePeriod={timePeriod}
+          dateError={dateError}
+          onDateChange={handleDateChange}
+          onTimeChange={handleTimeChange}
+          onTimePeriodChange={handleTimePeriodChange}
+        />
       </View>
 
       {/* Special Instructions */}
@@ -821,35 +608,13 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
       {/* Price Breakdown */}
       {priceBreakdown && (
-        <View style={styles.section}>
-          <Typography variant="h3" style={styles.sectionTitle}>Price Breakdown</Typography>
-          <Card style={styles.priceCard}>
-            {selectedAgency && (
-              <View style={styles.priceRow}>
-                <Typography variant="body" style={styles.priceLabel}>Agency</Typography>
-                <Typography variant="body" style={styles.priceValue}>{selectedAgency.name}</Typography>
-              </View>
-            )}
-            <View style={styles.priceRow}>
-              <Typography variant="body" style={styles.priceLabel}>Vehicle Capacity</Typography>
-              <Typography variant="body" style={styles.priceValue}>{selectedVehicle?.capacity}L</Typography>
-            </View>
-            {selectedVehicle && (
-              <View style={styles.priceRow}>
-                <Typography variant="body" style={styles.priceLabel}>Vehicle Number</Typography>
-                <Typography variant="body" style={styles.priceValue}>{selectedVehicle.vehicleNumber}</Typography>
-              </View>
-            )}
-            <View style={styles.priceRow}>
-              <Typography variant="body" style={styles.priceLabel}>Unit Price</Typography>
-              <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(priceBreakdown.basePrice)}</Typography>
-            </View>
-            <View style={[styles.priceRow, styles.totalRow]}>
-              <Typography variant="h3" style={styles.totalLabel}>Total Amount</Typography>
-              <Typography variant="h3" style={styles.totalValue}>{PricingUtils.formatPrice(priceBreakdown.totalPrice)}</Typography>
-            </View>
-          </Card>
-        </View>
+        <PriceBreakdown
+          agencyName={selectedAgency?.name}
+          vehicleCapacity={selectedVehicle?.capacity}
+          vehicleNumber={selectedVehicle?.vehicleNumber}
+          basePrice={priceBreakdown.basePrice}
+          totalPrice={priceBreakdown.totalPrice}
+        />
       )}
 
       {/* Book Now Button */}
@@ -862,9 +627,30 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         />
       </View>
 
-      <TankerSelectionModal />
-      <AgencySelectionModal />
-      <SavedAddressModal />
+      <TankerSelectionModal
+        visible={showTankerModal}
+        onClose={() => setShowTankerModal(false)}
+        vehicles={availableVehicles}
+        selectedVehicleId={selectedVehicle?.id || null}
+        onSelectVehicle={handleVehicleSelection}
+        loading={vehiclesLoading}
+        selectedAgency={selectedAgency}
+      />
+      <AgencySelectionModal
+        visible={showAgencyModal}
+        onClose={() => setShowAgencyModal(false)}
+        agencies={tankerAgencies}
+        selectedAgencyId={selectedAgency?.id || null}
+        onSelectAgency={handleAgencySelection}
+        loading={usersLoading}
+      />
+      <SavedAddressModal
+        visible={showSavedAddressModal}
+        onClose={() => setShowSavedAddressModal(false)}
+        addresses={user?.savedAddresses || []}
+        onSelectAddress={handleAddressSelection}
+        navigation={navigation}
+      />
       {successNotificationData && (
         <SuccessNotification
           visible={showSuccessNotification}
@@ -957,180 +743,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: UI_CONFIG.colors.textSecondary,
   },
-  dateTimeContainer: {
-    marginBottom: 8,
-  },
-  dateTimeRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  dateTimeInputContainer: {
-    flex: 1,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: UI_CONFIG.colors.textSecondary,
-    marginBottom: 8,
-  },
-  dateTimeInput: {
-    fontSize: 16,
-    color: UI_CONFIG.colors.text,
-    paddingVertical: 12,
-    flex: 1,
-  },
   inputCard: {
     marginBottom: 8,
     minHeight: 60,
     justifyContent: 'center',
-  },
-  inputCardError: {
-    borderColor: UI_CONFIG.colors.error,
-    borderWidth: 1,
-  },
-  errorText: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.error,
-    marginTop: 4,
-    marginLeft: 4,
   },
   textArea: {
     fontSize: 16,
     color: UI_CONFIG.colors.text,
     textAlignVertical: 'top',
   },
-  priceCard: {
-    marginBottom: 8,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  priceLabel: {
-    fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  priceValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: UI_CONFIG.colors.text,
-  },
-  totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: UI_CONFIG.colors.border,
-    marginTop: 8,
-    paddingTop: 16,
-  },
-  totalLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
-  },
-  totalValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.primary,
-  },
   bookButton: {
     marginTop: 8,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: UI_CONFIG.colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
-  },
-  modalContent: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  tankerCard: {
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  selectedTankerCard: {
-    backgroundColor: UI_CONFIG.colors.surfaceLight,
-    borderColor: UI_CONFIG.colors.primary,
-    borderWidth: 1,
-  },
-  tankerInfo: {
-    flex: 1,
-  },
-  tankerName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: UI_CONFIG.colors.text,
-    marginBottom: 4,
-  },
-  tankerPrice: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  timeInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flex: 1,
-  },
-  timePeriodContainer: {
-    flexDirection: 'column',
-    gap: 2,
-    marginLeft: 12,
-  },
-  timePeriodButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.surface,
-    borderWidth: 1.5,
-    borderColor: UI_CONFIG.colors.border,
-    minWidth: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: UI_CONFIG.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  timePeriodButtonActive: {
-    backgroundColor: UI_CONFIG.colors.primary,
-    borderColor: UI_CONFIG.colors.primary,
-    shadowColor: UI_CONFIG.colors.primary,
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  timePeriodText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.textSecondary,
-    letterSpacing: 0.5,
-  },
-  timePeriodTextActive: {
-    color: UI_CONFIG.colors.textLight,
-    fontWeight: '700',
   },
   savedAddressButton: {
     flexDirection: 'row',
@@ -1150,79 +774,6 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.primary,
     flex: 1,
     marginLeft: 8,
-  },
-  addressCard: {
-    marginBottom: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  addressInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  addressTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  addressTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.text,
-    flex: 1,
-  },
-  defaultBadge: {
-    backgroundColor: UI_CONFIG.colors.success,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginLeft: 8,
-  },
-  defaultText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.textLight,
-  },
-  addressDetails: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-    marginBottom: 4,
-  },
-  landmark: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-    fontStyle: 'italic',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyStateText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.textSecondary,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyStateSubtext: {
-    fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  emptyStateButton: {
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    backgroundColor: UI_CONFIG.colors.primary,
-    borderRadius: 8,
-  },
-  emptyStateButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.textLight,
   },
 });
 

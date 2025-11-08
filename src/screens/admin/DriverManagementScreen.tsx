@@ -6,11 +6,7 @@ import {
   Alert, 
   ScrollView, 
   RefreshControl,
-  Modal,
   TextInput,
-  Switch,
-  KeyboardAvoidingView,
-  Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +15,10 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useUserStore } from '../../store/userStore';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
-import { Typography, Card, Button, LoadingSpinner, Input, AdminMenuDrawer } from '../../components/common';
+import { Typography, Card, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
+import AddDriverModal from '../../components/admin/AddDriverModal';
+import DriverModal from '../../components/admin/DriverModal';
+import DriverCard from '../../components/admin/DriverCard';
 import { UI_CONFIG } from '../../constants/config';
 import { User } from '../../types';
 import { ValidationUtils } from '../../utils/validation';
@@ -27,315 +26,6 @@ import { PricingUtils } from '../../utils/pricing';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 
 type DriverManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Drivers'>;
-
-// AddDriverModal component moved outside to prevent re-creation on every render
-interface AddDriverModalProps {
-  visible: boolean;
-  onClose: () => void;
-  formData: {
-    name: string;
-    phone: string;
-    password: string;
-    confirmPassword: string;
-    emergencyContactName: string;
-    emergencyContactPhone: string;
-    licenseNumber: string;
-    licenseExpiry: string;
-  };
-  formErrors: {[key: string]: string};
-  isSubmitting: boolean;
-  onFormChange: (field: string, value: string) => void;
-  onSubmit: () => void;
-  onReset: () => void;
-  onDelete?: () => void;
-  isEditMode?: boolean;
-}
-
-const AddDriverModal: React.FC<AddDriverModalProps> = ({
-  visible,
-  onClose,
-  formData,
-  formErrors,
-  isSubmitting,
-  onFormChange,
-  onSubmit,
-  onReset,
-  onDelete,
-  isEditMode = false,
-}) => (
-  <Modal
-    visible={visible}
-    animationType="slide"
-    presentationStyle="fullScreen"
-    transparent={false}
-    onRequestClose={onClose}
-  >
-    <SafeAreaView style={styles.modalContainer}>
-      <View style={styles.modalHeader}>
-        <Typography variant="h2" style={styles.modalTitle}>
-          {isEditMode ? 'Edit Driver' : 'Add New Driver'}
-        </Typography>
-        {isEditMode && onDelete && (
-          <TouchableOpacity
-            style={[styles.headerDeleteButton, isSubmitting && styles.headerDeleteButtonDisabled]}
-            onPress={onDelete}
-            disabled={isSubmitting}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="trash-outline" size={24} color={isSubmitting ? UI_CONFIG.colors.textSecondary : UI_CONFIG.colors.error} />
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {(Platform.OS === 'ios' || Platform.OS === 'android') ? (
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
-        <Card style={styles.detailCard}>
-          <Typography variant="h3" style={styles.detailSectionTitle}>
-            Driver Information
-          </Typography>
-          
-          <View style={styles.formField}>
-            <Input
-              label="Full Name *"
-              value={formData.name}
-              onChangeText={(text) => onFormChange('name', text)}
-              placeholder="Enter driver's full name"
-              error={formErrors.name}
-              autoCapitalize="words"
-            />
-          </View>
-
-          <View style={styles.formField}>
-            <Input
-              label="Phone Number *"
-              value={formData.phone}
-              onChangeText={(text) => onFormChange('phone', text)}
-              placeholder="Enter 10-digit phone number"
-              error={formErrors.phone}
-              keyboardType="phone-pad"
-              maxLength={10}
-            />
-          </View>
-
-          <View style={styles.formField}>
-            <Input
-              label={isEditMode ? "Password (leave blank to keep current)" : "Password *"}
-              value={formData.password}
-              onChangeText={(text) => onFormChange('password', text)}
-              placeholder={isEditMode ? "Enter new password (optional)" : "Enter password (min 6 characters)"}
-              error={formErrors.password}
-              secureTextEntry
-            />
-          </View>
-
-          {(!isEditMode || formData.password) && (
-            <View style={styles.formField}>
-              <Input
-                label="Confirm Password *"
-                value={formData.confirmPassword}
-                onChangeText={(text) => onFormChange('confirmPassword', text)}
-                placeholder="Confirm your password"
-                error={formErrors.confirmPassword}
-                secureTextEntry
-              />
-            </View>
-          )}
-
-          <View style={styles.formField}>
-            <Input
-              label="Emergency Contact Name *"
-              value={formData.emergencyContactName}
-              onChangeText={(text) => onFormChange('emergencyContactName', text)}
-              placeholder="Enter emergency contact name"
-              error={formErrors.emergencyContactName}
-              autoCapitalize="words"
-            />
-          </View>
-
-          <View style={styles.formField}>
-            <Input
-              label="Emergency Contact Number *"
-              value={formData.emergencyContactPhone}
-              onChangeText={(text) => onFormChange('emergencyContactPhone', text)}
-              placeholder="Enter 10-digit emergency contact number"
-              error={formErrors.emergencyContactPhone}
-              keyboardType="phone-pad"
-              maxLength={10}
-            />
-          </View>
-
-          <View style={styles.formField}>
-            <Input
-              label="License Number *"
-              value={formData.licenseNumber}
-              onChangeText={(text) => onFormChange('licenseNumber', text)}
-              placeholder="Enter driver's license number"
-              error={formErrors.licenseNumber}
-              autoCapitalize="characters"
-            />
-          </View>
-
-          <View style={styles.formField}>
-            <Input
-              label="License Expiry (DD/MM/YYYY) *"
-              value={formData.licenseExpiry}
-              onChangeText={(text) => onFormChange('licenseExpiry', text)}
-              placeholder="e.g., 31/12/2026"
-              error={formErrors.licenseExpiry}
-              keyboardType="numbers-and-punctuation"
-              maxLength={10}
-            />
-          </View>
-        </Card>
-
-        <View style={styles.modalActions}>
-          <Button
-            title={isSubmitting ? (isEditMode ? "Updating Driver..." : "Adding Driver...") : (isEditMode ? "Update Driver" : "Add Driver")}
-            onPress={onSubmit}
-            disabled={isSubmitting}
-            style={styles.addDriverButton}
-          />
-          <Button
-            title="Cancel"
-            onPress={() => {
-              onClose();
-              onReset();
-            }}
-            style={styles.cancelButton}
-            variant="outline"
-          />
-        </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-      ) : (
-        <View style={{ flex: 1 }}>
-          <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
-          <Card style={styles.detailCard}>
-            <Typography variant="h3" style={styles.detailSectionTitle}>
-              Driver Information
-            </Typography>
-            
-            <View style={styles.formField}>
-              <Input
-                label="Full Name *"
-                value={formData.name}
-                onChangeText={(text) => onFormChange('name', text)}
-                placeholder="Enter driver's full name"
-                error={formErrors.name}
-                autoCapitalize="words"
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Input
-                label="Phone Number *"
-                value={formData.phone}
-                onChangeText={(text) => onFormChange('phone', text)}
-                placeholder="Enter 10-digit phone number"
-                error={formErrors.phone}
-                keyboardType="phone-pad"
-                maxLength={10}
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Input
-                label={isEditMode ? "Password (leave blank to keep current)" : "Password *"}
-                value={formData.password}
-                onChangeText={(text) => onFormChange('password', text)}
-                placeholder={isEditMode ? "Enter new password (optional)" : "Enter password (min 6 characters)"}
-                error={formErrors.password}
-                secureTextEntry
-              />
-            </View>
-
-            {(!isEditMode || formData.password) && (
-              <View style={styles.formField}>
-                <Input
-                  label="Confirm Password *"
-                  value={formData.confirmPassword}
-                  onChangeText={(text) => onFormChange('confirmPassword', text)}
-                  placeholder="Confirm your password"
-                  error={formErrors.confirmPassword}
-                  secureTextEntry
-                />
-              </View>
-            )}
-
-            <View style={styles.formField}>
-              <Input
-                label="Emergency Contact Name *"
-                value={formData.emergencyContactName}
-                onChangeText={(text) => onFormChange('emergencyContactName', text)}
-                placeholder="Enter emergency contact name"
-                error={formErrors.emergencyContactName}
-                autoCapitalize="words"
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Input
-                label="Emergency Contact Number *"
-                value={formData.emergencyContactPhone}
-                onChangeText={(text) => onFormChange('emergencyContactPhone', text)}
-                placeholder="Enter 10-digit emergency contact number"
-                error={formErrors.emergencyContactPhone}
-                keyboardType="phone-pad"
-                maxLength={10}
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Input
-                label="License Number *"
-                value={formData.licenseNumber}
-                onChangeText={(text) => onFormChange('licenseNumber', text)}
-                placeholder="Enter driver's license number"
-                error={formErrors.licenseNumber}
-                autoCapitalize="characters"
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Input
-                label="License Expiry (DD/MM/YYYY) *"
-                value={formData.licenseExpiry}
-                onChangeText={(text) => onFormChange('licenseExpiry', text)}
-                placeholder="e.g., 31/12/2026"
-                error={formErrors.licenseExpiry}
-                keyboardType="numbers-and-punctuation"
-                maxLength={10}
-              />
-            </View>
-          </Card>
-
-          <View style={styles.modalActions}>
-            <Button
-              title={isSubmitting ? (isEditMode ? "Updating Driver..." : "Adding Driver...") : (isEditMode ? "Update Driver" : "Add Driver")}
-              onPress={onSubmit}
-              disabled={isSubmitting}
-              style={styles.addDriverButton}
-            />
-            <Button
-              title="Cancel"
-              onPress={() => {
-                onClose();
-                onReset();
-              }}
-              style={styles.cancelButton}
-              variant="outline"
-            />
-          </View>
-          </ScrollView>
-        </View>
-      )}
-    </SafeAreaView>
-  </Modal>
-);
 
 const DriverManagementScreen: React.FC = () => {
   const navigation = useNavigation<DriverManagementScreenNavigationProp>();
@@ -778,213 +468,6 @@ const DriverManagementScreen: React.FC = () => {
     navigation.navigate(route);
   };
 
-  const DriverCard: React.FC<{ driver: User }> = ({ driver }) => (
-    <Card style={styles.driverCard}>
-      <TouchableOpacity 
-        style={styles.driverCardContent}
-        onPress={() => {
-          if (showDriverModal) return;
-          setSelectedDriver(driver);
-          setShowDriverModal(true);
-        }}
-        activeOpacity={0.7}
-      >
-        <View style={styles.driverHeader}>
-          <View style={styles.driverInfo}>
-            <Typography variant="h3" style={styles.driverName}>
-              {driver.name}
-            </Typography>
-            <Typography variant="body" style={styles.driverPhone}>
-              {driver.phone}
-            </Typography>
-          </View>
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={(e) => {
-              e.stopPropagation();
-              handleEditDriver(driver);
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="pencil-outline" size={20} color={UI_CONFIG.colors.success} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.driverDetails}>
-          <View style={styles.detailRow}>
-            <Ionicons name="card-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="caption" style={styles.detailText}>
-              {driver.licenseNumber || 'Not provided'}
-            </Typography>
-          </View>
-          <View style={styles.detailRow}>
-            <Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="caption" style={styles.detailText}>
-              {driver.licenseExpiry ? new Date(driver.licenseExpiry).toLocaleDateString() : 'Expiry not provided'}
-            </Typography>
-          </View>
-          <View style={styles.detailRow}>
-            <Ionicons name="call-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="caption" style={styles.detailText}>
-              {driver.emergencyContactName ? `${driver.emergencyContactName} - ${driver.emergencyContactPhone}` : 'Emergency contact not provided'}
-            </Typography>
-          </View>
-          <View style={styles.detailRow}>
-            <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="caption" style={styles.detailText}>
-              {PricingUtils.formatPrice(driver.totalEarnings || 0)} earned
-            </Typography>
-          </View>
-        </View>
-
-        <View style={styles.driverActions}>
-          {driver.isApproved === undefined && (
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.approveButton]}
-                onPress={() => handleApproveDriver(driver.uid)}
-              >
-                <Ionicons name="checkmark" size={16} color={UI_CONFIG.colors.textLight} />
-                <Typography variant="caption" style={styles.actionButtonText}>
-                  Approve
-                </Typography>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.rejectButton]}
-                onPress={() => handleRejectDriver(driver.uid)}
-              >
-                <Ionicons name="close" size={16} color={UI_CONFIG.colors.textLight} />
-                <Typography variant="caption" style={styles.actionButtonText}>
-                  Reject
-                </Typography>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-    </Card>
-  );
-
-  const DriverModal: React.FC = () => (
-    <Modal
-      visible={showDriverModal}
-      animationType="slide"
-      presentationStyle="fullScreen"
-      transparent={false}
-      onRequestClose={() => setShowDriverModal(false)}
-    >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <Typography variant="h2" style={styles.modalTitle}>
-            Driver Details
-          </Typography>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => {
-              setShowDriverModal(false);
-            }}
-          >
-            <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        {selectedDriver && (
-          <ScrollView style={styles.modalContent}>
-              <>
-                <Card style={styles.detailCard}>
-                  <Typography variant="h3" style={styles.detailSectionTitle}>
-                    Personal Information
-                  </Typography>
-                  <View style={styles.detailItem}>
-                    <Typography variant="body" style={styles.detailLabel}>Name</Typography>
-                    <Typography variant="body" style={styles.detailValue}>{selectedDriver.name}</Typography>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Typography variant="body" style={styles.detailLabel}>Phone</Typography>
-                    <Typography variant="body" style={styles.detailValue}>{selectedDriver.phone}</Typography>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Typography variant="body" style={styles.detailLabel}>Emergency Contact</Typography>
-                    <Typography variant="body" style={styles.detailValue}>
-                      {selectedDriver.emergencyContactName || 'Not provided'}
-                    </Typography>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Typography variant="body" style={styles.detailLabel}>Emergency Number</Typography>
-                    <Typography variant="body" style={styles.detailValue}>
-                      {selectedDriver.emergencyContactPhone || 'Not provided'}
-                    </Typography>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Typography variant="body" style={styles.detailLabel}>Joined</Typography>
-                    <Typography variant="body" style={styles.detailValue}>
-                      {new Date(selectedDriver.createdAt).toLocaleDateString()}
-                    </Typography>
-                  </View>
-                </Card>
-
-                <Card style={styles.detailCard}>
-                  <Typography variant="h3" style={styles.detailSectionTitle}>
-                    License Information
-                  </Typography>
-                  <View style={styles.detailItem}>
-                    <Typography variant="body" style={styles.detailLabel}>License Number</Typography>
-                    <Typography variant="body" style={styles.detailValue}>
-                      {selectedDriver.licenseNumber || 'Not provided'}
-                    </Typography>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Typography variant="body" style={styles.detailLabel}>Expiry Date</Typography>
-                    <Typography variant="body" style={styles.detailValue}>
-                      {selectedDriver.licenseExpiry ? new Date(selectedDriver.licenseExpiry).toLocaleDateString() : 'Not provided'}
-                    </Typography>
-                  </View>
-                </Card>
-
-                <Card style={styles.detailCard}>
-                  <Typography variant="h3" style={styles.detailSectionTitle}>
-                    Performance
-                  </Typography>
-                  <View style={styles.detailItem}>
-                    <Typography variant="body" style={styles.detailLabel}>Total Earnings</Typography>
-                    <Typography variant="body" style={styles.detailValue}>
-                      {PricingUtils.formatPrice(selectedDriver.totalEarnings || 0)}
-                    </Typography>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Typography variant="body" style={styles.detailLabel}>Completed Orders</Typography>
-                    <Typography variant="body" style={styles.detailValue}>
-                      {selectedDriver.completedOrders || 0}
-                    </Typography>
-                  </View>
-                </Card>
-
-                {selectedDriver.isApproved === undefined && (
-                  <View style={styles.modalActions}>
-                    <Button
-                      title="Approve Driver"
-                      onPress={() => {
-                        setShowDriverModal(false);
-                        handleApproveDriver(selectedDriver.uid);
-                      }}
-                      style={styles.approveButtonLarge}
-                    />
-                    <Button
-                      title="Reject Driver"
-                      onPress={() => {
-                        setShowDriverModal(false);
-                        handleRejectDriver(selectedDriver.uid);
-                      }}
-                      style={styles.rejectButtonLarge}
-                    />
-                  </View>
-                )}
-              </>
-          </ScrollView>
-        )}
-      </SafeAreaView>
-    </Modal>
-  );
 
 
   
@@ -1067,7 +550,18 @@ const DriverManagementScreen: React.FC = () => {
             </Card>
           ) : (
             filteredDrivers.map((driver) => (
-              <DriverCard key={driver.uid} driver={driver} />
+              <DriverCard 
+                key={driver.uid} 
+                driver={driver}
+                onPress={() => {
+                  if (showDriverModal) return;
+                  setSelectedDriver(driver);
+                  setShowDriverModal(true);
+                }}
+                onEdit={handleEditDriver}
+                onApprove={handleApproveDriver}
+                onReject={handleRejectDriver}
+              />
             ))
           )}
         </View>
@@ -1082,7 +576,13 @@ const DriverManagementScreen: React.FC = () => {
         <Ionicons name="add" size={24} color={UI_CONFIG.colors.textLight} />
       </TouchableOpacity>
 
-      <DriverModal />
+      <DriverModal 
+        visible={showDriverModal}
+        onClose={() => setShowDriverModal(false)}
+        driver={selectedDriver}
+        onApprove={handleApproveDriver}
+        onReject={handleRejectDriver}
+      />
       <AddDriverModal 
         visible={showAddDriverModal}
         onClose={() => setShowAddDriverModal(false)}
@@ -1229,98 +729,6 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.text,
     marginBottom: UI_CONFIG.spacing.md,
   },
-  driverCard: {
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  driverCardContent: {
-    padding: UI_CONFIG.spacing.md,
-  },
-  driverHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  editButton: {
-    padding: 8,
-    borderWidth: 1.5,
-    borderColor: UI_CONFIG.colors.success,
-    borderRadius: 8,
-    backgroundColor: 'transparent',
-  },
-  driverInfo: {
-    flex: 1,
-  },
-  driverName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
-    marginBottom: 2,
-  },
-  driverPhone: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  statusBadge: {
-    paddingHorizontal: UI_CONFIG.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textLight,
-    fontWeight: '600',
-  },
-  driverDetails: {
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: UI_CONFIG.spacing.xs,
-  },
-  detailText: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-    marginLeft: UI_CONFIG.spacing.sm,
-  },
-  driverActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  availabilityToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  availabilityLabel: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-    marginRight: UI_CONFIG.spacing.sm,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: UI_CONFIG.spacing.sm,
-    paddingVertical: UI_CONFIG.spacing.xs,
-    borderRadius: 6,
-    marginLeft: UI_CONFIG.spacing.sm,
-  },
-  approveButton: {
-    backgroundColor: UI_CONFIG.colors.success,
-  },
-  rejectButton: {
-    backgroundColor: UI_CONFIG.colors.error,
-  },
-  actionButtonText: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textLight,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
   emptyState: {
     alignItems: 'center',
     paddingVertical: UI_CONFIG.spacing.xl,
@@ -1330,77 +738,6 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textSecondary,
     marginTop: UI_CONFIG.spacing.md,
     textAlign: 'center',
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: UI_CONFIG.spacing.lg,
-    paddingTop: UI_CONFIG.spacing.lg,
-    paddingBottom: UI_CONFIG.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
-  },
-  closeButton: {
-    padding: UI_CONFIG.spacing.sm,
-  },
-  headerDeleteButton: {
-    padding: UI_CONFIG.spacing.sm,
-  },
-  headerDeleteButtonDisabled: {
-    opacity: 0.5,
-  },
-  modalContent: {
-    flex: 1,
-    padding: UI_CONFIG.spacing.lg,
-  },
-  detailCard: {
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  detailSectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: UI_CONFIG.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.background,
-  },
-  detailLabel: {
-    fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
-    fontWeight: '500',
-  },
-  detailValue: {
-    fontSize: 16,
-    color: UI_CONFIG.colors.text,
-    textAlign: 'right',
-    flex: 1,
-    marginLeft: UI_CONFIG.spacing.md,
-  },
-  modalActions: {
-    marginTop: UI_CONFIG.spacing.lg,
-  },
-  approveButtonLarge: {
-    backgroundColor: UI_CONFIG.colors.success,
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  rejectButtonLarge: {
-    backgroundColor: UI_CONFIG.colors.error,
   },
   floatingAddButton: {
     position: 'absolute',
@@ -1420,34 +757,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
-  },
-  formField: {
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  addDriverButton: {
-    backgroundColor: UI_CONFIG.colors.primary,
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  cancelButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: UI_CONFIG.colors.textSecondary,
-  },
-  deleteButton: {
-    backgroundColor: UI_CONFIG.colors.error,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  deleteButtonDisabled: {
-    backgroundColor: UI_CONFIG.colors.textSecondary,
-  },
-  deleteButtonText: {
-    color: UI_CONFIG.colors.textLight,
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 
