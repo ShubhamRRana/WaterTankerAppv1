@@ -1,5 +1,5 @@
 import { LocalStorageService } from './localStorage';
-import { User as AppUser, UserAccount } from '../types/index';
+import { User as AppUser } from '../types/index';
 import { ERROR_MESSAGES } from '../constants/config';
 
 export interface AuthResult {

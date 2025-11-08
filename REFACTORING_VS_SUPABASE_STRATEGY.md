@@ -12,7 +12,7 @@ This document provides strategic guidance on which code improvements to implemen
 
 #### 1. **Code Organization & Structure**
 - ✅ **Split large component files** (BookingScreen, AdminProfileScreen, DriverManagementScreen, AllBookingsScreen) ✅ **COMPLETED**
-- **Remove code duplication** (MenuDrawers, User types)
+- ✅ **Remove code duplication** (MenuDrawers, User types, calculation logic) ✅ **COMPLETED**
 - **Why**: Cleaner code structure makes migration easier and less error-prone
 
 #### 2. **Error Handling & Boundaries**
@@ -21,7 +21,7 @@ This document provides strategic guidance on which code improvements to implemen
 - **Why**: Critical for stability during migration and easier debugging
 
 #### 3. **Type System Improvements**
-- **Consolidate duplicate types** (User vs UserAccount)
+- ✅ **Consolidate duplicate types** (User vs UserAccount) ✅ **COMPLETED**
 - **Fix type inconsistencies**
 - **Why**: Cleaner types will align better with Supabase schema
 
@@ -77,19 +77,27 @@ This document provides strategic guidance on which code improvements to implemen
 **Priority: Critical**
 
 1. **Split Large Component Files** ✅ **COMPLETED**
-   - [x] `BookingScreen.tsx` (1230 lines) → Split into smaller components ✅ **COMPLETED**
+   - ✅ `BookingScreen.tsx` (1230 lines) → Split into smaller components ✅ **COMPLETED**
      - Extracted: `TankerSelectionModal.tsx`, `AgencySelectionModal.tsx`, `SavedAddressModal.tsx`, `DateTimeInput.tsx`, `PriceBreakdown.tsx`
-   - [x] `AdminProfileScreen.tsx` (1066 lines) → Extract form components ✅ **COMPLETED**
+   - ✅ `AdminProfileScreen.tsx` (1066 lines) → Extract form components ✅ **COMPLETED**
      - Extracted: `ProfileHeader.tsx`, `EditProfileForm.tsx`
-   - [x] `DriverManagementScreen.tsx` (~1455 lines) → Extract modals and forms ✅ **COMPLETED**
+   - ✅ `DriverManagementScreen.tsx` (~1455 lines) → Extract modals and forms ✅ **COMPLETED**
      - Extracted: `AddDriverModal.tsx`, `DriverModal.tsx`, `DriverCard.tsx`
-   - [x] `AllBookingsScreen.tsx` (850 lines) → Extract modal components ✅ **COMPLETED**
+   - ✅ `AllBookingsScreen.tsx` (850 lines) → Extract modal components ✅ **COMPLETED**
      - Extracted: `BookingDetailsModal.tsx`, `StatusUpdateModal.tsx`, `BookingCard.tsx`
 
-2. **Remove Code Duplication**
-   - Unify `AdminMenuDrawer` and `CustomerMenuDrawer` into base component
-   - Consolidate `User` and `UserAccount` types
-   - Extract shared calculation logic from ReportsScreen and PastOrdersScreen
+2. **Remove Code Duplication** ✅ **COMPLETED**
+   - ✅ Unify `AdminMenuDrawer` and `CustomerMenuDrawer` into base `MenuDrawer` component
+     - Created generic `MenuDrawer` component with type-safe route support
+     - Reduced code duplication by ~270 lines
+   - ✅ Consolidate `User` and `UserAccount` types into single `User` type
+     - Removed duplicate `UserAccount` interface
+     - Updated `auth.service.ts` to use unified `User` type
+   - ✅ Extract shared calculation logic from ReportsScreen and PastOrdersScreen
+     - Created `src/utils/reportCalculations.ts` utility module
+     - Extracted: `calculateMonthlyData`, `calculateDailyBreakdown`, `calculateYearlyData`, `calculateMonthlyBreakdown`
+     - Reduced code duplication by ~100 lines
+     - Both screens now use shared calculation functions
 
 3. **Add Error Boundaries**
    - Create ErrorBoundary component
@@ -318,9 +326,9 @@ This document provides strategic guidance on which code improvements to implemen
 
 ### Phase 1 Success Criteria
 - [x] All files under 500 lines ✅ **COMPLETED** (All 4 large files refactored: BookingScreen, AdminProfileScreen, DriverManagementScreen, AllBookingsScreen)
-- [ ] No duplicate code patterns
+- [x] No duplicate code patterns ✅ **COMPLETED** (MenuDrawers unified, User types consolidated, calculation logic extracted)
 - [ ] Error boundaries on all screens
-- [ ] Consistent type system
+- [x] Consistent type system ✅ **PARTIALLY COMPLETED** (User types consolidated, remaining type improvements pending)
 - [ ] Input validation on all forms
 
 ### Phase 2 Success Criteria
@@ -370,13 +378,13 @@ This approach minimizes wasted effort while ensuring a clean, maintainable codeb
 ---
 
 *Last Updated: 2024-12-19*
-*Document Version: 1.1*
+*Document Version: 1.2*
 
 ## Progress Tracking
 
 ### Phase 1: Pre-Supabase Foundation
 
-**Status: In Progress (20% Complete)**
+**Status: In Progress (40% Complete)**
 
 - ✅ **Split Large Component Files** - 100% Complete ✅
   - ✅ `BookingScreen.tsx` - Extracted: TankerSelectionModal, AgencySelectionModal, SavedAddressModal, DateTimeInput, PriceBreakdown
@@ -384,7 +392,21 @@ This approach minimizes wasted effort while ensuring a clean, maintainable codeb
   - ✅ `DriverManagementScreen.tsx` - Extracted: AddDriverModal, DriverModal, DriverCard
   - ✅ `AllBookingsScreen.tsx` - Extracted: BookingDetailsModal, StatusUpdateModal, BookingCard
 
-- ⏳ **Remove Code Duplication** - Not Started
+- ✅ **Remove Code Duplication** - 100% Complete ✅
+  - ✅ Unified `AdminMenuDrawer` and `CustomerMenuDrawer` into base `MenuDrawer` component
+    - Created generic `MenuDrawer<T>` component with type-safe route support
+    - Both drawer components now use the base component, reducing duplication by ~270 lines
+    - Maintains type safety with `AdminRoute` and `CustomerRoute` types
+  - ✅ Consolidated `User` and `UserAccount` types into single `User` type
+    - Removed duplicate `UserAccount` interface from `src/types/index.ts`
+    - Updated `auth.service.ts` to remove unused `UserAccount` import
+    - Single source of truth for user type definitions
+  - ✅ Extracted shared calculation logic from ReportsScreen and PastOrdersScreen into `reportCalculations.ts` utility
+    - Created `src/utils/reportCalculations.ts` with reusable calculation functions
+    - Extracted: `calculateMonthlyData`, `calculateDailyBreakdown`, `calculateYearlyData`, `calculateMonthlyBreakdown`
+    - Both `ReportsScreen` and `PastOrdersScreen` now use shared utilities
+    - Reduced code duplication by ~100 lines
+    - Improved maintainability with single source of truth for calculation logic
 - ⏳ **Add Error Boundaries** - Not Started
 - ⏳ **Improve Type System** - Not Started
 - ⏳ **Add Input Validation** - Not Started

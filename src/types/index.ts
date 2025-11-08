@@ -43,32 +43,6 @@ export interface User {
   businessName?: string;
 }
 
-// Extended user interface for multi-role support
-export interface UserAccount {
-  uid: string;
-  role: 'customer' | 'driver' | 'admin';
-  phone: string;
-  password: string; // hashed
-  name: string;
-  email?: string;
-  profileImage?: string;
-  createdAt: Date;
-  
-  // Customer specific
-  savedAddresses?: Address[];
-  
-  // Driver specific
-  vehicleNumber?: string;
-  licenseNumber?: string;
-  driverLicenseImage?: string;
-  vehicleRegistrationImage?: string;
-  isApproved?: boolean;
-  isAvailable?: boolean;
-  totalEarnings?: number;
-  completedOrders?: number;
-  createdByAdmin?: boolean; // Track if driver was created by admin
-}
-
 export type BookingStatus = 'pending' | 'accepted' | 'in_transit' | 'delivered' | 'cancelled';
 
 export interface Booking {

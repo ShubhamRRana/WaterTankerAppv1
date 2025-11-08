@@ -18,6 +18,12 @@ import { Typography, CustomerMenuDrawer } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
+import {
+  calculateMonthlyData,
+  calculateDailyBreakdown,
+  calculateYearlyData,
+  calculateMonthlyBreakdown,
+} from '../../utils/reportCalculations';
 
 const { width } = Dimensions.get('window');
 
@@ -47,7 +53,6 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
   const [yearOptionWidth, setYearOptionWidth] = useState(0);
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const fullMonthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
   // Generate year options (current year + 4 previous years)
   const getAvailableYears = () => {
@@ -111,90 +116,6 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
     }
   };
 
-  const calculateMonthlyData = () => {
-    const monthStart = new Date(selectedYear, selectedMonth, 1);
-    const monthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
-
-    const monthBookings = bookings.filter(booking => {
-      const bookingDate = new Date(booking.createdAt);
-      return bookingDate >= monthStart && bookingDate <= monthEnd;
-    });
-
-    const completedBookings = monthBookings.filter(b => b.status === 'delivered');
-    const totalRevenue = completedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
-    const totalOrders = completedBookings.length;
-
-    return { totalRevenue, totalOrders };
-  };
-
-  const calculateDailyBreakdown = () => {
-    const monthStart = new Date(selectedYear, selectedMonth, 1);
-    const monthEnd = new Date(selectedYear, selectedMonth + 1, 0);
-    const daysInMonth = monthEnd.getDate();
-
-    const dailyData = [];
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dayStart = new Date(selectedYear, selectedMonth, day, 0, 0, 0, 0);
-      const dayEnd = new Date(selectedYear, selectedMonth, day, 23, 59, 59, 999);
-
-      const dayBookings = bookings.filter(booking => {
-        const bookingDate = new Date(booking.createdAt);
-        return bookingDate >= dayStart && bookingDate <= dayEnd && booking.status === 'delivered';
-      });
-
-      const dayRevenue = dayBookings.reduce((sum, b) => sum + b.totalPrice, 0);
-      const dayOrders = dayBookings.length;
-
-      dailyData.push({
-        day,
-        revenue: dayRevenue,
-        orders: dayOrders,
-      });
-    }
-
-    return dailyData;
-  };
-
-  const calculateYearlyData = () => {
-    const yearStart = new Date(selectedYear, 0, 1);
-    const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
-
-    const yearBookings = bookings.filter(booking => {
-      const bookingDate = new Date(booking.createdAt);
-      return bookingDate >= yearStart && bookingDate <= yearEnd;
-    });
-
-    const completedBookings = yearBookings.filter(b => b.status === 'delivered');
-    const totalRevenue = completedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
-    const totalOrders = completedBookings.length;
-
-    return { totalRevenue, totalOrders };
-  };
-
-  const calculateMonthlyBreakdown = () => {
-    const monthlyData = [];
-    
-    for (let monthIndex = 0; monthIndex < 12; monthIndex++) {
-      const monthStart = new Date(selectedYear, monthIndex, 1);
-      const monthEnd = new Date(selectedYear, monthIndex + 1, 0, 23, 59, 59, 999);
-
-      const monthBookings = bookings.filter(booking => {
-        const bookingDate = new Date(booking.createdAt);
-        return bookingDate >= monthStart && bookingDate <= monthEnd && booking.status === 'delivered';
-      });
-
-      const monthRevenue = monthBookings.reduce((sum, b) => sum + b.totalPrice, 0);
-      const monthOrders = monthBookings.length;
-
-      monthlyData.push({
-        month: fullMonthNames[monthIndex],
-        revenue: monthRevenue,
-        orders: monthOrders,
-      });
-    }
-
-    return monthlyData;
-  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -218,11 +139,17 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
     navigation.navigate(route);
   };
 
-  const monthlyData = periodType === 'month' ? calculateMonthlyData() : calculateYearlyData();
+  const monthlyData = periodType === 'month' 
+    ? calculateMonthlyData(bookings, selectedYear, selectedMonth)
+    : calculateYearlyData(bookings, selectedYear);
   const totalRevenue = monthlyData.totalRevenue;
   const totalOrders = monthlyData.totalOrders;
-  const dailyBreakdown = periodType === 'month' ? calculateDailyBreakdown() : [];
-  const monthlyBreakdown = periodType === 'year' ? calculateMonthlyBreakdown() : [];
+  const dailyBreakdown = periodType === 'month' 
+    ? calculateDailyBreakdown(bookings, selectedYear, selectedMonth)
+    : [];
+  const monthlyBreakdown = periodType === 'year' 
+    ? calculateMonthlyBreakdown(bookings, selectedYear)
+    : [];
 
   return (
     <SafeAreaView style={styles.safeArea}>

@@ -4,8 +4,6 @@ import {
   StyleSheet, 
   ScrollView, 
   Alert, 
-  Image,
-  TextInput,
   TouchableOpacity,
   Animated,
   AccessibilityInfo,
@@ -466,6 +464,10 @@ const AdminProfileScreen: React.FC = () => {
     navigation.navigate(route);
   }, [navigation]);
 
+  const handleImageLoadStart = () => {
+    dispatch({ type: 'SET_IMAGE_LOADING', payload: true });
+    dispatch({ type: 'SET_IMAGE_ERROR', payload: false });
+  };
 
   const handleImageLoad = () => {
     dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
