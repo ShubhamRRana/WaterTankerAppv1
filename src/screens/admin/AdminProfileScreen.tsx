@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -18,6 +18,7 @@ import { useAuthStore } from '../../store/authStore';
 import { User } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
+import { ValidationUtils } from '../../utils/validation';
 
 type AdminProfileScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Profile'>;
 
@@ -32,39 +33,105 @@ const AdminProfileScreen: React.FC = () => {
     password: '',
     confirmPassword: '',
   });
+  const [formErrors, setFormErrors] = useState<{
+    businessName?: string;
+    name?: string;
+    phone?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const initialFormRef = useRef<typeof editForm | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     if (user) {
-      setEditForm({
+      const initialForm = {
         businessName: user.businessName || '',
         name: user.name || '',
         phone: user.phone || '',
         password: '',
         confirmPassword: '',
-      });
+      };
+      setEditForm(initialForm);
+      initialFormRef.current = initialForm;
+      setIsDirty(false);
+      setFormErrors({});
     }
   }, [user]);
+
+  // Track dirty state
+  useEffect(() => {
+    if (!isEditing || !user || !initialFormRef.current) return;
+    
+    const hasChanges = 
+      editForm.businessName.trim() !== (initialFormRef.current.businessName || '') ||
+      editForm.name.trim() !== (initialFormRef.current.name || '') ||
+      editForm.phone.trim() !== (initialFormRef.current.phone || '') ||
+      editForm.password !== '' ||
+      editForm.confirmPassword !== '';
+    
+    setIsDirty(hasChanges);
+  }, [editForm, isEditing, user]);
+
+  const validateForm = (): boolean => {
+    const errors: typeof formErrors = {};
+
+    // Validate business name
+    const businessNameTrimmed = editForm.businessName.trim();
+    if (!businessNameTrimmed) {
+      errors.businessName = 'Business name is required';
+    } else if (businessNameTrimmed.length < 2) {
+      errors.businessName = 'Business name must be at least 2 characters long';
+    } else if (businessNameTrimmed.length > 100) {
+      errors.businessName = 'Business name must be less than 100 characters';
+    }
+
+    // Validate name
+    const nameValidation = ValidationUtils.validateName(editForm.name.trim());
+    if (!nameValidation.isValid) {
+      errors.name = nameValidation.error;
+    }
+
+    // Validate phone
+    const phoneValidation = ValidationUtils.validatePhone(editForm.phone.trim());
+    if (!phoneValidation.isValid) {
+      errors.phone = phoneValidation.error;
+    }
+
+    // Validate password if provided
+    if (editForm.password || editForm.confirmPassword) {
+      if (!editForm.password) {
+        errors.password = 'Please enter a new password';
+      } else {
+        const passwordValidation = ValidationUtils.validatePassword(editForm.password);
+        if (!passwordValidation.isValid) {
+          errors.password = passwordValidation.error;
+        }
+      }
+
+      if (editForm.password && editForm.password !== editForm.confirmPassword) {
+        errors.confirmPassword = 'Passwords do not match';
+      }
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSaveProfile = async () => {
     if (!user) return;
     
-    // Validate password if provided
-    if (editForm.password || editForm.confirmPassword) {
-      if (!editForm.password) {
-        Alert.alert('Error', 'Please enter a new password');
-        return;
-      }
-      if (editForm.password.length < 6) {
-        Alert.alert('Error', 'Password must be at least 6 characters long');
-        return;
-      }
-      if (editForm.password !== editForm.confirmPassword) {
-        Alert.alert('Error', 'Passwords do not match');
-        return;
-      }
+    // Validate all fields
+    if (!validateForm()) {
+      return;
     }
     
+    setIsSaving(true);
     try {
       const updates: Partial<User> = {
         businessName: editForm.businessName.trim(),
@@ -79,17 +146,86 @@ const AdminProfileScreen: React.FC = () => {
       
       await updateUser(updates);
       setIsEditing(false);
+      setIsDirty(false);
+      setFormErrors({});
       Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile. Please try again.';
+      Alert.alert('Error', errorMessage);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to logout. Please try again.');
+    Alert.alert(
+      'Confirm Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (error) {
+              const errorMessage = error instanceof Error ? error.message : 'Failed to logout. Please try again.';
+              Alert.alert('Error', errorMessage);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleCancelEdit = () => {
+    if (isDirty) {
+      Alert.alert(
+        'Discard Changes?',
+        'You have unsaved changes. Are you sure you want to cancel?',
+        [
+          {
+            text: 'Keep Editing',
+            style: 'cancel',
+          },
+          {
+            text: 'Discard',
+            style: 'destructive',
+            onPress: () => {
+              if (user && initialFormRef.current) {
+                setEditForm(initialFormRef.current);
+                setFormErrors({});
+                setIsDirty(false);
+                setIsEditing(false);
+              }
+            },
+          },
+        ]
+      );
+    } else {
+      if (user && initialFormRef.current) {
+        setEditForm(initialFormRef.current);
+        setFormErrors({});
+      }
+      setIsEditing(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof typeof editForm, value: string) => {
+    // Trim input on change for better UX
+    const trimmedValue = field === 'phone' ? value.replace(/\s/g, '') : value;
+    setEditForm(prev => ({ ...prev, [field]: trimmedValue }));
+    // Clear error for this field when user starts typing
+    if (formErrors[field as keyof typeof formErrors]) {
+      setFormErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field as keyof typeof formErrors];
+        return newErrors;
+      });
     }
   };
 
@@ -154,6 +290,9 @@ const AdminProfileScreen: React.FC = () => {
               style={styles.menuButton} 
               onPress={() => setMenuVisible(true)}
               activeOpacity={0.7}
+              accessibilityLabel="Open menu"
+              accessibilityHint="Opens the navigation menu"
+              accessibilityRole="button"
             >
               <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
             </TouchableOpacity>
@@ -165,8 +304,13 @@ const AdminProfileScreen: React.FC = () => {
 
         <Card style={styles.profileCard}>
           <View style={styles.profileHeader}>
-            {user.profileImage ? (
-              <Image source={{ uri: user.profileImage }} style={styles.avatar} />
+            {user.profileImage && !imageError ? (
+              <Image 
+                source={{ uri: user.profileImage }} 
+                style={styles.avatar}
+                onError={() => setImageError(true)}
+                accessibilityLabel="Profile image"
+              />
             ) : (
               <View style={styles.avatarPlaceholder}>
                 <Typography variant="h3" style={styles.avatarText}>
@@ -181,7 +325,14 @@ const AdminProfileScreen: React.FC = () => {
           </View>
 
           {!isEditing && (
-            <Button title="Edit Profile" onPress={() => setIsEditing(true)} variant="primary" />
+            <Button 
+              title="Edit Profile" 
+              onPress={() => {
+                setIsEditing(true);
+                setImageError(false);
+              }} 
+              variant="primary"
+            />
           )}
         </Card>
 
@@ -191,75 +342,138 @@ const AdminProfileScreen: React.FC = () => {
             <View style={styles.inputContainer}>
               <Typography variant="body" style={styles.inputLabel}>Business Name</Typography>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, formErrors.businessName && styles.textInputError]}
                 value={editForm.businessName}
-                onChangeText={(t) => setEditForm(prev => ({ ...prev, businessName: t }))}
+                onChangeText={(t) => handleInputChange('businessName', t)}
                 placeholder="Enter business name"
                 placeholderTextColor={UI_CONFIG.colors.textSecondary}
+                accessibilityLabel="Business name input"
+                accessibilityHint="Enter your business name"
+                maxLength={100}
               />
+              {formErrors.businessName && (
+                <Typography variant="caption" style={styles.errorText}>
+                  {formErrors.businessName}
+                </Typography>
+              )}
             </View>
             <View style={styles.inputContainer}>
               <Typography variant="body" style={styles.inputLabel}>Full Name</Typography>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, formErrors.name && styles.textInputError]}
                 value={editForm.name}
-                onChangeText={(t) => setEditForm(prev => ({ ...prev, name: t }))}
+                onChangeText={(t) => handleInputChange('name', t)}
                 placeholder="Enter full name"
                 placeholderTextColor={UI_CONFIG.colors.textSecondary}
+                accessibilityLabel="Full name input"
+                accessibilityHint="Enter your full name"
+                maxLength={50}
               />
+              {formErrors.name && (
+                <Typography variant="caption" style={styles.errorText}>
+                  {formErrors.name}
+                </Typography>
+              )}
             </View>
             <View style={styles.inputContainer}>
               <Typography variant="body" style={styles.inputLabel}>Phone Number</Typography>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, formErrors.phone && styles.textInputError]}
                 value={editForm.phone}
-                onChangeText={(t) => setEditForm(prev => ({ ...prev, phone: t }))}
+                onChangeText={(t) => handleInputChange('phone', t)}
                 placeholder="Enter phone number"
                 placeholderTextColor={UI_CONFIG.colors.textSecondary}
                 keyboardType="phone-pad"
+                maxLength={10}
+                accessibilityLabel="Phone number input"
+                accessibilityHint="Enter your 10-digit phone number"
               />
+              {formErrors.phone && (
+                <Typography variant="caption" style={styles.errorText}>
+                  {formErrors.phone}
+                </Typography>
+              )}
             </View>
             <View style={styles.inputContainer}>
               <Typography variant="body" style={styles.inputLabel}>Password</Typography>
-              <TextInput
-                style={styles.textInput}
-                value={editForm.password}
-                onChangeText={(t) => setEditForm(prev => ({ ...prev, password: t }))}
-                placeholder="Leave blank to keep current"
-                placeholderTextColor={UI_CONFIG.colors.textSecondary}
-                secureTextEntry
-              />
+              <View style={styles.passwordInputContainer}>
+                <TextInput
+                  style={[styles.passwordInput, formErrors.password && styles.textInputError]}
+                  value={editForm.password}
+                  onChangeText={(t) => handleInputChange('password', t)}
+                  placeholder="Leave blank to keep current"
+                  placeholderTextColor={UI_CONFIG.colors.textSecondary}
+                  secureTextEntry={!showPassword}
+                  accessibilityLabel="Password input"
+                  accessibilityHint="Enter new password or leave blank to keep current"
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                  accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                  accessibilityRole="button"
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={24}
+                    color={UI_CONFIG.colors.textSecondary}
+                  />
+                </TouchableOpacity>
+              </View>
+              {formErrors.password && (
+                <Typography variant="caption" style={styles.errorText}>
+                  {formErrors.password}
+                </Typography>
+              )}
             </View>
             <View style={styles.inputContainer}>
               <Typography variant="body" style={styles.inputLabel}>Confirm Password</Typography>
-              <TextInput
-                style={styles.textInput}
-                value={editForm.confirmPassword}
-                onChangeText={(t) => setEditForm(prev => ({ ...prev, confirmPassword: t }))}
-                placeholder="Confirm new password"
-                placeholderTextColor={UI_CONFIG.colors.textSecondary}
-                secureTextEntry
-              />
+              <View style={styles.passwordInputContainer}>
+                <TextInput
+                  style={[styles.passwordInput, formErrors.confirmPassword && styles.textInputError]}
+                  value={editForm.confirmPassword}
+                  onChangeText={(t) => handleInputChange('confirmPassword', t)}
+                  placeholder="Confirm new password"
+                  placeholderTextColor={UI_CONFIG.colors.textSecondary}
+                  secureTextEntry={!showConfirmPassword}
+                  accessibilityLabel="Confirm password input"
+                  accessibilityHint="Confirm your new password"
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  accessibilityLabel={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  accessibilityRole="button"
+                >
+                  <Ionicons
+                    name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={24}
+                    color={UI_CONFIG.colors.textSecondary}
+                  />
+                </TouchableOpacity>
+              </View>
+              {formErrors.confirmPassword && (
+                <Typography variant="caption" style={styles.errorText}>
+                  {formErrors.confirmPassword}
+                </Typography>
+              )}
             </View>
             <View style={styles.row}>
               <Button 
                 title="Cancel" 
-                onPress={() => {
-                  if (user) {
-                    setEditForm({
-                      businessName: user.businessName || '',
-                      name: user.name || '',
-                      phone: user.phone || '',
-                      password: '',
-                      confirmPassword: '',
-                    });
-                  }
-                  setIsEditing(false);
-                }} 
+                onPress={handleCancelEdit}
                 variant="outline" 
-                style={styles.rowButton} 
+                style={styles.rowButton}
+                disabled={isSaving}
               />
-              <Button title="Save" onPress={handleSaveProfile} variant="primary" style={styles.rowButton} />
+              <Button 
+                title={isSaving ? "Saving..." : "Save"} 
+                onPress={handleSaveProfile} 
+                variant="primary" 
+                style={styles.rowButton}
+                disabled={isSaving}
+                loading={isSaving}
+              />
             </View>
           </Card>
         )}
@@ -389,6 +603,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: UI_CONFIG.colors.text,
     backgroundColor: UI_CONFIG.colors.surface,
+  },
+  textInputError: {
+    borderColor: '#EF4444',
+    borderWidth: 1.5,
+  },
+  passwordInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: UI_CONFIG.colors.border,
+    borderRadius: 8,
+    backgroundColor: UI_CONFIG.colors.surface,
+  },
+  passwordInput: {
+    flex: 1,
+    padding: 12,
+    fontSize: 16,
+    color: UI_CONFIG.colors.text,
+  },
+  eyeIcon: {
+    padding: 12,
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: 12,
+    marginTop: 4,
   },
   row: {
     flexDirection: 'row',
