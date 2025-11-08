@@ -42,7 +42,6 @@ src/
 │       ├── AllBookingsScreen.tsx
 │       ├── DriverManagementScreen.tsx
 │       ├── VehicleManagementScreen.tsx
-│       ├── CustomerManagementScreen.tsx
 │       ├── ReportsScreen.tsx
 │       └── AdminProfileScreen.tsx
 ├── navigation/
@@ -113,7 +112,6 @@ src/
 - **All Bookings Management**: View, filter, and manage all platform bookings
 - **Driver Management**: Create, approve, suspend drivers with comprehensive profile management
 - **Vehicle Management**: Add, edit, delete vehicles with insurance and capacity tracking
-- **Customer Management**: View and manage customer accounts
 - **Reports & Analytics**: View comprehensive platform statistics and analytics
 - **Profile Management**: Admin profile editing with photo upload
 
@@ -216,7 +214,7 @@ This formatting is applied consistently across:
   - Admin: Bottom tab navigation (Bookings, Drivers, Vehicles, Reports, Profile)
 - **Customer Screens**: Home, Booking, Order Tracking, Order History, Past Orders, Profile, Saved Addresses
 - **Driver Screens**: Orders, Active Order, Collect Payment, Earnings, Profile
-- **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Customer Management, Reports, Profile
+- **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Reports, Profile
 - **TypeScript Support**: All components properly typed with comprehensive type definitions
 - **State Management**: Zustand stores for authentication, bookings, users, and vehicles
 - **Services**: Local storage, auth, booking, payment, and location services
