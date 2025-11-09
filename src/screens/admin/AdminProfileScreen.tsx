@@ -17,7 +17,7 @@ import { Typography, Button, Card, LoadingSpinner, AdminMenuDrawer, SuccessNotif
 import ProfileHeader from '../../components/admin/ProfileHeader';
 import EditProfileForm from '../../components/admin/EditProfileForm';
 import { useAuthStore } from '../../store/authStore';
-import { User } from '../../types';
+import { User, isAdminUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { ValidationUtils } from '../../utils/validation';
@@ -181,7 +181,7 @@ const AdminProfileScreen: React.FC = () => {
 
   // Initialize form when user data is available
   useEffect(() => {
-    if (user) {
+    if (user && isAdminUser(user)) {
       const initialForm: FormState = {
         businessName: user.businessName || '',
         name: user.name || '',
