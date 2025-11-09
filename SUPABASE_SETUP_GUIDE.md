@@ -9,7 +9,11 @@
 6. [Installing Dependencies](#installing-dependencies)
 7. [Creating Supabase Client](#creating-supabase-client)
 8. [Verifying Setup](#verifying-setup)
-9. [Next Steps](#next-steps)
+9. [Phase 2: Supabase Integration - Next Steps](#phase-2-supabase-integration---next-steps)
+   - [1. Supabase Setup (Complete Foundation)](#1-supabase-setup-complete-foundation)
+   - [2. Service Layer Migration](#2-service-layer-migration)
+   - [3. Store Updates](#3-store-updates)
+   - [4. Data Migration](#4-data-migration)
 
 ---
 
@@ -585,31 +589,168 @@ export const testSupabaseConnection = async () => {
 
 ---
 
-## Next Steps
+## Phase 2: Supabase Integration - Next Steps
 
-Once your Supabase setup is verified, proceed with:
+Once your Supabase setup is verified, proceed with Phase 2 integration. This phase aligns with the refactoring strategy and includes 4 main components:
 
-1. **Database Schema Creation**
-   - Create tables (users, bookings, addresses, etc.)
-   - Set up Row Level Security (RLS) policies
-   - Create indexes for performance
+### 1. Supabase Setup (Complete Foundation)
 
-2. **Service Migration**
-   - Migrate `AuthService` to use Supabase Auth
-   - Migrate `BookingService` to use Supabase database
-   - Update stores to work with Supabase
+**Project Creation and Configuration:**
+- ✅ Project creation (completed in steps above)
+- ✅ Environment variables configured (completed in steps above)
+- ✅ Supabase client created (completed in steps above)
 
-3. **Real-time Features**
-   - Set up real-time subscriptions for booking updates
-   - Implement live location tracking
-   - Add push notifications
+**Database Schema Creation:**
+- Create tables (users, bookings, addresses, vehicles, drivers, etc.)
+- Define relationships and foreign keys
+- Create indexes for performance optimization
+- Set up database constraints and validations
 
-4. **Data Migration**
-   - Create scripts to migrate existing AsyncStorage data
-   - Test migration with sample data
-   - Execute full migration
+**RLS Policies Implementation:**
+- Set up Row Level Security (RLS) policies for all tables
+- Define policies for each user role (customer, driver, admin)
+- Ensure data isolation and security at the database level
+- Test RLS policies with different user roles
 
-Refer to `SUPABASE_MIGRATION_PLAN.md` for detailed implementation steps.
+**Resources:**
+- Refer to `SUPABASE_MIGRATION_PLAN.md` for detailed schema design
+- Use Supabase Dashboard → SQL Editor for schema creation
+- Test RLS policies in Supabase Dashboard → Authentication → Policies
+
+---
+
+### 2. Service Layer Migration
+
+**AuthService → Supabase Auth:**
+- Replace localStorage-based authentication with Supabase Auth
+- Migrate user registration to `supabase.auth.signUp()`
+- Migrate login to `supabase.auth.signInWithPassword()`
+- Implement session management with `supabase.auth.getSession()`
+- Handle password reset flows with Supabase Auth
+- Update user profile management to use Supabase Auth
+
+**BookingService → Supabase with Realtime:**
+- Replace AsyncStorage booking storage with Supabase database
+- Migrate booking CRUD operations to Supabase queries
+- Implement real-time subscriptions for booking status updates
+- Use Supabase Realtime for live booking updates
+- Replace polling mechanism with WebSocket subscriptions
+
+**LocationService → Supabase (with proper React Native support):**
+- Store location data in Supabase database
+- Implement location tracking with Supabase
+- Use Supabase Realtime for live location updates
+- Ensure proper React Native geolocation integration
+- Handle location permissions and errors
+
+**PaymentService → Keep simple for now (COD focus):**
+- Maintain current COD (Cash on Delivery) implementation
+- Store payment records in Supabase database
+- Prepare structure for future payment gateway integration
+- Keep payment logic simple and focused on COD
+
+**Resources:**
+- Refer to existing service files: `src/services/auth.service.ts`, `src/services/booking.service.ts`, `src/services/location.service.ts`, `src/services/payment.service.ts`
+- Supabase Auth documentation: https://supabase.com/docs/guides/auth
+- Supabase Realtime documentation: https://supabase.com/docs/guides/realtime
+
+---
+
+### 3. Store Updates
+
+**Update Zustand Stores to Work with Supabase:**
+- Update `authStore` to use Supabase Auth instead of localStorage
+- Update `bookingStore` to fetch from Supabase database
+- Update `userStore` to sync with Supabase user profiles
+- Update any other stores that interact with data storage
+- Ensure stores handle Supabase errors gracefully
+
+**Add Real-time Subscriptions:**
+- Set up Supabase Realtime subscriptions in stores
+- Subscribe to booking status changes
+- Subscribe to location updates for drivers
+- Subscribe to user profile updates
+- Implement subscription cleanup on component unmount
+
+**Update State Management Patterns:**
+- Replace AsyncStorage reads with Supabase queries
+- Replace AsyncStorage writes with Supabase mutations
+- Implement optimistic updates where appropriate
+- Add loading and error states for Supabase operations
+- Ensure state synchronization across app
+
+**Resources:**
+- Refer to existing store files: `src/stores/authStore.ts`, `src/stores/bookingStore.ts`, `src/stores/userStore.ts`
+- Supabase Realtime subscriptions: https://supabase.com/docs/guides/realtime/subscriptions
+- Zustand documentation: https://github.com/pmndrs/zustand
+
+---
+
+### 4. Data Migration
+
+**Create Migration Scripts:**
+- Create scripts to read data from AsyncStorage
+- Transform data to match Supabase schema
+- Handle data type conversions (dates, enums, etc.)
+- Create validation scripts to ensure data integrity
+- Implement rollback mechanisms for failed migrations
+
+**Migrate Existing Data:**
+- Export all data from AsyncStorage (users, bookings, addresses, etc.)
+- Transform and validate data format
+- Import data into Supabase database
+- Handle duplicate entries and conflicts
+- Preserve data relationships and references
+
+**Validate Data Integrity:**
+- Verify all data was migrated successfully
+- Check data relationships are intact
+- Validate data types and constraints
+- Compare record counts (before vs after)
+- Test app functionality with migrated data
+- Ensure no data loss occurred
+
+**Resources:**
+- Create migration scripts in `scripts/migrate-to-supabase.ts`
+- Use Supabase service_role key for migration (server-side only)
+- Test migration with sample data first
+- Backup AsyncStorage data before migration
+
+---
+
+## Implementation Order
+
+Follow this order for Phase 2 implementation:
+
+1. **Start with Supabase Setup** (Item 1)
+   - Create database schema
+   - Implement RLS policies
+   - Test database structure
+
+2. **Then Service Layer Migration** (Item 2)
+   - Start with AuthService (foundation for other services)
+   - Then BookingService (core functionality)
+   - Then LocationService (depends on auth)
+   - Finally PaymentService (simplest)
+
+3. **Update Stores** (Item 3)
+   - Update stores after services are migrated
+   - Add real-time subscriptions
+   - Test state management
+
+4. **Data Migration** (Item 4)
+   - Migrate data after all services are updated
+   - Validate data integrity
+   - Test with migrated data
+
+---
+
+## Additional Resources
+
+- **Detailed Migration Plan**: Refer to `SUPABASE_MIGRATION_PLAN.md` for step-by-step implementation
+- **Refactoring Strategy**: See `REFACTORING_VS_SUPABASE_STRATEGY.md` for overall approach
+- **Supabase Documentation**: https://supabase.com/docs
+- **Supabase React Native Guide**: https://supabase.com/docs/guides/getting-started/tutorials/with-expo-react-native
 
 ---
 
@@ -672,5 +813,6 @@ Refer to `SUPABASE_MIGRATION_PLAN.md` for detailed implementation steps.
 ---
 
 *Last Updated: 2024-12-19*
-*Document Version: 1.0*
+*Document Version: 1.1*
+*Updated to align with Phase 2 items from REFACTORING_VS_SUPABASE_STRATEGY.md*
 
