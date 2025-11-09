@@ -19,6 +19,7 @@ import { Address } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { LocalStorageService } from '../../services/localStorage';
 import { UI_CONFIG } from '../../constants/config';
+import { ValidationUtils, SanitizationUtils } from '../../utils';
 
 type SavedAddressesScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'SavedAddresses'>;
 
@@ -50,8 +51,12 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
   };
 
   const handleSaveAddress = async () => {
-    if (!newAddressText.trim()) {
-      Alert.alert('Error', 'Please enter an address');
+    // Sanitize and validate address
+    const sanitizedAddress = SanitizationUtils.sanitizeAddress(newAddressText);
+    const addressValidation = ValidationUtils.validateAddressText(sanitizedAddress);
+    
+    if (!addressValidation.isValid) {
+      Alert.alert('Invalid Address', addressValidation.error || 'Please enter a valid address');
       return;
     }
 
@@ -67,7 +72,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         // Update existing address
         const updatedAddress: Address = {
           ...editingAddress,
-          street: newAddressText.trim(),
+          street: sanitizedAddress,
         };
         
         updatedAddresses = addresses.map(addr => 
@@ -77,7 +82,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         // Add new address
         const addressToSave: Address = {
           id: LocalStorageService.generateId(),
-          street: newAddressText.trim(),
+          street: sanitizedAddress,
           city: '', // We'll use the full address as street
           state: '',
           pincode: '',
@@ -220,7 +225,10 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
               style={styles.addressInput}
               placeholder={editingAddress ? "Edit address..." : "Enter new address..."}
               value={newAddressText}
-              onChangeText={setNewAddressText}
+              onChangeText={(text) => {
+                const sanitized = SanitizationUtils.sanitizeAddress(text);
+                setNewAddressText(sanitized);
+              }}
               multiline
               numberOfLines={2}
             />

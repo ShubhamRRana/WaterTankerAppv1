@@ -20,6 +20,7 @@ import { useAuthStore } from '../../store/authStore';
 import { User } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { UI_CONFIG } from '../../constants/config';
+import { ValidationUtils, SanitizationUtils } from '../../utils';
 
 type ProfileScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Profile'>;
 
@@ -34,6 +35,10 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     name: '',
     phone: '',
   });
+  const [formErrors, setFormErrors] = useState<{
+    name?: string;
+    phone?: string;
+  }>({});
   const [menuVisible, setMenuVisible] = useState(false);
 
   // Animation values
@@ -126,10 +131,33 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const handleSaveProfile = async () => {
     if (!user) return;
 
+    // Sanitize inputs
+    const sanitizedName = SanitizationUtils.sanitizeName(editForm.name);
+    const sanitizedPhone = SanitizationUtils.sanitizePhone(editForm.phone);
+
+    // Validate inputs
+    const nameValidation = ValidationUtils.validateName(sanitizedName);
+    const phoneValidation = ValidationUtils.validatePhone(sanitizedPhone);
+
+    const errors: { name?: string; phone?: string } = {};
+    if (!nameValidation.isValid) {
+      errors.name = nameValidation.error;
+    }
+    if (!phoneValidation.isValid) {
+      errors.phone = phoneValidation.error;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setFormErrors({});
+
     try {
       const updates: Partial<User> = {
-        name: editForm.name.trim(),
-        phone: editForm.phone.trim(),
+        name: sanitizedName,
+        phone: sanitizedPhone,
       };
 
       await updateUser(updates);
@@ -343,12 +371,27 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                     </Typography>
                   </View>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.name && { borderColor: UI_CONFIG.colors.error }]}
                     value={editForm.name}
-                    onChangeText={(text) => setEditForm(prev => ({ ...prev, name: text }))}
+                    onChangeText={(text) => {
+                      const sanitized = SanitizationUtils.sanitizeName(text);
+                      setEditForm(prev => ({ ...prev, name: sanitized }));
+                      if (formErrors.name) {
+                        setFormErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.name;
+                          return newErrors;
+                        });
+                      }
+                    }}
                     placeholder="Enter your full name"
                     placeholderTextColor={UI_CONFIG.colors.textSecondary}
                   />
+                  {formErrors.name && (
+                    <Typography variant="caption" style={{ color: UI_CONFIG.colors.error, marginTop: 4 }}>
+                      {formErrors.name}
+                    </Typography>
+                  )}
                 </View>
 
                 <View style={styles.inputContainer}>
@@ -359,13 +402,29 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                     </Typography>
                   </View>
                   <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, formErrors.phone && { borderColor: UI_CONFIG.colors.error }]}
                     value={editForm.phone}
-                    onChangeText={(text) => setEditForm(prev => ({ ...prev, phone: text }))}
+                    onChangeText={(text) => {
+                      const sanitized = SanitizationUtils.sanitizePhone(text);
+                      setEditForm(prev => ({ ...prev, phone: sanitized }));
+                      if (formErrors.phone) {
+                        setFormErrors(prev => {
+                          const newErrors = { ...prev };
+                          delete newErrors.phone;
+                          return newErrors;
+                        });
+                      }
+                    }}
                     placeholder="Enter your phone number"
                     placeholderTextColor={UI_CONFIG.colors.textSecondary}
                     keyboardType="phone-pad"
+                    maxLength={10}
                   />
+                  {formErrors.phone && (
+                    <Typography variant="caption" style={{ color: UI_CONFIG.colors.error, marginTop: 4 }}>
+                      {formErrors.phone}
+                    </Typography>
+                  )}
                 </View>
 
                 <TouchableOpacity

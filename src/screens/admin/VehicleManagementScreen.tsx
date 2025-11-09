@@ -20,7 +20,7 @@ import { useAuthStore } from '../../store/authStore';
 import { Typography, Card, Button, LoadingSpinner, Input, AdminMenuDrawer } from '../../components/common';
 import { Vehicle } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
-import { PricingUtils } from '../../utils/pricing';
+import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 
 type VehicleManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Vehicles'>;
@@ -305,36 +305,38 @@ const VehicleManagementScreen: React.FC = () => {
   const validateVehicleForm = () => {
     const errors: {[key: string]: string} = {};
     
-    if (!addVehicleForm.vehicleNumber.trim()) {
-      errors.vehicleNumber = 'Vehicle number is required';
+    // Validate vehicle number
+    const vehicleNumberValidation = ValidationUtils.validateVehicleNumber(addVehicleForm.vehicleNumber);
+    if (!vehicleNumberValidation.isValid) {
+      errors.vehicleNumber = vehicleNumberValidation.error || 'Vehicle number is required';
     }
     
+    // Validate insurance company name
     if (!addVehicleForm.insuranceCompanyName.trim()) {
       errors.insuranceCompanyName = 'Insurance company name is required';
-    }
-
-    // Validate insurance expiry date: DD/MM/YYYY
-    const expiryMatch = addVehicleForm.insuranceExpiryDate.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
-    if (!expiryMatch) {
-      errors.insuranceExpiryDate = 'Use DD/MM/YYYY format';
     } else {
-      const day = parseInt(expiryMatch[1], 10);
-      const month = parseInt(expiryMatch[2], 10) - 1;
-      const year = parseInt(expiryMatch[3], 10);
-      const candidate = new Date(year, month, day);
-      if (isNaN(candidate.getTime())) {
-        errors.insuranceExpiryDate = 'Invalid date';
+      const sanitized = SanitizationUtils.sanitizeBusinessName(addVehicleForm.insuranceCompanyName);
+      if (sanitized.length < 2) {
+        errors.insuranceCompanyName = 'Insurance company name must be at least 2 characters';
       }
     }
 
-    const capacity = parseFloat(addVehicleForm.vehicleCapacity);
-    if (!addVehicleForm.vehicleCapacity || isNaN(capacity) || capacity <= 0) {
-      errors.vehicleCapacity = 'Valid vehicle capacity is required';
+    // Validate insurance expiry date
+    const insuranceDateValidation = ValidationUtils.validateInsuranceDate(addVehicleForm.insuranceExpiryDate);
+    if (!insuranceDateValidation.isValid) {
+      errors.insuranceExpiryDate = insuranceDateValidation.error || 'Invalid insurance expiry date';
     }
 
-    const amount = parseFloat(addVehicleForm.amount);
-    if (!addVehicleForm.amount || isNaN(amount) || amount <= 0) {
-      errors.amount = 'Valid amount is required';
+    // Validate vehicle capacity
+    const capacityValidation = ValidationUtils.validateVehicleCapacity(addVehicleForm.vehicleCapacity);
+    if (!capacityValidation.isValid) {
+      errors.vehicleCapacity = capacityValidation.error || 'Valid vehicle capacity is required';
+    }
+
+    // Validate amount
+    const amountValidation = ValidationUtils.validateAmount(addVehicleForm.amount);
+    if (!amountValidation.isValid) {
+      errors.amount = amountValidation.error || 'Valid amount is required';
     }
     
     setFormErrors(errors);
@@ -378,8 +380,8 @@ const VehicleManagementScreen: React.FC = () => {
         
         await addVehicle({
           agencyId: currentUser.uid,
-          vehicleNumber: addVehicleForm.vehicleNumber.trim().toUpperCase(),
-          insuranceCompanyName: addVehicleForm.insuranceCompanyName.trim(),
+          vehicleNumber: SanitizationUtils.sanitizeVehicleNumber(addVehicleForm.vehicleNumber).toUpperCase(),
+          insuranceCompanyName: SanitizationUtils.sanitizeBusinessName(addVehicleForm.insuranceCompanyName),
           insuranceExpiryDate: insuranceExpiryDate,
           vehicleCapacity: parseFloat(addVehicleForm.vehicleCapacity),
           amount: parseFloat(addVehicleForm.amount),
@@ -398,8 +400,8 @@ const VehicleManagementScreen: React.FC = () => {
         }
         
         await updateVehicle(editingVehicle.id, {
-          vehicleNumber: addVehicleForm.vehicleNumber.trim().toUpperCase(),
-          insuranceCompanyName: addVehicleForm.insuranceCompanyName.trim(),
+          vehicleNumber: SanitizationUtils.sanitizeVehicleNumber(addVehicleForm.vehicleNumber).toUpperCase(),
+          insuranceCompanyName: SanitizationUtils.sanitizeBusinessName(addVehicleForm.insuranceCompanyName),
           insuranceExpiryDate: insuranceExpiryDate,
           vehicleCapacity: parseFloat(addVehicleForm.vehicleCapacity),
           amount: parseFloat(addVehicleForm.amount),
@@ -487,7 +489,28 @@ const VehicleManagementScreen: React.FC = () => {
   }, [editingVehicle, deleteVehicle, resetVehicleForm]);
 
   const handleFormChange = useCallback((field: string, value: string) => {
-    setAddVehicleForm(prev => ({ ...prev, [field]: value }));
+    let sanitizedValue = value;
+    
+    // Sanitize based on field type
+    switch (field) {
+      case 'vehicleNumber':
+        sanitizedValue = SanitizationUtils.sanitizeVehicleNumber(value);
+        break;
+      case 'insuranceCompanyName':
+        sanitizedValue = SanitizationUtils.sanitizeBusinessName(value);
+        break;
+      case 'insuranceExpiryDate':
+        sanitizedValue = SanitizationUtils.sanitizeDateString(value);
+        break;
+      case 'vehicleCapacity':
+      case 'amount':
+        sanitizedValue = SanitizationUtils.sanitizeNumber(value);
+        break;
+      default:
+        sanitizedValue = SanitizationUtils.sanitizeString(value);
+    }
+    
+    setAddVehicleForm(prev => ({ ...prev, [field]: sanitizedValue }));
     // Clear error for this field when user starts typing
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: '' }));

@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
-import { ValidationUtils } from '../../utils/validation';
+import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../../constants/config';
 import { AuthStackParamList, UserRole } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -47,11 +47,125 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
   
   const { register, isLoading } = useAuthStore();
 
+  // Real-time validation handlers
+  const handleNameChange = (text: string) => {
+    const sanitized = SanitizationUtils.sanitizeName(text);
+    setName(sanitized);
+    
+    if (sanitized) {
+      const validation = ValidationUtils.validateName(sanitized);
+      if (!validation.isValid) {
+        setErrors(prev => ({ ...prev, name: validation.error }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.name;
+          return newErrors;
+        });
+      }
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.name;
+        return newErrors;
+      });
+    }
+  };
+
+  const handlePhoneChange = (text: string) => {
+    const sanitized = SanitizationUtils.sanitizePhone(text);
+    setPhone(sanitized);
+    
+    if (sanitized) {
+      const validation = ValidationUtils.validatePhone(sanitized);
+      if (!validation.isValid) {
+        setErrors(prev => ({ ...prev, phone: validation.error }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.phone;
+          return newErrors;
+        });
+      }
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.phone;
+        return newErrors;
+      });
+    }
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    
+    if (text) {
+      const validation = ValidationUtils.validatePassword(text);
+      if (!validation.isValid) {
+        setErrors(prev => ({ ...prev, password: validation.error }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.password;
+          return newErrors;
+        });
+      }
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.password;
+        return newErrors;
+      });
+    }
+
+    // Also validate confirm password if it exists
+    if (confirmPassword) {
+      const confirmValidation = ValidationUtils.validateConfirmPassword(text, confirmPassword);
+      if (!confirmValidation.isValid) {
+        setErrors(prev => ({ ...prev, confirmPassword: confirmValidation.error }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.confirmPassword;
+          return newErrors;
+        });
+      }
+    }
+  };
+
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text);
+    
+    if (text) {
+      const validation = ValidationUtils.validateConfirmPassword(password, text);
+      if (!validation.isValid) {
+        setErrors(prev => ({ ...prev, confirmPassword: validation.error }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.confirmPassword;
+          return newErrors;
+        });
+      }
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.confirmPassword;
+        return newErrors;
+      });
+    }
+  };
+
   const handleRegister = async () => {
+    // Sanitize inputs
+    const sanitizedPhone = SanitizationUtils.sanitizePhone(phone);
+    const sanitizedName = SanitizationUtils.sanitizeName(name);
+    
     // Validate inputs
-    const phoneValidation = ValidationUtils.validatePhone(phone);
+    const phoneValidation = ValidationUtils.validatePhone(sanitizedPhone);
     const passwordValidation = ValidationUtils.validatePassword(password);
-    const nameValidation = ValidationUtils.validateName(name);
+    const nameValidation = ValidationUtils.validateName(sanitizedName);
+    const confirmPasswordValidation = ValidationUtils.validateConfirmPassword(password, confirmPassword);
     
     const newErrors: any = {};
     
@@ -67,8 +181,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
       newErrors.name = nameValidation.error;
     }
     
-    if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+    if (!confirmPasswordValidation.isValid) {
+      newErrors.confirmPassword = confirmPasswordValidation.error;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -79,7 +193,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     setErrors({});
 
     try {
-      await register(phone, password, name, role);
+      await register(sanitizedPhone, password, sanitizedName, role);
       Alert.alert('Success', SUCCESS_MESSAGES.auth.registerSuccess);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : ERROR_MESSAGES.auth.userExists;
@@ -106,7 +220,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
               style={[styles.input, errors.name && styles.inputError]}
               placeholder="Enter your full name"
               value={name}
-              onChangeText={setName}
+              onChangeText={handleNameChange}
             />
             {errors.name && <Typography variant="caption" style={styles.errorText}>{errors.name}</Typography>}
           </View>
@@ -117,7 +231,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
               style={[styles.input, errors.phone && styles.inputError]}
               placeholder="Enter your phone number"
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={handlePhoneChange}
               keyboardType="phone-pad"
               maxLength={10}
             />
@@ -131,7 +245,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                 style={[styles.input, styles.passwordInput, errors.password && styles.inputError]}
                 placeholder="Enter your password"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity
@@ -155,7 +269,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
                 style={[styles.input, styles.passwordInput, errors.confirmPassword && styles.inputError]}
                 placeholder="Confirm your password"
                 value={confirmPassword}
-                onChangeText={setConfirmPassword}
+                onChangeText={handleConfirmPasswordChange}
                 secureTextEntry={!showConfirmPassword}
               />
               <TouchableOpacity

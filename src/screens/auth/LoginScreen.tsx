@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
-import { ValidationUtils } from '../../utils/validation';
+import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../../constants/config';
 import { AuthStackParamList } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -39,9 +39,60 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   
   const { login, loginWithRole, isLoading } = useAuthStore();
 
+  // Real-time validation handlers
+  const handlePhoneChange = (text: string) => {
+    const sanitized = SanitizationUtils.sanitizePhone(text);
+    setPhone(sanitized);
+    
+    if (sanitized) {
+      const validation = ValidationUtils.validatePhone(sanitized);
+      if (!validation.isValid) {
+        setErrors(prev => ({ ...prev, phone: validation.error }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.phone;
+          return newErrors;
+        });
+      }
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.phone;
+        return newErrors;
+      });
+    }
+  };
+
+  const handlePasswordChange = (text: string) => {
+    setPassword(text);
+    
+    if (text) {
+      const validation = ValidationUtils.validatePassword(text);
+      if (!validation.isValid) {
+        setErrors(prev => ({ ...prev, password: validation.error }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.password;
+          return newErrors;
+        });
+      }
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.password;
+        return newErrors;
+      });
+    }
+  };
+
   const handleLogin = async () => {
+    // Sanitize inputs
+    const sanitizedPhone = SanitizationUtils.sanitizePhone(phone);
+    
     // Validate inputs
-    const phoneValidation = ValidationUtils.validatePhone(phone);
+    const phoneValidation = ValidationUtils.validatePhone(sanitizedPhone);
     const passwordValidation = ValidationUtils.validatePassword(password);
 
     if (!phoneValidation.isValid || !passwordValidation.isValid) {
@@ -60,29 +111,29 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
       
       if (preferredRole) {
         // For role-specific login, use loginWithRole directly to ensure role match
-        await loginWithRole(phone, preferredRole);
+        await loginWithRole(sanitizedPhone, preferredRole);
         // Navigation will be handled by the auth store
       } else {
         // No preferred role - proceed with normal login
-        await login(phone, password);
+        await login(sanitizedPhone, password);
         // Navigation will be handled by the auth store
       }
     } catch (error) {
       if (error instanceof Error && error.message === 'ROLE_SELECTION_REQUIRED') {
         // Get available roles and act on preferred role if provided
-        const result = await AuthService.login(phone, password);
+        const result = await AuthService.login(sanitizedPhone, password);
         if (result.success && result.availableRoles) {
           const preferredRole = route?.params?.preferredRole;
           if (preferredRole && result.availableRoles.includes(preferredRole)) {
             try {
-              await loginWithRole(phone, preferredRole);
+              await loginWithRole(sanitizedPhone, preferredRole);
               return;
             } catch (_) {
               // fallback to role selection
             }
           }
           navigation.navigate('RoleSelection', {
-            phone,
+            phone: sanitizedPhone,
             availableRoles: result.availableRoles,
           });
         }
@@ -117,7 +168,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
               style={[styles.input, errors.phone && styles.inputError]}
               placeholder="Enter your phone number"
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={handlePhoneChange}
               keyboardType="phone-pad"
               maxLength={10}
             />
@@ -131,7 +182,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
                 style={[styles.input, styles.passwordInput, errors.password && styles.inputError]}
                 placeholder="Enter your password"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
               />
               <TouchableOpacity

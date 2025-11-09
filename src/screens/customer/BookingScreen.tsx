@@ -27,7 +27,7 @@ import DateTimeInput from '../../components/customer/DateTimeInput';
 import PriceBreakdown from '../../components/customer/PriceBreakdown';
 import { Address, BookingForm, TankerSize } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
-import { PricingUtils } from '../../utils/pricing';
+import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
 import { UI_CONFIG } from '../../constants/config';
 
 const { width } = Dimensions.get('window');
@@ -165,81 +165,22 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     setShowSavedAddressModal(false);
   };
 
-  // Validate if the date is not in the past
+  // Validate date using ValidationUtils
   const validateDate = (dateString: string): { isValid: boolean; error: string } => {
-    if (!dateString || dateString.length < 10) {
-      return { isValid: false, error: 'Please enter a complete date' };
-    }
-
-    try {
-      // Parse the date string (DD-MM-YYYY format)
-      const dateParts = dateString.split('-');
-      if (dateParts.length !== 3) {
-        return { isValid: false, error: 'Invalid date format. Use DD-MM-YYYY' };
-      }
-
-      const [dayStr, monthStr, yearStr] = dateParts;
-      const day = parseInt(dayStr, 10);
-      const month = parseInt(monthStr, 10);
-      const year = parseInt(yearStr, 10);
-      
-      // Check if the date components are valid numbers
-      if (isNaN(day) || isNaN(month) || isNaN(year)) {
-        return { isValid: false, error: 'Date must contain only numbers' };
-      }
-
-      // Validate ranges
-      if (year < 2024 || year > 2030) {
-        return { isValid: false, error: 'Year must be between 2024 and 2030' };
-      }
-
-      if (month < 1 || month > 12) {
-        return { isValid: false, error: 'Month must be between 1 and 12' };
-      }
-
-      if (day < 1 || day > 31) {
-        return { isValid: false, error: 'Day must be between 1 and 31' };
-      }
-
-      // Create date object (month is 0-indexed in JavaScript Date)
-      const inputDate = new Date(year, month - 1, day);
-      
-      // Check if the date is valid (handles invalid dates like 32-13-2024)
-      if (isNaN(inputDate.getTime())) {
-        return { isValid: false, error: 'Invalid date - this date does not exist' };
-      }
-
-      if (inputDate.getDate() !== day || inputDate.getMonth() !== month - 1 || inputDate.getFullYear() !== year) {
-        return { isValid: false, error: 'Invalid date - please check the date' };
-      }
-
-      const today = new Date();
-      
-      // Reset time to start of day for accurate comparison
-      today.setHours(0, 0, 0, 0);
-      inputDate.setHours(0, 0, 0, 0);
-
-      // Check if the date is in the past
-      if (inputDate < today) {
-        return { isValid: false, error: 'Cannot select past dates' };
-      }
-
-      // Check if date is too far in the future (more than 30 days)
-      const maxDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
-      if (inputDate > maxDate) {
-        return { isValid: false, error: 'Cannot select dates more than 30 days in future' };
-      }
-
-      return { isValid: true, error: '' };
-    } catch (error) {
-      return { isValid: false, error: 'Invalid date format' };
-    }
+    const sanitized = SanitizationUtils.sanitizeDateString(dateString);
+    const validation = ValidationUtils.validateDateString(sanitized);
+    return {
+      isValid: validation.isValid,
+      error: validation.error || ''
+    };
   };
 
   // Format date input to automatically add hyphens
   const formatDateInput = (text: string) => {
+    // Sanitize first
+    const sanitized = SanitizationUtils.sanitizeDateString(text);
     // Remove all non-numeric characters
-    const numbers = text.replace(/\D/g, '');
+    const numbers = sanitized.replace(/\D/g, '');
     
     // Add hyphens at appropriate positions
     if (numbers.length <= 2) {
@@ -253,8 +194,10 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
   // Format time input to automatically add colon
   const formatTimeInput = (text: string) => {
+    // Sanitize first
+    const sanitized = SanitizationUtils.sanitizeTimeString(text);
     // Remove all non-numeric characters
-    const numbers = text.replace(/\D/g, '');
+    const numbers = sanitized.replace(/\D/g, '');
     
     // Add colon at appropriate position
     if (numbers.length <= 2) {
@@ -272,7 +215,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     
     // Validate the date
     const validation = validateDate(formatted);
-    setDateError(validation.error);
+    setDateError(validation.isValid ? '' : validation.error);
   };
 
   const handleTimeChange = (text: string) => {
@@ -284,39 +227,14 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     setTimePeriod(period);
   };
 
-  // Validate time input
+  // Validate time input using ValidationUtils
   const validateTime = (timeString: string): { isValid: boolean; error: string } => {
-    if (!timeString || timeString.length < 5) {
-      return { isValid: false, error: 'Please enter a complete time' };
-    }
-
-    try {
-      // Parse time (HH:MM format)
-      const timeMatch = timeString.match(/^(\d{1,2}):(\d{2})$/);
-      if (!timeMatch) {
-        return { isValid: false, error: 'Invalid time format. Use HH:MM' };
-      }
-
-      const hours = parseInt(timeMatch[1], 10);
-      const minutes = parseInt(timeMatch[2], 10);
-
-      // Validate time components
-      if (isNaN(hours) || isNaN(minutes)) {
-        return { isValid: false, error: 'Time must contain only numbers' };
-      }
-
-      if (hours < 1 || hours > 12) {
-        return { isValid: false, error: 'Hours must be between 1 and 12' };
-      }
-
-      if (minutes < 0 || minutes > 59) {
-        return { isValid: false, error: 'Minutes must be between 0 and 59' };
-      }
-
-      return { isValid: true, error: '' };
-    } catch (error) {
-      return { isValid: false, error: 'Invalid time format' };
-    }
+    const sanitized = SanitizationUtils.sanitizeTimeString(timeString);
+    const validation = ValidationUtils.validateTimeString(sanitized);
+    return {
+      isValid: validation.isValid,
+      error: validation.error || ''
+    };
   };
 
   // Convert 12-hour format to 24-hour format for date creation
@@ -410,8 +328,16 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
 
   const handleBooking = async () => {
-    if (!selectedVehicle || !selectedAgency || !deliveryAddress.trim() || !user) {
-      Alert.alert('Error', 'Please select agency, vehicle and enter delivery address');
+    if (!selectedVehicle || !selectedAgency || !user) {
+      Alert.alert('Error', 'Please select agency and vehicle');
+      return;
+    }
+
+    // Sanitize and validate address
+    const sanitizedAddress = SanitizationUtils.sanitizeAddress(deliveryAddress);
+    const addressValidation = ValidationUtils.validateAddressText(sanitizedAddress);
+    if (!addressValidation.isValid) {
+      Alert.alert('Invalid Address', addressValidation.error || 'Please enter a valid delivery address');
       return;
     }
 
@@ -440,9 +366,9 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     }
 
     try {
-      // Create a mock Address object from the simple address string
+      // Create a mock Address object from the sanitized address string
       const mockAddress: Address = {
-        street: deliveryAddress,
+        street: sanitizedAddress,
         city: 'City',
         state: 'State',
         pincode: '000000',
@@ -562,7 +488,10 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
             style={styles.textArea}
             placeholder="Enter your delivery address..."
             value={deliveryAddress}
-            onChangeText={setDeliveryAddress}
+            onChangeText={(text) => {
+              const sanitized = SanitizationUtils.sanitizeAddress(text);
+              setDeliveryAddress(sanitized);
+            }}
             multiline
             numberOfLines={3}
           />
@@ -599,7 +528,10 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
             style={styles.textArea}
             placeholder="Any special instructions for delivery..."
             value={specialInstructions}
-            onChangeText={setSpecialInstructions}
+            onChangeText={(text) => {
+              const sanitized = SanitizationUtils.sanitizeText(text, 500);
+              setSpecialInstructions(sanitized);
+            }}
             multiline
             numberOfLines={3}
           />
@@ -622,7 +554,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         <Button
           title="Book Now"
           onPress={handleBooking}
-          disabled={!selectedVehicle || !selectedAgency || !deliveryAddress.trim() || !deliveryDate.trim() || !deliveryTime.trim() || !priceBreakdown}
+          disabled={!selectedVehicle || !selectedAgency || !deliveryAddress.trim() || !deliveryDate.trim() || !deliveryTime.trim() || !priceBreakdown || !!dateError}
           style={styles.bookButton}
         />
       </View>
