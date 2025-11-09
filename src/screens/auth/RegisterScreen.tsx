@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
 import { ValidationUtils } from '../../utils/validation';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../../constants/config';
-import { AuthStackParamList } from '../../types/index';
+import { AuthStackParamList, UserRole } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Typography } from '../../components/common';
@@ -36,7 +36,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const role: 'customer' | 'driver' | 'admin' = route?.params?.preferredRole ?? 'customer';
+  const role: UserRole = route?.params?.preferredRole ?? 'customer';
   const [errors, setErrors] = useState<{
     phone?: string;
     password?: string;

@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Typography, DriverIcon, AdminIcon, CustomerIcon } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { AuthStackParamList } from '../../types';
+import { AuthStackParamList, UserRole } from '../../types';
 
 type RoleEntryNavigationProp = StackNavigationProp<AuthStackParamList, 'RoleEntry'>;
 
@@ -13,10 +13,10 @@ interface Props {
 }
 
 const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
-  const [selectedRole, setSelectedRole] = useState<'customer' | 'driver' | 'admin' | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
 
-  const roles: Array<{ key: 'customer' | 'driver' | 'admin'; title: string; subtitle: string }> = [
+  const roles: Array<{ key: UserRole; title: string; subtitle: string }> = [
     { key: 'customer', title: 'Customer', subtitle: 'Book tankers and manage orders' },
     { key: 'admin', title: 'Admin', subtitle: 'Manage platform operations' },
     { key: 'driver', title: 'Driver', subtitle: 'Accept jobs and deliver' },

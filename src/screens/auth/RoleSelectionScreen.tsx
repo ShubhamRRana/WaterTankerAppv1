@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuthStore } from '../../store/authStore';
-import { AuthStackParamList } from '../../types/index';
+import { AuthStackParamList, UserRole } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Typography, DriverIcon, AdminIcon, CustomerIcon } from '../../components/common';
@@ -26,7 +26,7 @@ interface Props {
 
 const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
   const { phone, availableRoles } = route.params;
-  const [selectedRole, setSelectedRole] = useState<'customer' | 'driver' | 'admin' | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
   const { loginWithRole } = useAuthStore();
@@ -48,7 +48,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-  const getRoleDisplayName = (role: 'customer' | 'driver' | 'admin') => {
+  const getRoleDisplayName = (role: UserRole) => {
     switch (role) {
       case 'customer':
         return 'Customer';
@@ -61,7 +61,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-  const getRoleDescription = (role: 'customer' | 'driver' | 'admin') => {
+  const getRoleDescription = (role: UserRole) => {
     switch (role) {
       case 'customer':
         return 'Book water tankers and manage orders';

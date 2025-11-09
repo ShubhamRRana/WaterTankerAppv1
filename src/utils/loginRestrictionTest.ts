@@ -68,7 +68,7 @@ export class LoginRestrictionTest {
         let result;
         if (testCase.role) {
           // Test loginWithRole for multi-role users
-          result = await AuthService.loginWithRole(testCase.phone, testCase.role as 'customer' | 'driver' | 'admin');
+          result = await AuthService.loginWithRole(testCase.phone, testCase.role);
         } else {
           // Test regular login
           result = await AuthService.login(testCase.phone, 'password');

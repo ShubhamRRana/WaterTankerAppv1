@@ -333,7 +333,7 @@ This document provides strategic guidance on which code improvements to implemen
 - [x] All files under 500 lines ✅ **COMPLETED** (All 4 large files refactored: BookingScreen, AdminProfileScreen, DriverManagementScreen, AllBookingsScreen)
 - [x] No duplicate code patterns ✅ **COMPLETED** (MenuDrawers unified, User types consolidated, calculation logic extracted)
 - [x] Error boundaries on all screens ✅ **COMPLETED** (ErrorBoundary component created, root and navigator-level wrapping implemented, error logging utility added)
-- [x] Consistent type system ✅ **PARTIALLY COMPLETED** (User types consolidated, remaining type improvements pending)
+- [x] Consistent type system ✅ **COMPLETED** (Discriminated unions, type guards, UserRole type, JSDoc comments, utility types)
 - [ ] Input validation on all forms
 
 ### Phase 2 Success Criteria
@@ -389,7 +389,7 @@ This approach minimizes wasted effort while ensuring a clean, maintainable codeb
 
 ### Phase 1: Pre-Supabase Foundation
 
-**Status: In Progress (60% Complete)**
+**Status: In Progress (80% Complete)**
 
 - ✅ **Split Large Component Files** - 100% Complete ✅
   - ✅ `BookingScreen.tsx` - Extracted: TankerSelectionModal, AgencySelectionModal, SavedAddressModal, DateTimeInput, PriceBreakdown
@@ -429,6 +429,29 @@ This approach minimizes wasted effort while ensuring a clean, maintainable codeb
     - Each navigator uses resetKeys for automatic recovery
   - ✅ Added exports to component and utility index files
   - Benefits: Prevents app crashes, better UX, centralized error logging, granular error isolation
-- ⏳ **Improve Type System** - Not Started
+- ✅ **Improve Type System** - 100% Complete ✅
+  - ✅ Created discriminated union types for User (CustomerUser, DriverUser, AdminUser)
+    - Extracted BaseUser interface with shared properties
+    - Created role-specific interfaces extending BaseUser
+    - User type is now a discriminated union: `User = CustomerUser | DriverUser | AdminUser`
+  - ✅ Added type guards for role-specific user types
+    - Created `isCustomerUser()`, `isDriverUser()`, `isAdminUser()` type guard functions
+    - Enables type-safe narrowing of User type based on role
+  - ✅ Extracted UserRole type to shared constant
+    - Created `UserRole = 'customer' | 'driver' | 'admin'` type
+    - Replaced all inline union types across codebase (11+ locations)
+    - Updated: auth.service.ts, authStore.ts, userStore.ts, RoleSelectionScreen, RoleEntryScreen, RegisterScreen, loginRestrictionTest.ts
+  - ✅ Added JSDoc comments to all exported types
+    - Documented all interfaces and types with clear descriptions
+    - Added parameter and return type documentation for type guards
+  - ✅ Created helper utility types for role-specific property access
+    - `UserByRole<T>`: Extract user type by role
+    - `UserRoleProperties<T>`: Get only role-specific properties
+    - `UsersByRole<T>`: Array of users filtered by role
+  - ✅ Fixed type inconsistencies in stores and services
+    - All role parameters now use `UserRole` type consistently
+    - AuthResult interface updated to use `UserRole[]`
+    - Navigation types updated to use `UserRole`
+  - Benefits: Type-safe role handling, better IDE autocomplete, compile-time error checking, easier refactoring
 - ⏳ **Add Input Validation** - Not Started
 

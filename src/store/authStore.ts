@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User } from '../types/index';
+import { User, UserRole } from '../types/index';
 import { AuthService } from '../services/auth.service';
 
 interface AuthState {
@@ -7,12 +7,12 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (phone: string, password: string) => Promise<void>;
-  loginWithRole: (phone: string, role: 'customer' | 'driver' | 'admin') => Promise<void>;
+  loginWithRole: (phone: string, role: UserRole) => Promise<void>;
   register: (
     phone: string,
     password: string,
     name: string,
-    role: 'customer' | 'driver' | 'admin'
+    role: UserRole
   ) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
@@ -72,7 +72,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  loginWithRole: async (phone: string, role: 'customer' | 'driver' | 'admin') => {
+  loginWithRole: async (phone: string, role: UserRole) => {
     set({ isLoading: true });
     try {
       const result = await AuthService.loginWithRole(phone, role);
@@ -96,7 +96,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     phone: string,
     password: string,
     name: string,
-    role: 'customer' | 'driver' | 'admin'
+    role: UserRole
   ) => {
     set({ isLoading: true });
     try {

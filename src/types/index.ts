@@ -1,5 +1,13 @@
 // Core types for the Water Tanker Booking App
 
+/**
+ * User role types in the system
+ */
+export type UserRole = 'customer' | 'driver' | 'admin';
+
+/**
+ * Address information for deliveries and user saved addresses
+ */
 export interface Address {
   id?: string;
   street: string;
@@ -12,20 +20,32 @@ export interface Address {
   isDefault?: boolean;
 }
 
-export interface User {
+/**
+ * Base user properties shared across all user roles
+ */
+interface BaseUser {
   uid: string;
-  role: 'customer' | 'driver' | 'admin';
   phone: string;
   password: string; // hashed
   name: string;
   email?: string;
   profileImage?: string;
   createdAt: Date;
-  
-  // Customer specific
+}
+
+/**
+ * Customer-specific user properties
+ */
+export interface CustomerUser extends BaseUser {
+  role: 'customer';
   savedAddresses?: Address[];
-  
-  // Driver specific
+}
+
+/**
+ * Driver-specific user properties
+ */
+export interface DriverUser extends BaseUser {
+  role: 'driver';
   vehicleNumber?: string;
   licenseNumber?: string;
   licenseExpiry?: Date;
@@ -38,13 +58,30 @@ export interface User {
   createdByAdmin?: boolean; // Track if driver was created by admin
   emergencyContactName?: string;
   emergencyContactPhone?: string;
-  
-  // Admin specific
+}
+
+/**
+ * Admin-specific user properties
+ */
+export interface AdminUser extends BaseUser {
+  role: 'admin';
   businessName?: string;
 }
 
+/**
+ * Discriminated union type for all user roles
+ * Use type guards (isCustomerUser, isDriverUser, isAdminUser) to narrow the type
+ */
+export type User = CustomerUser | DriverUser | AdminUser;
+
+/**
+ * Booking status values
+ */
 export type BookingStatus = 'pending' | 'accepted' | 'in_transit' | 'delivered' | 'cancelled';
 
+/**
+ * Booking entity representing a water tanker delivery order
+ */
 export interface Booking {
   id: string;
   customerId: string;
@@ -76,6 +113,9 @@ export interface Booking {
   deliveredAt?: Date;
 }
 
+/**
+ * Tanker size configuration with pricing
+ */
 export interface TankerSize {
   id: string;
   size: number; // in liters
@@ -84,6 +124,9 @@ export interface TankerSize {
   displayName: string; // e.g., "1000 Liters", "Small Tanker"
 }
 
+/**
+ * Pricing configuration for distance-based charges
+ */
 export interface Pricing {
   pricePerKm: number;
   minimumCharge: number;
@@ -91,6 +134,9 @@ export interface Pricing {
   updatedBy: string; // admin uid
 }
 
+/**
+ * Driver application/registration request
+ */
 export interface DriverApplication {
   id: string;
   name: string;
@@ -107,6 +153,9 @@ export interface DriverApplication {
   rejectionReason?: string;
 }
 
+/**
+ * Vehicle information managed by admin agencies
+ */
 export interface Vehicle {
   id: string;
   agencyId: string; // Admin user uid (agency)
@@ -119,6 +168,9 @@ export interface Vehicle {
   updatedAt: Date;
 }
 
+/**
+ * In-app notification
+ */
 export interface Notification {
   id: string;
   userId: string;
@@ -131,16 +183,19 @@ export interface Notification {
 }
 
 // Navigation types
+/**
+ * Authentication stack navigation parameters
+ */
 export interface AuthStackParamList {
   RoleEntry: undefined;
-  Login: { preferredRole?: 'customer' | 'driver' | 'admin' } | undefined;
-  Register: { preferredRole?: 'customer' | 'driver' | 'admin' } | undefined;
-  RoleSelection: { phone: string; availableRoles: ('customer' | 'driver' | 'admin')[] };
+  Login: { preferredRole?: UserRole } | undefined;
+  Register: { preferredRole?: UserRole } | undefined;
+  RoleSelection: { phone: string; availableRoles: UserRole[] };
   [key: string]:
     | undefined
     | { phone: string }
-    | { phone: string; availableRoles: ('customer' | 'driver' | 'admin')[] }
-    | { preferredRole?: 'customer' | 'driver' | 'admin' };
+    | { phone: string; availableRoles: UserRole[] }
+    | { preferredRole?: UserRole };
 }
 
 // Customer navigation types moved to CustomerNavigator.tsx
@@ -162,12 +217,15 @@ export interface LoginForm {
   password: string;
 }
 
+/**
+ * User registration form data
+ */
 export interface RegisterForm {
   phone: string;
   password: string;
   confirmPassword: string;
   name: string;
-  role: 'customer' | 'driver' | 'admin';
+  role: UserRole;
 }
 
 export interface BookingForm {
@@ -326,3 +384,55 @@ export interface ChartData {
     label?: string;
   }>;
 }
+
+// ============================================================================
+// Type Guards and Utility Types
+// ============================================================================
+
+/**
+ * Type guard to check if a user is a CustomerUser
+ * @param user - The user to check
+ * @returns True if the user is a CustomerUser
+ */
+export function isCustomerUser(user: User): user is CustomerUser {
+  return user.role === 'customer';
+}
+
+/**
+ * Type guard to check if a user is a DriverUser
+ * @param user - The user to check
+ * @returns True if the user is a DriverUser
+ */
+export function isDriverUser(user: User): user is DriverUser {
+  return user.role === 'driver';
+}
+
+/**
+ * Type guard to check if a user is an AdminUser
+ * @param user - The user to check
+ * @returns True if the user is an AdminUser
+ */
+export function isAdminUser(user: User): user is AdminUser {
+  return user.role === 'admin';
+}
+
+/**
+ * Utility type to extract user type by role
+ */
+export type UserByRole<T extends UserRole> = T extends 'customer'
+  ? CustomerUser
+  : T extends 'driver'
+  ? DriverUser
+  : T extends 'admin'
+  ? AdminUser
+  : never;
+
+/**
+ * Utility type to get role-specific properties from a user
+ */
+export type UserRoleProperties<T extends UserRole> = Omit<UserByRole<T>, keyof BaseUser>;
+
+/**
+ * Helper type for filtering users by role
+ */
+export type UsersByRole<T extends UserRole> = UserByRole<T>[];

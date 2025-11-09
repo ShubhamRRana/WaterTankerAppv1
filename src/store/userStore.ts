@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User } from '../types';
+import { User, UserRole } from '../types';
 import { LocalStorageService } from '../services/localStorage';
 
 interface UserState {
@@ -10,7 +10,7 @@ interface UserState {
   
   // Actions
   fetchAllUsers: () => Promise<void>;
-  fetchUsersByRole: (role: 'customer' | 'driver' | 'admin') => Promise<void>;
+  fetchUsersByRole: (role: UserRole) => Promise<void>;
   addUser: (userData: Omit<User, 'uid' | 'createdAt'>) => Promise<void>;
   updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;

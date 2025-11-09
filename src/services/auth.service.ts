@@ -1,12 +1,12 @@
 import { LocalStorageService } from './localStorage';
-import { User as AppUser } from '../types/index';
+import { User as AppUser, UserRole } from '../types/index';
 import { ERROR_MESSAGES } from '../constants/config';
 
 export interface AuthResult {
   success: boolean;
   user?: AppUser;
   error?: string;
-  availableRoles?: ('customer' | 'driver' | 'admin')[];
+  availableRoles?: UserRole[];
   requiresRoleSelection?: boolean;
 }
 
@@ -15,7 +15,7 @@ export class AuthService {
     phone: string,
     password: string,
     name: string,
-    role: 'customer' | 'driver' | 'admin',
+    role: UserRole,
     additionalData?: Partial<AppUser>
   ): Promise<AuthResult> {
     try {
@@ -126,7 +126,7 @@ export class AuthService {
           };
         } else {
           // Multiple valid accounts - require role selection
-          const availableRoles = validAccounts.map(account => account.role);
+          const availableRoles = validAccounts.map(account => account.role) as UserRole[];
           return {
             success: true,
             requiresRoleSelection: true,
@@ -143,7 +143,7 @@ export class AuthService {
     }
   }
 
-  static async loginWithRole(phone: string, role: 'customer' | 'driver' | 'admin'): Promise<AuthResult> {
+  static async loginWithRole(phone: string, role: UserRole): Promise<AuthResult> {
     try {
       const users = await LocalStorageService.getUsers();
       const user = users.find(u => u.phone === phone && u.role === role);
