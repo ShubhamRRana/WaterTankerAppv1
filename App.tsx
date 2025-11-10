@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
+import { testSupabaseConfig } from './src/utils/testSupabaseConfig';
 
 // Navigation imports
 import AuthNavigator from './src/navigation/AuthNavigator';
@@ -41,6 +42,10 @@ const App: React.FC = () => {
     // Initialize the auth system and load any existing user
     initializeAuth();
   }, [initializeAuth]);
+
+  useEffect(() => {
+    testSupabaseConfig();
+  }, []);
 
   // Don't render until fonts are loaded
   if (!fontsLoaded) {
