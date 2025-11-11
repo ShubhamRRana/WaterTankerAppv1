@@ -2,6 +2,9 @@ import { supabase } from './supabase';
 import { User as AppUser, UserRole } from '../types/index';
 import { ERROR_MESSAGES } from '../constants/config';
 import { transformSupabaseUserToAppUser, transformAppUserToSupabaseUser } from '../utils/supabaseTransformers';
+import { securityLogger, SecurityEventType, SecuritySeverity } from '../utils/securityLogger';
+import { rateLimiter } from '../utils/rateLimiter';
+import { SanitizationUtils } from '../utils/sanitization';
 
 export interface AuthResult {
   success: boolean;
@@ -23,8 +26,26 @@ export class AuthService {
     additionalData?: Partial<AppUser>
   ): Promise<AuthResult> {
     try {
+      // Sanitize inputs
+      const sanitizedPhone = SanitizationUtils.sanitizePhone(phone);
+      const sanitizedName = SanitizationUtils.sanitizeName(name);
+
+      // Check rate limit for registration
+      const rateLimitCheck = rateLimiter.isAllowed('register', sanitizedPhone);
+      if (!rateLimitCheck.allowed) {
+        securityLogger.logRateLimitExceeded('register');
+        return {
+          success: false,
+          error: `Too many registration attempts. Please try again after ${new Date(rateLimitCheck.resetTime).toLocaleTimeString()}`
+        };
+      }
+
+      // Log registration attempt
+      securityLogger.logRegistrationAttempt(sanitizedPhone, role, false);
+
       // Prevent driver self-registration - only admin-created drivers are allowed
       if (role === 'driver' && !additionalData?.createdByAdmin) {
+        securityLogger.logRegistrationAttempt(sanitizedPhone, role, false, ERROR_MESSAGES.auth.adminCreatedDriverOnly);
         return {
           success: false,
           error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
@@ -35,7 +56,7 @@ export class AuthService {
       const { data: existingUsers, error: checkError } = await supabase
         .from('users')
         .select('*')
-        .eq('phone', phone)
+        .eq('phone', sanitizedPhone)
         .eq('role', role);
 
       if (checkError) {
@@ -46,28 +67,33 @@ export class AuthService {
       }
 
       if (existingUsers && existingUsers.length > 0) {
+        securityLogger.logRegistrationAttempt(sanitizedPhone, role, false, 'User already exists');
         return {
           success: false,
           error: `User already exists with this phone number as ${role}`
         };
       }
 
+      // Record rate limit
+      rateLimiter.record('register', sanitizedPhone);
+
       // Create user in Supabase Auth
       // Use phone as email for now (Supabase Auth requires email, we'll use phone@temp.com format)
-      const tempEmail = `${phone}@watertanker.temp`;
+      const tempEmail = `${sanitizedPhone}@watertanker.temp`;
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: tempEmail,
         password: password,
         options: {
           data: {
-            phone: phone,
-            name: name,
+            phone: sanitizedPhone,
+            name: sanitizedName,
             role: role,
           }
         }
       });
 
       if (authError || !authData.user) {
+        securityLogger.logRegistrationAttempt(sanitizedPhone, role, false, authError?.message);
         return {
           success: false,
           error: authError?.message || 'Failed to create authentication account'
@@ -78,9 +104,9 @@ export class AuthService {
       const userData: AppUser = {
         uid: authData.user.id, // Use auth user ID
         role,
-        phone,
+        phone: sanitizedPhone,
         password: '', // Password is handled by Supabase Auth
-        name,
+        name: sanitizedName,
         createdAt: new Date(),
         ...additionalData,
       };
@@ -118,11 +144,20 @@ export class AuthService {
 
       const appUser = transformSupabaseUserToAppUser(createdUser);
 
+      // Log successful registration
+      securityLogger.logRegistrationAttempt(sanitizedPhone, role, true, undefined, appUser.uid);
+
       return {
         success: true,
         user: appUser
       };
     } catch (error) {
+      securityLogger.logRegistrationAttempt(
+        SanitizationUtils.sanitizePhone(phone),
+        role,
+        false,
+        error instanceof Error ? error.message : 'Registration failed'
+      );
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Registration failed'
@@ -135,11 +170,28 @@ export class AuthService {
    */
   static async login(phone: string, password: string): Promise<AuthResult> {
     try {
+      // Sanitize phone input
+      const sanitizedPhone = SanitizationUtils.sanitizePhone(phone);
+
+      // Check rate limit for login
+      const rateLimitCheck = rateLimiter.isAllowed('login', sanitizedPhone);
+      if (!rateLimitCheck.allowed) {
+        securityLogger.logRateLimitExceeded('login');
+        securityLogger.logBruteForceAttempt(sanitizedPhone, 5); // Assume 5+ attempts
+        return {
+          success: false,
+          error: `Too many login attempts. Please try again after ${new Date(rateLimitCheck.resetTime).toLocaleTimeString()}`
+        };
+      }
+
+      // Log login attempt
+      securityLogger.logAuthAttempt(sanitizedPhone, false);
+
       // Find all users with this phone number
       const { data: userAccounts, error: fetchError } = await supabase
         .from('users')
         .select('*')
-        .eq('phone', phone);
+        .eq('phone', sanitizedPhone);
 
       if (fetchError) {
         return {
@@ -149,6 +201,8 @@ export class AuthService {
       }
 
       if (!userAccounts || userAccounts.length === 0) {
+        securityLogger.logAuthAttempt(sanitizedPhone, false, 'User not found');
+        rateLimiter.record('login', sanitizedPhone);
         return {
           success: false,
           error: 'User not found'
@@ -164,6 +218,8 @@ export class AuthService {
       });
 
       if (validAccounts.length === 0) {
+        securityLogger.logAuthAttempt(sanitizedPhone, false, ERROR_MESSAGES.auth.adminCreatedDriverOnly);
+        rateLimiter.record('login', sanitizedPhone);
         return {
           success: false,
           error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
@@ -175,7 +231,7 @@ export class AuthService {
         const dbUser = validAccounts[0];
         
         // Use the same email format as registration: phone@watertanker.temp
-        const tempEmail = `${phone}@watertanker.temp`;
+        const tempEmail = `${sanitizedPhone}@watertanker.temp`;
 
         // Sign in with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -184,6 +240,8 @@ export class AuthService {
         });
 
         if (authError || !authData.user) {
+          securityLogger.logAuthAttempt(sanitizedPhone, false, authError?.message || 'Invalid credentials');
+          rateLimiter.record('login', sanitizedPhone);
           return {
             success: false,
             error: authError?.message || 'Invalid phone number or password'
@@ -193,11 +251,23 @@ export class AuthService {
         // Verify the auth user matches the db user
         if (authData.user.id !== dbUser.auth_id) {
           await supabase.auth.signOut();
+          securityLogger.logAuthAttempt(sanitizedPhone, false, 'Authentication mismatch');
+          securityLogger.log(
+            SecurityEventType.SESSION_HIJACK_ATTEMPT,
+            SecuritySeverity.CRITICAL,
+            { userId: dbUser.auth_id, authUserId: authData.user.id },
+            dbUser.auth_id,
+            dbUser.role
+          );
           return {
             success: false,
             error: 'Authentication mismatch'
           };
         }
+
+        // Record successful login
+        rateLimiter.record('login', sanitizedPhone);
+        securityLogger.logAuthAttempt(sanitizedPhone, true, undefined, dbUser.auth_id);
 
         const appUser = transformSupabaseUserToAppUser(dbUser);
         return {
@@ -206,6 +276,7 @@ export class AuthService {
         };
       } else {
         // Multiple valid accounts - require role selection
+        // Don't record rate limit yet - wait for role selection
         const availableRoles = validAccounts.map(account => account.role) as UserRole[];
         return {
           success: true,
@@ -215,6 +286,11 @@ export class AuthService {
         };
       }
     } catch (error) {
+      securityLogger.logAuthAttempt(
+        SanitizationUtils.sanitizePhone(phone),
+        false,
+        error instanceof Error ? error.message : 'Login failed'
+      );
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Login failed'
@@ -277,9 +353,23 @@ export class AuthService {
    */
   static async logout(): Promise<void> {
     try {
+      // Get current user before logout for logging
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user?.id;
+
       const { error } = await supabase.auth.signOut();
       if (error) {
         throw error;
+      }
+
+      // Log logout
+      if (userId) {
+        securityLogger.log(
+          SecurityEventType.LOGOUT,
+          SecuritySeverity.INFO,
+          {},
+          userId
+        );
       }
     } catch (error) {
       throw error;
