@@ -168,8 +168,8 @@ Create environment variable files in your project root:
 1. **Create the file** in your project root directory:
    ```
    WaterTankerAppv1/
-   ├── .env          ← Create this file
-   ├── .env.example  ← Create this file
+   ├── .env          ← Create this file (Git ignored - contains REAL credentials)
+   ├── .env.example  ← Create this file (Git committed - contains PLACEHOLDERS only)
    ├── app.json
    ├── package.json
    └── ...
@@ -178,6 +178,9 @@ Create environment variable files in your project root:
 2. **Add your Supabase credentials** to `.env`:
    ```env
    # Supabase Configuration
+   # ⚠️ IMPORTANT: This file contains REAL credentials and is Git ignored
+   # Replace the placeholder values below with your actual Supabase credentials
+   
    EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
    EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
    
@@ -185,25 +188,41 @@ Create environment variable files in your project root:
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
    ```
 
-3. **Replace the placeholder values**:
+3. **Replace the placeholder values in `.env` with your REAL credentials**:
    - Replace `https://your-project-id.supabase.co` with your actual Project URL
    - Replace `your-anon-key-here` with your actual anon/public key
    - Replace `your-service-role-key-here` with your actual service_role key
 
 ### Step 3: Create `.env.example` File
 
-Create a template file that shows what variables are needed:
+**⚠️ CRITICAL SECURITY WARNING:**
+- `.env.example` is **committed to Git** (it's NOT in `.gitignore`)
+- `.env.example` must **ONLY contain PLACEHOLDER values**, never real credentials
+- This file serves as a template for other developers
+- **NEVER paste your actual Supabase credentials into `.env.example`**
+
+Create a template file that shows what variables are needed (with placeholders only):
 
 ```env
 # Supabase Configuration
 # Get these values from: Supabase Dashboard → Settings → API
+# 
+# ⚠️ SECURITY: This file is committed to Git!
+# ⚠️ NEVER put real credentials here - only placeholder values!
+# ⚠️ Copy this file to .env and replace placeholders with your actual values
+
 EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
 # Server-side only (for migration scripts, not used in app)
 # ⚠️ NEVER commit the actual service_role key to Git
+# ⚠️ This is a placeholder - replace with real value only in .env file
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 ```
+
+**Key Differences:**
+- **`.env`**: Contains REAL credentials, Git ignored, never committed
+- **`.env.example`**: Contains PLACEHOLDER values only, committed to Git, safe to share
 
 ### Step 4: Update `.gitignore`
 
@@ -760,16 +779,20 @@ Follow this order for Phase 2 implementation:
 - ✅ Use `EXPO_PUBLIC_SUPABASE_ANON_KEY` in your app (safe for client-side)
 - ✅ Rely on Row Level Security (RLS) policies for data protection
 - ✅ Store `SUPABASE_SERVICE_ROLE_KEY` only in server-side code or secure environment
-- ✅ Use `.env.example` as a template (without real values)
-- ✅ Add `.env` to `.gitignore`
+- ✅ Use `.env.example` as a template with **PLACEHOLDER values only** (e.g., `your-project-id.supabase.co`)
+- ✅ Add `.env` to `.gitignore` to prevent committing real credentials
+- ✅ Keep `.env.example` in Git (it's safe because it only has placeholders)
 - ✅ Rotate keys if they're accidentally exposed
+- ✅ Double-check `.env.example` before committing to ensure it has no real credentials
 
 ### ❌ DON'T:
-- ❌ Commit `.env` file to Git
+- ❌ Commit `.env` file to Git (it contains real credentials)
+- ❌ Put real credentials in `.env.example` (it's committed to Git!)
 - ❌ Use `SUPABASE_SERVICE_ROLE_KEY` in client-side code
 - ❌ Share your service_role key publicly
 - ❌ Hardcode credentials in source code
 - ❌ Commit credentials to version control
+- ❌ Copy-paste real values from `.env` into `.env.example`
 
 ---
 
