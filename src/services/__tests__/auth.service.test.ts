@@ -21,7 +21,7 @@ describe('AuthService', () => {
     it('should successfully register a new customer', async () => {
       const mockUser = {
         id: 'user-123',
-        email: '9876543210@watertanker.temp',
+        email: 'phone_9876543210@watertanker.app',
         phone: '9876543210'
       };
 
@@ -104,7 +104,7 @@ describe('AuthService', () => {
     it('should allow driver registration when createdByAdmin is true', async () => {
       const mockUser = {
         id: 'user-123',
-        email: '9876543210@watertanker.temp',
+        email: 'phone_9876543210@watertanker.app',
         phone: '9876543210'
       };
 
@@ -277,7 +277,7 @@ describe('AuthService', () => {
     it('should successfully login with valid credentials', async () => {
       const mockUser = {
         id: 'user-123',
-        email: '9876543210@watertanker.temp',
+        email: 'phone_9876543210@watertanker.app',
         phone: '9876543210'
       };
 

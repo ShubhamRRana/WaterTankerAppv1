@@ -78,38 +78,18 @@ const App: React.FC = () => {
 
   const renderNavigator = () => {
     if (!user) {
-      return (
-        <Suspense fallback={<NavigatorLoadingFallback />}>
-          <Stack.Screen name="Auth" component={AuthNavigator} />
-        </Suspense>
-      );
+      return <Stack.Screen name="Auth" component={AuthNavigator} />;
     }
 
     switch (user.role) {
       case 'customer':
-        return (
-          <Suspense fallback={<NavigatorLoadingFallback />}>
-            <Stack.Screen name="Customer" component={CustomerNavigator} />
-          </Suspense>
-        );
+        return <Stack.Screen name="Customer" component={CustomerNavigator} />;
       case 'driver':
-        return (
-          <Suspense fallback={<NavigatorLoadingFallback />}>
-            <Stack.Screen name="Driver" component={DriverNavigator} />
-          </Suspense>
-        );
+        return <Stack.Screen name="Driver" component={DriverNavigator} />;
       case 'admin':
-        return (
-          <Suspense fallback={<NavigatorLoadingFallback />}>
-            <Stack.Screen name="Admin" component={AdminNavigator} />
-          </Suspense>
-        );
+        return <Stack.Screen name="Admin" component={AdminNavigator} />;
       default:
-        return (
-          <Suspense fallback={<NavigatorLoadingFallback />}>
-            <Stack.Screen name="Auth" component={AuthNavigator} />
-          </Suspense>
-        );
+        return <Stack.Screen name="Auth" component={AuthNavigator} />;
     }
   };
 
@@ -118,13 +98,15 @@ const App: React.FC = () => {
       <SafeAreaProvider>
         <NavigationContainer>
           <StatusBar style="auto" />
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-            }}
-          >
-            {renderNavigator()}
-          </Stack.Navigator>
+          <Suspense fallback={<NavigatorLoadingFallback />}>
+            <Stack.Navigator
+              screenOptions={{
+                headerShown: false,
+              }}
+            >
+              {renderNavigator()}
+            </Stack.Navigator>
+          </Suspense>
         </NavigationContainer>
       </SafeAreaProvider>
     </ErrorBoundary>

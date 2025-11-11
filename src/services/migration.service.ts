@@ -207,7 +207,9 @@ export class MigrationService {
           // Create Supabase Auth account if requested and password exists
           if (createAuthAccounts && localUser.password) {
             try {
-              const tempEmail = `${localUser.phone}@watertanker.temp`;
+              // Use phone_ prefix to make email valid (email local part cannot start with a digit)
+              // Using .app TLD as it's valid and accepted by Supabase
+              const tempEmail = `phone_${localUser.phone}@watertanker.app`;
               const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: tempEmail,
                 password: localUser.password,

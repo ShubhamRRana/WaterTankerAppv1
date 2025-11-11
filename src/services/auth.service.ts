@@ -96,9 +96,6 @@ export class AuthService {
         };
       }
 
-      // Log registration attempt
-      securityLogger.logRegistrationAttempt(sanitizedPhone, role, false);
-
       // Prevent driver self-registration - only admin-created drivers are allowed
       if (role === 'driver' && !(additionalData as Partial<DriverUser>)?.createdByAdmin) {
         securityLogger.logRegistrationAttempt(sanitizedPhone, role, false, ERROR_MESSAGES.auth.adminCreatedDriverOnly);
@@ -134,8 +131,10 @@ export class AuthService {
       rateLimiter.record('register', sanitizedPhone);
 
       // Create user in Supabase Auth
-      // Use phone as email for now (Supabase Auth requires email, we'll use phone@temp.com format)
-      const tempEmail = `${sanitizedPhone}@watertanker.temp`;
+      // Use phone as email for now (Supabase Auth requires email, we'll use phone_ prefix to make it valid)
+      // Email local part cannot start with a digit, so we prefix with 'phone_'
+      // Using .app TLD as it's valid and accepted by Supabase
+      const tempEmail = `phone_${sanitizedPhone}@watertanker.app`;
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: tempEmail,
         password: password,
@@ -156,6 +155,20 @@ export class AuthService {
         };
       }
 
+      // Ensure session is established before inserting user profile
+      // This is important for RLS policies to work correctly
+      if (authData.session) {
+        // Session is available, we can proceed
+      } else {
+        // If no session, wait a moment and check again (session might be establishing)
+        await new Promise(resolve => setTimeout(resolve, 100));
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          // Still no session, but we'll try anyway - RLS policy should allow it
+          console.warn('No session available after signup, proceeding with user profile creation');
+        }
+      }
+
       // Create user profile in users table
       const userData: AppUser = {
         uid: authData.user.id, // Use auth user ID
@@ -170,31 +183,282 @@ export class AuthService {
       const supabaseUserData = transformAppUserToSupabaseUser(userData);
       supabaseUserData.auth_id = authData.user.id;
 
-      const { error: profileError } = await supabase
-        .from('users')
-        .insert([supabaseUserData]);
+      // Check if user profile already exists before attempting insert
+      // This prevents duplicate key errors if registration was partially completed
+      let createdUser: any = null;
+      let profileError: any = null;
 
-      if (profileError) {
-        // If profile creation fails, we can't clean up auth user from client
-        // This should be handled by a server-side cleanup function or manually
-        console.error('Failed to create user profile, auth user may need manual cleanup:', authData.user.id);
-        return {
-          success: false,
-          error: `Failed to create user profile: ${profileError.message}`
-        };
-      }
-
-      // Fetch the created user to return complete data
-      const { data: createdUser, error: fetchError } = await supabase
+      const existingUserCheck = await supabase
         .from('users')
         .select('*')
         .eq('auth_id', authData.user.id)
-        .single();
+        .maybeSingle();
 
-      if (fetchError || !createdUser) {
+      if (existingUserCheck.error && existingUserCheck.error.code !== 'PGRST116') {
+        // PGRST116 is "not found" which is expected if user doesn't exist
+        profileError = existingUserCheck.error;
+      } else if (existingUserCheck.data) {
+        // User already exists, use existing profile
+        console.warn('User profile already exists for this auth_id, using existing profile');
+        createdUser = existingUserCheck.data;
+      } else {
+        // User doesn't exist, proceed with insert
+        // Try to insert and get the created user in one query
+        const insertResult = await supabase
+          .from('users')
+          .insert([supabaseUserData])
+          .select('*')
+          .single();
+
+        if (insertResult.error) {
+          profileError = insertResult.error;
+        } else if (insertResult.data) {
+          // Handle both array and single object responses
+          createdUser = Array.isArray(insertResult.data) ? insertResult.data[0] : insertResult.data;
+        }
+
+        // If duplicate key error still occurs (race condition), fetch existing user
+        if (profileError && (profileError.message?.includes('duplicate key') || profileError.message?.includes('unique constraint') || profileError.message?.includes('users_auth_id_key') || profileError.code === '23505')) {
+          console.warn('Duplicate key error detected, fetching existing user by auth_id');
+          const fetchResult = await supabase
+            .from('users')
+            .select('*')
+            .eq('auth_id', authData.user.id)
+            .maybeSingle();
+          
+          if (fetchResult.data && !fetchResult.error) {
+            createdUser = fetchResult.data;
+            profileError = null;
+          }
+        }
+      }
+
+      // If single() failed, try fetching the user by auth_id as fallback
+      if (profileError && profileError.message?.includes('coerce')) {
+        console.warn('Insert returned array, fetching user by auth_id as fallback');
+        const fetchResult = await supabase
+          .from('users')
+          .select('*')
+          .eq('auth_id', authData.user.id)
+          .maybeSingle();
+        
+        if (fetchResult.data && !fetchResult.error) {
+          createdUser = fetchResult.data;
+          profileError = null;
+        }
+      }
+
+      // If RLS policy blocks the insert, try using the database function as fallback
+      // Also try function for any other errors that might be resolved by it
+      if (profileError && (profileError.message?.includes('row-level security') || profileError.message?.includes('permission denied') || profileError.code === '42501')) {
+        console.warn('RLS policy blocked insert, using database function as fallback');
+        try {
+          const { data: functionResult, error: functionError } = await supabase.rpc('create_user_profile', {
+            p_auth_id: authData.user.id,
+            p_phone: sanitizedPhone,
+            p_name: sanitizedName,
+            p_role: role,
+            p_email: null,
+            p_profile_image: null,
+            p_created_by_admin: role === 'driver' ? ((additionalData as Partial<DriverUser>)?.createdByAdmin ?? false) : false
+          });
+
+          if (functionError) {
+            console.error('Database function error:', {
+              message: functionError.message,
+              code: functionError.code,
+              details: functionError.details,
+              hint: functionError.hint
+            });
+            
+            // If function also returns duplicate key error, fetch existing user
+            if (functionError.message?.includes('duplicate key') || functionError.message?.includes('unique constraint') || functionError.message?.includes('users_auth_id_key') || functionError.code === '23505') {
+              console.warn('Database function returned duplicate key, fetching existing user');
+              const fetchResult = await supabase
+                .from('users')
+                .select('*')
+                .eq('auth_id', authData.user.id)
+                .maybeSingle();
+              
+              if (fetchResult.data && !fetchResult.error) {
+                createdUser = fetchResult.data;
+                profileError = null;
+              } else {
+                profileError = functionError;
+              }
+            } else {
+              profileError = functionError;
+            }
+          } else if (functionResult) {
+            // Fetch the created user using the returned ID
+            const fetchResult = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', functionResult)
+              .single();
+            
+            if (fetchResult.data && !fetchResult.error) {
+              createdUser = fetchResult.data;
+              profileError = null;
+            } else if (fetchResult.error) {
+              console.error('Failed to fetch user after function call:', fetchResult.error);
+              profileError = fetchResult.error;
+            } else {
+              // If function returned ID but user not found, try fetching by auth_id as fallback
+              console.warn('User not found by ID, trying auth_id lookup');
+              const authIdFetch = await supabase
+                .from('users')
+                .select('*')
+                .eq('auth_id', authData.user.id)
+                .maybeSingle();
+              
+              if (authIdFetch.data && !authIdFetch.error) {
+                createdUser = authIdFetch.data;
+                profileError = null;
+              } else {
+                profileError = new Error('User profile not found after creation');
+              }
+            }
+          } else {
+            // Function returned null/undefined, check if user exists
+            console.warn('Database function returned null, checking if user exists');
+            const fetchResult = await supabase
+              .from('users')
+              .select('*')
+              .eq('auth_id', authData.user.id)
+              .maybeSingle();
+            
+            if (fetchResult.data && !fetchResult.error) {
+              createdUser = fetchResult.data;
+              profileError = null;
+            } else {
+              profileError = new Error('Database function returned no result and user not found');
+            }
+          }
+        } catch (rpcError: any) {
+          console.error('Database function call failed with exception:', {
+            message: rpcError.message,
+            stack: rpcError.stack,
+            code: rpcError.code
+          });
+          
+          // If RPC throws duplicate key error, try fetching existing user
+          if (rpcError.message?.includes('duplicate key') || rpcError.message?.includes('unique constraint') || rpcError.message?.includes('users_auth_id_key') || rpcError.code === '23505') {
+            const fetchResult = await supabase
+              .from('users')
+              .select('*')
+              .eq('auth_id', authData.user.id)
+              .maybeSingle();
+            
+            if (fetchResult.data && !fetchResult.error) {
+              createdUser = fetchResult.data;
+              profileError = null;
+            } else {
+              profileError = rpcError;
+            }
+          } else {
+            profileError = rpcError;
+          }
+        }
+      }
+
+      // Final fallback: if we still have an error and haven't tried the function yet, try it now
+      if (profileError && !createdUser) {
+        console.warn('All other methods failed, trying database function as final fallback');
+        try {
+          const { data: functionResult, error: functionError } = await supabase.rpc('create_user_profile', {
+            p_auth_id: authData.user.id,
+            p_phone: sanitizedPhone,
+            p_name: sanitizedName,
+            p_role: role,
+            p_email: null,
+            p_profile_image: null,
+            p_created_by_admin: role === 'driver' ? ((additionalData as Partial<DriverUser>)?.createdByAdmin ?? false) : false
+          });
+
+          if (functionError) {
+            console.error('Final fallback - Database function error:', {
+              message: functionError.message,
+              code: functionError.code,
+              details: functionError.details,
+              hint: functionError.hint
+            });
+            
+            // Even on error, check if user exists (function might have created it before failing)
+            const finalCheck = await supabase
+              .from('users')
+              .select('*')
+              .eq('auth_id', authData.user.id)
+              .maybeSingle();
+            
+            if (finalCheck.data && !finalCheck.error) {
+              createdUser = finalCheck.data;
+              profileError = null;
+            }
+          } else if (functionResult) {
+            const fetchResult = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', functionResult)
+              .single();
+            
+            if (fetchResult.data && !fetchResult.error) {
+              createdUser = fetchResult.data;
+              profileError = null;
+            } else {
+              // Try auth_id lookup as fallback
+              const authIdFetch = await supabase
+                .from('users')
+                .select('*')
+                .eq('auth_id', authData.user.id)
+                .maybeSingle();
+              
+              if (authIdFetch.data && !authIdFetch.error) {
+                createdUser = authIdFetch.data;
+                profileError = null;
+              }
+            }
+          } else {
+            // Function returned null, check if user exists anyway
+            const finalCheck = await supabase
+              .from('users')
+              .select('*')
+              .eq('auth_id', authData.user.id)
+              .maybeSingle();
+            
+            if (finalCheck.data && !finalCheck.error) {
+              createdUser = finalCheck.data;
+              profileError = null;
+            }
+          }
+        } catch (finalError: any) {
+          console.error('Final fallback also failed:', finalError);
+          // Last attempt: just check if user exists
+          const lastCheck = await supabase
+            .from('users')
+            .select('*')
+            .eq('auth_id', authData.user.id)
+            .maybeSingle();
+          
+          if (lastCheck.data && !lastCheck.error) {
+            createdUser = lastCheck.data;
+            profileError = null;
+          }
+        }
+      }
+
+      if (profileError || !createdUser) {
+        // If profile creation fails, we can't clean up auth user from client
+        // This should be handled by a server-side cleanup function or manually
+        console.error('Failed to create user profile, auth user may need manual cleanup:', {
+          authId: authData.user.id,
+          error: profileError?.message || 'Unknown error',
+          errorCode: profileError?.code,
+          errorDetails: profileError?.details
+        });
         return {
           success: false,
-          error: `Failed to fetch created user: ${fetchError?.message || 'Unknown error'}`
+          error: `Failed to create user profile: ${profileError?.message || 'Unknown error'}`
         };
       }
 
@@ -308,8 +572,9 @@ export class AuthService {
         // Single account - login with the auth account
         const dbUser = validAccounts[0];
         
-        // Use the same email format as registration: phone@watertanker.temp
-        const tempEmail = `${sanitizedPhone}@watertanker.temp`;
+        // Use the same email format as registration: phone_ prefix to make it valid
+        // Using .app TLD as it's valid and accepted by Supabase
+        const tempEmail = `phone_${sanitizedPhone}@watertanker.app`;
 
         // Sign in with Supabase Auth
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
