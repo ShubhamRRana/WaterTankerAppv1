@@ -1,0 +1,53 @@
+appId: com.watertanker.app
+---
+# Driver Flow E2E Tests
+# Tests driver acceptance and delivery flow
+
+- launchApp
+
+# Login as driver
+- label: "Login as driver"
+- tapOn: 
+    id: "phone-input"
+- inputText: "9876500002"
+- tapOn: 
+    id: "password-input"
+- inputText: "TestPassword123"
+- tapOn: 
+    id: "login-button"
+- waitForAnimationToEnd
+- assertVisible: 
+    id: "driver-home-screen"
+
+# View available bookings
+- label: "View available bookings"
+- tapOn: 
+    id: "available-bookings-tab"
+- assertVisible: 
+    id: "bookings-list"
+- assertVisible: 
+    text: "Available Bookings"
+
+# Accept a booking
+- label: "Accept a booking"
+- tapOn: 
+    text: ".*" # Tap on first available booking
+- assertVisible: 
+    id: "booking-details"
+- tapOn: 
+    id: "accept-booking-button"
+- waitForAnimationToEnd
+- assertVisible: 
+    text: "Booking Accepted"
+
+# Mark booking as delivered
+- label: "Mark booking as delivered"
+- tapOn: 
+    id: "my-bookings-tab"
+- tapOn: 
+    text: ".*" # Tap on accepted booking
+- tapOn: 
+    id: "mark-delivered-button"
+- assertVisible: 
+    text: "Booking Delivered"
+

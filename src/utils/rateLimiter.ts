@@ -215,7 +215,9 @@ class RateLimiter {
 export const rateLimiter = new RateLimiter();
 
 // Cleanup expired entries every 5 minutes
-if (typeof setInterval !== 'undefined') {
+// Skip in test environments to prevent Jest from hanging
+const isTestEnvironment = process.env.NODE_ENV === 'test' || process.env.JEST_WORKER_ID !== undefined;
+if (typeof setInterval !== 'undefined' && !isTestEnvironment) {
   setInterval(() => {
     rateLimiter.cleanup();
   }, 5 * 60 * 1000);

@@ -2,8 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "skipLibCheck": true,
-    "types": []
+    "skipLibCheck": true
   },
   "include": [
     "**/*.ts",

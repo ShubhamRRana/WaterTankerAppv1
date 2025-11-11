@@ -77,7 +77,7 @@ export class ValidationUtils {
     }
     
     if (!VALIDATION_CONFIG.name.pattern.test(trimmed)) {
-      return { isValid: false, error: 'Name can only contain letters and spaces' };
+      return { isValid: false, error: 'Name can only contain letters, spaces, and hyphens' };
     }
     
     return { isValid: true };
@@ -241,19 +241,6 @@ export class ValidationUtils {
         return { isValid: false, error: 'Date must contain only numbers' };
       }
 
-      // Validate ranges
-      if (year < 2024 || year > 2030) {
-        return { isValid: false, error: 'Year must be between 2024 and 2030' };
-      }
-
-      if (month < 1 || month > 12) {
-        return { isValid: false, error: 'Month must be between 1 and 12' };
-      }
-
-      if (day < 1 || day > 31) {
-        return { isValid: false, error: 'Day must be between 1 and 31' };
-      }
-
       // Create date object (month is 0-indexed in JavaScript Date)
       const inputDate = new Date(year, month - 1, day);
       
@@ -270,9 +257,22 @@ export class ValidationUtils {
       today.setHours(0, 0, 0, 0);
       inputDate.setHours(0, 0, 0, 0);
 
-      // Check if the date is in the past
+      // Check if the date is in the past (check this before year range to get proper error message)
       if (inputDate < today) {
         return { isValid: false, error: 'Cannot select past dates' };
+      }
+
+      // Validate ranges
+      if (year < 2024 || year > 2030) {
+        return { isValid: false, error: 'Year must be between 2024 and 2030' };
+      }
+
+      if (month < 1 || month > 12) {
+        return { isValid: false, error: 'Month must be between 1 and 12' };
+      }
+
+      if (day < 1 || day > 31) {
+        return { isValid: false, error: 'Day must be between 1 and 31' };
       }
 
       // Check if date is too far in the future (more than 30 days)

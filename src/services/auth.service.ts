@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { User as AppUser, UserRole } from '../types/index';
+import { User as AppUser, UserRole, DriverUser } from '../types/index';
 import { ERROR_MESSAGES } from '../constants/config';
 import { transformSupabaseUserToAppUser, transformAppUserToSupabaseUser } from '../utils/supabaseTransformers';
 import { securityLogger, SecurityEventType, SecuritySeverity } from '../utils/securityLogger';
@@ -44,7 +44,7 @@ export class AuthService {
       securityLogger.logRegistrationAttempt(sanitizedPhone, role, false);
 
       // Prevent driver self-registration - only admin-created drivers are allowed
-      if (role === 'driver' && !additionalData?.createdByAdmin) {
+      if (role === 'driver' && !(additionalData as Partial<DriverUser>)?.createdByAdmin) {
         securityLogger.logRegistrationAttempt(sanitizedPhone, role, false, ERROR_MESSAGES.auth.adminCreatedDriverOnly);
         return {
           success: false,

@@ -116,13 +116,17 @@ export class SanitizationUtils {
       return '';
     }
 
-    // Keep only digits and one decimal point
-    return input
-      .trim()
-      .replace(/[^\d.]/g, '')
-      // Ensure only one decimal point
-      .replace(/\.(?=.*\.)/g, '')
-      .trim();
+    // Keep only digits and decimal points
+    const cleaned = input.trim().replace(/[^\d.]/g, '');
+    
+    // Split by decimal points and keep only the first one
+    const parts = cleaned.split('.');
+    if (parts.length === 1) {
+      return cleaned.trim();
+    }
+    
+    // Keep first part and join the rest (removing dots)
+    return (parts[0] + '.' + parts.slice(1).join('')).trim();
   }
 
   /**
@@ -242,8 +246,13 @@ export class SanitizationUtils {
         // Use custom sanitizer if provided
         sanitized[key] = sanitizers[key](sanitized[key]);
       } else if (typeof sanitized[key] === 'string') {
-        // Default: sanitize strings
-        sanitized[key] = this.sanitizeString(sanitized[key]);
+        // Auto-detect email fields and use sanitizeEmail
+        if (key.toLowerCase().includes('email')) {
+          sanitized[key] = this.sanitizeEmail(sanitized[key] as string) as T[Extract<keyof T, string>];
+        } else {
+          // Default: sanitize strings
+          sanitized[key] = this.sanitizeString(sanitized[key] as string) as T[Extract<keyof T, string>];
+        }
       }
     }
 

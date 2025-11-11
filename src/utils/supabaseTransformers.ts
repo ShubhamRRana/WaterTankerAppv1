@@ -9,7 +9,10 @@
  * - Type mapping between app and database schemas
  */
 
-import { User, Booking, Address, BookingStatus, PaymentStatus, Vehicle } from '../types/index';
+import { User, Booking, Address, BookingStatus, Vehicle } from '../types/index';
+
+// PaymentStatus type extracted from Booking interface
+type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 /**
  * Transform Supabase user record to app User type

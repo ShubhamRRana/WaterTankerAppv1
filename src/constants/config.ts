@@ -123,9 +123,9 @@ export const VALIDATION_CONFIG = {
     maxLength: 50,
   },
   name: {
-    minLength: 2,
+    minLength: 3,
     maxLength: 50,
-    pattern: /^[a-zA-Z\s]+$/,
+    pattern: /^[a-zA-Z\s\-]+$/,
   },
   email: {
     pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
