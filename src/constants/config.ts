@@ -255,8 +255,8 @@ export const DATE_CONFIG = {
 // Feature Flags
 export const FEATURE_FLAGS = {
   enableOnlinePayment: false, // Disabled in MVP
-  enablePushNotifications: false, // Disabled in MVP
-  enableRealTimeTracking: false, // Disabled in MVP
+  enablePushNotifications: true, // ✅ Enabled - Phase 3 Item 2 Complete
+  enableRealTimeTracking: true, // ✅ Enabled - Phase 3 Item 2 Complete
   enableDriverSelfRegistration: false, // Disabled in MVP
   enableRatingsAndReviews: false, // Disabled in MVP
   enableImmediateBookings: false, // Disabled in MVP

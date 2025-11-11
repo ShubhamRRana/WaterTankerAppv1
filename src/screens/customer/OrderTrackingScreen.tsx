@@ -19,6 +19,7 @@ import { Booking, BookingStatus } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
 import { UI_CONFIG } from '../../constants/config';
+import { LocationTrackingService, DriverLocation } from '../../services/locationTracking.service';
 
 const { width } = Dimensions.get('window');
 
@@ -37,16 +38,47 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
   const [booking, setBooking] = useState<Booking | null>(null);
   const [trackingStatus, setTrackingStatus] = useState<BookingStatus>('pending');
   const [estimatedDeliveryTime, setEstimatedDeliveryTime] = useState<number | null>(null);
-  const [driverLocation, setDriverLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [driverLocation, setDriverLocation] = useState<DriverLocation | null>(null);
 
   useEffect(() => {
     loadBooking();
-    // Simulate real-time updates
-    const interval = setInterval(() => {
-      simulateTrackingUpdate();
-    }, 10000); // Update every 10 seconds
+    
+    // Subscribe to real-time booking updates
+    const unsubscribeBooking = useBookingStore.getState().subscribeToBooking(orderId);
+    
+    // Subscribe to real-time location updates for this booking
+    let unsubscribeLocation: (() => void) | null = null;
+    
+    const setupLocationTracking = async () => {
+      try {
+        // Get initial location if available
+        const initialLocation = await LocationTrackingService.getBookingLocation(orderId);
+        if (initialLocation) {
+          setDriverLocation(initialLocation);
+        }
+        
+        // Subscribe to real-time location updates
+        unsubscribeLocation = LocationTrackingService.subscribeToBookingLocation(
+          orderId,
+          (location) => {
+            if (location) {
+              setDriverLocation(location);
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Error setting up location tracking:', error);
+      }
+    };
+    
+    setupLocationTracking();
 
-    return () => clearInterval(interval);
+    return () => {
+      unsubscribeBooking();
+      if (unsubscribeLocation) {
+        unsubscribeLocation();
+      }
+    };
   }, [orderId]);
 
   const loadBooking = async () => {
@@ -61,32 +93,44 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
           const estimatedTime = PricingUtils.calculateDeliveryTime(bookingData.distance);
           setEstimatedDeliveryTime(estimatedTime);
         }
+        
+        // Load driver location if booking is in transit
+        if (bookingData.status === 'in_transit' || bookingData.status === 'accepted') {
+          try {
+            const location = await LocationTrackingService.getBookingLocation(orderId);
+            if (location) {
+              setDriverLocation(location);
+            }
+          } catch (error) {
+            console.error('Error loading driver location:', error);
+          }
+        }
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to load booking details');
     }
   };
-
-  const simulateTrackingUpdate = () => {
-    if (!booking) return;
-
-    // Simulate status progression
-    const statusOrder: BookingStatus[] = ['pending', 'accepted', 'in_transit', 'delivered'];
-    const currentIndex = statusOrder.indexOf(trackingStatus);
-    
-    if (currentIndex < statusOrder.length - 1) {
-      const nextStatus = statusOrder[currentIndex + 1];
-      setTrackingStatus(nextStatus);
-      
-      // Simulate driver location updates
-      if (nextStatus === 'in_transit') {
-        setDriverLocation({
-          latitude: booking.deliveryAddress.latitude + (Math.random() - 0.5) * 0.01,
-          longitude: booking.deliveryAddress.longitude + (Math.random() - 0.5) * 0.01,
-        });
+  
+  // Subscribe to booking updates from store
+  useEffect(() => {
+    const unsubscribe = useBookingStore.subscribe(
+      (state) => state.currentBooking,
+      (currentBooking) => {
+        if (currentBooking && currentBooking.id === orderId) {
+          setBooking(currentBooking);
+          setTrackingStatus(currentBooking.status);
+          
+          // Update estimated delivery time if distance changed
+          if (currentBooking.distance) {
+            const estimatedTime = PricingUtils.calculateDeliveryTime(currentBooking.distance);
+            setEstimatedDeliveryTime(estimatedTime);
+          }
+        }
       }
-    }
-  };
+    );
+    
+    return unsubscribe;
+  }, [orderId]);
 
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {

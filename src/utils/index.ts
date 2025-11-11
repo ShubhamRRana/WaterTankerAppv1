@@ -13,3 +13,5 @@ export { sessionManager } from './sessionManager';
 export type { SessionInfo, SessionConfig } from './sessionManager';
 export { securityAuditor } from './securityAudit';
 export type { SecurityCheck, SecurityAuditResult } from './securityAudit';
+export { SubscriptionManager } from './subscriptionManager';
+export type { SubscriptionConfig, SubscriptionState } from './subscriptionManager';

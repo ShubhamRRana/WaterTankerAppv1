@@ -179,43 +179,39 @@ export class BookingService {
 
   /**
    * Subscribe to real-time booking updates using Supabase Realtime
+   * Uses SubscriptionManager for optimized subscription handling
    */
   static subscribeToBookingUpdates(
     bookingId: string,
     callback: (booking: Booking | null) => void
   ): () => void {
-    // Subscribe to changes for this specific booking
-    const channel = supabase
-      .channel(`booking:${bookingId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
-          schema: 'public',
-          table: 'bookings',
-          filter: `id=eq.${bookingId}`,
+    const { SubscriptionManager } = require('../utils/subscriptionManager');
+    
+    return SubscriptionManager.subscribe(
+      {
+        channelName: `booking:${bookingId}`,
+        table: 'bookings',
+        filter: `id=eq.${bookingId}`,
+        event: '*',
+        onError: (error) => {
+          console.error(`Error in booking subscription for ${bookingId}:`, error);
         },
-        async (payload) => {
-          try {
-            if (payload.eventType === 'DELETE') {
-              callback(null);
-            } else {
-              // Fetch the updated booking to get all fields
-              const booking = await this.getBookingById(bookingId);
-              callback(booking);
-            }
-          } catch (error) {
-            console.error('Error handling booking update:', error);
+      },
+      async (payload: any) => {
+        try {
+          if (payload.eventType === 'DELETE') {
             callback(null);
+          } else {
+            // Fetch the updated booking to get all fields
+            const booking = await this.getBookingById(bookingId);
+            callback(booking);
           }
+        } catch (error) {
+          console.error('Error handling booking update:', error);
+          callback(null);
         }
-      )
-      .subscribe();
-
-    // Return cleanup function
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      }
+    );
   }
 
   /**

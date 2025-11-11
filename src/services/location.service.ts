@@ -3,7 +3,9 @@
 // 
 // Note: Addresses are now stored in Supabase addresses table.
 // This service provides utility functions for distance calculations and location operations.
-// For React Native, getCurrentLocation() should be updated to use expo-location.
+// Uses expo-location for React Native compatibility.
+
+import * as Location from 'expo-location';
 
 export interface Location {
   latitude: number;
@@ -39,31 +41,100 @@ export class LocationService {
     return degrees * (Math.PI / 180);
   }
 
-  // Get current location using device GPS
+  /**
+   * Request location permissions
+   */
+  static async requestPermissions(): Promise<boolean> {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      return status === 'granted';
+    } catch (error) {
+      console.error('Error requesting location permissions:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check if location permissions are granted
+   */
+  static async hasPermissions(): Promise<boolean> {
+    try {
+      const { status } = await Location.getForegroundPermissionsAsync();
+      return status === 'granted';
+    } catch (error) {
+      console.error('Error checking location permissions:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get current location using device GPS (React Native compatible)
+   */
   static async getCurrentLocation(): Promise<Location> {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation is not supported by this browser.'));
-        return;
+    try {
+      // Check permissions first
+      const hasPermission = await this.hasPermissions();
+      if (!hasPermission) {
+        const granted = await this.requestPermissions();
+        if (!granted) {
+          throw new Error('Location permission denied');
+        }
       }
 
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-        },
-        (error) => {
-          reject(new Error(`Geolocation error: ${error.message}`));
-        },
+      // Get current position
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+        timeInterval: 10000,
+        distanceInterval: 10,
+      });
+
+      return {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to get location';
+      throw new Error(`Geolocation error: ${errorMessage}`);
+    }
+  }
+
+  /**
+   * Start watching location updates
+   */
+  static async watchPositionAsync(
+    callback: (location: Location) => void,
+    options?: {
+      accuracy?: Location.Accuracy;
+      timeInterval?: number;
+      distanceInterval?: number;
+    }
+  ): Promise<Location.LocationSubscription> {
+    try {
+      const hasPermission = await this.hasPermissions();
+      if (!hasPermission) {
+        const granted = await this.requestPermissions();
+        if (!granted) {
+          throw new Error('Location permission denied');
+        }
+      }
+
+      return await Location.watchPositionAsync(
         {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000,
+          accuracy: options?.accuracy ?? Location.Accuracy.High,
+          timeInterval: options?.timeInterval ?? 5000,
+          distanceInterval: options?.distanceInterval ?? 10,
+        },
+        (location) => {
+          callback({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
         }
       );
-    });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to watch location';
+      throw new Error(`Location watch error: ${errorMessage}`);
+    }
   }
 
   // Reverse geocoding - get address from coordinates
