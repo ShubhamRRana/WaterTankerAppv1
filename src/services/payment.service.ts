@@ -1,6 +1,8 @@
 // Payment service for Cash on Delivery (COD) implementation
 // This is a simplified version for MVP - payment gateway integration will be added in v2
 
+import { supabase } from './supabase';
+
 export interface PaymentResult {
   success: boolean;
   paymentId?: string;
@@ -8,15 +10,29 @@ export interface PaymentResult {
 }
 
 export class PaymentService {
-  // For MVP, we only support Cash on Delivery
+  /**
+   * Process Cash on Delivery payment - marks payment as pending in Supabase
+   */
   static async processCODPayment(bookingId: string, amount: number): Promise<PaymentResult> {
     try {
-      // Simulate payment processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For COD, we just mark the payment as pending
+      // For COD, we just mark the payment as pending in the booking
       // The actual payment happens when the driver delivers
       const paymentId = `cod_${bookingId}_${Date.now()}`;
+      
+      const { error } = await supabase
+        .from('bookings')
+        .update({
+          payment_status: 'pending',
+          payment_id: paymentId,
+        })
+        .eq('id', bookingId);
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message || 'Payment processing failed',
+        };
+      }
       
       return {
         success: true,
@@ -30,15 +46,31 @@ export class PaymentService {
     }
   }
 
-  // Mark payment as completed when driver confirms delivery
+  /**
+   * Mark payment as completed when driver confirms delivery
+   */
   static async confirmCODPayment(bookingId: string): Promise<PaymentResult> {
     try {
-      // Simulate payment confirmation
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const paymentId = `cod_confirmed_${bookingId}_${Date.now()}`;
+      
+      const { error } = await supabase
+        .from('bookings')
+        .update({
+          payment_status: 'completed',
+          payment_id: paymentId,
+        })
+        .eq('id', bookingId);
+
+      if (error) {
+        return {
+          success: false,
+          error: error.message || 'Payment confirmation failed',
+        };
+      }
       
       return {
         success: true,
-        paymentId: `cod_confirmed_${bookingId}`,
+        paymentId,
       };
     } catch (error) {
       return {

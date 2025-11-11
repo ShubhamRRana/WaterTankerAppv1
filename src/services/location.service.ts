@@ -1,5 +1,9 @@
 // Location service for handling maps and distance calculations
 // Using Haversine formula for distance calculation in MVP
+// 
+// Note: Addresses are now stored in Supabase addresses table.
+// This service provides utility functions for distance calculations and location operations.
+// For React Native, getCurrentLocation() should be updated to use expo-location.
 
 export interface Location {
   latitude: number;

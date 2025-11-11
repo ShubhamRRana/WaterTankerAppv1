@@ -7,6 +7,7 @@ interface BookingState {
   currentBooking: Booking | null;
   isLoading: boolean;
   error: string | null;
+  unsubscribeCurrentBooking: (() => void) | null;
   
   // Actions
   createBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
@@ -18,6 +19,8 @@ interface BookingState {
   getBookingById: (bookingId: string) => Promise<Booking | null>;
   cancelBooking: (bookingId: string, reason: string) => Promise<void>;
   setCurrentBooking: (booking: Booking | null) => void;
+  subscribeToBooking: (bookingId: string) => void;
+  unsubscribeFromBooking: () => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
@@ -28,6 +31,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   currentBooking: null,
   isLoading: false,
   error: null,
+  unsubscribeCurrentBooking: null,
 
   createBooking: async (bookingData) => {
     set({ isLoading: true, error: null });
@@ -146,7 +150,45 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   },
 
   setCurrentBooking: (booking) => {
-    set({ currentBooking: booking });
+    // Clean up existing subscription when setting a new booking
+    const { unsubscribeCurrentBooking } = get();
+    if (unsubscribeCurrentBooking) {
+      unsubscribeCurrentBooking();
+    }
+    set({ currentBooking: booking, unsubscribeCurrentBooking: null });
+  },
+
+  subscribeToBooking: (bookingId: string) => {
+    const { unsubscribeCurrentBooking } = get();
+    // Clean up existing subscription if any
+    if (unsubscribeCurrentBooking) {
+      unsubscribeCurrentBooking();
+    }
+
+    const unsubscribe = BookingService.subscribeToBookingUpdates(bookingId, (booking) => {
+      set({ currentBooking: booking });
+      
+      // Also update in bookings array if it exists
+      const { bookings } = get();
+      if (booking) {
+        const updatedBookings = bookings.map(b => b.id === bookingId ? booking : b);
+        set({ bookings: updatedBookings });
+      } else {
+        // Booking was deleted
+        const filteredBookings = bookings.filter(b => b.id !== bookingId);
+        set({ bookings: filteredBookings });
+      }
+    });
+
+    set({ unsubscribeCurrentBooking: unsubscribe });
+  },
+
+  unsubscribeFromBooking: () => {
+    const { unsubscribeCurrentBooking } = get();
+    if (unsubscribeCurrentBooking) {
+      unsubscribeCurrentBooking();
+      set({ unsubscribeCurrentBooking: null });
+    }
   },
 
   setLoading: (loading) => {

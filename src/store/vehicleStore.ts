@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import { Vehicle } from '../types';
-import { LocalStorageService } from '../services/localStorage';
+import { VehicleService } from '../services/vehicle.service';
 
 interface VehicleState {
   vehicles: Vehicle[];
   selectedVehicle: Vehicle | null;
   isLoading: boolean;
   error: string | null;
+  unsubscribeAgencyVehicles: (() => void) | null;
+  currentAgencyId: string | null;
   
   // Actions
   fetchAllVehicles: () => Promise<void>;
@@ -18,6 +20,8 @@ interface VehicleState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
+  subscribeToAgencyVehicles: (agencyId: string) => void;
+  unsubscribeFromAgencyVehicles: () => void;
 }
 
 export const useVehicleStore = create<VehicleState>((set, get) => ({
@@ -25,11 +29,13 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
   selectedVehicle: null,
   isLoading: false,
   error: null,
+  unsubscribeAgencyVehicles: null,
+  currentAgencyId: null,
 
   fetchAllVehicles: async () => {
     set({ isLoading: true, error: null });
     try {
-      const vehicles = await LocalStorageService.getVehicles();
+      const vehicles = await VehicleService.getAllVehicles();
       set({ vehicles, isLoading: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch vehicles';
@@ -39,11 +45,14 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
   },
 
   fetchVehiclesByAgency: async (agencyId: string) => {
+    set({ isLoading: true, error: null });
     try {
-      const vehicles = await LocalStorageService.getVehicles();
-      return vehicles.filter((vehicle: Vehicle) => vehicle.agencyId === agencyId);
+      const vehicles = await VehicleService.getVehiclesByAgency(agencyId);
+      set({ vehicles, isLoading: false });
+      return vehicles;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch vehicles by agency';
+      set({ isLoading: false, error: errorMessage });
       throw new Error(errorMessage);
     }
   },
@@ -51,14 +60,7 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
   addVehicle: async (vehicleData) => {
     set({ isLoading: true, error: null });
     try {
-      const newVehicle: Vehicle = {
-        ...vehicleData,
-        id: LocalStorageService.generateId(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      
-      await LocalStorageService.saveVehicle(newVehicle);
+      const newVehicle = await VehicleService.createVehicle(vehicleData);
       
       // Update local state
       const { vehicles } = get();
@@ -73,12 +75,12 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
   updateVehicle: async (vehicleId, updates) => {
     set({ isLoading: true, error: null });
     try {
-      await LocalStorageService.updateVehicle(vehicleId, updates);
+      await VehicleService.updateVehicle(vehicleId, updates);
       
       // Update local state
       const { vehicles } = get();
       const updatedVehicles = vehicles.map(vehicle =>
-        vehicle.id === vehicleId ? { ...vehicle, ...updates, updatedAt: new Date() } : vehicle
+        vehicle.id === vehicleId ? { ...vehicle, ...updates } : vehicle
       );
       set({ vehicles: updatedVehicles, isLoading: false });
     } catch (error) {
@@ -91,7 +93,7 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
   deleteVehicle: async (vehicleId) => {
     set({ isLoading: true, error: null });
     try {
-      await LocalStorageService.deleteVehicle(vehicleId);
+      await VehicleService.deleteVehicle(vehicleId);
       
       // Update local state
       const { vehicles } = get();
@@ -104,6 +106,28 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete vehicle';
       set({ isLoading: false, error: errorMessage });
       throw error;
+    }
+  },
+
+  subscribeToAgencyVehicles: (agencyId: string) => {
+    const { unsubscribeAgencyVehicles } = get();
+    // Clean up existing subscription if any
+    if (unsubscribeAgencyVehicles) {
+      unsubscribeAgencyVehicles();
+    }
+
+    const unsubscribe = VehicleService.subscribeToAgencyVehiclesUpdates(agencyId, (vehicles) => {
+      set({ vehicles });
+    });
+
+    set({ unsubscribeAgencyVehicles: unsubscribe, currentAgencyId: agencyId });
+  },
+
+  unsubscribeFromAgencyVehicles: () => {
+    const { unsubscribeAgencyVehicles } = get();
+    if (unsubscribeAgencyVehicles) {
+      unsubscribeAgencyVehicles();
+      set({ unsubscribeAgencyVehicles: null, currentAgencyId: null });
     }
   },
 

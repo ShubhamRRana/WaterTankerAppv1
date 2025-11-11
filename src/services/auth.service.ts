@@ -1,6 +1,7 @@
-import { LocalStorageService } from './localStorage';
+import { supabase } from './supabase';
 import { User as AppUser, UserRole } from '../types/index';
 import { ERROR_MESSAGES } from '../constants/config';
+import { transformSupabaseUserToAppUser, transformAppUserToSupabaseUser } from '../utils/supabaseTransformers';
 
 export interface AuthResult {
   success: boolean;
@@ -11,6 +12,9 @@ export interface AuthResult {
 }
 
 export class AuthService {
+  /**
+   * Register a new user with Supabase Auth and create profile in users table
+   */
   static async register(
     phone: string,
     password: string,
@@ -28,37 +32,95 @@ export class AuthService {
       }
 
       // Check if user already exists with same phone AND role
-      const users = await LocalStorageService.getUsers();
-      const existingUser = users.find(user => user.phone === phone && user.role === role);
-      
-      if (existingUser) {
+      const { data: existingUsers, error: checkError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', phone)
+        .eq('role', role);
+
+      if (checkError) {
+        return {
+          success: false,
+          error: `Failed to check existing users: ${checkError.message}`
+        };
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
         return {
           success: false,
           error: `User already exists with this phone number as ${role}`
         };
       }
 
-      // Create new user
-      const uid = LocalStorageService.generateId();
+      // Create user in Supabase Auth
+      // Use phone as email for now (Supabase Auth requires email, we'll use phone@temp.com format)
+      const tempEmail = `${phone}@watertanker.temp`;
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: tempEmail,
+        password: password,
+        options: {
+          data: {
+            phone: phone,
+            name: name,
+            role: role,
+          }
+        }
+      });
+
+      if (authError || !authData.user) {
+        return {
+          success: false,
+          error: authError?.message || 'Failed to create authentication account'
+        };
+      }
+
+      // Create user profile in users table
       const userData: AppUser = {
-        uid,
+        uid: authData.user.id, // Use auth user ID
         role,
         phone,
-        password: '', // Don't store password in local storage for security
+        password: '', // Password is handled by Supabase Auth
         name,
         createdAt: new Date(),
         ...additionalData,
       };
 
-      // Save user to collection
-      await LocalStorageService.saveUserToCollection(userData);
-      
-      // Set as current user
-      await LocalStorageService.saveUser(userData);
+      const supabaseUserData = transformAppUserToSupabaseUser(userData);
+      supabaseUserData.auth_id = authData.user.id;
+
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert([supabaseUserData]);
+
+      if (profileError) {
+        // If profile creation fails, we can't clean up auth user from client
+        // This should be handled by a server-side cleanup function or manually
+        console.error('Failed to create user profile, auth user may need manual cleanup:', authData.user.id);
+        return {
+          success: false,
+          error: `Failed to create user profile: ${profileError.message}`
+        };
+      }
+
+      // Fetch the created user to return complete data
+      const { data: createdUser, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('auth_id', authData.user.id)
+        .single();
+
+      if (fetchError || !createdUser) {
+        return {
+          success: false,
+          error: `Failed to fetch created user: ${fetchError?.message || 'Unknown error'}`
+        };
+      }
+
+      const appUser = transformSupabaseUserToAppUser(createdUser);
 
       return {
         success: true,
-        user: userData
+        user: appUser
       };
     } catch (error) {
       return {
@@ -68,72 +130,89 @@ export class AuthService {
     }
   }
 
+  /**
+   * Login with phone and password using Supabase Auth
+   */
   static async login(phone: string, password: string): Promise<AuthResult> {
     try {
-      const users = await LocalStorageService.getUsers();
-      const userAccounts = users.filter(u => u.phone === phone);
-      
-      if (userAccounts.length === 0) {
+      // Find all users with this phone number
+      const { data: userAccounts, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', phone);
+
+      if (fetchError) {
+        return {
+          success: false,
+          error: `Failed to fetch users: ${fetchError.message}`
+        };
+      }
+
+      if (!userAccounts || userAccounts.length === 0) {
         return {
           success: false,
           error: 'User not found'
         };
       }
 
-      // For local storage, we'll skip password validation for now
-      // In a real app, you'd hash and compare passwords
-      
-      if (userAccounts.length === 1) {
-        // Single account - check if driver was created by admin
-        const user = userAccounts[0];
+      // Filter out drivers not created by admin
+      const validAccounts = userAccounts.filter(account => {
+        if (account.role === 'driver' && !account.created_by_admin) {
+          return false;
+        }
+        return true;
+      });
+
+      if (validAccounts.length === 0) {
+        return {
+          success: false,
+          error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
+        };
+      }
+
+      if (validAccounts.length === 1) {
+        // Single account - login with the auth account
+        const dbUser = validAccounts[0];
         
-        // Check if it's a driver that wasn't created by admin
-        if (user.role === 'driver' && !user.createdByAdmin) {
+        // Use the same email format as registration: phone@watertanker.temp
+        const tempEmail = `${phone}@watertanker.temp`;
+
+        // Sign in with Supabase Auth
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: tempEmail,
+          password: password,
+        });
+
+        if (authError || !authData.user) {
           return {
             success: false,
-            error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
+            error: authError?.message || 'Invalid phone number or password'
           };
         }
-        
-        await LocalStorageService.saveUser(user);
+
+        // Verify the auth user matches the db user
+        if (authData.user.id !== dbUser.auth_id) {
+          await supabase.auth.signOut();
+          return {
+            success: false,
+            error: 'Authentication mismatch'
+          };
+        }
+
+        const appUser = transformSupabaseUserToAppUser(dbUser);
         return {
           success: true,
-          user
+          user: appUser
         };
       } else {
-        // Multiple accounts - filter out drivers not created by admin
-        const validAccounts = userAccounts.filter(account => {
-          if (account.role === 'driver' && !account.createdByAdmin) {
-            return false; // Exclude drivers not created by admin
-          }
-          return true;
-        });
-        
-        if (validAccounts.length === 0) {
-          return {
-            success: false,
-            error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
-          };
-        }
-        
-        if (validAccounts.length === 1) {
-          // Only one valid account - proceed normally
-          const user = validAccounts[0];
-          await LocalStorageService.saveUser(user);
-          return {
-            success: true,
-            user
-          };
-        } else {
-          // Multiple valid accounts - require role selection
-          const availableRoles = validAccounts.map(account => account.role) as UserRole[];
-          return {
-            success: true,
-            requiresRoleSelection: true,
-            availableRoles,
-            user: undefined
-          };
-        }
+        // Multiple valid accounts - require role selection
+        const availableRoles = validAccounts.map(account => account.role) as UserRole[];
+        return {
+          success: true,
+          requiresRoleSelection: true,
+          availableRoles,
+          user: undefined
+        };
       }
     } catch (error) {
       return {
@@ -143,12 +222,20 @@ export class AuthService {
     }
   }
 
+  /**
+   * Login with phone and selected role (used after role selection)
+   * Note: This assumes the user has already authenticated via login()
+   */
   static async loginWithRole(phone: string, role: UserRole): Promise<AuthResult> {
     try {
-      const users = await LocalStorageService.getUsers();
-      const user = users.find(u => u.phone === phone && u.role === role);
-      
-      if (!user) {
+      const { data: dbUser, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('phone', phone)
+        .eq('role', role)
+        .single();
+
+      if (fetchError || !dbUser) {
         return {
           success: false,
           error: 'User not found with selected role'
@@ -156,19 +243,26 @@ export class AuthService {
       }
 
       // Check if it's a driver that wasn't created by admin
-      if (user.role === 'driver' && !user.createdByAdmin) {
+      if (dbUser.role === 'driver' && !dbUser.created_by_admin) {
         return {
           success: false,
           error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
         };
       }
 
-      // Set as current user
-      await LocalStorageService.saveUser(user);
+      // Verify the user is already authenticated (login() should be called first)
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session || session.session.user.id !== dbUser.auth_id) {
+        return {
+          success: false,
+          error: 'Please login first with your password'
+        };
+      }
 
+      const appUser = transformSupabaseUserToAppUser(dbUser);
       return {
         success: true,
-        user
+        user: appUser
       };
     } catch (error) {
       return {
@@ -178,46 +272,99 @@ export class AuthService {
     }
   }
 
+  /**
+   * Logout from Supabase Auth
+   */
   static async logout(): Promise<void> {
     try {
-      await LocalStorageService.removeUser();
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  static async getCurrentUserData(): Promise<AppUser | null> {
-    try {
-      return await LocalStorageService.getCurrentUser();
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  static async updateUserProfile(uid: string, updates: Partial<AppUser>): Promise<void> {
-    try {
-      const users = await LocalStorageService.getUsers();
-      const userIndex = users.findIndex(u => u.uid === uid);
-      
-      if (userIndex >= 0) {
-        users[userIndex] = { ...users[userIndex], ...updates };
-        await LocalStorageService.setItem('users_collection', users);
-        
-        // Update current user if it's the same user
-        const currentUser = await LocalStorageService.getCurrentUser();
-        if (currentUser && currentUser.uid === uid) {
-          await LocalStorageService.saveUser(users[userIndex]);
-        }
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
       }
     } catch (error) {
       throw error;
     }
   }
 
-  // Initialize sample data for development
+  /**
+   * Get current authenticated user data from Supabase
+   */
+  static async getCurrentUserData(): Promise<AppUser | null> {
+    try {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      
+      if (!authUser) {
+        return null;
+      }
+
+      const { data: dbUser, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('auth_id', authUser.id)
+        .single();
+
+      if (error || !dbUser) {
+        return null;
+      }
+
+      return transformSupabaseUserToAppUser(dbUser);
+    } catch (error) {
+      console.error('Failed to get current user:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update user profile in Supabase users table
+   */
+  static async updateUserProfile(uid: string, updates: Partial<AppUser>): Promise<void> {
+    try {
+      // Get current user to merge updates
+      const { data: currentUser, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', uid)
+        .single();
+
+      if (fetchError || !currentUser) {
+        throw new Error('User not found');
+      }
+
+      // Transform current user to app type, apply updates, then transform back
+      const appUser = transformSupabaseUserToAppUser(currentUser);
+      const updatedUser = { ...appUser, ...updates };
+      const supabaseUpdates = transformAppUserToSupabaseUser(updatedUser);
+
+      // Remove fields that shouldn't be updated directly
+      delete supabaseUpdates.auth_id;
+      delete supabaseUpdates.role; // Role shouldn't be changed via profile update
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update(supabaseUpdates)
+        .eq('id', uid);
+
+      if (updateError) {
+        throw updateError;
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Initialize app - check Supabase connection and restore session
+   */
   static async initializeApp(): Promise<void> {
     try {
-      await LocalStorageService.initializeSampleData();
+      // Check if there's an existing session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // Session exists, user is already authenticated
+        // The session will be automatically refreshed by Supabase
+        console.log('Existing session found');
+      }
     } catch (error) {
       console.error('Failed to initialize app:', error);
     }

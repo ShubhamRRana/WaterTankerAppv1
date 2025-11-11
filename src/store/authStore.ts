@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { User, UserRole } from '../types/index';
 import { AuthService } from '../services/auth.service';
+import { supabase } from '../services/supabase';
 
 interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  unsubscribeAuth: (() => void) | null;
   login: (phone: string, password: string) => Promise<void>;
   loginWithRole: (phone: string, role: UserRole) => Promise<void>;
   register: (
@@ -19,12 +21,15 @@ interface AuthState {
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   initializeAuth: () => Promise<void>;
+  subscribeToAuthChanges: () => void;
+  unsubscribeFromAuthChanges: () => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
   isAuthenticated: false,
+  unsubscribeAuth: null,
 
   initializeAuth: async () => {
     set({ isLoading: true });
@@ -36,6 +41,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isAuthenticated: !!userData,
         isLoading: false,
       });
+      
+      // Subscribe to auth changes after initialization
+      get().subscribeToAuthChanges();
     } catch (error) {
       set({ isLoading: false });
       console.error('Failed to initialize auth:', error);
@@ -159,5 +167,58 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   setLoading: (loading: boolean) => {
     set({ isLoading: loading });
+  },
+
+  subscribeToAuthChanges: () => {
+    const { unsubscribeAuth } = get();
+    // Clean up existing subscription if any
+    if (unsubscribeAuth) {
+      unsubscribeAuth();
+    }
+
+    // Subscribe to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          // User signed in or session refreshed - fetch user data
+          try {
+            const userData = await AuthService.getCurrentUserData();
+            set({
+              user: userData,
+              isAuthenticated: !!userData,
+            });
+          } catch (error) {
+            console.error('Failed to fetch user data on auth change:', error);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          // User signed out
+          set({
+            user: null,
+            isAuthenticated: false,
+          });
+        } else if (event === 'USER_UPDATED') {
+          // User data updated - refresh user data
+          try {
+            const userData = await AuthService.getCurrentUserData();
+            set({
+              user: userData,
+              isAuthenticated: !!userData,
+            });
+          } catch (error) {
+            console.error('Failed to fetch user data on user update:', error);
+          }
+        }
+      }
+    );
+
+    set({ unsubscribeAuth: () => subscription.unsubscribe() });
+  },
+
+  unsubscribeFromAuthChanges: () => {
+    const { unsubscribeAuth } = get();
+    if (unsubscribeAuth) {
+      unsubscribeAuth();
+      set({ unsubscribeAuth: null });
+    }
   },
 }));

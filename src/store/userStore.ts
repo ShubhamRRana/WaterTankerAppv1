@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { User, UserRole } from '../types';
-import { LocalStorageService } from '../services/localStorage';
+import { UserService } from '../services/user.service';
 
 interface UserState {
   users: User[];
   selectedUser: User | null;
   isLoading: boolean;
   error: string | null;
+  unsubscribeAllUsers: (() => void) | null;
   
   // Actions
   fetchAllUsers: () => Promise<void>;
@@ -18,6 +19,8 @@ interface UserState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
+  subscribeToAllUsers: () => void;
+  unsubscribeFromAllUsers: () => void;
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
@@ -25,11 +28,12 @@ export const useUserStore = create<UserState>((set, get) => ({
   selectedUser: null,
   isLoading: false,
   error: null,
+  unsubscribeAllUsers: null,
 
   fetchAllUsers: async () => {
     set({ isLoading: true, error: null });
     try {
-      const users = await LocalStorageService.getUsers();
+      const users = await UserService.getAllUsers();
       set({ users, isLoading: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch users';
@@ -41,8 +45,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   fetchUsersByRole: async (role) => {
     set({ isLoading: true, error: null });
     try {
-      const allUsers = await LocalStorageService.getUsers();
-      const users = allUsers.filter(user => user.role === role);
+      const users = await UserService.getUsersByRole(role);
       set({ users, isLoading: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch users by role';
@@ -54,13 +57,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   addUser: async (userData) => {
     set({ isLoading: true, error: null });
     try {
-      const newUser: User = {
-        ...userData,
-        uid: LocalStorageService.generateId(),
-        createdAt: new Date(),
-      };
-      
-      await LocalStorageService.saveUserToCollection(newUser);
+      const newUser = await UserService.createUser(userData);
       
       // Update local state
       const { users } = get();
@@ -75,7 +72,7 @@ export const useUserStore = create<UserState>((set, get) => ({
   updateUser: async (userId, updates) => {
     set({ isLoading: true, error: null });
     try {
-      await LocalStorageService.updateUserProfile(userId, updates);
+      await UserService.updateUser(userId, updates);
       
       // Update local state
       const { users } = get();
@@ -93,11 +90,11 @@ export const useUserStore = create<UserState>((set, get) => ({
   deleteUser: async (userId) => {
     set({ isLoading: true, error: null });
     try {
-      const users = await LocalStorageService.getUsers();
-      const updatedUsers = users.filter(user => user.uid !== userId);
-      await LocalStorageService.setItem('users_collection', updatedUsers);
+      await UserService.deleteUser(userId);
       
       // Update local state
+      const { users } = get();
+      const updatedUsers = users.filter(user => user.uid !== userId);
       set({ 
         users: updatedUsers, 
         selectedUser: get().selectedUser?.uid === userId ? null : get().selectedUser,
@@ -107,6 +104,28 @@ export const useUserStore = create<UserState>((set, get) => ({
       const errorMessage = error instanceof Error ? error.message : 'Failed to delete user';
       set({ isLoading: false, error: errorMessage });
       throw error;
+    }
+  },
+
+  subscribeToAllUsers: () => {
+    const { unsubscribeAllUsers } = get();
+    // Clean up existing subscription if any
+    if (unsubscribeAllUsers) {
+      unsubscribeAllUsers();
+    }
+
+    const unsubscribe = UserService.subscribeToAllUsersUpdates((users) => {
+      set({ users });
+    });
+
+    set({ unsubscribeAllUsers: unsubscribe });
+  },
+
+  unsubscribeFromAllUsers: () => {
+    const { unsubscribeAllUsers } = get();
+    if (unsubscribeAllUsers) {
+      unsubscribeAllUsers();
+      set({ unsubscribeAllUsers: null });
     }
   },
 
