@@ -9,12 +9,6 @@
 -- HELPER FUNCTIONS
 -- ============================================================================
 
--- Function to get current user's ID from auth.users
-CREATE OR REPLACE FUNCTION auth.user_id()
-RETURNS UUID AS $$
-  SELECT id FROM auth.users WHERE id = auth.uid();
-$$ LANGUAGE sql SECURITY DEFINER;
-
 -- Function to get current user's role from users table
 CREATE OR REPLACE FUNCTION public.get_user_role()
 RETURNS user_role AS $$
@@ -361,7 +355,6 @@ CREATE POLICY "Users can delete own notifications"
 -- COMMENTS
 -- ============================================================================
 
-COMMENT ON FUNCTION auth.user_id() IS 'Helper function to get current authenticated user ID';
 COMMENT ON FUNCTION public.get_user_role() IS 'Helper function to get current user role';
 COMMENT ON FUNCTION public.is_admin() IS 'Helper function to check if current user is admin';
 COMMENT ON FUNCTION public.is_driver() IS 'Helper function to check if current user is driver';
