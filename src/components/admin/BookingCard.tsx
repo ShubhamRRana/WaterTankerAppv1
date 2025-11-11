@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -22,7 +22,32 @@ const BookingCard: React.FC<BookingCardProps> = ({
   onPress,
   getStatusColor,
   getStatusIcon,
-}) => (
+}) => {
+  const statusColor = useMemo(() => getStatusColor(booking.status), [booking.status, getStatusColor]);
+  const statusIcon = useMemo(() => getStatusIcon(booking.status), [booking.status, getStatusIcon]);
+  const formattedDate = useMemo(() => {
+    return new Date(booking.createdAt).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }, [booking.createdAt]);
+  const formattedDeliveredDate = useMemo(() => {
+    if (!booking.deliveredAt) return null;
+    return new Date(booking.deliveredAt).toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }, [booking.deliveredAt]);
+  const bookingIdShort = useMemo(() => booking.id.slice(-8), [booking.id]);
+  const statusText = useMemo(() => booking.status.replace('_', ' ').toUpperCase(), [booking.status]);
+
+  return (
   <Card style={styles.bookingCard}>
     <TouchableOpacity 
       onPress={() => onPress(booking)}
@@ -34,17 +59,17 @@ const BookingCard: React.FC<BookingCardProps> = ({
             {booking.customerName}
           </Typography>
           <Typography variant="caption" style={styles.bookingId}>
-            #{booking.id.slice(-8)}
+            #{bookingIdShort}
           </Typography>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) }]}>
+        <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
           <Ionicons 
-            name={getStatusIcon(booking.status) as any} 
+            name={statusIcon as any} 
             size={16} 
             color={UI_CONFIG.colors.textLight} 
           />
           <Typography variant="caption" style={styles.statusText}>
-            {booking.status.replace('_', ' ').toUpperCase()}
+            {statusText}
           </Typography>
         </View>
       </View>
@@ -74,26 +99,14 @@ const BookingCard: React.FC<BookingCardProps> = ({
         <View style={styles.detailRow}>
           <Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
           <Typography variant="body" style={styles.detailText}>
-            {new Date(booking.createdAt).toLocaleDateString('en-IN', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            })}
+            {formattedDate}
           </Typography>
         </View>
-        {booking.status === 'delivered' && booking.deliveredAt && (
+        {booking.status === 'delivered' && formattedDeliveredDate && (
           <View style={styles.detailRow}>
             <Ionicons name="checkmark-circle" size={16} color={UI_CONFIG.colors.success} />
             <Typography variant="body" style={styles.detailText}>
-              Delivered: {new Date(booking.deliveredAt).toLocaleDateString('en-IN', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-              })}
+              Delivered: {formattedDeliveredDate}
             </Typography>
           </View>
         )}
@@ -108,7 +121,10 @@ const BookingCard: React.FC<BookingCardProps> = ({
       )}
     </TouchableOpacity>
   </Card>
-);
+  );
+};
+
+export default memo(BookingCard);
 
 const styles = StyleSheet.create({
   bookingCard: {
@@ -171,6 +187,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
-
-export default BookingCard;
 

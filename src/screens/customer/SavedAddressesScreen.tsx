@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Alert,
   TextInput,
@@ -50,7 +50,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
     setAddresses(user.savedAddresses);
   };
 
-  const handleSaveAddress = async () => {
+  const handleSaveAddress = useCallback(async () => {
     // Sanitize and validate address
     const sanitizedAddress = SanitizationUtils.sanitizeAddress(newAddressText);
     const addressValidation = ValidationUtils.validateAddressText(sanitizedAddress);
@@ -109,9 +109,9 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
     } catch (error) {
       Alert.alert('Error', 'Failed to save address. Please try again.');
     }
-  };
+  }, [newAddressText, editingAddress, addresses, user, updateUser]);
 
-  const handleDeleteAddress = (addressId: string) => {
+  const handleDeleteAddress = useCallback((addressId: string) => {
     Alert.alert(
       'Delete Address',
       'Are you sure you want to delete this address?',
@@ -148,9 +148,9 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         },
       ]
     );
-  };
+  }, [addresses, user, updateUser]);
 
-  const handleSetDefault = async (addressId: string) => {
+  const handleSetDefault = useCallback(async (addressId: string) => {
     if (!user) {
       Alert.alert('Error', 'User not found. Please log in again.');
       return;
@@ -172,17 +172,17 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
     } catch (error) {
       Alert.alert('Error', 'Failed to update default address. Please try again.');
     }
-  };
+  }, [addresses, user, updateUser]);
 
-  const handleEditAddress = (address: Address) => {
+  const handleEditAddress = useCallback((address: Address) => {
     setEditingAddress(address);
     setNewAddressText(address.street);
   };
 
-  const handleCancelEdit = () => {
+  const handleCancelEdit = useCallback(() => {
     setEditingAddress(null);
     setNewAddressText('');
-  };
+  }, []);
 
 
 
@@ -253,17 +253,11 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         </Card>
       </View>
 
-      <ScrollView style={styles.content}>
-        {addresses.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="location-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="h3" style={styles.emptyStateText}>No saved addresses</Typography>
-            <Typography variant="body" style={styles.emptyStateSubtext}>Add your first address using the input above</Typography>
-          </View>
-        ) : (
-          <View style={styles.addressList}>
-            {addresses.map((address) => (
-              <Card key={address.id} style={styles.addressCard}>
+      <FlatList
+        data={addresses}
+        keyExtractor={(item) => item.id!}
+        renderItem={({ item: address }) => (
+          <Card style={styles.addressCard}>
                 <View style={styles.addressHeader}>
                   <View style={styles.addressInfo}>
                     <View style={styles.addressTitleRow}>
@@ -313,10 +307,22 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
                   </TouchableOpacity>
                 )}
               </Card>
-            ))}
-          </View>
         )}
-      </ScrollView>
+        style={styles.content}
+        contentContainerStyle={addresses.length === 0 ? styles.emptyContainer : styles.addressList}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name="location-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
+            <Typography variant="h3" style={styles.emptyStateText}>No saved addresses</Typography>
+            <Typography variant="body" style={styles.emptyStateSubtext}>Add your first address using the input above</Typography>
+          </View>
+        }
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={10}
+        windowSize={10}
+      />
       </View>
     </SafeAreaView>
   );
@@ -432,6 +438,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   emptyState: {
     flex: 1,

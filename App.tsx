@@ -1,16 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
+import { View, ActivityIndicator } from 'react-native';
 import { testSupabaseConfig } from './src/utils/testSupabaseConfig';
+import { UI_CONFIG } from './src/constants/config';
 
-// Navigation imports
-import AuthNavigator from './src/navigation/AuthNavigator';
-import CustomerNavigator from './src/navigation/CustomerNavigator';
-import DriverNavigator from './src/navigation/DriverNavigator';
-import AdminNavigator from './src/navigation/AdminNavigator';
+// Lazy load navigators for code splitting
+const AuthNavigator = lazy(() => import('./src/navigation/AuthNavigator'));
+const CustomerNavigator = lazy(() => import('./src/navigation/CustomerNavigator'));
+const DriverNavigator = lazy(() => import('./src/navigation/DriverNavigator'));
+const AdminNavigator = lazy(() => import('./src/navigation/AdminNavigator'));
 
 // Store imports
 import { useAuthStore } from './src/store/authStore';
@@ -67,20 +69,47 @@ const App: React.FC = () => {
     }
   };
 
+  // Loading component for lazy-loaded navigators
+  const NavigatorLoadingFallback = () => (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: UI_CONFIG.colors.background }}>
+      <ActivityIndicator size="large" color={UI_CONFIG.colors.primary} />
+    </View>
+  );
+
   const renderNavigator = () => {
     if (!user) {
-      return <Stack.Screen name="Auth" component={AuthNavigator} />;
+      return (
+        <Suspense fallback={<NavigatorLoadingFallback />}>
+          <Stack.Screen name="Auth" component={AuthNavigator} />
+        </Suspense>
+      );
     }
 
     switch (user.role) {
       case 'customer':
-        return <Stack.Screen name="Customer" component={CustomerNavigator} />;
+        return (
+          <Suspense fallback={<NavigatorLoadingFallback />}>
+            <Stack.Screen name="Customer" component={CustomerNavigator} />
+          </Suspense>
+        );
       case 'driver':
-        return <Stack.Screen name="Driver" component={DriverNavigator} />;
+        return (
+          <Suspense fallback={<NavigatorLoadingFallback />}>
+            <Stack.Screen name="Driver" component={DriverNavigator} />
+          </Suspense>
+        );
       case 'admin':
-        return <Stack.Screen name="Admin" component={AdminNavigator} />;
+        return (
+          <Suspense fallback={<NavigatorLoadingFallback />}>
+            <Stack.Screen name="Admin" component={AdminNavigator} />
+          </Suspense>
+        );
       default:
-        return <Stack.Screen name="Auth" component={AuthNavigator} />;
+        return (
+          <Suspense fallback={<NavigatorLoadingFallback />}>
+            <Stack.Screen name="Auth" component={AuthNavigator} />
+          </Suspense>
+        );
     }
   };
 

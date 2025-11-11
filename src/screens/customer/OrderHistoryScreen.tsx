@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Alert,
   TextInput,
@@ -34,7 +34,6 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<BookingStatus | 'all'>('all');
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [menuVisible, setMenuVisible] = useState(false);
 
   const handleLogout = async () => {
@@ -51,8 +50,26 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
     }
   }, [user?.uid]);
 
-  useEffect(() => {
-    filterBookings();
+  const filteredBookings = useMemo(() => {
+    let filtered = [...bookings];
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(booking => 
+        booking.id.toLowerCase().includes(query) ||
+        booking.deliveryAddress.street.toLowerCase().includes(query) ||
+        booking.deliveryAddress.city.toLowerCase().includes(query) ||
+        booking.customerName.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by status
+    if (selectedFilter !== 'all') {
+      filtered = filtered.filter(booking => booking.status === selectedFilter);
+    }
+
+    return filtered;
   }, [bookings, searchQuery, selectedFilter]);
 
   const loadBookings = async () => {
@@ -98,8 +115,8 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
   };
 
   // Calculate counts for each filter
-  const getFilterCounts = () => {
-    const counts = {
+  const filterCounts = useMemo(() => {
+    return {
       all: bookings.length,
       pending: bookings.filter(booking => booking.status === 'pending').length,
       accepted: bookings.filter(booking => booking.status === 'accepted').length,
@@ -107,21 +124,18 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       delivered: bookings.filter(booking => booking.status === 'delivered').length,
       cancelled: bookings.filter(booking => booking.status === 'cancelled').length,
     };
-    return counts;
-  };
+  }, [bookings]);
 
-  const filterCounts = getFilterCounts();
-
-  const filterButtons = [
+  const filterButtons = useMemo(() => [
     { key: 'all', label: 'All', icon: 'list-outline', count: filterCounts.all },
     { key: 'pending', label: 'Pending', icon: 'time-outline', count: filterCounts.pending },
     { key: 'accepted', label: 'Accepted', icon: 'checkmark-circle-outline', count: filterCounts.accepted },
     { key: 'in_transit', label: 'In Transit', icon: 'car-outline', count: filterCounts.in_transit },
     { key: 'delivered', label: 'Delivered', icon: 'checkmark-done-outline', count: filterCounts.delivered },
     { key: 'cancelled', label: 'Cancelled', icon: 'close-circle-outline', count: filterCounts.cancelled },
-  ];
+  ], [filterCounts]);
 
-  const handleCancelBooking = (booking: Booking) => {
+  const handleCancelBooking = useCallback((booking: Booking) => {
     if (!booking.canCancel) {
       Alert.alert('Cannot Cancel', 'This booking cannot be cancelled as it has already been accepted by a driver.');
       return;
@@ -146,9 +160,9 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
         },
       ]
     );
-  };
+  }, []);
 
-  const getStatusColor = (status: BookingStatus) => {
+  const getStatusColor = useCallback((status: BookingStatus) => {
     switch (status) {
       case 'pending': return UI_CONFIG.colors.warning;
       case 'accepted': return UI_CONFIG.colors.primary;
@@ -157,9 +171,9 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       case 'cancelled': return UI_CONFIG.colors.error;
       default: return UI_CONFIG.colors.textSecondary;
     }
-  };
+  }, []);
 
-  const getStatusText = (status: BookingStatus) => {
+  const getStatusText = useCallback((status: BookingStatus) => {
     switch (status) {
       case 'pending': return 'Pending';
       case 'accepted': return 'Accepted';
@@ -168,9 +182,9 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       case 'cancelled': return 'Cancelled';
       default: return 'Unknown';
     }
-  };
+  }, []);
 
-  const getStatusIcon = (status: BookingStatus) => {
+  const getStatusIcon = useCallback((status: BookingStatus) => {
     switch (status) {
       case 'pending': return 'time-outline';
       case 'accepted': return 'checkmark-circle-outline';
@@ -179,9 +193,9 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       case 'cancelled': return 'close-circle-outline';
       default: return 'help-circle-outline';
     }
-  };
+  }, []);
 
-  const formatDate = (date: Date | string) => {
+  const formatDate = useCallback((date: Date | string) => {
     try {
       // Handle both Date objects and date strings
       const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
@@ -202,7 +216,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       console.error('Error formatting date:', error);
       return 'Unknown date';
     }
-  };
+  }, []);
 
 
   if (isLoading && !bookings.length) {
@@ -305,32 +319,14 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
 
 
       {/* Orders List */}
-      <ScrollView
-        style={styles.ordersContainer}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {filteredBookings.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="h3" style={styles.emptyStateText}>
-              {searchQuery || selectedFilter !== 'all' ? 'No matching orders' : 'No orders yet'}
-            </Typography>
-            <Typography variant="body" style={styles.emptyStateSubtext}>
-              {searchQuery || selectedFilter !== 'all'
-                ? 'Try adjusting your search or filter' 
-                : 'Book your first tanker to get started'
-              }
-            </Typography>
-          </View>
-        ) : (
-          filteredBookings.map((booking) => (
-            <Card 
-              key={booking.id} 
-              style={styles.orderCard}
-              onPress={() => navigation.navigate('OrderTracking', { orderId: booking.id })}
-            >
+      <FlatList
+        data={filteredBookings}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item: booking }) => (
+          <Card 
+            style={styles.orderCard}
+            onPress={() => navigation.navigate('OrderTracking', { orderId: booking.id })}
+          >
               <View style={styles.orderHeader}>
                 <View style={styles.orderInfo}>
                   <Typography variant="body" style={styles.orderId}>Order #{booking.id.slice(-6)}</Typography>
@@ -394,9 +390,32 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                 </View>
               )}
             </Card>
-          ))
         )}
-      </ScrollView>
+        style={styles.ordersContainer}
+        contentContainerStyle={filteredBookings.length === 0 ? styles.emptyContainer : undefined}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name="receipt-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
+            <Typography variant="h3" style={styles.emptyStateText}>
+              {searchQuery || selectedFilter !== 'all' ? 'No matching orders' : 'No orders yet'}
+            </Typography>
+            <Typography variant="body" style={styles.emptyStateSubtext}>
+              {searchQuery || selectedFilter !== 'all'
+                ? 'Try adjusting your search or filter' 
+                : 'Book your first tanker to get started'
+              }
+            </Typography>
+          </View>
+        }
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={10}
+        windowSize={10}
+      />
       </View>
       <CustomerMenuDrawer
         visible={menuVisible}
@@ -534,6 +553,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 16,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
   },
   emptyState: {
     flex: 1,

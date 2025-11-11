@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
+import React, { memo, useMemo, useCallback } from 'react';
+import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, Button } from '../common';
 import { Booking, BookingStatus } from '../../types';
@@ -32,7 +32,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
   onCollectPayment,
   onDismissError,
 }) => {
-  const getStatusColor = (status: BookingStatus): string => {
+  const getStatusColor = useCallback((status: BookingStatus): string => {
     switch (status) {
       case 'pending': return UI_CONFIG.colors.warning;
       case 'accepted': return UI_CONFIG.colors.primary;
@@ -41,9 +41,9 @@ const OrdersList: React.FC<OrdersListProps> = ({
       case 'cancelled': return UI_CONFIG.colors.error;
       default: return UI_CONFIG.colors.textSecondary;
     }
-  };
+  }, []);
 
-  const getStatusText = (status: BookingStatus): string => {
+  const getStatusText = useCallback((status: BookingStatus): string => {
     switch (status) {
       case 'pending': return 'Pending';
       case 'accepted': return 'Accepted';
@@ -52,22 +52,26 @@ const OrdersList: React.FC<OrdersListProps> = ({
       case 'cancelled': return 'Cancelled';
       default: return 'Unknown';
     }
-  };
+  }, []);
 
-  const formatDate = (date: Date): string => {
+  const formatDate = useCallback((date: Date): string => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
+  }, []);
 
-  const renderOrderCard = (order: Booking) => {
+  const renderOrderCard = useCallback(({ item: order }: { item: Booking }) => {
     const isProcessing = processingOrder === order.id;
+    const statusColor = getStatusColor(order.status);
+    const statusText = getStatusText(order.status);
+    const formattedDate = order.isImmediate ? 'Immediate' : (order.scheduledFor ? formatDate(order.scheduledFor) : '');
+    const formattedDeliveredDate = order.deliveredAt ? formatDate(order.deliveredAt) : '';
     
     return (
-      <Card key={order.id} style={styles.orderCard}>
+      <Card style={styles.orderCard}>
         <View style={styles.orderHeader}>
           <View style={styles.orderInfo}>
             <Typography variant="body" style={styles.customerName}>
@@ -77,9 +81,9 @@ const OrdersList: React.FC<OrdersListProps> = ({
               {order.customerPhone}
             </Typography>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
             <Typography variant="caption" style={styles.statusText}>
-              {getStatusText(order.status)}
+              {statusText}
             </Typography>
           </View>
         </View>
@@ -113,14 +117,14 @@ const OrdersList: React.FC<OrdersListProps> = ({
         </TouchableOpacity>
 
         <Typography variant="caption" style={styles.orderTime}>
-          {order.isImmediate ? 'Immediate' : `Scheduled: ${formatDate(order.scheduledFor!)}`}
+          {formattedDate ? `Scheduled: ${formattedDate}` : 'Immediate'}
         </Typography>
 
-        {order.status === 'delivered' && order.deliveredAt && (
+        {order.status === 'delivered' && formattedDeliveredDate && (
           <View style={styles.deliveredInfo}>
             <Ionicons name="checkmark-circle" size={16} color={UI_CONFIG.colors.success} />
             <Typography variant="caption" style={styles.deliveredText}>
-              Delivered: {formatDate(order.deliveredAt)}
+              Delivered: {formattedDeliveredDate}
             </Typography>
           </View>
         )}
@@ -157,9 +161,11 @@ const OrdersList: React.FC<OrdersListProps> = ({
         )}
       </Card>
     );
-  };
+  }, [activeTab, processingOrder, getStatusColor, getStatusText, formatDate, onAcceptOrder, onStartDelivery, onCollectPayment]);
 
-  const renderErrorState = () => (
+  const keyExtractor = useCallback((item: Booking) => item.id, []);
+
+  const renderErrorState = useCallback(() => (
     <Card style={styles.errorCard}>
       <Ionicons 
         name="alert-circle" 
@@ -189,9 +195,9 @@ const OrdersList: React.FC<OrdersListProps> = ({
         </Typography>
       </TouchableOpacity>
     </Card>
-  );
+  ), [error, onDismissError, onRefresh]);
 
-  const renderEmptyState = () => (
+  const renderEmptyState = useCallback(() => (
     <Card style={styles.emptyCard}>
       <Ionicons 
         name={activeTab === 'available' ? 'list-outline' : 'checkmark-circle-outline'} 
@@ -209,25 +215,30 @@ const OrdersList: React.FC<OrdersListProps> = ({
         {activeTab === 'completed' && 'Your completed deliveries will appear here'}
       </Typography>
     </Card>
-  );
+  ), [activeTab]);
+
+  const ListEmptyComponent = useMemo(() => {
+    if (error) return renderErrorState();
+    return renderEmptyState();
+  }, [error, renderErrorState, renderEmptyState]);
 
   return (
-    <ScrollView 
+    <FlatList
+      data={orders}
+      keyExtractor={keyExtractor}
+      renderItem={renderOrderCard}
       style={styles.scrollView}
+      contentContainerStyle={styles.ordersContainer}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
-    >
-      <View style={styles.ordersContainer}>
-        {error ? (
-          renderErrorState()
-        ) : orders.length > 0 ? (
-          orders.map(renderOrderCard)
-        ) : (
-          renderEmptyState()
-        )}
-      </View>
-    </ScrollView>
+      ListEmptyComponent={ListEmptyComponent}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={10}
+      updateCellsBatchingPeriod={50}
+      initialNumToRender={10}
+      windowSize={10}
+    />
   );
 };
 
@@ -386,5 +397,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export default OrdersList;
+export default memo(OrdersList);
 

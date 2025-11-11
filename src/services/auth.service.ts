@@ -6,17 +6,73 @@ import { securityLogger, SecurityEventType, SecuritySeverity } from '../utils/se
 import { rateLimiter } from '../utils/rateLimiter';
 import { SanitizationUtils } from '../utils/sanitization';
 
+/**
+ * Result of authentication operations
+ */
 export interface AuthResult {
+  /** Whether the operation was successful */
   success: boolean;
+  /** Authenticated user data (if successful) */
   user?: AppUser;
+  /** Error message (if failed) */
   error?: string;
+  /** Available roles for user (if multiple roles exist) */
   availableRoles?: UserRole[];
+  /** Whether user needs to select a role */
   requiresRoleSelection?: boolean;
 }
 
+/**
+ * Authentication Service
+ * 
+ * Handles user authentication, registration, and session management with Supabase Auth.
+ * Includes security features like rate limiting, input sanitization, and brute force protection.
+ * 
+ * @example
+ * ```typescript
+ * // Register a new user
+ * const result = await AuthService.register('9876543210', 'password123', 'John Doe', 'customer');
+ * if (result.success) {
+ *   console.log('User registered:', result.user);
+ * }
+ * 
+ * // Login
+ * const loginResult = await AuthService.login('9876543210', 'password123');
+ * if (loginResult.success && loginResult.user) {
+ *   // User logged in successfully
+ * }
+ * ```
+ */
 export class AuthService {
   /**
-   * Register a new user with Supabase Auth and create profile in users table
+   * Register a new user with Supabase Auth and create profile in users table.
+   * 
+   * Includes input sanitization, rate limiting, and security event logging.
+   * Prevents driver self-registration (only admin-created drivers allowed).
+   * 
+   * @param phone - User's phone number (will be sanitized automatically)
+   * @param password - User's password (will be hashed by Supabase)
+   * @param name - User's name (will be sanitized automatically)
+   * @param role - User role ('customer' | 'driver' | 'admin')
+   * @param additionalData - Optional additional user data
+   * @returns Promise resolving to AuthResult with success status and user data
+   * @throws Never throws - returns error in AuthResult.error instead
+   * 
+   * @example
+   * ```typescript
+   * const result = await AuthService.register(
+   *   '9876543210',
+   *   'password123',
+   *   'John Doe',
+   *   'customer'
+   * );
+   * 
+   * if (result.success) {
+   *   console.log('User registered:', result.user);
+   * } else {
+   *   console.error('Registration failed:', result.error);
+   * }
+   * ```
    */
   static async register(
     phone: string,
@@ -166,7 +222,29 @@ export class AuthService {
   }
 
   /**
-   * Login with phone and password using Supabase Auth
+   * Login with phone and password using Supabase Auth.
+   * 
+   * Supports multi-role users - if user has multiple roles, returns requiresRoleSelection flag.
+   * Includes rate limiting, brute force detection, and security event logging.
+   * 
+   * @param phone - User's phone number (will be sanitized automatically)
+   * @param password - User's password
+   * @returns Promise resolving to AuthResult with success status and user data
+   * @throws Never throws - returns error in AuthResult.error instead
+   * 
+   * @example
+   * ```typescript
+   * const result = await AuthService.login('9876543210', 'password123');
+   * 
+   * if (result.success && result.user) {
+   *   // User logged in successfully
+   * } else if (result.requiresRoleSelection) {
+   *   // User has multiple roles, need to select
+   *   const roles = result.availableRoles || [];
+   * } else {
+   *   console.error('Login failed:', result.error);
+   * }
+   * ```
    */
   static async login(phone: string, password: string): Promise<AuthResult> {
     try {
@@ -299,8 +377,29 @@ export class AuthService {
   }
 
   /**
-   * Login with phone and selected role (used after role selection)
-   * Note: This assumes the user has already authenticated via login()
+   * Login with phone and selected role (used after role selection).
+   * 
+   * This method should be called after login() when user has multiple roles.
+   * It verifies the user is already authenticated and selects the specific role.
+   * 
+   * @param phone - User's phone number
+   * @param role - Selected user role
+   * @returns Promise resolving to AuthResult with success status and user data
+   * @throws Never throws - returns error in AuthResult.error instead
+   * 
+   * @example
+   * ```typescript
+   * // First login
+   * const loginResult = await AuthService.login('9876543210', 'password123');
+   * 
+   * if (loginResult.requiresRoleSelection) {
+   *   // User selected 'customer' role
+   *   const roleResult = await AuthService.loginWithRole('9876543210', 'customer');
+   *   if (roleResult.success && roleResult.user) {
+   *     // User logged in as customer
+   *   }
+   * }
+   * ```
    */
   static async loginWithRole(phone: string, role: UserRole): Promise<AuthResult> {
     try {
@@ -349,7 +448,17 @@ export class AuthService {
   }
 
   /**
-   * Logout from Supabase Auth
+   * Logout from Supabase Auth.
+   * 
+   * Signs out the current user and logs the logout event for security monitoring.
+   * 
+   * @returns Promise that resolves when logout is complete
+   * @throws Error if logout fails
+   * 
+   * @example
+   * ```typescript
+   * await AuthService.logout();
+   * ```
    */
   static async logout(): Promise<void> {
     try {
@@ -377,7 +486,22 @@ export class AuthService {
   }
 
   /**
-   * Get current authenticated user data from Supabase
+   * Get current authenticated user data from Supabase.
+   * 
+   * Fetches the user profile from the users table based on the current Supabase Auth session.
+   * 
+   * @returns Promise resolving to User object if authenticated, null otherwise
+   * @throws Never throws - returns null on error
+   * 
+   * @example
+   * ```typescript
+   * const user = await AuthService.getCurrentUserData();
+   * if (user) {
+   *   console.log('Current user:', user);
+   * } else {
+   *   console.log('No user logged in');
+   * }
+   * ```
    */
   static async getCurrentUserData(): Promise<AppUser | null> {
     try {
@@ -405,7 +529,22 @@ export class AuthService {
   }
 
   /**
-   * Update user profile in Supabase users table
+   * Update user profile in Supabase users table.
+   * 
+   * Updates user profile data. Note: role and auth_id cannot be updated via this method.
+   * 
+   * @param uid - User ID to update
+   * @param updates - Partial user object with fields to update
+   * @returns Promise that resolves when update is complete
+   * @throws Error if user not found or update fails
+   * 
+   * @example
+   * ```typescript
+   * await AuthService.updateUserProfile('user-123', {
+   *   name: 'John Updated',
+   *   email: 'john@example.com'
+   * });
+   * ```
    */
   static async updateUserProfile(uid: string, updates: Partial<AppUser>): Promise<void> {
     try {
@@ -443,7 +582,22 @@ export class AuthService {
   }
 
   /**
-   * Initialize app - check Supabase connection and restore session
+   * Initialize app - check Supabase connection and restore session.
+   * 
+   * Should be called on app startup to restore any existing authentication session.
+   * Checks for existing Supabase Auth session and restores it if available.
+   * 
+   * @returns Promise that resolves when initialization is complete
+   * @throws Never throws - errors are logged to console
+   * 
+   * @example
+   * ```typescript
+   * await AuthService.initializeApp();
+   * const user = await AuthService.getCurrentUserData();
+   * if (user) {
+   *   // User session was restored
+   * }
+   * ```
    */
   static async initializeApp(): Promise<void> {
     try {

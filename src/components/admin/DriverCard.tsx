@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -24,7 +24,20 @@ const DriverCard: React.FC<DriverCardProps> = ({
   onEdit,
   onApprove,
   onReject,
-}) => (
+}) => {
+  const formattedLicenseExpiry = useMemo(() => {
+    return driver.licenseExpiry ? new Date(driver.licenseExpiry).toLocaleDateString() : 'Expiry not provided';
+  }, [driver.licenseExpiry]);
+  
+  const formattedEarnings = useMemo(() => {
+    return PricingUtils.formatPrice((driver as any).totalEarnings || 0);
+  }, [(driver as any).totalEarnings]);
+
+  const emergencyContact = useMemo(() => {
+    return driver.emergencyContactName ? `${driver.emergencyContactName} - ${driver.emergencyContactPhone}` : 'Emergency contact not provided';
+  }, [driver.emergencyContactName, driver.emergencyContactPhone]);
+
+  return (
   <Card style={styles.driverCard}>
     <TouchableOpacity 
       style={styles.driverCardContent}
@@ -62,19 +75,19 @@ const DriverCard: React.FC<DriverCardProps> = ({
         <View style={styles.detailRow}>
           <Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
           <Typography variant="caption" style={styles.detailText}>
-            {driver.licenseExpiry ? new Date(driver.licenseExpiry).toLocaleDateString() : 'Expiry not provided'}
+            {formattedLicenseExpiry}
           </Typography>
         </View>
         <View style={styles.detailRow}>
           <Ionicons name="call-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
           <Typography variant="caption" style={styles.detailText}>
-            {driver.emergencyContactName ? `${driver.emergencyContactName} - ${driver.emergencyContactPhone}` : 'Emergency contact not provided'}
+            {emergencyContact}
           </Typography>
         </View>
         <View style={styles.detailRow}>
           <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
           <Typography variant="caption" style={styles.detailText}>
-            {PricingUtils.formatPrice((driver as any).totalEarnings || 0)} earned
+            {formattedEarnings} earned
           </Typography>
         </View>
       </View>
@@ -105,7 +118,10 @@ const DriverCard: React.FC<DriverCardProps> = ({
       </View>
     </TouchableOpacity>
   </Card>
-);
+  );
+};
+
+export default memo(DriverCard);
 
 const styles = StyleSheet.create({
   driverCard: {
@@ -182,6 +198,4 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
 });
-
-export default DriverCard;
 
