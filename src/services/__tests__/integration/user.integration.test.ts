@@ -2,23 +2,29 @@
  * Integration tests for User Service with Supabase
  * 
  * NOTE: These tests require a test Supabase instance.
- * Set SUPABASE_TEST_URL and SUPABASE_TEST_KEY environment variables.
+ * Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY environment variables.
  * 
  * To run integration tests:
  * npm test -- --testPathPattern=integration
  */
+
+// Unmock Supabase to use real client for integration tests
+jest.unmock('../../supabase');
 
 import { UserService } from '../../user.service';
 import { AuthService } from '../../auth.service';
 import { UserRole } from '../../../types';
 
 // Skip integration tests if test credentials are not provided
-const shouldRunIntegrationTests = process.env.SUPABASE_TEST_URL && process.env.SUPABASE_TEST_KEY;
+const shouldRunIntegrationTests = process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// Increase timeout for integration tests (real API calls take longer)
+jest.setTimeout(30000); // 30 seconds
 
 describe('UserService Integration Tests', () => {
   beforeAll(() => {
     if (!shouldRunIntegrationTests) {
-      console.warn('Skipping integration tests - SUPABASE_TEST_URL and SUPABASE_TEST_KEY not set');
+      console.warn('Skipping integration tests - EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY not set');
     }
   });
 
@@ -36,12 +42,27 @@ describe('UserService Integration Tests', () => {
     it('should get all users', async () => {
       // Create a test user first
       const timestamp = Date.now().toString().slice(-5);
-      await AuthService.register(
+      const registerResult = await AuthService.register(
         `98765${timestamp}`,
         'TestPassword123',
         'Test User',
         'customer'
       );
+      
+      // Login as admin to access all users (getAllUsers requires admin role)
+      // For testing, we'll create an admin user
+      const adminTimestamp = Date.now().toString().slice(-5);
+      const adminResult = await AuthService.register(
+        `98799${adminTimestamp}`,
+        'TestPassword123',
+        'Test Admin',
+        'admin'
+      );
+      
+      if (adminResult.success) {
+        await AuthService.login(`98799${adminTimestamp}`, 'TestPassword123');
+      }
+      
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Get all users
@@ -103,13 +124,15 @@ describe('UserService Integration Tests', () => {
         const user = await UserService.getUserById(registerResult.user.uid);
 
         expect(user).toBeDefined();
-        expect(user?.id).toBe(registerResult.user.uid);
+        expect(user?.uid).toBe(registerResult.user.uid);
         expect(user?.phone).toBe(`98768${timestamp}`);
       }
     });
 
     it('should return null for non-existent user', async () => {
-      const user = await UserService.getUserById('non-existent-id-12345');
+      // Use a valid UUID format for non-existent ID test
+      const nonExistentId = '00000000-0000-4000-8000-000000000000';
+      const user = await UserService.getUserById(nonExistentId);
 
       expect(user).toBeNull();
     });
@@ -128,12 +151,14 @@ describe('UserService Integration Tests', () => {
 
       if (registerResult.success && registerResult.user) {
         // Update user
-        const updatedUser = await UserService.updateUser(registerResult.user.uid, {
+        await UserService.updateUser(registerResult.user.uid, {
           name: 'Updated Test User',
         });
 
+        // Fetch updated user to verify changes
+        const updatedUser = await UserService.getUserById(registerResult.user.uid);
         expect(updatedUser).toBeDefined();
-        expect(updatedUser.name).toBe('Updated Test User');
+        expect(updatedUser?.name).toBe('Updated Test User');
       }
     });
 

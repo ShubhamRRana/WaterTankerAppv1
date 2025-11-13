@@ -57,6 +57,13 @@ export class UserService {
    */
   static async getUserById(userId: string): Promise<User | null> {
     try {
+      // Validate UUID format before querying
+      const { ValidationUtils } = require('../utils/validation');
+      const uuidValidation = ValidationUtils.validateUUID(userId);
+      if (!uuidValidation.isValid) {
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -66,6 +73,10 @@ export class UserService {
       if (error) {
         if (error.code === 'PGRST116') {
           // No rows returned
+          return null;
+        }
+        // Handle invalid UUID syntax errors
+        if (error.message && error.message.includes('invalid input syntax for type uuid')) {
           return null;
         }
         throw new Error(error.message);

@@ -34,8 +34,8 @@ describe('AuthService', () => {
       };
 
       // Mock: First call checks for existing users (returns empty array)
-      // Second call inserts user (returns no data, just error check)
-      // Third call fetches created user (returns profile)
+      // Second call checks existing user by auth_id (returns null - user doesn't exist yet)
+      // Third call inserts user (returns inserted data)
       let callCount = 0;
       mockSupabase.from.mockImplementation(() => {
         if (callCount === 0) {
@@ -60,20 +60,33 @@ describe('AuthService', () => {
             })
           } as any;
         } else if (callCount === 1) {
-          // Second call: insert user
+          // Second call: check existing user by auth_id (maybeSingle)
           callCount++;
           return {
-            insert: jest.fn().mockResolvedValue({
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            maybeSingle: jest.fn().mockResolvedValue({
               data: null,
               error: null
             })
           } as any;
+        } else if (callCount === 2) {
+          // Third call: insert user with select and single
+          callCount++;
+          return {
+            insert: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockProfile,
+              error: null
+            })
+          } as any;
         } else {
-          // Third call: fetch created user (auth_id)
+          // Any additional calls: fetch created user (auth_id) - fallback
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
-            single: jest.fn().mockResolvedValue({
+            maybeSingle: jest.fn().mockResolvedValue({
               data: mockProfile,
               error: null
             })
@@ -83,6 +96,11 @@ describe('AuthService', () => {
 
       (mockSupabase.auth.signUp as jest.Mock).mockResolvedValue({
         data: { user: mockUser as any, session: null },
+        error: null
+      });
+
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValue({
+        data: { session: null },
         error: null
       });
 
@@ -118,8 +136,8 @@ describe('AuthService', () => {
       };
 
       // Mock: First call checks for existing users (returns empty array)
-      // Second call inserts user (returns no data, just error check)
-      // Third call fetches created user (returns profile)
+      // Second call checks existing user by auth_id (returns null - user doesn't exist yet)
+      // Third call inserts user (returns inserted data)
       let callCount = 0;
       mockSupabase.from.mockImplementation(() => {
         if (callCount === 0) {
@@ -144,20 +162,33 @@ describe('AuthService', () => {
             })
           } as any;
         } else if (callCount === 1) {
-          // Second call: insert user
+          // Second call: check existing user by auth_id (maybeSingle)
           callCount++;
           return {
-            insert: jest.fn().mockResolvedValue({
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            maybeSingle: jest.fn().mockResolvedValue({
               data: null,
               error: null
             })
           } as any;
+        } else if (callCount === 2) {
+          // Third call: insert user with select and single
+          callCount++;
+          return {
+            insert: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockProfile,
+              error: null
+            })
+          } as any;
         } else {
-          // Third call: fetch created user
+          // Any additional calls: fetch created user (auth_id) - fallback
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
-            single: jest.fn().mockResolvedValue({
+            maybeSingle: jest.fn().mockResolvedValue({
               data: mockProfile,
               error: null
             })
@@ -167,6 +198,11 @@ describe('AuthService', () => {
 
       (mockSupabase.auth.signUp as jest.Mock).mockResolvedValue({
         data: { user: mockUser as any, session: null },
+        error: null
+      });
+
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValue({
+        data: { session: null },
         error: null
       });
 
@@ -210,8 +246,8 @@ describe('AuthService', () => {
       };
 
       // Mock: First call checks for existing users (returns empty array)
-      // Second call inserts user (returns no data, just error check)
-      // Third call fetches created user (returns profile)
+      // Second call checks existing user by auth_id (returns null - user doesn't exist yet)
+      // Third call inserts user (returns inserted data)
       let callCount = 0;
       mockSupabase.from.mockImplementation(() => {
         if (callCount === 0) {
@@ -236,20 +272,33 @@ describe('AuthService', () => {
             })
           } as any;
         } else if (callCount === 1) {
-          // Second call: insert user
+          // Second call: check existing user by auth_id (maybeSingle)
           callCount++;
           return {
-            insert: jest.fn().mockResolvedValue({
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            maybeSingle: jest.fn().mockResolvedValue({
               data: null,
               error: null
             })
           } as any;
+        } else if (callCount === 2) {
+          // Third call: insert user with select and single
+          callCount++;
+          return {
+            insert: jest.fn().mockReturnThis(),
+            select: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({
+              data: mockProfile,
+              error: null
+            })
+          } as any;
         } else {
-          // Third call: fetch created user
+          // Any additional calls: fetch created user (auth_id) - fallback
           return {
             select: jest.fn().mockReturnThis(),
             eq: jest.fn().mockReturnThis(),
-            single: jest.fn().mockResolvedValue({
+            maybeSingle: jest.fn().mockResolvedValue({
               data: mockProfile,
               error: null
             })
@@ -259,6 +308,11 @@ describe('AuthService', () => {
 
       (mockSupabase.auth.signUp as jest.Mock).mockResolvedValue({
         data: { user: mockUser as any, session: null },
+        error: null
+      });
+
+      (mockSupabase.auth.getSession as jest.Mock).mockResolvedValue({
+        data: { session: null },
         error: null
       });
 

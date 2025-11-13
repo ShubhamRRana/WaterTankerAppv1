@@ -157,6 +157,13 @@ export class BookingService {
    */
   static async getBookingById(bookingId: string): Promise<Booking | null> {
     try {
+      // Validate UUID format before querying
+      const { ValidationUtils } = require('../utils/validation');
+      const uuidValidation = ValidationUtils.validateUUID(bookingId);
+      if (!uuidValidation.isValid) {
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
@@ -166,6 +173,10 @@ export class BookingService {
       if (error) {
         if (error.code === 'PGRST116') {
           // No rows returned
+          return null;
+        }
+        // Handle invalid UUID syntax errors
+        if (error.message && error.message.includes('invalid input syntax for type uuid')) {
           return null;
         }
         throw new Error(error.message);
@@ -193,7 +204,7 @@ export class BookingService {
         table: 'bookings',
         filter: `id=eq.${bookingId}`,
         event: '*',
-        onError: (error) => {
+        onError: (error: Error) => {
           console.error(`Error in booking subscription for ${bookingId}:`, error);
         },
       },

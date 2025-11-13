@@ -2,22 +2,28 @@
  * Integration tests for Auth Service with Supabase
  * 
  * NOTE: These tests require a test Supabase instance.
- * Set SUPABASE_TEST_URL and SUPABASE_TEST_KEY environment variables.
+ * Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY environment variables.
  * 
  * To run integration tests:
  * npm test -- --testPathPatterns=integration
  */
 
+// Unmock Supabase to use real client for integration tests
+jest.unmock('../../supabase');
+
 import { AuthService } from '../../auth.service';
 import { supabase } from '../../supabase';
 
 // Skip integration tests if test credentials are not provided
-const shouldRunIntegrationTests = process.env.SUPABASE_TEST_URL && process.env.SUPABASE_TEST_KEY;
+const shouldRunIntegrationTests = process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// Increase timeout for integration tests (real API calls take longer)
+jest.setTimeout(30000); // 30 seconds
 
 describe('AuthService Integration Tests', () => {
   beforeAll(() => {
     if (!shouldRunIntegrationTests) {
-      console.warn('Skipping integration tests - SUPABASE_TEST_URL and SUPABASE_TEST_KEY not set');
+      console.warn('Skipping integration tests - EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY not set');
     }
   });
 
@@ -52,6 +58,11 @@ describe('AuthService Integration Tests', () => {
       expect(result.user?.phone).toBe(testPhone);
       expect(result.user?.name).toBe(testName);
       expect(result.user?.role).toBe('customer');
+      
+      // Login after registration to establish session
+      if (result.success) {
+        await AuthService.login(testPhone, 'TestPassword123');
+      }
     });
 
     it('should login with registered user', async () => {
@@ -69,7 +80,7 @@ describe('AuthService Integration Tests', () => {
       expect(registerResult.success).toBe(true);
 
       // Wait a bit for Supabase to process
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Then try to login
       const loginResult = await AuthService.login(testPhone, password);
@@ -108,9 +119,14 @@ describe('AuthService Integration Tests', () => {
       );
 
       expect(result1.success).toBe(true);
+      
+      // Login after first registration
+      if (result1.success) {
+        await AuthService.login(testPhone, 'Password123');
+      }
 
       // Wait for Supabase
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Try to register again with same phone and role
       const result2 = await AuthService.register(

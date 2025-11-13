@@ -63,14 +63,14 @@ export class SubscriptionManager {
     const channel = supabase
       .channel(channelName)
       .on(
-        'postgres_changes',
+        'postgres_changes' as any,
         {
           event,
           schema,
           table,
           filter,
-        },
-        async (payload) => {
+        } as any,
+        async (payload: any) => {
           try {
             await callback(payload as T);
           } catch (error) {

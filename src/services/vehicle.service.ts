@@ -54,6 +54,13 @@ export class VehicleService {
    */
   static async getVehicleById(vehicleId: string): Promise<Vehicle | null> {
     try {
+      // Validate UUID format before querying
+      const { ValidationUtils } = require('../utils/validation');
+      const uuidValidation = ValidationUtils.validateUUID(vehicleId);
+      if (!uuidValidation.isValid) {
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('vehicles')
         .select('*')
@@ -63,6 +70,10 @@ export class VehicleService {
       if (error) {
         if (error.code === 'PGRST116') {
           // No rows returned
+          return null;
+        }
+        // Handle invalid UUID syntax errors
+        if (error.message && error.message.includes('invalid input syntax for type uuid')) {
           return null;
         }
         throw new Error(error.message);

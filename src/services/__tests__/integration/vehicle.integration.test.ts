@@ -2,25 +2,31 @@
  * Integration tests for Vehicle Service with Supabase
  * 
  * NOTE: These tests require a test Supabase instance.
- * Set SUPABASE_TEST_URL and SUPABASE_TEST_KEY environment variables.
+ * Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY environment variables.
  * 
  * To run integration tests:
  * npm test -- --testPathPattern=integration
  */
+
+// Unmock Supabase to use real client for integration tests
+jest.unmock('../../supabase');
 
 import { VehicleService } from '../../vehicle.service';
 import { AuthService } from '../../auth.service';
 import { Vehicle } from '../../../types';
 
 // Skip integration tests if test credentials are not provided
-const shouldRunIntegrationTests = process.env.SUPABASE_TEST_URL && process.env.SUPABASE_TEST_KEY;
+const shouldRunIntegrationTests = process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// Increase timeout for integration tests (real API calls take longer)
+jest.setTimeout(30000); // 30 seconds
 
 describe('VehicleService Integration Tests', () => {
   let testAgencyId: string;
 
   beforeAll(async () => {
     if (!shouldRunIntegrationTests) {
-      console.warn('Skipping integration tests - SUPABASE_TEST_URL and SUPABASE_TEST_KEY not set');
+      console.warn('Skipping integration tests - EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY not set');
       return;
     }
 
@@ -35,6 +41,9 @@ describe('VehicleService Integration Tests', () => {
 
     if (agencyResult.success && agencyResult.user) {
       testAgencyId = agencyResult.user.uid;
+      
+      // Login to establish authenticated session for RLS policies
+      await AuthService.login(`98765${timestamp}`, 'TestPassword123');
     }
 
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -137,7 +146,9 @@ describe('VehicleService Integration Tests', () => {
     });
 
     it('should return null for non-existent vehicle', async () => {
-      const vehicle = await VehicleService.getVehicleById('non-existent-id-12345');
+      // Use a valid UUID format for non-existent ID test
+      const nonExistentId = '00000000-0000-4000-8000-000000000000';
+      const vehicle = await VehicleService.getVehicleById(nonExistentId);
 
       expect(vehicle).toBeNull();
     });
@@ -157,14 +168,16 @@ describe('VehicleService Integration Tests', () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Update vehicle
-      const updatedVehicle = await VehicleService.updateVehicle(createdVehicle.id, {
+      await VehicleService.updateVehicle(createdVehicle.id, {
         vehicleCapacity: 6000,
         amount: 6000,
       });
 
+      // Fetch updated vehicle to verify changes
+      const updatedVehicle = await VehicleService.getVehicleById(createdVehicle.id);
       expect(updatedVehicle).toBeDefined();
-      expect(updatedVehicle.vehicleCapacity).toBe(6000);
-      expect(updatedVehicle.amount).toBe(6000);
+      expect(updatedVehicle?.vehicleCapacity).toBe(6000);
+      expect(updatedVehicle?.amount).toBe(6000);
     });
 
     it('should delete vehicle', async () => {

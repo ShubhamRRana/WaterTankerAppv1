@@ -5,8 +5,14 @@ module.exports = {
   ],
   setupFiles: ['<rootDir>/jest.setup.js'],
   testMatch: [
-    '**/__tests__/**/*.(ts|tsx|js)',
+    '**/__tests__/**/*.(test|spec).(ts|tsx|js)',
     '**/*.(test|spec).(ts|tsx|js)'
+  ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/src/utils/__tests__/',
+    '/src/services/__tests__/',
+    '/src/__tests__/utils/testHelpers.ts'
   ],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

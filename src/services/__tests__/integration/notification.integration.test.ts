@@ -2,7 +2,7 @@
  * Integration tests for Notification Service with Supabase
  * 
  * NOTE: These tests require a test Supabase instance.
- * Set SUPABASE_TEST_URL and SUPABASE_TEST_KEY environment variables.
+ * Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY environment variables.
  * 
  * NOTE: Push notification tests may not work in test environment.
  * These tests focus on database operations (creating, fetching notifications).
@@ -11,12 +11,18 @@
  * npm test -- --testPathPattern=integration
  */
 
+// Unmock Supabase to use real client for integration tests
+jest.unmock('../../supabase');
+
 import { NotificationService } from '../../notification.service';
 import { AuthService } from '../../auth.service';
 import { Notification } from '../../../types';
 
 // Skip integration tests if test credentials are not provided
-const shouldRunIntegrationTests = process.env.SUPABASE_TEST_URL && process.env.SUPABASE_TEST_KEY;
+const shouldRunIntegrationTests = process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// Increase timeout for integration tests (real API calls take longer)
+jest.setTimeout(30000); // 30 seconds
 
 // Mock expo-notifications for testing
 jest.mock('expo-notifications', () => ({
@@ -24,6 +30,7 @@ jest.mock('expo-notifications', () => ({
   requestPermissionsAsync: jest.fn().mockResolvedValue({ status: 'granted' }),
   getExpoPushTokenAsync: jest.fn().mockResolvedValue({ data: 'test-push-token' }),
   setNotificationChannelAsync: jest.fn().mockResolvedValue(undefined),
+  setNotificationHandler: jest.fn(),
   scheduleNotificationAsync: jest.fn().mockResolvedValue('test-notification-id'),
   cancelScheduledNotificationAsync: jest.fn().mockResolvedValue(undefined),
   getAllScheduledNotificationsAsync: jest.fn().mockResolvedValue([]),
@@ -36,7 +43,7 @@ describe('NotificationService Integration Tests', () => {
 
   beforeAll(async () => {
     if (!shouldRunIntegrationTests) {
-      console.warn('Skipping integration tests - SUPABASE_TEST_URL and SUPABASE_TEST_KEY not set');
+      console.warn('Skipping integration tests - EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY not set');
       return;
     }
 
@@ -51,6 +58,9 @@ describe('NotificationService Integration Tests', () => {
 
     if (userResult.success && userResult.user) {
       testUserId = userResult.user.uid;
+      
+      // Login to establish authenticated session for RLS policies
+      await AuthService.login(`98765${timestamp}`, 'TestPassword123');
     }
 
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -73,7 +83,7 @@ describe('NotificationService Integration Tests', () => {
         'Test Notification',
         'This is a test notification',
         'booking',
-        'test-booking-id'
+        undefined // Don't use invalid UUID, use undefined instead
       );
 
       expect(notification).toBeDefined();

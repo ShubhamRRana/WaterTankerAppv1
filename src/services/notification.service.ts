@@ -11,6 +11,13 @@ import { supabase } from './supabase';
 import { SubscriptionManager } from '../utils/subscriptionManager';
 import { Notification } from '../types';
 
+// Type for Supabase Realtime payload
+interface RealtimePayload<T = any> {
+  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
+  new?: T;
+  old?: T;
+}
+
 // Check if device (for simulator/emulator detection)
 const isDevice = Platform.OS !== 'web' && !__DEV__;
 
@@ -20,6 +27,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -302,7 +311,16 @@ export class NotificationService {
           console.error(`Error in notification subscription for ${userId}:`, error);
         },
       },
-      async (payload) => {
+      async (payload: RealtimePayload<{
+        id: string;
+        user_id: string;
+        title: string;
+        message: string;
+        type: 'booking' | 'payment' | 'system';
+        is_read: boolean;
+        related_booking_id?: string;
+        created_at: string;
+      }>) => {
         try {
           if (payload.eventType === 'INSERT' && payload.new) {
             const notification: Notification = {

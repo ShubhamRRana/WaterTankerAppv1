@@ -2,18 +2,24 @@
  * Integration tests for Booking Service with Supabase
  * 
  * NOTE: These tests require a test Supabase instance.
- * Set SUPABASE_TEST_URL and SUPABASE_TEST_KEY environment variables.
+ * Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY environment variables.
  * 
  * To run integration tests:
  * npm test -- --testPathPattern=integration
  */
+
+// Unmock Supabase to use real client for integration tests
+jest.unmock('../../supabase');
 
 import { BookingService } from '../../booking.service';
 import { AuthService } from '../../auth.service';
 import { Booking, BookingStatus } from '../../../types';
 
 // Skip integration tests if test credentials are not provided
-const shouldRunIntegrationTests = process.env.SUPABASE_TEST_URL && process.env.SUPABASE_TEST_KEY;
+const shouldRunIntegrationTests = process.env.EXPO_PUBLIC_SUPABASE_URL && process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// Increase timeout for integration tests (real API calls take longer)
+jest.setTimeout(30000); // 30 seconds
 
 describe('BookingService Integration Tests', () => {
   let testCustomerId: string;
@@ -22,7 +28,7 @@ describe('BookingService Integration Tests', () => {
 
   beforeAll(async () => {
     if (!shouldRunIntegrationTests) {
-      console.warn('Skipping integration tests - SUPABASE_TEST_URL and SUPABASE_TEST_KEY not set');
+      console.warn('Skipping integration tests - EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY not set');
       return;
     }
 
@@ -38,6 +44,8 @@ describe('BookingService Integration Tests', () => {
     );
     if (customerResult.success && customerResult.user) {
       testCustomerId = customerResult.user.uid;
+      // Login as customer to establish authenticated session for RLS policies
+      await AuthService.login(`98765${timestamp}`, 'TestPassword123');
     }
 
     // Create agency
@@ -49,9 +57,12 @@ describe('BookingService Integration Tests', () => {
     );
     if (agencyResult.success && agencyResult.user) {
       testAgencyId = agencyResult.user.uid;
+      // Login as agency/admin to establish authenticated session for RLS policies
+      await AuthService.login(`98766${timestamp}`, 'TestPassword123');
     }
 
-    // Create driver
+    // Create driver (note: driver registration may fail due to business logic)
+    // For testing, we'll try to register but handle failure gracefully
     const driverResult = await AuthService.register(
       `98767${timestamp}`,
       'TestPassword123',
@@ -60,6 +71,8 @@ describe('BookingService Integration Tests', () => {
     );
     if (driverResult.success && driverResult.user) {
       testDriverId = driverResult.user.uid;
+      // Login as driver to establish authenticated session for RLS policies
+      await AuthService.login(`98767${timestamp}`, 'TestPassword123');
     }
 
     // Wait for Supabase to process
@@ -84,7 +97,6 @@ describe('BookingService Integration Tests', () => {
         customerPhone: '9876500000',
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
-        agencyPhone: '9876600000',
         tankerSize: 1000,
         quantity: 1,
         basePrice: 200,
@@ -121,7 +133,6 @@ describe('BookingService Integration Tests', () => {
         customerPhone: '9876500000',
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
-        agencyPhone: '9876600000',
         tankerSize: 1000,
         quantity: 1,
         basePrice: 200,
@@ -163,7 +174,6 @@ describe('BookingService Integration Tests', () => {
         customerPhone: '9876500000',
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
-        agencyPhone: '9876600000',
         tankerSize: 1000,
         quantity: 1,
         basePrice: 200,
@@ -207,7 +217,6 @@ describe('BookingService Integration Tests', () => {
         customerPhone: '9876500000',
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
-        agencyPhone: '9876600000',
         tankerSize: 1000,
         quantity: 1,
         basePrice: 200,
@@ -259,7 +268,6 @@ describe('BookingService Integration Tests', () => {
         customerPhone: '9876500000',
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
-        agencyPhone: '9876600000',
         tankerSize: 1000,
         quantity: 1,
         basePrice: 200,
@@ -304,7 +312,6 @@ describe('BookingService Integration Tests', () => {
         customerPhone: '9876500000',
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
-        agencyPhone: '9876600000',
         tankerSize: 1000,
         quantity: 1,
         basePrice: 200,
