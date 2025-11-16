@@ -55,17 +55,8 @@ async function cleanupTestUsers() {
         console.log(`Deleting user: ${user.name} (${user.phone})...`);
         await UserService.deleteUser(user.uid);
         
-        // Also delete from auth.users if possible (requires service role key)
-        // Note: This might require admin privileges
-        try {
-          const { error: authError } = await supabase.auth.admin.deleteUser(user.uid);
-          if (authError) {
-            console.log(`  Warning: Could not delete auth user: ${authError.message}`);
-          }
-        } catch (error) {
-          // Ignore auth deletion errors - user might already be deleted or we don't have admin access
-          console.log(`  Note: Auth user deletion skipped (may require admin access)`);
-        }
+        // Note: Auth user deletion should be handled by your authentication system
+        // This script only deletes database records
         
         deletedCount++;
         console.log(`  ✓ Deleted successfully\n`);

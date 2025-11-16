@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { User, UserRole } from '../types/index';
 import { AuthService } from '../services/auth.service';
-import { supabase } from '../services/supabase';
 
 interface AuthState {
   user: User | null;
@@ -176,42 +175,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       unsubscribeAuth();
     }
 
-    // Subscribe to auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // User signed in or session refreshed - fetch user data
-          try {
-            const userData = await AuthService.getCurrentUserData();
-            set({
-              user: userData,
-              isAuthenticated: !!userData,
-            });
-          } catch (error) {
-            console.error('Failed to fetch user data on auth change:', error);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          // User signed out
-          set({
-            user: null,
-            isAuthenticated: false,
-          });
-        } else if (event === 'USER_UPDATED') {
-          // User data updated - refresh user data
-          try {
-            const userData = await AuthService.getCurrentUserData();
-            set({
-              user: userData,
-              isAuthenticated: !!userData,
-            });
-          } catch (error) {
-            console.error('Failed to fetch user data on user update:', error);
-          }
-        }
-      }
-    );
-
-    set({ unsubscribeAuth: () => subscription.unsubscribe() });
+    // Note: Implement auth state change subscription based on your authentication system
+    // This is a placeholder - subscribe to your auth system's state changes here
+    
+    set({ unsubscribeAuth: () => {} });
   },
 
   unsubscribeFromAuthChanges: () => {

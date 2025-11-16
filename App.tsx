@@ -5,7 +5,6 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { View, ActivityIndicator } from 'react-native';
-import { testSupabaseConfig } from './src/utils/testSupabaseConfig';
 import { UI_CONFIG } from './src/constants/config';
 
 // Lazy load navigators for code splitting
@@ -44,10 +43,6 @@ const App: React.FC = () => {
     // Initialize the auth system and load any existing user
     initializeAuth();
   }, [initializeAuth]);
-
-  useEffect(() => {
-    testSupabaseConfig();
-  }, []);
 
   // Don't render until fonts are loaded
   if (!fontsLoaded) {

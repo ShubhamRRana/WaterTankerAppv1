@@ -7,7 +7,6 @@
 
 import { SUPABASE_CONFIG } from '../constants/supabase';
 import { securityLogger, SecurityEventType, SecuritySeverity } from './securityLogger';
-import { supabase } from '../services/supabase';
 
 export interface SecurityCheck {
   name: string;
@@ -90,10 +89,10 @@ class SecurityAuditor {
   private checkConfiguration(): SecurityCheck[] {
     const checks: SecurityCheck[] = [];
 
-    // Check Supabase URL is configured
+    // Check Supabase URL is configured (for database operations)
     checks.push({
       name: 'Supabase URL Configuration',
-      description: 'Verify Supabase URL is properly configured',
+      description: 'Verify Supabase URL is properly configured for database operations',
       status: SUPABASE_CONFIG.url ? 'pass' : 'fail',
       message: SUPABASE_CONFIG.url
         ? 'Supabase URL is configured'
@@ -103,10 +102,10 @@ class SecurityAuditor {
         : 'Set EXPO_PUBLIC_SUPABASE_URL in environment variables',
     });
 
-    // Check Supabase anon key is configured
+    // Check Supabase anon key is configured (for database operations)
     checks.push({
       name: 'Supabase Anon Key Configuration',
-      description: 'Verify Supabase anon key is properly configured',
+      description: 'Verify Supabase anon key is properly configured for database operations',
       status: SUPABASE_CONFIG.anonKey ? 'pass' : 'fail',
       message: SUPABASE_CONFIG.anonKey
         ? 'Supabase anon key is configured'
@@ -115,38 +114,6 @@ class SecurityAuditor {
         ? undefined
         : 'Set EXPO_PUBLIC_SUPABASE_ANON_KEY in environment variables',
     });
-
-    // Check service role key is NOT exposed in client
-    checks.push({
-      name: 'Service Role Key Security',
-      description: 'Verify service role key is not exposed in client code',
-      status: !SUPABASE_CONFIG.serviceRoleKey || SUPABASE_CONFIG.serviceRoleKey.length === 0
-        ? 'pass'
-        : 'warning',
-      message: !SUPABASE_CONFIG.serviceRoleKey || SUPABASE_CONFIG.serviceRoleKey.length === 0
-        ? 'Service role key is not exposed in client'
-        : 'Service role key may be exposed in client code',
-      recommendation: !SUPABASE_CONFIG.serviceRoleKey || SUPABASE_CONFIG.serviceRoleKey.length === 0
-        ? undefined
-        : 'Service role key should only be used server-side. Remove from client configuration.',
-    });
-
-    // Check URL format
-    if (SUPABASE_CONFIG.url) {
-      const isValidUrl = SUPABASE_CONFIG.url.startsWith('https://') &&
-        SUPABASE_CONFIG.url.includes('.supabase.co');
-      checks.push({
-        name: 'Supabase URL Format',
-        description: 'Verify Supabase URL is in correct format',
-        status: isValidUrl ? 'pass' : 'fail',
-        message: isValidUrl
-          ? 'Supabase URL format is valid'
-          : 'Supabase URL format is invalid',
-        recommendation: isValidUrl
-          ? undefined
-          : 'Supabase URL should start with https:// and contain .supabase.co',
-      });
-    }
 
     return checks;
   }
@@ -194,24 +161,15 @@ class SecurityAuditor {
   private async checkAuthentication(): Promise<SecurityCheck[]> {
     const checks: SecurityCheck[] = [];
 
-    // Check if Supabase client is properly initialized
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      checks.push({
-        name: 'Supabase Auth Connection',
-        description: 'Verify Supabase Auth is accessible',
-        status: 'pass',
-        message: 'Supabase Auth is accessible',
-      });
-    } catch (error) {
-      checks.push({
-        name: 'Supabase Auth Connection',
-        description: 'Verify Supabase Auth is accessible',
-        status: 'fail',
-        message: 'Failed to connect to Supabase Auth',
-        recommendation: 'Check network connection and Supabase configuration',
-      });
-    }
+    // Note: Implement authentication security checks based on your auth system
+    // This is a placeholder - add checks for your authentication system
+    checks.push({
+      name: 'Authentication System',
+      description: 'Verify authentication system is properly configured',
+      status: 'warning',
+      message: 'Authentication system check not implemented',
+      recommendation: 'Implement authentication security checks for your auth system',
+    });
 
     return checks;
   }

@@ -5,7 +5,6 @@
  * Complements Supabase Auth session management with additional security features.
  */
 
-import { supabase } from '../services/supabase';
 import { securityLogger, SecurityEventType } from './securityLogger';
 
 export interface SessionInfo {
@@ -36,34 +35,19 @@ class SessionManager {
    * Initialize session manager
    */
   async initialize(): Promise<void> {
-    // Check for existing session
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session?.user) {
-      // Get user data from database
-      const { data: dbUser } = await supabase
-        .from('users')
-        .select('role')
-        .eq('auth_id', session.user.id)
-        .single();
-
-      if (dbUser) {
-        this.currentSession = {
-          userId: session.user.id,
-          userRole: dbUser.role,
-          createdAt: new Date(session.created_at ? parseInt(session.created_at) * 1000 : Date.now()),
-          lastActivity: new Date(),
-        };
-
-        // Start activity monitoring
-        this.startActivityMonitoring();
-      }
-    }
-
-    // Monitor Supabase auth changes
-    supabase.auth.onAuthStateChange((event, session) => {
-      this.handleAuthStateChange(event, session);
-    });
+    // Note: Implement session initialization based on your authentication system
+    // This is a placeholder - restore session from your storage mechanism
+    // Example:
+    // const session = await getSessionFromStorage();
+    // if (session) {
+    //   this.currentSession = {
+    //     userId: session.userId,
+    //     userRole: session.userRole,
+    //     createdAt: session.createdAt,
+    //     lastActivity: new Date(),
+    //   };
+    //   this.startActivityMonitoring();
+    // }
   }
 
   /**
@@ -83,12 +67,13 @@ class SessionManager {
       return false;
     }
 
-    // Check Supabase session
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      this.clearSession();
-      return false;
-    }
+    // Note: Implement session validation based on your authentication system
+    // This is a placeholder - check session validity from your auth system
+    // const isValid = await validateSession(this.currentSession.userId);
+    // if (!isValid) {
+    //   this.clearSession();
+    //   return false;
+    // }
 
     // Check idle time
     const idleTime = Date.now() - this.currentSession.lastActivity.getTime();
@@ -151,42 +136,36 @@ class SessionManager {
   }
 
   /**
-   * Handle auth state changes from Supabase
+   * Handle auth state changes
+   * Note: This should be called by your authentication system when auth state changes
    */
-  private async handleAuthStateChange(
-    event: string,
-    session: any
+  async handleAuthStateChange(
+    event: 'SIGNED_IN' | 'SIGNED_OUT' | 'TOKEN_REFRESHED' | 'USER_UPDATED',
+    userId?: string,
+    userRole?: string
   ): Promise<void> {
     switch (event) {
       case 'SIGNED_IN':
       case 'TOKEN_REFRESHED':
-        if (session?.user) {
-          const { data: dbUser } = await supabase
-            .from('users')
-            .select('role')
-            .eq('auth_id', session.user.id)
-            .single();
+        if (userId && userRole) {
+          this.currentSession = {
+            userId: userId,
+            userRole: userRole,
+            createdAt: new Date(),
+            lastActivity: new Date(),
+          };
 
-          if (dbUser) {
-            this.currentSession = {
-              userId: session.user.id,
-              userRole: dbUser.role,
-              createdAt: new Date(),
-              lastActivity: new Date(),
-            };
-
-            if (event === 'TOKEN_REFRESHED') {
-              securityLogger.log(
-                SecurityEventType.SESSION_REFRESHED,
-                'info' as any,
-                {},
-                session.user.id,
-                dbUser.role
-              );
-            }
-
-            this.startActivityMonitoring();
+          if (event === 'TOKEN_REFRESHED') {
+            securityLogger.log(
+              SecurityEventType.SESSION_REFRESHED,
+              'info' as any,
+              {},
+              userId,
+              userRole
+            );
           }
+
+          this.startActivityMonitoring();
         }
         break;
 
@@ -196,7 +175,7 @@ class SessionManager {
 
       case 'USER_UPDATED':
         // Update session if user data changed
-        if (this.currentSession && session?.user) {
+        if (this.currentSession) {
           this.updateActivity();
         }
         break;
@@ -239,8 +218,8 @@ class SessionManager {
         { reason }
       );
 
-      // Sign out from Supabase
-      await supabase.auth.signOut();
+      // Note: Sign out from your authentication system
+      // await signOutFromAuthSystem();
       await this.clearSession();
     }
   }

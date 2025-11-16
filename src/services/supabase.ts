@@ -45,16 +45,8 @@ if (shouldUseFallback) {
   );
 }
 
-// Create the Supabase client
+// Create the Supabase client (database operations only, no auth)
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    // Automatically refresh the session
-    autoRefreshToken: true,
-    // Persist the session in AsyncStorage
-    persistSession: true,
-    // Don't detect session in URL (not needed for React Native)
-    detectSessionInUrl: false,
-  },
   // Enable real-time subscriptions
   realtime: {
     params: {
