@@ -68,17 +68,9 @@ jest.mock('expo-notifications', () => ({
   addNotificationResponseReceivedListener: jest.fn(() => ({ remove: jest.fn() }))
 }));
 
-// Mock Supabase client
+// Mock Supabase client (database operations only, no auth)
 jest.mock('./src/services/supabase', () => ({
   supabase: {
-    auth: {
-      signUp: jest.fn(),
-      signInWithPassword: jest.fn(),
-      signOut: jest.fn(),
-      getSession: jest.fn(),
-      getUser: jest.fn(),
-      onAuthStateChange: jest.fn(() => ({ data: { subscription: null }, unsubscribe: jest.fn() }))
-    },
     from: jest.fn(() => ({
       select: jest.fn().mockReturnThis(),
       insert: jest.fn().mockReturnThis(),
@@ -87,12 +79,15 @@ jest.mock('./src/services/supabase', () => ({
       eq: jest.fn().mockReturnThis(),
       single: jest.fn(),
       order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis()
+      limit: jest.fn().mockReturnThis(),
+      maybeSingle: jest.fn()
     })),
     channel: jest.fn(() => ({
       on: jest.fn().mockReturnThis(),
       subscribe: jest.fn(() => ({ unsubscribe: jest.fn() }))
-    }))
+    })),
+    rpc: jest.fn(),
+    removeChannel: jest.fn()
   }
 }));
 

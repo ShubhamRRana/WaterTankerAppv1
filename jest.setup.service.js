@@ -55,7 +55,7 @@ jest.mock('react-native', () => ({
 
 // Note: Supabase is NOT mocked here globally
 // - Integration tests use jest.unmock() to use the real Supabase client
-// - Unit tests should mock Supabase themselves if needed (e.g., auth.service.test.ts)
+// - Unit tests should mock Supabase themselves if needed
 // This allows integration tests to properly connect to the real Supabase instance
 
 // Suppress console warnings in tests

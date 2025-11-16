@@ -79,7 +79,7 @@ src/
 │       └── rateLimiter.test.ts    # Rate limiter tests
 └── services/
     └── __tests__/
-        └── auth.service.test.ts    # Auth service tests
+        └── (auth service tests removed - Supabase auth no longer used)
 ```
 
 ## Test Categories
@@ -150,13 +150,9 @@ Tests for rate limiting functionality:
 
 Service tests verify business logic and Supabase interactions.
 
-#### Auth Service (`src/services/__tests__/auth.service.test.ts`)
+#### Auth Service Tests
 
-Tests for authentication operations:
-- User registration
-- User login
-- User logout
-- Multi-role user handling
+Auth service tests have been removed as Supabase authentication is no longer used. New tests should be written when implementing a replacement authentication system.
 - Rate limiting integration
 - Input sanitization
 
@@ -351,7 +347,7 @@ Integration tests verify that services work correctly with actual Supabase datab
 
 Integration tests are located in `src/services/__tests__/integration/`:
 
-- `auth.integration.test.ts` - Auth service integration tests
+- Auth integration tests removed (Supabase auth no longer used)
 - `booking.integration.test.ts` - Booking service integration tests
 - `user.integration.test.ts` - User service integration tests
 - `vehicle.integration.test.ts` - Vehicle service integration tests
