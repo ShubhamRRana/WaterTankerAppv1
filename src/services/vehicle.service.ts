@@ -3,6 +3,7 @@
 import { supabase } from './supabase';
 import { Vehicle } from '../types/index';
 import { transformSupabaseVehicleToAppVehicle, transformAppVehicleToSupabaseVehicle } from '../utils/supabaseTransformers';
+import { UserService } from './user.service';
 
 /**
  * VehicleService - Handles vehicle CRUD operations with Supabase
@@ -30,13 +31,22 @@ export class VehicleService {
 
   /**
    * Get vehicles by agency ID
+   * Note: agencyId should be auth_id value
+   * This function converts it to users.id for querying
    */
   static async getVehiclesByAgency(agencyId: string): Promise<Vehicle[]> {
     try {
+      // Convert auth_id to users.id for querying
+      const agencyTableId = await UserService.getUsersTableIdByAuthId(agencyId);
+      if (!agencyTableId) {
+        // If agency not found, return empty array
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('vehicles')
         .select('*')
-        .eq('agency_id', agencyId)
+        .eq('agency_id', agencyTableId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -87,10 +97,24 @@ export class VehicleService {
 
   /**
    * Create a new vehicle
+   * Note: vehicleData.agencyId should be auth_id value
+   * This function converts it to users.id for foreign key relationships
    */
   static async createVehicle(vehicleData: Omit<Vehicle, 'id' | 'createdAt' | 'updatedAt'>): Promise<Vehicle> {
     try {
-      const supabaseVehicleData = transformAppVehicleToSupabaseVehicle(vehicleData);
+      // Convert auth_id to users.id for foreign key
+      const agencyTableId = await UserService.getUsersTableIdByAuthId(vehicleData.agencyId);
+      if (!agencyTableId) {
+        throw new Error('Agency not found');
+      }
+
+      // Create vehicle data with converted ID
+      const vehicleDataWithTableId = {
+        ...vehicleData,
+        agencyId: agencyTableId,
+      };
+
+      const supabaseVehicleData = transformAppVehicleToSupabaseVehicle(vehicleDataWithTableId);
 
       const { data, error } = await supabase
         .from('vehicles')

@@ -20,27 +20,48 @@ import { SUPABASE_CONFIG } from '../constants/supabase';
  * ```
  */
 
+const FALLBACK_SUPABASE_URL = 'http://localhost:54321';
+const FALLBACK_SUPABASE_ANON_KEY = 'public-anon-key';
+const isTestEnv = process.env.NODE_ENV === 'test';
+const shouldUseFallback =
+  isTestEnv && (!SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey);
+
+const supabaseUrl = shouldUseFallback
+  ? FALLBACK_SUPABASE_URL
+  : SUPABASE_CONFIG.url;
+const supabaseAnonKey = shouldUseFallback
+  ? FALLBACK_SUPABASE_ANON_KEY
+  : SUPABASE_CONFIG.anonKey;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Supabase credentials are not configured. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.'
+  );
+}
+
+if (shouldUseFallback) {
+  console.warn(
+    'Supabase credentials missing in test environment; using fallback localhost configuration.'
+  );
+}
+
 // Create the Supabase client
-export const supabase = createClient(
-  SUPABASE_CONFIG.url,
-  SUPABASE_CONFIG.anonKey,
-  {
-    auth: {
-      // Automatically refresh the session
-      autoRefreshToken: true,
-      // Persist the session in AsyncStorage
-      persistSession: true,
-      // Don't detect session in URL (not needed for React Native)
-      detectSessionInUrl: false,
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    // Automatically refresh the session
+    autoRefreshToken: true,
+    // Persist the session in AsyncStorage
+    persistSession: true,
+    // Don't detect session in URL (not needed for React Native)
+    detectSessionInUrl: false,
+  },
+  // Enable real-time subscriptions
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
     },
-    // Enable real-time subscriptions
-    realtime: {
-      params: {
-        eventsPerSecond: 10,
-      },
-    },
-  }
-);
+  },
+});
 
 // Export a helper to check connection
 export const checkSupabaseConnection = async (): Promise<boolean> => {

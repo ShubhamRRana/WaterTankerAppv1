@@ -13,6 +13,8 @@ jest.unmock('../../supabase');
 
 import { BookingService } from '../../booking.service';
 import { AuthService } from '../../auth.service';
+import { UserService } from '../../user.service';
+import { supabase } from '../../supabase';
 import { Booking, BookingStatus } from '../../../types';
 
 // Skip integration tests if test credentials are not provided
@@ -21,10 +23,36 @@ const shouldRunIntegrationTests = process.env.EXPO_PUBLIC_SUPABASE_URL && proces
 // Increase timeout for integration tests (real API calls take longer)
 jest.setTimeout(30000); // 30 seconds
 
+// Track created test users for cleanup
+const createdTestUsers: string[] = [];
+
+// Helper function to generate unique phone number
+const generateTestPhone = (prefix: string = '987'): string => {
+  const timestamp = Date.now().toString();
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `${prefix}${timestamp.slice(-6)}${random}`;
+};
+
+// Helper function to wait for session establishment
+const waitForSession = async (maxWaitMs: number = 3000): Promise<boolean> => {
+  const startTime = Date.now();
+  while (Date.now() - startTime < maxWaitMs) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      return true;
+    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  return false;
+};
+
 describe('BookingService Integration Tests', () => {
   let testCustomerId: string;
   let testAgencyId: string;
   let testDriverId: string;
+  let testCustomerPhone: string;
+  let testAgencyPhone: string;
+  let testDriverPhone: string;
 
   beforeAll(async () => {
     if (!shouldRunIntegrationTests) {
@@ -33,46 +61,118 @@ describe('BookingService Integration Tests', () => {
     }
 
     // Create test users for booking operations
-    const timestamp = Date.now().toString().slice(-5);
+    testCustomerPhone = generateTestPhone('98765');
+    testAgencyPhone = generateTestPhone('98766');
+    testDriverPhone = generateTestPhone('98767');
     
     // Create customer
     const customerResult = await AuthService.register(
-      `98765${timestamp}`,
+      testCustomerPhone,
       'TestPassword123',
       'Test Customer',
       'customer'
     );
     if (customerResult.success && customerResult.user) {
       testCustomerId = customerResult.user.uid;
+      createdTestUsers.push(testCustomerId);
+      
+      // Wait for user profile to be created in users table
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify user exists in users table before proceeding
+      let retries = 0;
+      let userExists = false;
+      while (retries < 5 && !userExists) {
+        const userTableId = await UserService.getUsersTableIdByAuthId(testCustomerId);
+        if (userTableId) {
+          userExists = true;
+        } else {
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!userExists) {
+        throw new Error('Failed to create user profile in users table');
+      }
+      
       // Login as customer to establish authenticated session for RLS policies
-      await AuthService.login(`98765${timestamp}`, 'TestPassword123');
+      await AuthService.login(testCustomerPhone, 'TestPassword123');
+      await waitForSession();
     }
 
     // Create agency
     const agencyResult = await AuthService.register(
-      `98766${timestamp}`,
+      testAgencyPhone,
       'TestPassword123',
       'Test Agency',
       'admin' // Admin role for agency
     );
     if (agencyResult.success && agencyResult.user) {
       testAgencyId = agencyResult.user.uid;
+      createdTestUsers.push(testAgencyId);
+      
+      // Wait for user profile to be created in users table
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify user exists in users table before proceeding
+      let retries = 0;
+      let userExists = false;
+      while (retries < 5 && !userExists) {
+        const userTableId = await UserService.getUsersTableIdByAuthId(testAgencyId);
+        if (userTableId) {
+          userExists = true;
+        } else {
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!userExists) {
+        throw new Error('Failed to create agency user profile in users table');
+      }
+      
       // Login as agency/admin to establish authenticated session for RLS policies
-      await AuthService.login(`98766${timestamp}`, 'TestPassword123');
+      await AuthService.login(testAgencyPhone, 'TestPassword123');
+      await waitForSession();
     }
 
     // Create driver (note: driver registration may fail due to business logic)
     // For testing, we'll try to register but handle failure gracefully
     const driverResult = await AuthService.register(
-      `98767${timestamp}`,
+      testDriverPhone,
       'TestPassword123',
       'Test Driver',
-      'driver'
+      'driver',
+      { createdByAdmin: true } as any
     );
     if (driverResult.success && driverResult.user) {
       testDriverId = driverResult.user.uid;
+      createdTestUsers.push(testDriverId);
+      
+      // Wait for user profile to be created in users table
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify user exists in users table before proceeding
+      let retries = 0;
+      let userExists = false;
+      while (retries < 5 && !userExists) {
+        const userTableId = await UserService.getUsersTableIdByAuthId(testDriverId);
+        if (userTableId) {
+          userExists = true;
+        } else {
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!userExists) {
+        throw new Error('Failed to create driver user profile in users table');
+      }
+      
       // Login as driver to establish authenticated session for RLS policies
-      await AuthService.login(`98767${timestamp}`, 'TestPassword123');
+      await AuthService.login(testDriverPhone, 'TestPassword123');
+      await waitForSession();
     }
 
     // Wait for Supabase to process
@@ -81,7 +181,20 @@ describe('BookingService Integration Tests', () => {
 
   beforeEach(async () => {
     if (!shouldRunIntegrationTests) return;
-    // Clean up test bookings before each test if needed
+    
+    // Reset rate limiter to prevent test failures due to rate limiting
+    const { rateLimiter } = require('../../../utils/rateLimiter');
+    rateLimiter.resetAll();
+    
+    // Ensure we're logged in as customer for creating bookings
+    if (testCustomerPhone) {
+      try {
+        await AuthService.login(testCustomerPhone, 'TestPassword123');
+        await waitForSession();
+      } catch (error) {
+        // Ignore login errors
+      }
+    }
   });
 
   afterEach(async () => {
@@ -89,12 +202,31 @@ describe('BookingService Integration Tests', () => {
     // Clean up test data after each test
   });
 
+  afterAll(async () => {
+    if (!shouldRunIntegrationTests) return;
+    // Clean up all created test users
+    for (const userId of createdTestUsers) {
+      try {
+        await UserService.deleteUser(userId);
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+    createdTestUsers.length = 0;
+    // Logout
+    try {
+      await AuthService.logout();
+    } catch (error) {
+      // Ignore logout errors
+    }
+  });
+
   (shouldRunIntegrationTests ? describe : describe.skip)('Real Supabase Integration', () => {
     it('should create a new booking', async () => {
       const bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
         customerId: testCustomerId,
         customerName: 'Test Customer',
-        customerPhone: '9876500000',
+        customerPhone: testCustomerPhone,
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
         tankerSize: 1000,
@@ -130,7 +262,7 @@ describe('BookingService Integration Tests', () => {
       const bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
         customerId: testCustomerId,
         customerName: 'Test Customer',
-        customerPhone: '9876500000',
+        customerPhone: testCustomerPhone,
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
         tankerSize: 1000,
@@ -171,7 +303,7 @@ describe('BookingService Integration Tests', () => {
       const bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
         customerId: testCustomerId,
         customerName: 'Test Customer',
-        customerPhone: '9876500000',
+        customerPhone: testCustomerPhone,
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
         tankerSize: 1000,
@@ -214,7 +346,7 @@ describe('BookingService Integration Tests', () => {
       const bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
         customerId: testCustomerId,
         customerName: 'Test Customer',
-        customerPhone: '9876500000',
+        customerPhone: testCustomerPhone,
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
         tankerSize: 1000,
@@ -246,7 +378,7 @@ describe('BookingService Integration Tests', () => {
       await BookingService.updateBookingStatus(bookingId, 'accepted', {
         driverId: testDriverId,
         driverName: 'Test Driver',
-        driverPhone: '9876700000',
+        driverPhone: testDriverPhone,
       });
 
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -265,7 +397,7 @@ describe('BookingService Integration Tests', () => {
       const bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
         customerId: testCustomerId,
         customerName: 'Test Customer',
-        customerPhone: '9876500000',
+        customerPhone: testCustomerPhone,
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
         tankerSize: 1000,
@@ -290,7 +422,7 @@ describe('BookingService Integration Tests', () => {
         canCancel: false,
         driverId: testDriverId,
         driverName: 'Test Driver',
-        driverPhone: '9876700000',
+        driverPhone: testDriverPhone,
       };
 
       const bookingId = await BookingService.createBooking(bookingData);
@@ -309,7 +441,7 @@ describe('BookingService Integration Tests', () => {
       const bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
         customerId: testCustomerId,
         customerName: 'Test Customer',
-        customerPhone: '9876500000',
+        customerPhone: testCustomerPhone,
         agencyId: testAgencyId,
         agencyName: 'Test Agency',
         tankerSize: 1000,

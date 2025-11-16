@@ -1,14 +1,81 @@
 import { supabase } from './supabase';
 import { Booking, BookingStatus } from '../types/index';
 import { transformAppBookingToSupabaseBooking, transformSupabaseBookingToAppBooking } from '../utils/supabaseTransformers';
+import { UserService } from './user.service';
 
 export class BookingService {
   /**
+   * Helper function to convert users.id to auth_id in booking objects
+   */
+  private static async convertBookingIdsToAuthIds(booking: Booking): Promise<Booking> {
+    // Get auth_id for customer
+    const { data: customerUser } = await supabase
+      .from('users')
+      .select('auth_id')
+      .eq('id', booking.customerId)
+      .single();
+    if (customerUser) booking.customerId = customerUser.auth_id;
+
+    // Get auth_id for agency if exists
+    if (booking.agencyId) {
+      const { data: agencyUser } = await supabase
+        .from('users')
+        .select('auth_id')
+        .eq('id', booking.agencyId)
+        .single();
+      if (agencyUser) booking.agencyId = agencyUser.auth_id;
+    }
+
+    // Get auth_id for driver if exists
+    if (booking.driverId) {
+      const { data: driverUser } = await supabase
+        .from('users')
+        .select('auth_id')
+        .eq('id', booking.driverId)
+        .single();
+      if (driverUser) booking.driverId = driverUser.auth_id;
+    }
+
+    return booking;
+  }
+  /**
    * Create a new booking in Supabase
+   * Note: bookingData.customerId, agencyId, driverId should be auth_id values
+   * This function converts them to users.id for foreign key relationships
    */
   static async createBooking(bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
-      const supabaseBooking = transformAppBookingToSupabaseBooking(bookingData);
+      // Convert auth_id values to users.id for foreign keys
+      const customerTableId = await UserService.getUsersTableIdByAuthId(bookingData.customerId);
+      if (!customerTableId) {
+        throw new Error('Customer not found');
+      }
+
+      let agencyTableId: string | null = null;
+      if (bookingData.agencyId) {
+        agencyTableId = await UserService.getUsersTableIdByAuthId(bookingData.agencyId);
+        if (!agencyTableId) {
+          throw new Error('Agency not found');
+        }
+      }
+
+      let driverTableId: string | null = null;
+      if (bookingData.driverId) {
+        driverTableId = await UserService.getUsersTableIdByAuthId(bookingData.driverId);
+        if (!driverTableId) {
+          throw new Error('Driver not found');
+        }
+      }
+
+      // Create booking data with converted IDs
+      const bookingDataWithTableIds = {
+        ...bookingData,
+        customerId: customerTableId,
+        agencyId: agencyTableId || undefined,
+        driverId: driverTableId || undefined,
+      };
+
+      const supabaseBooking = transformAppBookingToSupabaseBooking(bookingDataWithTableIds);
 
       const { data, error } = await supabase
         .from('bookings')
@@ -47,7 +114,13 @@ export class BookingService {
 
       // Map additional data fields to Supabase format
       if (additionalData) {
-        if (additionalData.driverId !== undefined) updateData.driver_id = additionalData.driverId;
+        // Convert driverId from auth_id to users.id if provided
+        if (additionalData.driverId !== undefined) {
+          const driverTableId = await UserService.getUsersTableIdByAuthId(additionalData.driverId);
+          if (driverTableId) {
+            updateData.driver_id = driverTableId;
+          }
+        }
         if (additionalData.driverName !== undefined) updateData.driver_name = additionalData.driverName;
         if (additionalData.driverPhone !== undefined) updateData.driver_phone = additionalData.driverPhone;
         if (additionalData.paymentStatus !== undefined) updateData.payment_status = additionalData.paymentStatus;
@@ -69,21 +142,33 @@ export class BookingService {
   }
 
   /**
-   * Get all bookings for a customer
+   * Get all bookings for a customer by auth_id
    */
-  static async getBookingsByCustomer(customerId: string): Promise<Booking[]> {
+  static async getBookingsByCustomer(customerAuthId: string): Promise<Booking[]> {
     try {
+      // Convert auth_id to users.id for querying
+      const customerTableId = await UserService.getUsersTableIdByAuthId(customerAuthId);
+      if (!customerTableId) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
-        .eq('customer_id', customerId)
+        .eq('customer_id', customerTableId)
         .order('created_at', { ascending: false });
 
       if (error) {
         throw new Error(error.message);
       }
 
-      return (data || []).map(transformSupabaseBookingToAppBooking);
+      // Transform bookings and convert users.id back to auth_id
+      const bookings = (data || []).map(transformSupabaseBookingToAppBooking);
+      const convertedBookings = await Promise.all(
+        bookings.map(booking => this.convertBookingIdsToAuthIds(booking))
+      );
+
+      return convertedBookings;
     } catch (error) {
       throw error;
     }
@@ -91,6 +176,7 @@ export class BookingService {
 
   /**
    * Get all available bookings (pending status, no driver assigned)
+   * Returns bookings with auth_id values for customerId, agencyId, driverId
    */
   static async getAvailableBookings(): Promise<Booking[]> {
     try {
@@ -105,28 +191,46 @@ export class BookingService {
         throw new Error(error.message);
       }
 
-      return (data || []).map(transformSupabaseBookingToAppBooking);
+      // Transform bookings and convert users.id back to auth_id
+      const bookings = (data || []).map(transformSupabaseBookingToAppBooking);
+      const convertedBookings = await Promise.all(
+        bookings.map(booking => this.convertBookingIdsToAuthIds(booking))
+      );
+
+      return convertedBookings;
     } catch (error) {
       throw error;
     }
   }
 
   /**
-   * Get all bookings for a driver
+   * Get all bookings for a driver by auth_id
    */
-  static async getBookingsByDriver(driverId: string): Promise<Booking[]> {
+  static async getBookingsByDriver(driverAuthId: string): Promise<Booking[]> {
     try {
+      // Convert auth_id to users.id for querying
+      const driverTableId = await UserService.getUsersTableIdByAuthId(driverAuthId);
+      if (!driverTableId) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('bookings')
         .select('*')
-        .eq('driver_id', driverId)
+        .eq('driver_id', driverTableId)
         .order('created_at', { ascending: false });
 
       if (error) {
         throw new Error(error.message);
       }
 
-      return (data || []).map(transformSupabaseBookingToAppBooking);
+      // Transform bookings and convert users.id back to auth_id
+      const bookings = (data || []).map(transformSupabaseBookingToAppBooking);
+      const convertedBookings = await Promise.all(
+        bookings.map(booking => this.convertBookingIdsToAuthIds(booking))
+      );
+
+      return convertedBookings;
     } catch (error) {
       throw error;
     }
@@ -134,6 +238,7 @@ export class BookingService {
 
   /**
    * Get all bookings (admin only)
+   * Returns bookings with auth_id values for customerId, agencyId, driverId
    */
   static async getAllBookings(): Promise<Booking[]> {
     try {
@@ -146,7 +251,13 @@ export class BookingService {
         throw new Error(error.message);
       }
 
-      return (data || []).map(transformSupabaseBookingToAppBooking);
+      // Transform bookings and convert users.id back to auth_id
+      const bookings = (data || []).map(transformSupabaseBookingToAppBooking);
+      const convertedBookings = await Promise.all(
+        bookings.map(booking => this.convertBookingIdsToAuthIds(booking))
+      );
+
+      return convertedBookings;
     } catch (error) {
       throw error;
     }
@@ -154,6 +265,7 @@ export class BookingService {
 
   /**
    * Get a single booking by ID
+   * Returns booking with auth_id values for customerId, agencyId, driverId
    */
   static async getBookingById(bookingId: string): Promise<Booking | null> {
     try {
@@ -182,7 +294,13 @@ export class BookingService {
         throw new Error(error.message);
       }
 
-      return data ? transformSupabaseBookingToAppBooking(data) : null;
+      if (!data) {
+        return null;
+      }
+
+      // Transform and convert users.id to auth_id
+      const booking = transformSupabaseBookingToAppBooking(data);
+      return await this.convertBookingIdsToAuthIds(booking);
     } catch (error) {
       throw error;
     }

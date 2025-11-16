@@ -16,10 +16,11 @@ type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
 
 /**
  * Transform Supabase user record to app User type
+ * Note: uid maps to auth_id (not users table id) as per requirement
  */
 export function transformSupabaseUserToAppUser(dbUser: any): User {
   const baseUser = {
-    uid: dbUser.id,
+    uid: dbUser.auth_id, // Use auth_id as primary identifier
     phone: dbUser.phone,
     password: '', // Password is handled by Supabase Auth, not stored in users table
     name: dbUser.name,
@@ -142,14 +143,19 @@ export function transformSupabaseBookingToAppBooking(dbBooking: any): Booking {
     ? JSON.parse(dbBooking.delivery_address) 
     : dbBooking.delivery_address;
 
+  // Note: dbBooking.customer_id, agency_id, driver_id are users.id (not auth_id)
+  // We need to convert them to auth_id for the app
+  // This is done by fetching the user and returning auth_id
+  // For now, we'll return the users.id and let the caller handle conversion if needed
+  // Actually, we should convert here - but that requires async, so we'll do it in the service layer
   return {
     id: dbBooking.id,
-    customerId: dbBooking.customer_id,
+    customerId: dbBooking.customer_id, // This is users.id, needs conversion to auth_id in service layer
     customerName: dbBooking.customer_name,
     customerPhone: dbBooking.customer_phone,
-    agencyId: dbBooking.agency_id || undefined,
+    agencyId: dbBooking.agency_id || undefined, // This is users.id, needs conversion to auth_id
     agencyName: dbBooking.agency_name || undefined,
-    driverId: dbBooking.driver_id || undefined,
+    driverId: dbBooking.driver_id || undefined, // This is users.id, needs conversion to auth_id
     driverName: dbBooking.driver_name || undefined,
     driverPhone: dbBooking.driver_phone || undefined,
     status: dbBooking.status as BookingStatus,
@@ -183,15 +189,17 @@ export function transformSupabaseBookingToAppBooking(dbBooking: any): Booking {
 
 /**
  * Transform app Booking type to Supabase booking record format
+ * Note: customerId, agencyId, driverId are auth_id values and need to be converted to users.id
+ * This function should be called with converted IDs (use UserService.getUsersTableIdByAuthId)
  */
 export function transformAppBookingToSupabaseBooking(booking: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): any {
   return {
-    customer_id: booking.customerId,
+    customer_id: booking.customerId, // Should be users.id (not auth_id) for foreign key
     customer_name: booking.customerName,
     customer_phone: booking.customerPhone,
-    agency_id: booking.agencyId || null,
+    agency_id: booking.agencyId || null, // Should be users.id (not auth_id) for foreign key
     agency_name: booking.agencyName || null,
-    driver_id: booking.driverId || null,
+    driver_id: booking.driverId || null, // Should be users.id (not auth_id) for foreign key
     driver_name: booking.driverName || null,
     driver_phone: booking.driverPhone || null,
     status: booking.status,

@@ -13,6 +13,8 @@ jest.unmock('../../supabase');
 
 import { VehicleService } from '../../vehicle.service';
 import { AuthService } from '../../auth.service';
+import { UserService } from '../../user.service';
+import { supabase } from '../../supabase';
 import { Vehicle } from '../../../types';
 
 // Skip integration tests if test credentials are not provided
@@ -21,8 +23,32 @@ const shouldRunIntegrationTests = process.env.EXPO_PUBLIC_SUPABASE_URL && proces
 // Increase timeout for integration tests (real API calls take longer)
 jest.setTimeout(30000); // 30 seconds
 
+// Track created test users for cleanup
+const createdTestUsers: string[] = [];
+
+// Helper function to generate unique phone number
+const generateTestPhone = (prefix: string = '987'): string => {
+  const timestamp = Date.now().toString();
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `${prefix}${timestamp.slice(-6)}${random}`;
+};
+
+// Helper function to wait for session establishment
+const waitForSession = async (maxWaitMs: number = 3000): Promise<boolean> => {
+  const startTime = Date.now();
+  while (Date.now() - startTime < maxWaitMs) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      return true;
+    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  return false;
+};
+
 describe('VehicleService Integration Tests', () => {
   let testAgencyId: string;
+  let testAgencyPhone: string;
 
   beforeAll(async () => {
     if (!shouldRunIntegrationTests) {
@@ -31,9 +57,9 @@ describe('VehicleService Integration Tests', () => {
     }
 
     // Create test agency user
-    const timestamp = Date.now().toString().slice(-5);
+    testAgencyPhone = generateTestPhone('98765');
     const agencyResult = await AuthService.register(
-      `98765${timestamp}`,
+      testAgencyPhone,
       'TestPassword123',
       'Test Agency',
       'admin' // Admin role for agency
@@ -41,22 +67,76 @@ describe('VehicleService Integration Tests', () => {
 
     if (agencyResult.success && agencyResult.user) {
       testAgencyId = agencyResult.user.uid;
+      createdTestUsers.push(testAgencyId);
+      
+      // Wait for user profile to be created in users table
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify user exists in users table before proceeding
+      let retries = 0;
+      let userExists = false;
+      while (retries < 5 && !userExists) {
+        const userTableId = await UserService.getUsersTableIdByAuthId(testAgencyId);
+        if (userTableId) {
+          userExists = true;
+        } else {
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!userExists) {
+        throw new Error('Failed to create user profile in users table');
+      }
       
       // Login to establish authenticated session for RLS policies
-      await AuthService.login(`98765${timestamp}`, 'TestPassword123');
+      await AuthService.login(testAgencyPhone, 'TestPassword123');
+      await waitForSession();
     }
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
   });
 
   beforeEach(async () => {
     if (!shouldRunIntegrationTests) return;
-    // Clean up test data before each test
+    
+    // Reset rate limiter to prevent test failures due to rate limiting
+    const { rateLimiter } = require('../../../utils/rateLimiter');
+    rateLimiter.resetAll();
+    
+    // Ensure we're logged in as agency
+    if (testAgencyPhone) {
+      try {
+        await AuthService.login(testAgencyPhone, 'TestPassword123');
+        await waitForSession();
+      } catch (error) {
+        // Ignore login errors
+      }
+    }
   });
 
   afterEach(async () => {
     if (!shouldRunIntegrationTests) return;
     // Clean up test data after each test
+  });
+
+  afterAll(async () => {
+    if (!shouldRunIntegrationTests) return;
+    // Clean up all created test users
+    for (const userId of createdTestUsers) {
+      try {
+        await UserService.deleteUser(userId);
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+    createdTestUsers.length = 0;
+    // Logout
+    try {
+      await AuthService.logout();
+    } catch (error) {
+      // Ignore logout errors
+    }
   });
 
   (shouldRunIntegrationTests ? describe : describe.skip)('Real Supabase Integration', () => {

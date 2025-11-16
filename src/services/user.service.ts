@@ -12,6 +12,28 @@ import { transformSupabaseUserToAppUser, transformAppUserToSupabaseUser } from '
  */
 export class UserService {
   /**
+   * Helper function to convert auth_id to users table id
+   * Needed for foreign key relationships that reference users.id
+   */
+  static async getUsersTableIdByAuthId(authId: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('auth_id', authId)
+        .single();
+
+      if (error || !data) {
+        return null;
+      }
+
+      return data.id;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
    * Get all users from Supabase
    */
   static async getAllUsers(): Promise<User[]> {
@@ -53,13 +75,13 @@ export class UserService {
   }
 
   /**
-   * Get a single user by ID
+   * Get a single user by auth_id (primary key for fetching users)
    */
-  static async getUserById(userId: string): Promise<User | null> {
+  static async getUserById(authId: string): Promise<User | null> {
     try {
       // Validate UUID format before querying
       const { ValidationUtils } = require('../utils/validation');
-      const uuidValidation = ValidationUtils.validateUUID(userId);
+      const uuidValidation = ValidationUtils.validateUUID(authId);
       if (!uuidValidation.isValid) {
         return null;
       }
@@ -67,7 +89,7 @@ export class UserService {
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
+        .eq('auth_id', authId)
         .single();
 
       if (error) {
@@ -116,15 +138,15 @@ export class UserService {
   }
 
   /**
-   * Update user profile
+   * Update user profile by auth_id
    */
-  static async updateUser(userId: string, updates: Partial<User>): Promise<void> {
+  static async updateUser(authId: string, updates: Partial<User>): Promise<void> {
     try {
       // Get current user to merge updates
       const { data: currentUser, error: fetchError } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
+        .eq('auth_id', authId)
         .single();
 
       if (fetchError || !currentUser) {
@@ -143,7 +165,7 @@ export class UserService {
       const { error: updateError } = await supabase
         .from('users')
         .update(supabaseUpdates)
-        .eq('id', userId);
+        .eq('auth_id', authId);
 
       if (updateError) {
         throw updateError;
@@ -154,15 +176,15 @@ export class UserService {
   }
 
   /**
-   * Delete a user (admin only)
+   * Delete a user by auth_id (admin only)
    * Note: This will cascade delete related records due to foreign key constraints
    */
-  static async deleteUser(userId: string): Promise<void> {
+  static async deleteUser(authId: string): Promise<void> {
     try {
       const { error } = await supabase
         .from('users')
         .delete()
-        .eq('id', userId);
+        .eq('auth_id', authId);
 
       if (error) {
         throw new Error(error.message);
@@ -173,28 +195,28 @@ export class UserService {
   }
 
   /**
-   * Subscribe to real-time user updates
+   * Subscribe to real-time user updates by auth_id
    */
   static subscribeToUserUpdates(
-    userId: string,
+    authId: string,
     callback: (user: User | null) => void
   ): () => void {
     const channel = supabase
-      .channel(`user:${userId}`)
+      .channel(`user:${authId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'users',
-          filter: `id=eq.${userId}`,
+          filter: `auth_id=eq.${authId}`,
         },
         async (payload) => {
           try {
             if (payload.eventType === 'DELETE') {
               callback(null);
             } else {
-              const user = await this.getUserById(userId);
+              const user = await this.getUserById(authId);
               callback(user);
             }
           } catch (error) {

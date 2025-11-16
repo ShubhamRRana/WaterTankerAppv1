@@ -14,6 +14,8 @@ jest.unmock('../../supabase');
 import { PaymentService } from '../../payment.service';
 import { BookingService } from '../../booking.service';
 import { AuthService } from '../../auth.service';
+import { UserService } from '../../user.service';
+import { supabase } from '../../supabase';
 import { Booking } from '../../../types';
 
 // Skip integration tests if test credentials are not provided
@@ -21,6 +23,30 @@ const shouldRunIntegrationTests = process.env.EXPO_PUBLIC_SUPABASE_URL && proces
 
 // Increase timeout for integration tests (real API calls take longer)
 jest.setTimeout(30000); // 30 seconds
+
+// Track created test users for cleanup
+const createdTestUsers: string[] = [];
+const createdTestBookings: string[] = [];
+
+// Helper function to generate unique phone number
+const generateTestPhone = (prefix: string = '987'): string => {
+  const timestamp = Date.now().toString();
+  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  return `${prefix}${timestamp.slice(-6)}${random}`;
+};
+
+// Helper function to wait for session establishment
+const waitForSession = async (maxWaitMs: number = 3000): Promise<boolean> => {
+  const startTime = Date.now();
+  while (Date.now() - startTime < maxWaitMs) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      return true;
+    }
+    await new Promise(resolve => setTimeout(resolve, 200));
+  }
+  return false;
+};
 
 describe('PaymentService Integration Tests', () => {
   let testCustomerId: string;
@@ -36,9 +62,8 @@ describe('PaymentService Integration Tests', () => {
     }
 
     // Create test users
-    const timestamp = Date.now().toString().slice(-5);
-    testCustomerPhone = `98765${timestamp}`;
-    testAgencyPhone = `98766${timestamp}`;
+    testCustomerPhone = generateTestPhone('98765');
+    testAgencyPhone = generateTestPhone('98766');
     
     // Create customer
     const customerResult = await AuthService.register(
@@ -48,9 +73,40 @@ describe('PaymentService Integration Tests', () => {
       'customer'
     );
     if (customerResult.success && customerResult.user) {
-      testCustomerId = customerResult.user.uid;
+      createdTestUsers.push(customerResult.user.uid);
+      
+      // Wait for user profile to be created in users table
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify user exists in users table before proceeding
+      let retries = 0;
+      let userExists = false;
+      while (retries < 5 && !userExists) {
+        const userTableId = await UserService.getUsersTableIdByAuthId(customerResult.user.uid);
+        if (userTableId) {
+          userExists = true;
+        } else {
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!userExists) {
+        throw new Error('Failed to create user profile in users table');
+      }
+      
       // Login as customer to establish authenticated session for RLS policies
       await AuthService.login(testCustomerPhone, 'TestPassword123');
+      // Wait for session to be established
+      await waitForSession();
+      // Get current user data to ensure we have the correct users table ID (not auth_id)
+      const currentUser = await AuthService.getCurrentUserData();
+      if (currentUser) {
+        testCustomerId = currentUser.uid; // This is the users table id, which is what bookings need
+      } else {
+        // Fallback to the user from registration result
+        testCustomerId = customerResult.user.uid;
+      }
     }
 
     // Create agency
@@ -61,9 +117,40 @@ describe('PaymentService Integration Tests', () => {
       'admin'
     );
     if (agencyResult.success && agencyResult.user) {
-      testAgencyId = agencyResult.user.uid;
+      createdTestUsers.push(agencyResult.user.uid);
+      
+      // Wait for user profile to be created in users table
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Verify user exists in users table before proceeding
+      let retries = 0;
+      let userExists = false;
+      while (retries < 5 && !userExists) {
+        const userTableId = await UserService.getUsersTableIdByAuthId(agencyResult.user.uid);
+        if (userTableId) {
+          userExists = true;
+        } else {
+          retries++;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      if (!userExists) {
+        throw new Error('Failed to create user profile in users table');
+      }
+      
       // Login as agency/admin to establish authenticated session for RLS policies
       await AuthService.login(testAgencyPhone, 'TestPassword123');
+      // Wait for session to be established
+      await waitForSession();
+      // Get current user data to ensure we have the correct users table ID
+      const currentAgency = await AuthService.getCurrentUserData();
+      if (currentAgency) {
+        testAgencyId = currentAgency.uid; // This is the users table id
+      } else {
+        // Fallback to the user from registration result
+        testAgencyId = agencyResult.user.uid;
+      }
     }
 
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -72,16 +159,21 @@ describe('PaymentService Integration Tests', () => {
   beforeEach(async () => {
     if (!shouldRunIntegrationTests) return;
     
+    // Reset rate limiter to prevent test failures due to rate limiting
+    const { rateLimiter } = require('../../../utils/rateLimiter');
+    rateLimiter.resetAll();
+    
     // Ensure we're logged in as customer for creating bookings
     if (testCustomerPhone) {
       await AuthService.login(testCustomerPhone, 'TestPassword123');
+      await waitForSession();
     }
     
     // Create a test booking for payment tests
     const bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
       customerId: testCustomerId,
       customerName: 'Test Customer',
-      customerPhone: '9876500000',
+      customerPhone: testCustomerPhone,
       agencyId: testAgencyId,
       agencyName: 'Test Agency',
       tankerSize: 1000,
@@ -107,12 +199,40 @@ describe('PaymentService Integration Tests', () => {
     };
 
     testBookingId = await BookingService.createBooking(bookingData);
+    createdTestBookings.push(testBookingId);
     await new Promise(resolve => setTimeout(resolve, 1000));
   });
 
   afterEach(async () => {
     if (!shouldRunIntegrationTests) return;
-    // Clean up test data after each test
+    // Clean up test bookings
+    for (const bookingId of createdTestBookings) {
+      try {
+        // Bookings will be cascade deleted when users are deleted
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+    createdTestBookings.length = 0;
+  });
+
+  afterAll(async () => {
+    if (!shouldRunIntegrationTests) return;
+    // Clean up all created test users
+    for (const userId of createdTestUsers) {
+      try {
+        await UserService.deleteUser(userId);
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
+    createdTestUsers.length = 0;
+    // Logout
+    try {
+      await AuthService.logout();
+    } catch (error) {
+      // Ignore logout errors
+    }
   });
 
   (shouldRunIntegrationTests ? describe : describe.skip)('Real Supabase Integration', () => {

@@ -14,6 +14,7 @@
     "test:unit": "jest --config jest.config.service.js",
     "test:component": "jest --config jest.config.js",
     "test:integration": "jest --config jest.config.service.js --testPathPattern=integration",
+    "cleanup:test-users": "node scripts/cleanup-test-users-standalone.js",
     "test:e2e": "maestro test e2e/",
     "test:e2e:auth": "maestro test e2e/auth-flow.yaml",
     "test:e2e:booking": "maestro test e2e/booking-flow.yaml",

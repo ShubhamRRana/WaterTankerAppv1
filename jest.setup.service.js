@@ -53,33 +53,10 @@ jest.mock('react-native', () => ({
   },
 }));
 
-// Mock Supabase client
-jest.mock('./src/services/supabase', () => ({
-  supabase: {
-    auth: {
-      signUp: jest.fn(),
-      signInWithPassword: jest.fn(),
-      signOut: jest.fn(),
-      getSession: jest.fn(),
-      getUser: jest.fn(),
-      onAuthStateChange: jest.fn(() => ({ data: { subscription: null }, unsubscribe: jest.fn() }))
-    },
-    from: jest.fn(() => ({
-      select: jest.fn().mockReturnThis(),
-      insert: jest.fn().mockReturnThis(),
-      update: jest.fn().mockReturnThis(),
-      delete: jest.fn().mockReturnThis(),
-      eq: jest.fn().mockReturnThis(),
-      single: jest.fn(),
-      order: jest.fn().mockReturnThis(),
-      limit: jest.fn().mockReturnThis()
-    })),
-    channel: jest.fn(() => ({
-      on: jest.fn().mockReturnThis(),
-      subscribe: jest.fn(() => ({ unsubscribe: jest.fn() }))
-    }))
-  }
-}));
+// Note: Supabase is NOT mocked here globally
+// - Integration tests use jest.unmock() to use the real Supabase client
+// - Unit tests should mock Supabase themselves if needed (e.g., auth.service.test.ts)
+// This allows integration tests to properly connect to the real Supabase instance
 
 // Suppress console warnings in tests
 global.console = {
