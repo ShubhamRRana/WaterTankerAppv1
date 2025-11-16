@@ -19,7 +19,11 @@
     "test:e2e:auth": "maestro test e2e/auth-flow.yaml",
     "test:e2e:booking": "maestro test e2e/booking-flow.yaml",
     "test:e2e:driver": "maestro test e2e/driver-flow.yaml",
-    "test:e2e:admin": "maestro test e2e/admin-flow.yaml"
+    "test:e2e:admin": "maestro test e2e/admin-flow.yaml",
+    "functions:deploy": "supabase functions deploy",
+    "functions:deploy:example": "supabase functions deploy example-function",
+    "functions:serve": "supabase functions serve",
+    "functions:list": "supabase functions list"
   },
   "dependencies": {
     "@expo-google-fonts/merriweather": "^0.4.2",

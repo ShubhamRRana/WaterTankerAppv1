@@ -1,0 +1,10 @@
+# Deno cache
+.deno/
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log
+
