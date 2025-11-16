@@ -200,8 +200,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         day: 'numeric',
       }).format(dateObj);
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Unknown date';
+            return 'Unknown date';
     }
   };
 

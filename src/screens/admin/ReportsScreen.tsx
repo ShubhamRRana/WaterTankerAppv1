@@ -110,8 +110,7 @@ const ReportsScreen: React.FC = () => {
     try {
       await fetchAllBookings();
     } catch (error) {
-      console.error('Failed to load report data:', error);
-    }
+          }
   };
 
 

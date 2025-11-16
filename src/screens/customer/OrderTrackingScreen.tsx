@@ -67,8 +67,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
           }
         );
       } catch (error) {
-        console.error('Error setting up location tracking:', error);
-      }
+              }
     };
     
     setupLocationTracking();
@@ -102,8 +101,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
               setDriverLocation(location);
             }
           } catch (error) {
-            console.error('Error loading driver location:', error);
-          }
+                      }
         }
       }
     } catch (error) {
@@ -194,8 +192,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
         minute: '2-digit',
       });
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Unknown date';
+            return 'Unknown date';
     }
   };
 

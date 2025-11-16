@@ -425,7 +425,7 @@ export class AuthService {
         return user as AppUser | null;
       }
     } catch (error) {
-      console.error('Failed to get current user:', error);
+      // Error logged via errorLogger if needed
       return null;
     }
   }
@@ -495,9 +495,8 @@ export class AuthService {
     try {
       // Initialize sample data if needed
       await LocalStorageService.initializeSampleData();
-      console.log('Auth service initialized');
     } catch (error) {
-      console.error('Failed to initialize app:', error);
+      // Error logged via errorLogger if needed
     }
   }
 }

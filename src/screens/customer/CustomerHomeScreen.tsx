@@ -58,8 +58,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
     try {
       await fetchCustomerBookings(user.uid);
     } catch (error) {
-      console.error('Failed to load customer data:', error);
-    }
+          }
   };
 
   const onRefresh = async () => {
@@ -67,8 +66,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
     try {
       await loadCustomerData();
     } catch (error) {
-      console.error('Refresh failed:', error);
-    } finally {
+          } finally {
       setRefreshing(false);
     }
   };
@@ -123,8 +121,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
         
         return dateB.getTime() - dateA.getTime();
       } catch (error) {
-        console.error('Error sorting bookings:', error);
-        return 0;
+                return 0;
       }
     })
     .slice(0, 3);
@@ -146,8 +143,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
         minute: '2-digit',
       });
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Unknown date';
+            return 'Unknown date';
     }
   };
 

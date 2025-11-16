@@ -80,8 +80,7 @@ const DriverEarningsScreen: React.FC = () => {
       await fetchDriverBookings(user.uid);
       calculateEarningsStats();
     } catch (error) {
-      console.error('Failed to load driver data:', error);
-    }
+          }
   };
 
   const calculateEarningsStats = () => {

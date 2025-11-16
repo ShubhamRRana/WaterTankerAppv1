@@ -112,8 +112,7 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
     try {
       await fetchCustomerBookings(user.uid);
     } catch (error) {
-      console.error('Failed to load report data:', error);
-    }
+          }
   };
 
 

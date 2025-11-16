@@ -88,8 +88,7 @@ const OrdersScreen: React.FC = () => {
       
       const errorMessage = error instanceof Error ? error.message : 'Failed to load orders';
       setLocalError(errorMessage);
-      console.error('Failed to load orders:', error);
-    }
+          }
   }, [activeTab, user?.uid, fetchAvailableBookings, fetchDriverBookings, clearError]);
 
   // Load data when tab changes (only once, not on focus)
@@ -291,8 +290,7 @@ const OrdersScreen: React.FC = () => {
     try {
       navigation.navigate('CollectPayment', { orderId });
     } catch (error) {
-      console.error('Navigation error:', error);
-      Alert.alert('Error', 'Failed to open payment screen. Please try again.');
+            Alert.alert('Error', 'Failed to open payment screen. Please try again.');
     }
   };
 
@@ -342,8 +340,7 @@ const OrdersScreen: React.FC = () => {
             try {
               await logout();
             } catch (error) {
-              console.error('Logout failed:', error);
-              Alert.alert('Error', 'Failed to logout. Please try again.');
+                            Alert.alert('Error', 'Failed to logout. Please try again.');
             }
           },
         },

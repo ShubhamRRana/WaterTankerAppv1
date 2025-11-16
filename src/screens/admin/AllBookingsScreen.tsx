@@ -45,8 +45,7 @@ const AllBookingsScreen: React.FC = () => {
     try {
       await fetchAllBookings();
     } catch (error) {
-      console.error('Failed to load bookings:', error);
-      Alert.alert('Error', 'Failed to load bookings. Please try again.');
+            Alert.alert('Error', 'Failed to load bookings. Please try again.');
     }
   };
 
@@ -149,8 +148,7 @@ const AllBookingsScreen: React.FC = () => {
       setSelectedBooking(null);
       Alert.alert('Success', 'Booking status updated successfully');
     } catch (error) {
-      console.error('Failed to update status:', error);
-      Alert.alert('Error', 'Failed to update booking status. Please try again.');
+            Alert.alert('Error', 'Failed to update booking status. Please try again.');
     }
   };
 

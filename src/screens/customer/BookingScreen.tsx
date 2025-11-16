@@ -81,8 +81,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       try {
         await fetchUsersByRole('admin');
       } catch (error) {
-        console.error('Failed to load agencies:', error);
-      }
+              }
     };
     loadAgencies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,8 +109,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
           setSelectedVehicle(null);
           setPriceBreakdown(null);
         } catch (error) {
-          console.error('Failed to load vehicles:', error);
-          setAvailableVehicles([]);
+                    setAvailableVehicles([]);
         } finally {
           setVehiclesLoading(false);
         }
@@ -317,8 +315,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
       return date;
     } catch (error) {
-      console.error('Error creating scheduled date:', error);
-      // Return a fallback date (tomorrow at 9 AM) instead of current time
+            // Return a fallback date (tomorrow at 9 AM) instead of current time
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(9, 0, 0, 0);

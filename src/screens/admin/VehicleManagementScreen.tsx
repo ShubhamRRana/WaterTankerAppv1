@@ -291,8 +291,7 @@ const VehicleManagementScreen: React.FC = () => {
         // Vehicles are already filtered in the component based on agencyId
       }
     } catch (error) {
-      console.error('Failed to load vehicles:', error);
-      Alert.alert('Error', 'Failed to load vehicles. Please try again.');
+            Alert.alert('Error', 'Failed to load vehicles. Please try again.');
     }
   };
 

@@ -107,8 +107,7 @@ const DriverManagementScreen: React.FC = () => {
         fetchAllBookings(),
       ]);
     } catch (error) {
-      console.error('Failed to load drivers:', error);
-      Alert.alert('Error', 'Failed to load drivers. Please try again.');
+            Alert.alert('Error', 'Failed to load drivers. Please try again.');
     }
   };
 
@@ -120,8 +119,7 @@ const DriverManagementScreen: React.FC = () => {
         fetchAllBookings(),
       ]);
     } catch (error) {
-      console.error('Failed to refresh:', error);
-    } finally {
+          } finally {
       setRefreshing(false);
     }
   };

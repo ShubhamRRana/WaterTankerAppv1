@@ -45,7 +45,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       get().subscribeToAuthChanges();
     } catch (error) {
       set({ isLoading: false });
-      console.error('Failed to initialize auth:', error);
     }
   },
 

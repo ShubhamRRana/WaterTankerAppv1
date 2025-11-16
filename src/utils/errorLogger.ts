@@ -51,13 +51,7 @@ class ErrorLogger {
       this.logs.shift(); // Remove oldest log
     }
 
-    // Console logging based on severity
-    const consoleMethod = this.getConsoleMethod(severity);
-    consoleMethod(`[${severity.toUpperCase()}] ${message}`, {
-      error,
-      context,
-      stack: errorLog.stack,
-    });
+    // Console logging removed - errors are still tracked in memory
 
     // In production, you could send to error tracking service
     // Example: Sentry, Bugsnag, etc.
@@ -117,19 +111,11 @@ class ErrorLogger {
 
   /**
    * Get console method based on severity
+   * Method kept for compatibility but console logging is disabled
    */
   private getConsoleMethod(severity: ErrorSeverity): typeof console.error {
-    switch (severity) {
-      case ErrorSeverity.CRITICAL:
-      case ErrorSeverity.HIGH:
-        return console.error;
-      case ErrorSeverity.MEDIUM:
-        return console.warn;
-      case ErrorSeverity.LOW:
-        return console.info;
-      default:
-        return console.log;
-    }
+    // Console logging disabled - return no-op function
+    return () => {};
   }
 
   /**
@@ -137,10 +123,7 @@ class ErrorLogger {
    */
   private reportToService(errorLog: ErrorLog): void {
     // TODO: Integrate with error tracking service (Sentry, Bugsnag, etc.)
-    // For now, just log to console
-    if (__DEV__) {
-      console.log('Would report to error tracking service:', errorLog);
-    }
+    // Console logging removed
   }
 }
 

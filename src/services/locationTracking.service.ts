@@ -53,7 +53,6 @@ export class LocationTrackingService {
     try {
       // Check if already tracking
       if (this.activeWatchers.has(driverId)) {
-        console.warn(`Location tracking already active for driver ${driverId}`);
         return;
       }
 
@@ -96,7 +95,7 @@ export class LocationTrackingService {
             longitude: currentLocation.longitude,
           });
         } catch (error) {
-          console.error('Error in periodic location update:', error);
+          // Error handling for periodic location update
         }
       }, updateInterval);
 
@@ -111,7 +110,6 @@ export class LocationTrackingService {
         longitude: initialLocation.longitude,
       });
     } catch (error) {
-      console.error('Error starting location tracking:', error);
       throw error;
     }
   }
@@ -135,7 +133,6 @@ export class LocationTrackingService {
         this.updateIntervals.delete(driverId);
       }
     } catch (error) {
-      console.error('Error stopping location tracking:', error);
       throw error;
     }
   }
@@ -147,9 +144,7 @@ export class LocationTrackingService {
   static async updateLocation(update: LocationUpdate): Promise<void> {
     try {
       // TODO: Implement location update with your new backend
-      console.warn('Location update not implemented - Supabase removed');
     } catch (error) {
-      console.error('Error updating location:', error);
       throw error;
     }
   }
@@ -161,10 +156,8 @@ export class LocationTrackingService {
   static async getDriverLocation(driverId: string): Promise<DriverLocation | null> {
     try {
       // TODO: Implement location fetching with your new backend
-      console.warn('Location fetching not implemented - Supabase removed');
       return null;
     } catch (error) {
-      console.error('Error getting driver location:', error);
       throw error;
     }
   }
@@ -176,10 +169,8 @@ export class LocationTrackingService {
   static async getBookingLocation(bookingId: string): Promise<DriverLocation | null> {
     try {
       // TODO: Implement location fetching with your new backend
-      console.warn('Location fetching not implemented - Supabase removed');
       return null;
     } catch (error) {
-      console.error('Error getting booking location:', error);
       throw error;
     }
   }
@@ -198,7 +189,7 @@ export class LocationTrackingService {
         filter: `driver_id=eq.${driverId}`,
         event: 'UPDATE',
         onError: (error) => {
-          console.error(`Error in driver location subscription for ${driverId}:`, error);
+          // Error handling for driver location subscription
         },
       },
       async (payload) => {
@@ -218,7 +209,6 @@ export class LocationTrackingService {
             callback(location);
           }
         } catch (error) {
-          console.error('Error processing location update:', error);
           callback(null);
         }
       }
@@ -239,7 +229,7 @@ export class LocationTrackingService {
         filter: `booking_id=eq.${bookingId}`,
         event: 'UPDATE',
         onError: (error) => {
-          console.error(`Error in booking location subscription for ${bookingId}:`, error);
+          // Error handling for booking location subscription
         },
       },
       async (payload) => {
@@ -259,7 +249,6 @@ export class LocationTrackingService {
             callback(location);
           }
         } catch (error) {
-          console.error('Error processing location update:', error);
           callback(null);
         }
       }

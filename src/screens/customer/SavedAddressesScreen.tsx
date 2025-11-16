@@ -177,7 +177,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
   const handleEditAddress = useCallback((address: Address) => {
     setEditingAddress(address);
     setNewAddressText(address.street);
-  };
+  }, []);
 
   const handleCancelEdit = useCallback(() => {
     setEditingAddress(null);

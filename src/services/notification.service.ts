@@ -52,10 +52,7 @@ export class NotificationService {
    */
   static async requestPermissions(): Promise<boolean> {
     try {
-      if (!isDevice && __DEV__) {
-        console.warn('Notifications may not work properly on simulator/emulator');
-        // Continue anyway for development
-      }
+      // Continue anyway for development
 
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
@@ -66,7 +63,6 @@ export class NotificationService {
       }
 
       if (finalStatus !== 'granted') {
-        console.warn('Notification permissions not granted');
         return false;
       }
 
@@ -82,7 +78,6 @@ export class NotificationService {
 
       return true;
     } catch (error) {
-      console.error('Error requesting notification permissions:', error);
       return false;
     }
   }
@@ -114,7 +109,6 @@ export class NotificationService {
       this.tokenRegistered = true;
       return token;
     } catch (error) {
-      console.error('Error registering for push notifications:', error);
       return null;
     }
   }
@@ -125,12 +119,11 @@ export class NotificationService {
   private static async savePushToken(tokenData: PushNotificationToken): Promise<void> {
     try {
       // TODO: Implement push token storage with your new backend
-      console.warn('Push token storage not implemented - Supabase removed');
       // Store in user's profile or a separate push_tokens table
       // For now, we'll store it in a simple way
       // You may want to create a push_tokens table for better management
     } catch (error) {
-      console.error('Error saving push token:', error);
+      // Error handling for push token storage
     }
   }
 
@@ -153,7 +146,7 @@ export class NotificationService {
         trigger: null, // Send immediately
       });
     } catch (error) {
-      console.error('Error sending local notification:', error);
+      // Error handling for notification sending
     }
   }
 
@@ -170,7 +163,6 @@ export class NotificationService {
   ): Promise<Notification | null> {
     try {
       // TODO: Implement notification creation with your new backend
-      console.warn('Notification creation not implemented - Supabase removed');
       
       // Send push notification if token is registered
       if (this.tokenRegistered) {
@@ -193,7 +185,6 @@ export class NotificationService {
         createdAt: new Date(),
       };
     } catch (error) {
-      console.error('Error creating notification:', error);
       throw error;
     }
   }
@@ -205,10 +196,8 @@ export class NotificationService {
   static async getNotifications(userId: string, limit: number = 50): Promise<Notification[]> {
     try {
       // TODO: Implement notification fetching with your new backend
-      console.warn('Notification fetching not implemented - Supabase removed');
       return [];
     } catch (error) {
-      console.error('Error getting notifications:', error);
       throw error;
     }
   }
@@ -220,9 +209,7 @@ export class NotificationService {
   static async markAsRead(notificationId: string): Promise<void> {
     try {
       // TODO: Implement notification update with your new backend
-      console.warn('Notification update not implemented - Supabase removed');
     } catch (error) {
-      console.error('Error marking notification as read:', error);
       throw error;
     }
   }
@@ -234,9 +221,7 @@ export class NotificationService {
   static async markAllAsRead(userId: string): Promise<void> {
     try {
       // TODO: Implement notification update with your new backend
-      console.warn('Notification update not implemented - Supabase removed');
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
       throw error;
     }
   }
@@ -255,7 +240,7 @@ export class NotificationService {
         filter: `user_id=eq.${userId}`,
         event: 'INSERT',
         onError: (error) => {
-          console.error(`Error in notification subscription for ${userId}:`, error);
+          // Error handling for notification subscription
         },
       },
       async (payload: RealtimePayload<{
@@ -291,7 +276,7 @@ export class NotificationService {
             callback(notification);
           }
         } catch (error) {
-          console.error('Error processing notification:', error);
+          // Error handling for notification processing
         }
       }
     );
@@ -342,10 +327,8 @@ export class NotificationService {
   static async getUnreadCount(userId: string): Promise<number> {
     try {
       // TODO: Implement unread count with your new backend
-      console.warn('Unread count not implemented - Supabase removed');
       return 0;
     } catch (error) {
-      console.error('Error getting unread count:', error);
       return 0;
     }
   }
@@ -357,9 +340,7 @@ export class NotificationService {
   static async deleteNotification(notificationId: string): Promise<void> {
     try {
       // TODO: Implement notification deletion with your new backend
-      console.warn('Notification deletion not implemented - Supabase removed');
     } catch (error) {
-      console.error('Error deleting notification:', error);
       throw error;
     }
   }

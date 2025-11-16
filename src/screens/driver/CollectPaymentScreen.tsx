@@ -31,8 +31,7 @@ const CollectPaymentScreen: React.FC = () => {
       Alert.alert('Success', 'Delivery completed successfully!');
       navigation.goBack();
     } catch (error) {
-      console.error('Failed to complete delivery:', error);
-      Alert.alert('Error', 'Failed to complete delivery. Please try again.');
+            Alert.alert('Error', 'Failed to complete delivery. Please try again.');
     }
   };
 

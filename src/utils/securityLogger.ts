@@ -366,29 +366,10 @@ class SecurityLogger {
 
   /**
    * Log to console with appropriate level
+   * Console logging removed - events are still tracked in memory
    */
   private logToConsole(event: SecurityEvent): void {
-    const message = `[SECURITY ${event.severity.toUpperCase()}] ${event.type}`;
-    const data = {
-      timestamp: event.timestamp,
-      userId: event.userId,
-      userRole: event.userRole,
-      details: event.details,
-    };
-
-    switch (event.severity) {
-      case SecuritySeverity.CRITICAL:
-        console.error(message, data);
-        break;
-      case SecuritySeverity.WARNING:
-        console.warn(message, data);
-        break;
-      case SecuritySeverity.INFO:
-        if (__DEV__) {
-          console.info(message, data);
-        }
-        break;
-    }
+    // Console logging removed - events are still tracked in memory for security monitoring
   }
 
   /**

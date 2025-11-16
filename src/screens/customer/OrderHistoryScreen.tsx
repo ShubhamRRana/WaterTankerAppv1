@@ -77,8 +77,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
     try {
       await fetchCustomerBookings(user.uid);
     } catch (error) {
-      console.error('Failed to load bookings:', error);
-    }
+          }
   };
 
   const filterBookings = () => {
@@ -108,8 +107,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
     try {
       await loadBookings();
     } catch (error) {
-      console.error('Refresh failed:', error);
-    } finally {
+          } finally {
       setRefreshing(false);
     }
   };
@@ -213,8 +211,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
         minute: '2-digit',
       });
     } catch (error) {
-      console.error('Error formatting date:', error);
-      return 'Unknown date';
+            return 'Unknown date';
     }
   }, []);
 
