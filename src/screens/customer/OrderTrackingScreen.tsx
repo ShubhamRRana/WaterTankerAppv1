@@ -44,7 +44,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
     loadBooking();
     
     // Subscribe to real-time booking updates
-    const unsubscribeBooking = useBookingStore.getState().subscribeToBooking(orderId);
+    useBookingStore.getState().subscribeToBooking(orderId);
     
     // Subscribe to real-time location updates for this booking
     let unsubscribeLocation: (() => void) | null = null;
@@ -73,7 +73,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
     setupLocationTracking();
 
     return () => {
-      unsubscribeBooking();
+      useBookingStore.getState().unsubscribeFromBooking();
       if (unsubscribeLocation) {
         unsubscribeLocation();
       }
@@ -111,21 +111,19 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
   
   // Subscribe to booking updates from store
   useEffect(() => {
-    const unsubscribe = useBookingStore.subscribe(
-      (state) => state.currentBooking,
-      (currentBooking) => {
-        if (currentBooking && currentBooking.id === orderId) {
-          setBooking(currentBooking);
-          setTrackingStatus(currentBooking.status);
-          
-          // Update estimated delivery time if distance changed
-          if (currentBooking.distance) {
-            const estimatedTime = PricingUtils.calculateDeliveryTime(currentBooking.distance);
-            setEstimatedDeliveryTime(estimatedTime);
-          }
+    const unsubscribe = useBookingStore.subscribe((state, prevState) => {
+      const currentBooking = state.currentBooking;
+      if (currentBooking && currentBooking.id === orderId) {
+        setBooking(currentBooking);
+        setTrackingStatus(currentBooking.status);
+        
+        // Update estimated delivery time if distance changed
+        if (currentBooking.distance) {
+          const estimatedTime = PricingUtils.calculateDeliveryTime(currentBooking.distance);
+          setEstimatedDeliveryTime(estimatedTime);
         }
       }
-    );
+    });
     
     return unsubscribe;
   }, [orderId]);

@@ -25,7 +25,7 @@ import AgencySelectionModal from '../../components/customer/AgencySelectionModal
 import SavedAddressModal from '../../components/customer/SavedAddressModal';
 import DateTimeInput from '../../components/customer/DateTimeInput';
 import PriceBreakdown from '../../components/customer/PriceBreakdown';
-import { Address, BookingForm, TankerSize } from '../../types';
+import { Address, BookingForm, TankerSize, isAdminUser, isCustomerUser } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
 import { UI_CONFIG } from '../../constants/config';
@@ -66,7 +66,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
 
   // Load default address when user data is available
   useEffect(() => {
-    if (user && user.savedAddresses && user.savedAddresses.length > 0) {
+    if (user && isCustomerUser(user) && user.savedAddresses && user.savedAddresses.length > 0) {
       const defaultAddress = user.savedAddresses.find(addr => addr.isDefault);
       if (defaultAddress && !deliveryAddress) {
         setDeliveryAddress(defaultAddress.street);
@@ -90,7 +90,8 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   // Build tanker agencies list from admin users with business names
   const tankerAgencies: Array<{ id: string; name: string }> = React.useMemo(() => {
     return allUsers
-      .filter(user => user.role === 'admin' && (user.businessName || user.name))
+      .filter(isAdminUser)
+      .filter(admin => admin.businessName || admin.name)
       .map(admin => ({
         id: admin.uid,
         name: admin.businessName || admin.name || 'Unnamed Agency'
@@ -576,7 +577,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       <SavedAddressModal
         visible={showSavedAddressModal}
         onClose={() => setShowSavedAddressModal(false)}
-        addresses={user?.savedAddresses || []}
+        addresses={user && isCustomerUser(user) ? (user.savedAddresses || []) : []}
         onSelectAddress={handleAddressSelection}
         navigation={navigation}
       />

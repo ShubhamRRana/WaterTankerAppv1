@@ -2,7 +2,7 @@ import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import MenuDrawer, { MenuItem } from './MenuDrawer';
 
-export type AdminRoute = 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile' | 'Migration';
+export type AdminRoute = 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile';
 
 interface AdminMenuDrawerProps {
   visible: boolean;
@@ -62,15 +62,6 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
       route: 'Profile',
       onPress: () => {
         onNavigate('Profile');
-        onClose();
-      },
-    },
-    {
-      label: 'Data Migration',
-      icon: 'cloud-upload-outline',
-      route: 'Migration',
-      onPress: () => {
-        onNavigate('Migration');
         onClose();
       },
     },

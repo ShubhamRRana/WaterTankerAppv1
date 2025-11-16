@@ -20,12 +20,14 @@ import AddDriverModal from '../../components/admin/AddDriverModal';
 import DriverModal from '../../components/admin/DriverModal';
 import DriverCard from '../../components/admin/DriverCard';
 import { UI_CONFIG } from '../../constants/config';
-import { User } from '../../types';
+import { User, DriverUser, isDriverUser } from '../../types';
 import { ValidationUtils } from '../../utils/validation';
 import { PricingUtils } from '../../utils/pricing';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 
 type DriverManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Drivers'>;
+
+type EnrichedDriver = DriverUser & { totalEarnings: number; completedOrders: number };
 
 const DriverManagementScreen: React.FC = () => {
   const navigation = useNavigation<DriverManagementScreenNavigationProp>();
@@ -33,10 +35,10 @@ const DriverManagementScreen: React.FC = () => {
   const { user: currentUser, logout } = useAuthStore();
   const { bookings, fetchAllBookings } = useBookingStore();
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedDriver, setSelectedDriver] = useState<User | null>(null);
+  const [selectedDriver, setSelectedDriver] = useState<EnrichedDriver | null>(null);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [showAddDriverModal, setShowAddDriverModal] = useState(false);
-  const [editingDriver, setEditingDriver] = useState<User | null>(null);
+  const [editingDriver, setEditingDriver] = useState<DriverUser | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [menuVisible, setMenuVisible] = useState(false);
   
@@ -69,9 +71,9 @@ const DriverManagementScreen: React.FC = () => {
   }, [bookings]);
 
   // Enrich drivers with calculated statistics
-  const drivers = useMemo(() => {
+  const drivers = useMemo((): EnrichedDriver[] => {
     return users
-      .filter(user => user.role === 'driver')
+      .filter((user): user is DriverUser => user.role === 'driver')
       .map(driver => {
         const stats = calculateDriverStats(driver.uid);
         return {
@@ -280,7 +282,7 @@ const DriverManagementScreen: React.FC = () => {
             const y = parseInt(m[3], 10);
             return new Date(y, mo, d);
           })(),
-        });
+        } as Omit<DriverUser, 'uid' | 'createdAt'>);
         
         Alert.alert('Success', 'Driver added successfully');
       } else {
@@ -357,7 +359,7 @@ const DriverManagementScreen: React.FC = () => {
     setEditingDriver(null);
   }, []);
 
-  const handleEditDriver = useCallback((driver: User) => {
+  const handleEditDriverInternal = useCallback((driver: DriverUser) => {
     setEditingDriver(driver);
     setAddDriverForm({
       name: driver.name || '',
@@ -378,6 +380,13 @@ const DriverManagementScreen: React.FC = () => {
     setFormErrors({});
     setShowAddDriverModal(true);
   }, []);
+
+  const handleEditDriver = useCallback((driver: User) => {
+    // In this context, driver is always a DriverUser since it comes from the drivers array
+    if (isDriverUser(driver)) {
+      handleEditDriverInternal(driver);
+    }
+  }, [handleEditDriverInternal]);
 
   const handleDeleteDriver = useCallback(async () => {
     if (!editingDriver) return;
@@ -438,13 +447,13 @@ const DriverManagementScreen: React.FC = () => {
     return matchesSearch;
   });
 
-  const getStatusColor = (driver: User) => {
+  const getStatusColor = (driver: DriverUser) => {
     if (driver.isApproved === true) return UI_CONFIG.colors.success;
     if (driver.isApproved === false) return UI_CONFIG.colors.error;
     return UI_CONFIG.colors.warning;
   };
 
-  const getStatusText = (driver: User) => {
+  const getStatusText = (driver: DriverUser) => {
     if (driver.isApproved === true) return 'Approved';
     if (driver.isApproved === false) return 'Rejected';
     return 'Pending';

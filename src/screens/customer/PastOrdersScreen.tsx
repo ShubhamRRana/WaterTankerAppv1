@@ -653,4 +653,3 @@ const styles = StyleSheet.create({
 });
 
 export default PastOrdersScreen;
-

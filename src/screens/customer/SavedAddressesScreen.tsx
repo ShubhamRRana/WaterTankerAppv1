@@ -15,7 +15,7 @@ import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Typography } from '../../components/common';
-import { Address } from '../../types';
+import { Address, isCustomerUser } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { LocalStorageService } from '../../services/localStorage';
 import { UI_CONFIG } from '../../constants/config';
@@ -40,10 +40,10 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
 
   useEffect(() => {
     loadAddresses();
-  }, [user?.savedAddresses]);
+  }, [user]);
 
   const loadAddresses = async () => {
-    if (!user?.savedAddresses) {
+    if (!user || !isCustomerUser(user) || !user.savedAddresses) {
       setAddresses([]);
       return;
     }

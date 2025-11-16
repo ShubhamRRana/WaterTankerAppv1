@@ -7,6 +7,7 @@ import {
   Alert,
   TextInput,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,28 +79,6 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       await fetchCustomerBookings(user.uid);
     } catch (error) {
           }
-  };
-
-  const filterBookings = () => {
-    let filtered = [...bookings];
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(booking => 
-        booking.id.toLowerCase().includes(query) ||
-        booking.deliveryAddress.street.toLowerCase().includes(query) ||
-        booking.deliveryAddress.city.toLowerCase().includes(query) ||
-        booking.customerName.toLowerCase().includes(query)
-      );
-    }
-
-    // Filter by status
-    if (selectedFilter !== 'all') {
-      filtered = filtered.filter(booking => booking.status === selectedFilter);
-    }
-
-    setFilteredBookings(filtered);
   };
 
   const onRefresh = async () => {
