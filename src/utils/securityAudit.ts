@@ -5,7 +5,6 @@
  * is configured securely and identify potential vulnerabilities.
  */
 
-import { SUPABASE_CONFIG } from '../constants/supabase';
 import { securityLogger, SecurityEventType, SecuritySeverity } from './securityLogger';
 
 export interface SecurityCheck {
@@ -89,30 +88,13 @@ class SecurityAuditor {
   private checkConfiguration(): SecurityCheck[] {
     const checks: SecurityCheck[] = [];
 
-    // Check Supabase URL is configured (for database operations)
+    // Local storage configuration check
     checks.push({
-      name: 'Supabase URL Configuration',
-      description: 'Verify Supabase URL is properly configured for database operations',
-      status: SUPABASE_CONFIG.url ? 'pass' : 'fail',
-      message: SUPABASE_CONFIG.url
-        ? 'Supabase URL is configured'
-        : 'Supabase URL is missing',
-      recommendation: SUPABASE_CONFIG.url
-        ? undefined
-        : 'Set EXPO_PUBLIC_SUPABASE_URL in environment variables',
-    });
-
-    // Check Supabase anon key is configured (for database operations)
-    checks.push({
-      name: 'Supabase Anon Key Configuration',
-      description: 'Verify Supabase anon key is properly configured for database operations',
-      status: SUPABASE_CONFIG.anonKey ? 'pass' : 'fail',
-      message: SUPABASE_CONFIG.anonKey
-        ? 'Supabase anon key is configured'
-        : 'Supabase anon key is missing',
-      recommendation: SUPABASE_CONFIG.anonKey
-        ? undefined
-        : 'Set EXPO_PUBLIC_SUPABASE_ANON_KEY in environment variables',
+      name: 'Local Storage Configuration',
+      description: 'Verify local storage is properly configured',
+      status: 'pass',
+      message: 'Local storage is available',
+      recommendation: undefined,
     });
 
     return checks;

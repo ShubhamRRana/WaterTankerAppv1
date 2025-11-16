@@ -1,7 +1,7 @@
 // Payment service for Cash on Delivery (COD) implementation
 // This is a simplified version for MVP - payment gateway integration will be added in v2
 
-import { supabase } from './supabase';
+import { LocalStorageService } from './localStorage';
 
 export interface PaymentResult {
   success: boolean;
@@ -11,7 +11,7 @@ export interface PaymentResult {
 
 export class PaymentService {
   /**
-   * Process Cash on Delivery payment - marks payment as pending in Supabase
+   * Process Cash on Delivery payment - marks payment as pending in local storage
    */
   static async processCODPayment(bookingId: string, amount: number): Promise<PaymentResult> {
     try {
@@ -19,20 +19,10 @@ export class PaymentService {
       // The actual payment happens when the driver delivers
       const paymentId = `cod_${bookingId}_${Date.now()}`;
       
-      const { error } = await supabase
-        .from('bookings')
-        .update({
-          payment_status: 'pending',
-          payment_id: paymentId,
-        })
-        .eq('id', bookingId);
-
-      if (error) {
-        return {
-          success: false,
-          error: error.message || 'Payment processing failed',
-        };
-      }
+      await LocalStorageService.updateBooking(bookingId, {
+        paymentStatus: 'pending',
+        paymentId,
+      });
       
       return {
         success: true,
@@ -53,20 +43,10 @@ export class PaymentService {
     try {
       const paymentId = `cod_confirmed_${bookingId}_${Date.now()}`;
       
-      const { error } = await supabase
-        .from('bookings')
-        .update({
-          payment_status: 'completed',
-          payment_id: paymentId,
-        })
-        .eq('id', bookingId);
-
-      if (error) {
-        return {
-          success: false,
-          error: error.message || 'Payment confirmation failed',
-        };
-      }
+      await LocalStorageService.updateBooking(bookingId, {
+        paymentStatus: 'completed',
+        paymentId,
+      });
       
       return {
         success: true,

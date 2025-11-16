@@ -10,7 +10,3 @@ export { NotificationService } from './notification.service';
 export type { PushNotificationToken } from './notification.service';
 export { UserService } from './user.service';
 export { VehicleService } from './vehicle.service';
-export { MigrationService } from './migration.service';
-export { supabase, checkSupabaseConnection } from './supabase';
-export { EdgeFunctionsService } from './edgeFunctions.service';
-export type { EdgeFunctionResponse } from './edgeFunctions.service';

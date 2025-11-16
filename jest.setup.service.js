@@ -22,10 +22,7 @@ jest.mock('expo', () => ({
 jest.mock('expo-constants', () => ({
   default: {
     expoConfig: {
-      extra: {
-        supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL || '',
-        supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
-      },
+      extra: {},
     },
     manifest: null,
     appOwnership: null,
@@ -53,10 +50,7 @@ jest.mock('react-native', () => ({
   },
 }));
 
-// Note: Supabase is NOT mocked here globally
-// - Integration tests use jest.unmock() to use the real Supabase client
-// - Unit tests should mock Supabase themselves if needed
-// This allows integration tests to properly connect to the real Supabase instance
+// Note: Supabase dependencies have been removed from the project
 
 // Suppress console warnings in tests
 global.console = {

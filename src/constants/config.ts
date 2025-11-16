@@ -268,5 +268,3 @@ export const DEV_CONFIG = {
   enableDebugMode: __DEV__,
   mockData: __DEV__,
 };
-
-export * from './supabase';

@@ -5,7 +5,7 @@
  * Stores location updates in Supabase and provides real-time subscriptions.
  */
 
-import { supabase } from './supabase';
+// import { supabase } from './supabase'; // Removed: Supabase dependency
 import { LocationService } from './location.service';
 import * as Location from 'expo-location';
 import { SubscriptionManager } from '../utils/subscriptionManager';
@@ -142,30 +142,12 @@ export class LocationTrackingService {
 
   /**
    * Update driver location in database
+   * TODO: Implement with your new backend - Supabase removed
    */
   static async updateLocation(update: LocationUpdate): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('driver_locations')
-        .upsert(
-          {
-            driver_id: update.driverId,
-            booking_id: update.bookingId,
-            latitude: update.latitude,
-            longitude: update.longitude,
-            accuracy: update.accuracy,
-            heading: update.heading,
-            speed: update.speed,
-            updated_at: new Date().toISOString(),
-          },
-          {
-            onConflict: 'driver_id,booking_id',
-          }
-        );
-
-      if (error) {
-        throw error;
-      }
+      // TODO: Implement location update with your new backend
+      console.warn('Location update not implemented - Supabase removed');
     } catch (error) {
       console.error('Error updating location:', error);
       throw error;
@@ -174,38 +156,13 @@ export class LocationTrackingService {
 
   /**
    * Get current location for a driver
+   * TODO: Implement with your new backend - Supabase removed
    */
   static async getDriverLocation(driverId: string): Promise<DriverLocation | null> {
     try {
-      const { data, error } = await supabase
-        .from('driver_locations')
-        .select('*')
-        .eq('driver_id', driverId)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // No location found
-          return null;
-        }
-        throw error;
-      }
-
-      if (!data) return null;
-
-      return {
-        id: data.id,
-        driverId: data.driver_id,
-        bookingId: data.booking_id,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        accuracy: data.accuracy,
-        heading: data.heading,
-        speed: data.speed,
-        timestamp: new Date(data.updated_at),
-      };
+      // TODO: Implement location fetching with your new backend
+      console.warn('Location fetching not implemented - Supabase removed');
+      return null;
     } catch (error) {
       console.error('Error getting driver location:', error);
       throw error;
@@ -214,37 +171,13 @@ export class LocationTrackingService {
 
   /**
    * Get location for a specific booking
+   * TODO: Implement with your new backend - Supabase removed
    */
   static async getBookingLocation(bookingId: string): Promise<DriverLocation | null> {
     try {
-      const { data, error } = await supabase
-        .from('driver_locations')
-        .select('*')
-        .eq('booking_id', bookingId)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return null;
-        }
-        throw error;
-      }
-
-      if (!data) return null;
-
-      return {
-        id: data.id,
-        driverId: data.driver_id,
-        bookingId: data.booking_id,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        accuracy: data.accuracy,
-        heading: data.heading,
-        speed: data.speed,
-        timestamp: new Date(data.updated_at),
-      };
+      // TODO: Implement location fetching with your new backend
+      console.warn('Location fetching not implemented - Supabase removed');
+      return null;
     } catch (error) {
       console.error('Error getting booking location:', error);
       throw error;

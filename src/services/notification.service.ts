@@ -7,7 +7,7 @@
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { supabase } from './supabase';
+// import { supabase } from './supabase'; // Removed: Supabase dependency
 import { SubscriptionManager } from '../utils/subscriptionManager';
 import { Notification } from '../types';
 
@@ -124,20 +124,11 @@ export class NotificationService {
    */
   private static async savePushToken(tokenData: PushNotificationToken): Promise<void> {
     try {
+      // TODO: Implement push token storage with your new backend
+      console.warn('Push token storage not implemented - Supabase removed');
       // Store in user's profile or a separate push_tokens table
       // For now, we'll store it in a simple way
       // You may want to create a push_tokens table for better management
-      const { error } = await supabase
-        .from('users')
-        .update({
-          // Store token in a JSON field or create a separate table
-          // For MVP, we can add a push_token field to users table
-        })
-        .eq('id', tokenData.userId);
-
-      if (error) {
-        console.error('Error saving push token:', error);
-      }
     } catch (error) {
       console.error('Error saving push token:', error);
     }
@@ -167,7 +158,8 @@ export class NotificationService {
   }
 
   /**
-   * Create an in-app notification in Supabase
+   * Create an in-app notification
+   * TODO: Implement with your new backend - Supabase removed
    */
   static async createNotification(
     userId: string,
@@ -177,43 +169,28 @@ export class NotificationService {
     relatedBookingId?: string
   ): Promise<Notification | null> {
     try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: userId,
-          title,
-          message,
-          type,
-          related_booking_id: relatedBookingId,
-          is_read: false,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      if (!data) return null;
-
+      // TODO: Implement notification creation with your new backend
+      console.warn('Notification creation not implemented - Supabase removed');
+      
       // Send push notification if token is registered
       if (this.tokenRegistered) {
         await this.sendLocalNotification(title, message, {
-          notificationId: data.id,
+          notificationId: 'temp-id',
           type,
           relatedBookingId,
         });
       }
 
+      // Return a temporary notification object
       return {
-        id: data.id,
-        userId: data.user_id,
-        title: data.title,
-        message: data.message,
-        type: data.type,
-        isRead: data.is_read,
-        relatedBookingId: data.related_booking_id,
-        createdAt: new Date(data.created_at),
+        id: 'temp-id',
+        userId,
+        title,
+        message,
+        type,
+        isRead: false,
+        relatedBookingId,
+        createdAt: new Date(),
       };
     } catch (error) {
       console.error('Error creating notification:', error);
@@ -223,32 +200,13 @@ export class NotificationService {
 
   /**
    * Get notifications for a user
+   * TODO: Implement with your new backend - Supabase removed
    */
   static async getNotifications(userId: string, limit: number = 50): Promise<Notification[]> {
     try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        throw error;
-      }
-
-      if (!data) return [];
-
-      return data.map((item) => ({
-        id: item.id,
-        userId: item.user_id,
-        title: item.title,
-        message: item.message,
-        type: item.type,
-        isRead: item.is_read,
-        relatedBookingId: item.related_booking_id,
-        createdAt: new Date(item.created_at),
-      }));
+      // TODO: Implement notification fetching with your new backend
+      console.warn('Notification fetching not implemented - Supabase removed');
+      return [];
     } catch (error) {
       console.error('Error getting notifications:', error);
       throw error;
@@ -257,17 +215,12 @@ export class NotificationService {
 
   /**
    * Mark notification as read
+   * TODO: Implement with your new backend - Supabase removed
    */
   static async markAsRead(notificationId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', notificationId);
-
-      if (error) {
-        throw error;
-      }
+      // TODO: Implement notification update with your new backend
+      console.warn('Notification update not implemented - Supabase removed');
     } catch (error) {
       console.error('Error marking notification as read:', error);
       throw error;
@@ -276,18 +229,12 @@ export class NotificationService {
 
   /**
    * Mark all notifications as read for a user
+   * TODO: Implement with your new backend - Supabase removed
    */
   static async markAllAsRead(userId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('user_id', userId)
-        .eq('is_read', false);
-
-      if (error) {
-        throw error;
-      }
+      // TODO: Implement notification update with your new backend
+      console.warn('Notification update not implemented - Supabase removed');
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
       throw error;
@@ -390,20 +337,13 @@ export class NotificationService {
 
   /**
    * Get unread notification count
+   * TODO: Implement with your new backend - Supabase removed
    */
   static async getUnreadCount(userId: string): Promise<number> {
     try {
-      const { count, error } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_read', false);
-
-      if (error) {
-        throw error;
-      }
-
-      return count ?? 0;
+      // TODO: Implement unread count with your new backend
+      console.warn('Unread count not implemented - Supabase removed');
+      return 0;
     } catch (error) {
       console.error('Error getting unread count:', error);
       return 0;
@@ -412,17 +352,12 @@ export class NotificationService {
 
   /**
    * Delete a notification
+   * TODO: Implement with your new backend - Supabase removed
    */
   static async deleteNotification(notificationId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId);
-
-      if (error) {
-        throw error;
-      }
+      // TODO: Implement notification deletion with your new backend
+      console.warn('Notification deletion not implemented - Supabase removed');
     } catch (error) {
       console.error('Error deleting notification:', error);
       throw error;

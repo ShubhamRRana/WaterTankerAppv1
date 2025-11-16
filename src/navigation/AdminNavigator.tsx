@@ -5,7 +5,6 @@ import AllBookingsScreen from '../screens/admin/AllBookingsScreen';
 import DriverManagementScreen from '../screens/admin/DriverManagementScreen';
 import VehicleManagementScreen from '../screens/admin/VehicleManagementScreen';
 import ReportsScreen from '../screens/admin/ReportsScreen';
-import DataMigrationScreen from '../screens/admin/DataMigrationScreen';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 
 export type AdminStackParamList = {
@@ -14,7 +13,6 @@ export type AdminStackParamList = {
   Vehicles: undefined;
   Reports: undefined;
   Profile: undefined;
-  Migration: undefined;
 };
 
 const Stack = createStackNavigator<AdminStackParamList>();
@@ -33,7 +31,6 @@ const AdminNavigator: React.FC = () => {
         <Stack.Screen name="Vehicles" component={VehicleManagementScreen} />
         <Stack.Screen name="Reports" component={ReportsScreen} />
         <Stack.Screen name="Profile" component={AdminProfileScreen} />
-        <Stack.Screen name="Migration" component={DataMigrationScreen} />
       </Stack.Navigator>
     </ErrorBoundary>
   );
