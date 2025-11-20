@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '../common';
 import { UI_CONFIG } from '../../constants/config';
 
@@ -9,7 +8,6 @@ export type OrderTab = 'available' | 'active' | 'completed';
 interface Tab {
   key: OrderTab;
   label: string;
-  icon: string;
 }
 
 interface OrdersFilterProps {
@@ -19,9 +17,9 @@ interface OrdersFilterProps {
 
 const OrdersFilter: React.FC<OrdersFilterProps> = ({ activeTab, onTabChange }) => {
   const tabs: Tab[] = [
-    { key: 'available', label: 'Available', icon: 'list-outline' },
-    { key: 'active', label: 'Active', icon: 'navigate-outline' },
-    { key: 'completed', label: 'Completed', icon: 'checkmark-circle-outline' },
+    { key: 'available', label: 'Available' },
+    { key: 'active', label: 'Active' },
+    { key: 'completed', label: 'Done' },
   ];
 
   // Animation values for glass glider
@@ -71,12 +69,6 @@ const OrdersFilter: React.FC<OrdersFilterProps> = ({ activeTab, onTabChange }) =
               }
             }}
           >
-            <Ionicons 
-              name={tab.icon as any} 
-              size={18} 
-              color={activeTab === tab.key ? UI_CONFIG.colors.text : UI_CONFIG.colors.textSecondary}
-              style={{ marginRight: 6 }}
-            />
             <Typography 
               variant="body" 
               style={[
@@ -135,18 +127,20 @@ const styles = StyleSheet.create({
   glassRadioOption: {
     flex: 1,
     minWidth: 80,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
     paddingVertical: 12.8,
     paddingHorizontal: 25.6,
     zIndex: 2,
   },
   glassRadioLabel: {
     fontSize: 14,
+    lineHeight: 18,
     fontWeight: '600',
     letterSpacing: 0.3,
     color: UI_CONFIG.colors.textSecondary,
+    textAlign: 'center',
+    alignSelf: 'center',
   },
   glassRadioLabelActive: {
     color: UI_CONFIG.colors.text,
@@ -165,9 +159,9 @@ const styles = StyleSheet.create({
       height: 0,
     },
     shadowOpacity: 0.5,
-    shadowRadius: 18,
+    shadowRadius: 15,
     elevation: 10,
-    height: '100%',
+    height: '80%',
   },
 });
 
