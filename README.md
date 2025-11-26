@@ -65,7 +65,6 @@ src/
 ├── types/
 │   └── index.ts
 ├── utils/
-│   ├── loginRestrictionTest.ts
 │   ├── pricing.ts          # Pricing calculations and Indian numbering system formatting
 │   ├── validation.ts
 │   └── index.ts
