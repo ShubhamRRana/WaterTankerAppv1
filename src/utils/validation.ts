@@ -44,15 +44,73 @@ export class ValidationUtils {
   }
 
   // Email validation
-  static validateEmail(email: string): { isValid: boolean; error?: string } {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (!email) {
-      return { isValid: true }; // Email is optional
+  static validateEmail(email: string, required: boolean = true): { isValid: boolean; error?: string } {
+    if (!email || !email.trim()) {
+      return required 
+        ? { isValid: false, error: 'Email address is required' }
+        : { isValid: true };
     }
     
-    if (!emailRegex.test(email)) {
+    const trimmed = email.trim();
+    
+    // Use email pattern from config
+    if (!VALIDATION_CONFIG.email.pattern.test(trimmed)) {
       return { isValid: false, error: 'Please enter a valid email address' };
+    }
+    
+    // Additional validation: check for valid domain structure
+    const parts = trimmed.split('@');
+    if (parts.length !== 2) {
+      return { isValid: false, error: 'Please enter a valid email address' };
+    }
+    
+    const [localPart, domain] = parts;
+    
+    // Validate local part (before @)
+    if (!localPart || localPart.length === 0 || localPart.length > 64) {
+      return { isValid: false, error: 'Email address is invalid' };
+    }
+    
+    // Validate domain (after @)
+    if (!domain || domain.length === 0 || domain.length > 255) {
+      return { isValid: false, error: 'Email address is invalid' };
+    }
+    
+    // Check domain has at least one dot
+    if (!domain.includes('.')) {
+      return { isValid: false, error: 'Please enter a valid email address' };
+    }
+    
+    // Check domain doesn't start or end with dot or hyphen
+    if (domain.startsWith('.') || domain.endsWith('.') || domain.startsWith('-') || domain.endsWith('-')) {
+      return { isValid: false, error: 'Please enter a valid email address' };
+    }
+    
+    return { isValid: true };
+  }
+
+  // Email uniqueness validation helper
+  // This function checks if an email already exists in a list of users
+  // Usage: validateEmailUniqueness(email, (email) => users.find(u => u.email?.toLowerCase() === email.toLowerCase()))
+  static validateEmailUniqueness(
+    email: string,
+    checkExists: (email: string) => boolean | undefined
+  ): { isValid: boolean; error?: string } {
+    if (!email || !email.trim()) {
+      return { isValid: false, error: 'Email address is required' };
+    }
+    
+    const normalizedEmail = email.trim().toLowerCase();
+    
+    // First validate email format
+    const formatValidation = this.validateEmail(email, true);
+    if (!formatValidation.isValid) {
+      return formatValidation;
+    }
+    
+    // Check uniqueness
+    if (checkExists(normalizedEmail)) {
+      return { isValid: false, error: 'An account with this email address already exists' };
     }
     
     return { isValid: true };

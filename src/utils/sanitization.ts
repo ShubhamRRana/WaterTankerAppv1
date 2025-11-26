@@ -76,7 +76,13 @@ export class SanitizationUtils {
   }
 
   /**
-   * Sanitize an email address
+   * Sanitize and normalize an email address
+   * - Trims whitespace
+   * - Converts to lowercase (email normalization)
+   * - Removes potentially dangerous characters while keeping valid email format
+   * 
+   * Note: Email addresses are case-insensitive per RFC 5321, so normalization
+   * to lowercase ensures consistent storage and comparison.
    */
   static sanitizeEmail(email: string): string {
     if (!email || typeof email !== 'string') {
@@ -85,7 +91,7 @@ export class SanitizationUtils {
 
     return email
       .trim()
-      .toLowerCase()
+      .toLowerCase() // Normalize to lowercase for consistent storage and comparison
       // Remove potentially dangerous characters while keeping valid email format
       .replace(/[<>\"'`]/g, '')
       .trim();

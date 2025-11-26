@@ -22,13 +22,14 @@ export interface Address {
 
 /**
  * Base user properties shared across all user roles
+ * Email is the primary identifier for authentication
  */
 interface BaseUser {
   uid: string;
-  phone: string;
+  email: string; // Required: primary identifier for authentication
   password: string; // hashed
   name: string;
-  email?: string;
+  phone?: string; // Optional: kept for contact purposes
   profileImage?: string;
   createdAt: Date;
 }
@@ -190,11 +191,11 @@ export interface AuthStackParamList {
   RoleEntry: undefined;
   Login: { preferredRole?: UserRole } | undefined;
   Register: { preferredRole?: UserRole } | undefined;
-  RoleSelection: { phone: string; availableRoles: UserRole[] };
+  RoleSelection: { email: string; availableRoles: UserRole[] };
   [key: string]:
     | undefined
-    | { phone: string }
-    | { phone: string; availableRoles: UserRole[] }
+    | { email: string }
+    | { email: string; availableRoles: UserRole[] }
     | { preferredRole?: UserRole };
 }
 
@@ -213,7 +214,7 @@ export interface DriverStackParamList {
 
 // Form types
 export interface LoginForm {
-  phone: string;
+  email: string;
   password: string;
 }
 
@@ -221,11 +222,12 @@ export interface LoginForm {
  * User registration form data
  */
 export interface RegisterForm {
-  phone: string;
+  email: string;
   password: string;
   confirmPassword: string;
   name: string;
   role: UserRole;
+  phone?: string; // Optional: for contact purposes
 }
 
 export interface BookingForm {
