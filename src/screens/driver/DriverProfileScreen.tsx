@@ -15,20 +15,20 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useFocusEffect } from '@react-navigation/native';
-import { Typography, LoadingSpinner, CustomerMenuDrawer } from '../../components/common';
+import { Typography, LoadingSpinner } from '../../components/common';
 import { useAuthStore } from '../../store/authStore';
-import { User } from '../../types';
-import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
+import { DriverUser } from '../../types';
+import { DriverStackParamList } from '../../navigation/DriverNavigator';
 import { UI_CONFIG } from '../../constants/config';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 
-type ProfileScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Profile'>;
+type DriverProfileScreenNavigationProp = StackNavigationProp<DriverStackParamList, 'Profile'>;
 
-interface ProfileScreenProps {
-  navigation: ProfileScreenNavigationProp;
+interface DriverProfileScreenProps {
+  navigation: DriverProfileScreenNavigationProp;
 }
 
-const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
+const DriverProfileScreen: React.FC<DriverProfileScreenProps> = ({ navigation }) => {
   const { user, updateUser, logout, isLoading } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -41,7 +41,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     email?: string;
     phone?: string;
   }>({});
-  const [menuVisible, setMenuVisible] = useState(false);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -163,17 +162,16 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     setFormErrors({});
 
     try {
-      const updates: Partial<User> = {
+      await updateUser({
         name: sanitizedName,
         email: sanitizedEmail,
-        ...(sanitizedPhone && { phone: sanitizedPhone }),
-      };
+        phone: sanitizedPhone || undefined,
+      });
 
-      await updateUser(updates);
       setIsEditing(false);
-      Alert.alert('Success', 'Profile updated successfully!');
+      Alert.alert('Success', 'Profile updated successfully');
     } catch (error) {
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to update profile');
     }
   };
 
@@ -185,98 +183,97 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         phone: user.phone || '',
       });
     }
+    setFormErrors({});
     setIsEditing(false);
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      Alert.alert('Error', 'Failed to logout. Please try again.');
-    }
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
+    );
   };
 
-  const formatDate = (date: Date | string) => {
-    try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
-      
-      if (isNaN(dateObj.getTime())) {
-        return 'Unknown date';
-      }
-      
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }).format(dateObj);
-    } catch (error) {
-            return 'Unknown date';
-    }
+  const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(date);
   };
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.loadingContainer}>
-          <LoadingSpinner size="large" />
-          <Typography variant="body" style={styles.loadingText}>
-            Loading profile...
-          </Typography>
+          <LoadingSpinner />
         </View>
       </SafeAreaView>
     );
   }
 
-  if (!user) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.errorContainer}>
-          <Typography variant="h3" style={styles.errorTitle}>
-            Profile Not Found
-          </Typography>
-          <Typography variant="body" style={styles.errorText}>
-            Unable to load your profile. Please try logging in again.
-          </Typography>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const handleMenuNavigate = (route: 'Home' | 'Orders' | 'Profile' | 'PastOrders') => {
-    if (route === 'Profile') {
-      return;
-    }
-    navigation.navigate(route);
-  };
+  const driverUser = user as DriverUser;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardView}
       >
         <ScrollView 
-          style={styles.container} 
-          contentContainerStyle={styles.contentContainer} 
-          showsVerticalScrollIndicator={false} 
-          keyboardShouldPersistTaps="handled"
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
         >
-          {/* Header with Gradient */}
+          {/* Header with Menu */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => navigation.goBack()}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={24} color={UI_CONFIG.colors.text} />
+            </TouchableOpacity>
+            <Typography variant="h2" style={styles.headerTitle}>
+              Profile
+            </Typography>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleLogout}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="log-out-outline" size={24} color={UI_CONFIG.colors.error} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Profile Header with Gradient */}
           <LinearGradient
             colors={[UI_CONFIG.colors.primary, UI_CONFIG.colors.secondary]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.headerGradient}
+            style={styles.gradientHeader}
           >
-            <View style={styles.header}>
-              <TouchableOpacity 
-                style={styles.menuButton} 
-                onPress={() => setMenuVisible(true)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="menu" size={24} color={UI_CONFIG.colors.textLight} />
-              </TouchableOpacity>
-              <Typography variant="h2" style={styles.headerTitle}>Profile</Typography>
+            <View style={styles.profileHeader}>
+              <View style={styles.avatarContainer}>
+                <Ionicons name="person" size={60} color={UI_CONFIG.colors.textLight} />
+              </View>
               <View style={styles.headerSpacer} />
             </View>
 
@@ -293,7 +290,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               <Typography variant="h2" style={styles.userName}>
                 {user.name}
               </Typography>
-              <Typography variant="body" style={styles.userPhone}>
+              <Typography variant="body" style={styles.userEmail}>
                 {user.email}
               </Typography>
               {user.phone && (
@@ -327,6 +324,38 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 </Typography>
               </View>
             </View>
+            
+            {driverUser.vehicleNumber && (
+              <View style={styles.infoRow}>
+                <View style={styles.infoIconContainer}>
+                  <Ionicons name="car-outline" size={20} color={UI_CONFIG.colors.primary} />
+                </View>
+                <View style={styles.infoContent}>
+                  <Typography variant="caption" style={styles.infoLabel}>
+                    Vehicle Number
+                  </Typography>
+                  <Typography variant="body" style={styles.infoValue}>
+                    {driverUser.vehicleNumber}
+                  </Typography>
+                </View>
+              </View>
+            )}
+
+            {driverUser.licenseNumber && (
+              <View style={styles.infoRow}>
+                <View style={styles.infoIconContainer}>
+                  <Ionicons name="card-outline" size={20} color={UI_CONFIG.colors.primary} />
+                </View>
+                <View style={styles.infoContent}>
+                  <Typography variant="caption" style={styles.infoLabel}>
+                    License Number
+                  </Typography>
+                  <Typography variant="body" style={styles.infoValue}>
+                    {driverUser.licenseNumber}
+                  </Typography>
+                </View>
+              </View>
+            )}
           </Animated.View>
 
           {/* Action Buttons */}
@@ -499,14 +528,6 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
           <View style={styles.bottomSpacing} />
         </ScrollView>
       </KeyboardAvoidingView>
-      
-      <CustomerMenuDrawer
-        visible={menuVisible}
-        onClose={() => setMenuVisible(false)}
-        onNavigate={handleMenuNavigate}
-        onLogout={handleLogout}
-        currentRoute="Profile"
-      />
     </SafeAreaView>
   );
 };
@@ -516,96 +537,89 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: UI_CONFIG.colors.background,
   },
-  container: {
+  keyboardView: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
   },
-  contentContainer: {
-    paddingBottom: 32,
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 24,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
-  },
-  loadingText: {
-    marginTop: 16,
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.error,
-    marginBottom: 8,
-  },
-  errorText: {
-    fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
-    textAlign: 'center',
-  },
-  headerGradient: {
-    paddingTop: 8,
-    paddingBottom: 32,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    shadowColor: UI_CONFIG.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 16,
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: UI_CONFIG.colors.background,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   menuButton: {
     padding: 8,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.textLight,
+    color: UI_CONFIG.colors.text,
+  },
+  logoutButton: {
+    padding: 8,
+  },
+  gradientHeader: {
+    paddingTop: 24,
+    paddingBottom: 32,
+    paddingHorizontal: 24,
+  },
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  avatarContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   headerSpacer: {
-    width: 40,
+    height: 16,
   },
   profileSection: {
     alignItems: 'center',
-    paddingTop: 40,
-    paddingBottom: 40,
   },
   userName: {
-    fontSize: 25,
+    fontSize: 28,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.accent,
-    marginBottom: 4,
+    color: UI_CONFIG.colors.textLight,
+    marginBottom: 8,
     textAlign: 'center',
+  },
+  userEmail: {
+    fontSize: 16,
+    color: UI_CONFIG.colors.textLight,
+    marginBottom: 4,
+    opacity: 0.9,
   },
   userPhone: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
+    color: UI_CONFIG.colors.textLight,
+    opacity: 0.9,
   },
   infoCard: {
     backgroundColor: UI_CONFIG.colors.surface,
-    marginHorizontal: 20,
-    marginTop: -20,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 16,
     borderRadius: 16,
     padding: 20,
     shadowColor: UI_CONFIG.colors.shadow,
@@ -620,12 +634,15 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_CONFIG.colors.border,
   },
   infoIconContainer: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: `${UI_CONFIG.colors.primary}15`,
+    backgroundColor: UI_CONFIG.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -643,33 +660,25 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: 16,
     color: UI_CONFIG.colors.text,
-    fontWeight: '600',
+    fontWeight: '500',
   },
   actionButtonsContainer: {
-    paddingHorizontal: 20,
-    marginTop: 24,
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: UI_CONFIG.colors.surface,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 12,
-    padding: 16,
     borderWidth: 2,
-    borderColor: UI_CONFIG.colors.border,
-    shadowColor: UI_CONFIG.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: UI_CONFIG.colors.primary,
   },
   actionButtonActive: {
     borderColor: UI_CONFIG.colors.error,
-    backgroundColor: `${UI_CONFIG.colors.error}10`,
   },
   actionButtonText: {
     marginLeft: 8,
@@ -681,32 +690,32 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.error,
   },
   editFormContainer: {
-    paddingHorizontal: 20,
-    marginTop: 20,
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
   editCard: {
     backgroundColor: UI_CONFIG.colors.surface,
     borderRadius: 16,
-    padding: 24,
+    padding: 20,
     shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   editHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   editTitle: {
+    marginLeft: 12,
     fontSize: 20,
     fontWeight: 'bold',
     color: UI_CONFIG.colors.text,
-    marginLeft: 12,
   },
   inputContainer: {
     marginBottom: 20,
@@ -717,38 +726,31 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   inputLabel: {
+    marginLeft: 8,
     fontSize: 14,
     fontWeight: '600',
     color: UI_CONFIG.colors.text,
-    marginLeft: 8,
   },
   textInput: {
-    borderWidth: 2,
+    backgroundColor: UI_CONFIG.colors.background,
+    borderWidth: 1,
     borderColor: UI_CONFIG.colors.border,
     borderRadius: 12,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 16,
     color: UI_CONFIG.colors.text,
-    backgroundColor: UI_CONFIG.colors.background,
   },
   saveButton: {
     marginTop: 8,
     borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: UI_CONFIG.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
   saveButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    paddingVertical: 16,
   },
   saveButtonText: {
     marginLeft: 8,
@@ -757,8 +759,9 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textLight,
   },
   bottomSpacing: {
-    height: 40,
+    height: 24,
   },
 });
 
-export default ProfileScreen;
+export default DriverProfileScreen;
+

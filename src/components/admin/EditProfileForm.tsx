@@ -13,6 +13,7 @@ import { UI_CONFIG } from '../../constants/config';
 interface FormState {
   businessName: string;
   name: string;
+  email: string;
   phone: string;
   password: string;
   confirmPassword: string;
@@ -21,6 +22,7 @@ interface FormState {
 interface FormErrors {
   businessName?: string;
   name?: string;
+  email?: string;
   phone?: string;
   password?: string;
   confirmPassword?: string;
@@ -55,6 +57,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
 }) => {
   const businessNameInputRef = useRef<TextInput>(null);
   const nameInputRef = useRef<TextInput>(null);
+  const emailInputRef = useRef<TextInput>(null);
   const phoneInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const confirmPasswordInputRef = useRef<TextInput>(null);
@@ -133,7 +136,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           maxLength={50}
           autoCapitalize="words"
           returnKeyType="next"
-          onSubmitEditing={() => phoneInputRef.current?.focus()}
+          onSubmitEditing={() => emailInputRef.current?.focus()}
         />
         {formErrors.name && (
           <Typography variant="caption" style={styles.errorText}>
@@ -144,7 +147,41 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
 
       <View style={styles.inputContainer}>
         <View style={styles.labelRow}>
-          <Typography variant="body" style={styles.inputLabel}>Phone Number</Typography>
+          <Typography variant="body" style={styles.inputLabel}>Email Address</Typography>
+          <Typography 
+            variant="caption" 
+            style={[
+              styles.characterCount, 
+              { color: getCharacterCountColor(formData.email, 100) }
+            ]}
+          >
+            {getCharacterCount(formData.email, 100)}
+          </Typography>
+        </View>
+        <TextInput
+          ref={emailInputRef}
+          style={[styles.textInput, formErrors.email && styles.textInputError]}
+          value={formData.email}
+          onChangeText={(t) => onFieldChange('email', t)}
+          placeholder="Enter email address"
+          placeholderTextColor={UI_CONFIG.colors.textSecondary}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          accessibilityLabel="Email address input"
+          accessibilityHint="Enter your email address. This is used for authentication."
+          returnKeyType="next"
+          onSubmitEditing={() => phoneInputRef.current?.focus()}
+        />
+        {formErrors.email && (
+          <Typography variant="caption" style={styles.errorText}>
+            {formErrors.email}
+          </Typography>
+        )}
+      </View>
+
+      <View style={styles.inputContainer}>
+        <View style={styles.labelRow}>
+          <Typography variant="body" style={styles.inputLabel}>Phone Number (Optional)</Typography>
           <Typography 
             variant="caption" 
             style={[
@@ -160,12 +197,12 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           style={[styles.textInput, formErrors.phone && styles.textInputError]}
           value={formData.phone}
           onChangeText={(t) => onFieldChange('phone', t)}
-          placeholder="Enter phone number"
+          placeholder="Enter phone number (optional)"
           placeholderTextColor={UI_CONFIG.colors.textSecondary}
           keyboardType="phone-pad"
           maxLength={10}
           accessibilityLabel="Phone number input"
-          accessibilityHint="Enter your 10-digit phone number starting with 6-9"
+          accessibilityHint="Enter your 10-digit phone number starting with 6-9. This field is optional."
           returnKeyType="next"
           onSubmitEditing={() => passwordInputRef.current?.focus()}
         />

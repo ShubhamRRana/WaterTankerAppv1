@@ -72,7 +72,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </View>
         <View style={styles.profileInfo}>
           <Typography variant="h3" style={styles.userName}>{user.businessName || user.name}</Typography>
-          <Typography variant="body" style={styles.userPhone}>{user.phone}</Typography>
+          <Typography variant="body" style={styles.userPhone}>{user.email}</Typography>
+          {user.phone && (
+            <Typography variant="body" style={styles.userPhone}>{user.phone}</Typography>
+          )}
         </View>
       </View>
     </Card>

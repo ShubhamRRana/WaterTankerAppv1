@@ -22,6 +22,7 @@ import DriverCard from '../../components/admin/DriverCard';
 import { UI_CONFIG } from '../../constants/config';
 import { User, DriverUser, isDriverUser } from '../../types';
 import { ValidationUtils } from '../../utils/validation';
+import { SanitizationUtils } from '../../utils/sanitization';
 import { PricingUtils } from '../../utils/pricing';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 
@@ -47,6 +48,7 @@ const DriverManagementScreen: React.FC = () => {
   // Add/Edit Driver form state
   const [addDriverForm, setAddDriverForm] = useState({
     name: '',
+    email: '',
     phone: '',
     password: '',
     confirmPassword: '',
@@ -186,10 +188,18 @@ const DriverManagementScreen: React.FC = () => {
       errors.name = nameValidation.error || 'Invalid name';
     }
     
-    // Validate phone
-    const phoneValidation = ValidationUtils.validatePhone(addDriverForm.phone);
-    if (!phoneValidation.isValid) {
-      errors.phone = phoneValidation.error || 'Invalid phone';
+    // Validate email
+    const emailValidation = ValidationUtils.validateEmail(addDriverForm.email, true);
+    if (!emailValidation.isValid) {
+      errors.email = emailValidation.error || 'Invalid email';
+    }
+    
+    // Validate phone (optional)
+    if (addDriverForm.phone) {
+      const phoneValidation = ValidationUtils.validatePhone(addDriverForm.phone);
+      if (!phoneValidation.isValid) {
+        errors.phone = phoneValidation.error || 'Invalid phone';
+      }
     }
     
     // Validate password (required for add, optional for edit)
@@ -253,10 +263,10 @@ const DriverManagementScreen: React.FC = () => {
     setIsSubmitting(true);
     try {
       if (!isEditMode) {
-        // Check if phone number already exists (only for new drivers)
-        const existingUser = users.find(user => user.phone === addDriverForm.phone);
+        // Check if email already exists (only for new drivers)
+        const existingUser = users.find(user => user.email?.toLowerCase() === addDriverForm.email.toLowerCase());
         if (existingUser) {
-          Alert.alert('Error', 'A user with this phone number already exists');
+          Alert.alert('Error', 'A user with this email address already exists');
           setIsSubmitting(false);
           return;
         }
@@ -264,7 +274,8 @@ const DriverManagementScreen: React.FC = () => {
         await addUser({
           role: 'driver',
           name: addDriverForm.name.trim(),
-          phone: addDriverForm.phone,
+          email: SanitizationUtils.sanitizeEmail(addDriverForm.email),
+          phone: addDriverForm.phone ? addDriverForm.phone : undefined,
           password: addDriverForm.password, // In real app, this should be hashed
           isApproved: true, // Auto-approve when added by admin
           isAvailable: true,
@@ -286,11 +297,11 @@ const DriverManagementScreen: React.FC = () => {
         
         Alert.alert('Success', 'Driver added successfully');
       } else {
-        // Check if phone number was changed and if it already exists for another user
-        if (addDriverForm.phone !== editingDriver.phone) {
-          const existingUser = users.find(user => user.phone === addDriverForm.phone && user.uid !== editingDriver.uid);
+        // Check if email was changed and if it already exists for another user
+        if (addDriverForm.email.toLowerCase() !== editingDriver.email?.toLowerCase()) {
+          const existingUser = users.find(user => user.email?.toLowerCase() === addDriverForm.email.toLowerCase() && user.uid !== editingDriver.uid);
           if (existingUser) {
-            Alert.alert('Error', 'A user with this phone number already exists');
+            Alert.alert('Error', 'A user with this email address already exists');
             setIsSubmitting(false);
             return;
           }
@@ -299,7 +310,8 @@ const DriverManagementScreen: React.FC = () => {
         // Update existing driver
         const updateData: any = {
           name: addDriverForm.name.trim(),
-          phone: addDriverForm.phone,
+          email: SanitizationUtils.sanitizeEmail(addDriverForm.email),
+          phone: addDriverForm.phone ? addDriverForm.phone : undefined,
           licenseNumber: addDriverForm.licenseNumber.trim(),
           emergencyContactName: addDriverForm.emergencyContactName.trim(),
           emergencyContactPhone: addDriverForm.emergencyContactPhone,
@@ -326,6 +338,7 @@ const DriverManagementScreen: React.FC = () => {
       // Reset form
       setAddDriverForm({
         name: '',
+        email: '',
         phone: '',
         password: '',
         confirmPassword: '',
@@ -347,6 +360,7 @@ const DriverManagementScreen: React.FC = () => {
   const resetAddDriverForm = useCallback(() => {
     setAddDriverForm({
       name: '',
+      email: '',
       phone: '',
       password: '',
       confirmPassword: '',
@@ -363,6 +377,7 @@ const DriverManagementScreen: React.FC = () => {
     setEditingDriver(driver);
     setAddDriverForm({
       name: driver.name || '',
+      email: driver.email || '',
       phone: driver.phone || '',
       password: '',
       confirmPassword: '',
@@ -402,13 +417,13 @@ const DriverManagementScreen: React.FC = () => {
           onPress: async () => {
             try {
               const driverId = editingDriver.uid;
-              const driverPhone = editingDriver.phone;
+              const driverEmail = editingDriver.email;
               
               // Delete the driver
               await deleteUser(driverId);
               
               // Check if the deleted driver is currently logged in
-              if (currentUser && (currentUser.uid === driverId || currentUser.phone === driverPhone)) {
+              if (currentUser && (currentUser.uid === driverId || currentUser.email?.toLowerCase() === driverEmail?.toLowerCase())) {
                 // Logout the deleted driver
                 await logout();
                 Alert.alert(
@@ -442,7 +457,8 @@ const DriverManagementScreen: React.FC = () => {
 
   const filteredDrivers = drivers.filter(driver => {
     const matchesSearch = driver.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         driver.phone.includes(searchQuery) ||
+                         driver.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         driver.phone?.includes(searchQuery) ||
                          driver.vehicleNumber?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });

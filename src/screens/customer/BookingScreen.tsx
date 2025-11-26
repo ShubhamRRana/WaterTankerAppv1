@@ -377,7 +377,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       const bookingData = {
         customerId: user.uid,
         customerName: user.name,
-        customerPhone: user.phone,
+        customerPhone: user.phone || '', // Phone is optional, use empty string as fallback
         agencyId: selectedAgency.id,
         agencyName: selectedAgency.name,
         status: 'pending' as const,

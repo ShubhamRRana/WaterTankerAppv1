@@ -5,17 +5,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { UI_CONFIG } from '../constants/config';
 import OrdersScreen from '../screens/driver/OrdersScreen';
 import DriverEarningsScreen from '../screens/driver/DriverEarningsScreen';
+import DriverProfileScreen from '../screens/driver/DriverProfileScreen';
 import CollectPaymentScreen from '../screens/driver/CollectPaymentScreen';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 
 export type DriverTabParamList = {
   Orders: undefined;
   Earnings: undefined;
+  Profile: undefined;
 };
 
 export type DriverStackParamList = {
   DriverTabs: undefined;
   CollectPayment: { orderId: string };
+  Profile: undefined;
 };
 
 const Tab = createBottomTabNavigator<DriverTabParamList>();
@@ -59,6 +62,16 @@ const DriverTabs: React.FC = () => {
           tabBarLabel: 'Earnings',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cash-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={DriverProfileScreen}
+        options={{ 
+          tabBarLabel: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />

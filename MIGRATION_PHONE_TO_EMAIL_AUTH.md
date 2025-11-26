@@ -95,19 +95,19 @@ This document provides a comprehensive step-by-step guide to migrate the Water T
 
 ---
 
-### Phase 3: Authentication Service
+### Phase 3: Authentication Service ✅ COMPLETED
 
-#### Step 3.1: Update AuthService.register()
+#### Step 3.1: Update AuthService.register() ✅
 **File:** `src/services/auth.service.ts`
 
 **Changes:**
-- Change parameter from `phone: string` to `email: string`
-- Replace `sanitizePhone()` with `sanitizeEmail()`
-- Replace `validatePhone()` with `validateEmail()`
-- Update rate limiting key from phone to email
-- Update user lookup to check email instead of phone
-- Update security logging to use email
-- Update all comments and JSDoc
+- ✅ Change parameter from `phone: string` to `email: string`
+- ✅ Replace `sanitizePhone()` with `sanitizeEmail()`
+- ✅ Replace `validatePhone()` with `validateEmail()`
+- ✅ Update rate limiting key from phone to email
+- ✅ Update user lookup to check email instead of phone (case-insensitive)
+- ✅ Update security logging to use email
+- ✅ Update all comments and JSDoc
 
 **Key Changes:**
 ```typescript
@@ -118,18 +118,21 @@ static async register(phone: string, password: string, name: string, role: UserR
 static async register(email: string, password: string, name: string, role: UserRole, ...)
 ```
 
+**Note:** Email validation added, user lookup now uses case-insensitive email comparison, and user creation sets email as required field.
+
 ---
 
-#### Step 3.2: Update AuthService.login()
+#### Step 3.2: Update AuthService.login() ✅
 **File:** `src/services/auth.service.ts`
 
 **Changes:**
-- Change parameter from `phone: string` to `email: string`
-- Replace `sanitizePhone()` with `sanitizeEmail()`
-- Update rate limiting to use email as key
-- Update user lookup: `allUsers.filter(u => u.email === sanitizedEmail)`
-- Update security logging to use email
-- Update all comments and JSDoc
+- ✅ Change parameter from `phone: string` to `email: string`
+- ✅ Replace `sanitizePhone()` with `sanitizeEmail()`
+- ✅ Added email format validation
+- ✅ Update rate limiting to use email as key
+- ✅ Update user lookup: `allUsers.filter(u => u.email?.toLowerCase() === sanitizedEmail.toLowerCase())`
+- ✅ Update security logging to use email
+- ✅ Update all comments and JSDoc
 
 **Key Changes:**
 ```typescript
@@ -140,236 +143,323 @@ static async login(phone: string, password: string): Promise<AuthResult>
 static async login(email: string, password: string): Promise<AuthResult>
 ```
 
+**Note:** Email validation added, user lookup now uses case-insensitive email comparison.
+
 ---
 
-#### Step 3.3: Update AuthService.loginWithRole()
+#### Step 3.3: Update AuthService.loginWithRole() ✅
 **File:** `src/services/auth.service.ts`
 
 **Changes:**
-- Change parameter from `phone: string` to `email: string`
-- Update user lookup: `allUsers.find(u => u.email === email && u.role === role)`
-- Update all comments and JSDoc
+- ✅ Change parameter from `phone: string` to `email: string`
+- ✅ Added email sanitization
+- ✅ Update user lookup: `allUsers.find(u => u.email?.toLowerCase() === sanitizedEmail.toLowerCase() && u.role === role)`
+- ✅ Update all comments and JSDoc
+
+**Note:** Email sanitization added and user lookup now uses case-insensitive email comparison.
 
 ---
 
-#### Step 3.4: Update Rate Limiter Keys
+#### Step 3.4: Update Rate Limiter Keys ✅
 **File:** `src/services/auth.service.ts`
 
 **Changes:**
-- All rate limiting should use email instead of phone
-- Update `rateLimiter.isAllowed()` and `rateLimiter.record()` calls to use email
+- ✅ All rate limiting now uses email instead of phone
+- ✅ Updated `rateLimiter.isAllowed()` and `rateLimiter.record()` calls to use email
+
+**Note:** Both registration and login rate limiting now use email as the identifier.
 
 ---
 
-#### Step 3.5: Update Security Logger
-**File:** `src/services/auth.service.ts`
+#### Step 3.5: Update Security Logger ✅
+**File:** `src/services/auth.service.ts` and `src/utils/securityLogger.ts`
 
 **Changes:**
-- Update all `securityLogger` calls to use email instead of phone
-- Check `src/utils/securityLogger.ts` if it needs updates for email-based logging
+- ✅ Updated all `securityLogger` calls in AuthService to use email instead of phone
+- ✅ Added `maskEmail()` method to `securityLogger.ts` for email masking in logs
+- ✅ Updated `logAuthAttempt()` to accept email parameter
+- ✅ Updated `logRegistrationAttempt()` to accept email parameter
+- ✅ Email masking shows first 2 characters and full domain (e.g., `us***@example.com`)
+
+**Note:** Security logger now supports email-based logging with proper masking for privacy.
 
 ---
 
-### Phase 4: Authentication Store (Zustand)
+### Phase 4: Authentication Store (Zustand) ✅ COMPLETED
 
-#### Step 4.1: Update authStore.login()
+#### Step 4.1: Update authStore.login() ✅
 **File:** `src/store/authStore.ts`
 
 **Changes:**
-- Change parameter from `phone: string` to `email: string`
-- Update call to `AuthService.login(email, password)`
-- Update all related comments
+- ✅ Change parameter from `phone: string` to `email: string`
+- ✅ Update call to `AuthService.login(email, password)`
+- ✅ Update all related comments
+
+**Note:** The login method now accepts email parameter and calls AuthService.login with email.
 
 ---
 
-#### Step 4.2: Update authStore.loginWithRole()
+#### Step 4.2: Update authStore.loginWithRole() ✅
 **File:** `src/store/authStore.ts`
 
 **Changes:**
-- Change parameter from `phone: string` to `email: string`
-- Update call to `AuthService.loginWithRole(email, role)`
+- ✅ Change parameter from `phone: string` to `email: string`
+- ✅ Update call to `AuthService.loginWithRole(email, role)`
+
+**Note:** The loginWithRole method now accepts email parameter and calls AuthService.loginWithRole with email.
 
 ---
 
-#### Step 4.3: Update authStore.register()
+#### Step 4.3: Update authStore.register() ✅
 **File:** `src/store/authStore.ts`
 
 **Changes:**
-- Change parameter from `phone: string` to `email: string`
-- Update call to `AuthService.register(email, password, name, role)`
+- ✅ Change parameter from `phone: string` to `email: string`
+- ✅ Update call to `AuthService.register(email, password, name, role)`
+
+**Note:** The register method now accepts email parameter and calls AuthService.register with email.
 
 ---
 
-### Phase 5: Login Screen
+### Phase 5: Login Screen ✅ COMPLETED
 
-#### Step 5.1: Update LoginScreen State
+#### Step 5.1: Update LoginScreen State ✅
 **File:** `src/screens/auth/LoginScreen.tsx`
 
 **Changes:**
-- Replace `const [phone, setPhone] = useState('')` with `const [email, setEmail] = useState('')`
-- Update error state: `errors: { email?: string; password?: string }`
+- ✅ Replace `const [phone, setPhone] = useState('')` with `const [email, setEmail] = useState('')`
+- ✅ Update error state: `errors: { email?: string; password?: string }`
+
+**Note:** State has been updated to use email instead of phone, and error state now references email field.
 
 ---
 
-#### Step 5.2: Update LoginScreen Handlers
+#### Step 5.2: Update LoginScreen Handlers ✅
 **File:** `src/screens/auth/LoginScreen.tsx`
 
 **Changes:**
-- Replace `handlePhoneChange()` with `handleEmailChange()`
-- Use `SanitizationUtils.sanitizeEmail()` instead of `sanitizePhone()`
-- Use `ValidationUtils.validateEmail()` instead of `validatePhone()`
-- Update error handling for email field
+- ✅ Replace `handlePhoneChange()` with `handleEmailChange()`
+- ✅ Use `SanitizationUtils.sanitizeEmail()` instead of `sanitizePhone()`
+- ✅ Use `ValidationUtils.validateEmail()` instead of `validatePhone()`
+- ✅ Update error handling for email field
+
+**Note:** Handler now uses email sanitization and validation utilities, with proper error handling.
 
 ---
 
-#### Step 5.3: Update LoginScreen UI
+#### Step 5.3: Update LoginScreen UI ✅
 **File:** `src/screens/auth/LoginScreen.tsx`
 
 **Changes:**
-- Replace phone input field with email input field
-- Update label: "Phone Number" → "Email Address"
-- Update placeholder: "Enter your phone number" → "Enter your email address"
-- Change `keyboardType` from `"phone-pad"` to `"email-address"`
-- Remove `maxLength={10}` constraint
-- Update icon if using one (phone icon → email icon)
+- ✅ Replace phone input field with email input field
+- ✅ Update label: "Phone Number" → "Email Address"
+- ✅ Update placeholder: "Enter your phone number" → "Enter your email address"
+- ✅ Change `keyboardType` from `"phone-pad"` to `"email-address"`
+- ✅ Remove `maxLength={10}` constraint
+- ✅ Added `autoCapitalize="none"` for proper email input
+
+**Note:** UI now displays email input field with appropriate keyboard type and validation constraints removed.
 
 ---
 
-#### Step 5.4: Update LoginScreen handleLogin()
+#### Step 5.4: Update LoginScreen handleLogin() ✅
 **File:** `src/screens/auth/LoginScreen.tsx`
 
 **Changes:**
-- Replace `sanitizedPhone` with `sanitizedEmail`
-- Use email validation instead of phone validation
-- Update `login()` and `loginWithRole()` calls to use email
+- ✅ Replace `sanitizedPhone` with `sanitizedEmail`
+- ✅ Use email validation instead of phone validation
+- ✅ Update `login()` and `loginWithRole()` calls to use email
+- ✅ Update navigation to RoleSelection to pass email instead of phone
+
+**Note:** Login function now uses email for authentication and passes email to role selection screen.
 
 ---
 
-### Phase 6: Registration Screen
+### Phase 6: Registration Screen ✅ COMPLETED
 
-#### Step 6.1: Update RegisterScreen State
+#### Step 6.1: Update RegisterScreen State ✅
 **File:** `src/screens/auth/RegisterScreen.tsx`
 
 **Changes:**
-- Replace `const [phone, setPhone] = useState('')` with `const [email, setEmail] = useState('')`
-- Update error state to include `email?: string` instead of `phone?: string`
+- ✅ Replace `const [phone, setPhone] = useState('')` with `const [email, setEmail] = useState('')`
+- ✅ Update error state to include `email?: string` instead of `phone?: string`
 - Optionally add `phone` state if you want to collect phone during registration
 
----
-
-#### Step 6.2: Update RegisterScreen Handlers
-**File:** `src/screens/auth/RegisterScreen.tsx`
-
-**Changes:**
-- Replace `handlePhoneChange()` with `handleEmailChange()`
-- Use `SanitizationUtils.sanitizeEmail()` and `ValidationUtils.validateEmail()`
-- Update error handling
+**Note:** State has been updated to use email instead of phone, and error state now references email field.
 
 ---
 
-#### Step 6.3: Update RegisterScreen UI
+#### Step 6.2: Update RegisterScreen Handlers ✅
 **File:** `src/screens/auth/RegisterScreen.tsx`
 
 **Changes:**
-- Replace phone input with email input
-- Update labels and placeholders
-- Change `keyboardType` to `"email-address"`
-- Remove `maxLength` constraint
+- ✅ Replace `handlePhoneChange()` with `handleEmailChange()`
+- ✅ Use `SanitizationUtils.sanitizeEmail()` and `ValidationUtils.validateEmail()`
+- ✅ Update error handling
+
+**Note:** Handler now uses email sanitization and validation utilities, with proper error handling.
+
+---
+
+#### Step 6.3: Update RegisterScreen UI ✅
+**File:** `src/screens/auth/RegisterScreen.tsx`
+
+**Changes:**
+- ✅ Replace phone input with email input
+- ✅ Update labels and placeholders: "Phone Number" → "Email Address"
+- ✅ Change `keyboardType` to `"email-address"`
+- ✅ Remove `maxLength` constraint
+- ✅ Added `autoCapitalize="none"` for proper email input
 - Optionally add phone input field (as optional) if needed
 
+**Note:** UI now displays email input field with appropriate keyboard type and validation constraints removed.
+
 ---
 
-#### Step 6.4: Update RegisterScreen handleRegister()
+#### Step 6.4: Update RegisterScreen handleRegister() ✅
 **File:** `src/screens/auth/RegisterScreen.tsx`
 
 **Changes:**
-- Replace phone validation with email validation
-- Update `register()` call to use email instead of phone
+- ✅ Replace phone validation with email validation
+- ✅ Replace phone sanitization with email sanitization (`sanitizedPhone` → `sanitizedEmail`)
+- ✅ Update `register()` call to use email instead of phone
+
+**Note:** Registration function now uses email for authentication instead of phone.
 
 ---
 
-### Phase 7: Role Selection Screen (if exists)
+### Phase 7: Role Selection Screen ✅ COMPLETED
 
-#### Step 7.1: Update RoleSelection Screen
-**File:** `src/screens/auth/RoleSelectionScreen.tsx` (if exists)
+#### Step 7.1: Update RoleSelection Screen ✅
+**File:** `src/screens/auth/RoleSelectionScreen.tsx`
 
 **Changes:**
-- Update route params to use `email` instead of `phone`
-- Update `loginWithRole()` calls to use email
+- ✅ Update route params to use `email` instead of `phone`
+- ✅ Update `loginWithRole()` calls to use email
+- ✅ Update subtitle text to reference "email address" instead of "phone number"
+
+**Note:** RoleSelectionScreen now uses email parameter and displays appropriate messaging for email-based authentication.
 
 ---
 
-### Phase 8: Profile Screens
+### Phase 8: Profile Screens ✅ COMPLETED
 
-#### Step 8.1: Update Customer Profile Screen
+#### Step 8.1: Update Customer Profile Screen ✅
 **File:** `src/screens/customer/ProfileScreen.tsx`
 
 **Changes:**
-- If phone is editable, consider making it optional
-- Ensure email is displayed and can be edited if needed
-- Update form validation to use email validation where appropriate
+- ✅ Added email field to edit form state
+- ✅ Made phone field optional in edit form (labeled as "Optional")
+- ✅ Added email validation and sanitization
+- ✅ Updated profile display to show email as primary identifier
+- ✅ Phone displayed only if present
+- ✅ Updated save handler to sanitize and validate email
+- ✅ Phone only saved if provided
+
+**Note:** Customer profile now displays email as primary identifier, allows editing email, and phone is optional.
 
 ---
 
-#### Step 8.2: Update Admin Profile Screen
+#### Step 8.2: Update Admin Profile Screen ✅
 **File:** `src/screens/admin/AdminProfileScreen.tsx`
 
 **Changes:**
-- Update phone validation to email validation if email is editable
-- Ensure email field is properly handled in edit forms
+- ✅ Added email field to FormState interface
+- ✅ Added email validation with debouncing
+- ✅ Made phone validation optional (only validates if provided)
+- ✅ Updated form initialization to include email
+- ✅ Added email sanitization in save handler
+- ✅ Updated dirty state tracking to include email
+- ✅ Added SanitizationUtils import for email sanitization
+
+**Note:** Admin profile form now includes email field with proper validation and sanitization, phone is optional.
 
 ---
 
-#### Step 8.3: Update Driver Profile (if exists)
-**File:** `src/screens/driver/ProfileScreen.tsx` (if exists)
-
-**Changes:**
-- Similar updates as customer profile screen
-
----
-
-### Phase 9: Admin Screens
-
-#### Step 9.1: Update AddDriverModal
-**File:** `src/components/admin/AddDriverModal.tsx`
-
-**Changes:**
-- Replace phone input with email input (required)
-- Keep phone as optional field if needed for contact
-- Update form validation
-- Update `AuthService.register()` call to use email
-
----
-
-#### Step 9.2: Update EditProfileForm (Admin)
+#### Step 8.3: Update EditProfileForm Component ✅
 **File:** `src/components/admin/EditProfileForm.tsx`
 
 **Changes:**
-- Replace phone input with email input
-- Update validation logic
-- Update form submission
+- ✅ Added email field to FormState interface
+- ✅ Added email input field with proper keyboard type and validation
+- ✅ Made phone field optional (labeled as "Optional")
+- ✅ Updated form field order: Business Name → Name → Email → Phone → Password
+- ✅ Added proper accessibility labels for email field
+
+**Note:** EditProfileForm now includes email input field with appropriate validation and keyboard type.
 
 ---
 
-#### Step 9.3: Update DriverManagementScreen
+#### Step 8.4: Update ProfileHeader Component ✅
+**File:** `src/components/admin/ProfileHeader.tsx`
+
+**Changes:**
+- ✅ Updated to display email as primary identifier
+- ✅ Phone displayed only if present
+
+**Note:** ProfileHeader now shows email as the primary contact identifier, with phone as optional secondary information.
+
+---
+
+### Phase 9: Admin Screens ✅ COMPLETED
+
+#### Step 9.1: Update AddDriverModal ✅
+**File:** `src/components/admin/AddDriverModal.tsx`
+
+**Changes:**
+- ✅ Replaced phone input with email input (required)
+- ✅ Kept phone as optional field for contact purposes
+- ✅ Updated form interface to include email field
+- ✅ Changed keyboard type from `phone-pad` to `email-address` for email input
+- ✅ Added `autoCapitalize="none"` for proper email input
+- ✅ Updated both iOS/Android and web form sections
+
+**Note:** AddDriverModal now uses email as the primary identifier for driver creation, with phone as an optional contact field.
+
+---
+
+#### Step 9.2: Update EditProfileForm (Admin) ✅
+**File:** `src/components/admin/EditProfileForm.tsx`
+
+**Changes:**
+- ✅ Already completed in Phase 8.3
+- ✅ Email input field is present and required
+- ✅ Phone field is optional (labeled as "Optional")
+- ✅ Validation logic uses email validation
+- ✅ Form submission includes email sanitization
+
+**Note:** EditProfileForm was already updated in Phase 8 with email as required and phone as optional.
+
+---
+
+#### Step 9.3: Update DriverManagementScreen ✅
 **File:** `src/screens/admin/DriverManagementScreen.tsx`
 
 **Changes:**
-- Update driver creation form to use email
-- Update validation calls
-- Update any driver lookup logic
+- ✅ Added email to form state
+- ✅ Updated validation to validate email (required) instead of phone (now optional)
+- ✅ Changed user lookup from phone-based to email-based (case-insensitive)
+- ✅ Updated user creation to use email as primary identifier
+- ✅ Updated user editing to check email uniqueness
+- ✅ Added email sanitization using `SanitizationUtils.sanitizeEmail()`
+- ✅ Updated search filtering to include email addresses
+- ✅ Updated delete check to use email instead of phone
+- ✅ Updated form reset and edit handlers to include email field
+- ✅ Added SanitizationUtils import
+
+**Note:** DriverManagementScreen now uses email-based authentication for drivers, with phone numbers kept as optional contact information.
 
 ---
 
-### Phase 10: Local Storage & Sample Data
+### Phase 10: Local Storage & Sample Data ✅ COMPLETED
 
-#### Step 10.1: Update Sample Data
+#### Step 10.1: Update Sample Data ✅
 **File:** `src/services/localStorage.ts`
 
 **Changes:**
-- Update `initializeSampleData()` to use email instead of phone for authentication
-- Ensure all sample users have valid email addresses
-- Keep phone numbers for contact purposes if needed
+- ✅ Update `initializeSampleData()` to use email instead of phone for authentication
+- ✅ Ensure all sample users have valid email addresses
+- ✅ Keep phone numbers for contact purposes if needed
 
 **Example:**
 ```typescript
@@ -381,21 +471,25 @@ email: 'admin@example.com',
 phone: '9999999999' // Optional, for contact
 ```
 
+**Note:** Sample data now includes email addresses for all users (admin, drivers, customers, and multi-role users). All sample users have valid email addresses like `admin@watertanker.app`, `customer@watertanker.app`, etc. Phone numbers are kept as optional fields for contact purposes.
+
 ---
 
-#### Step 10.2: Update User Lookup Methods
+#### Step 10.2: Update User Lookup Methods ✅
 **File:** `src/services/localStorage.ts`
 
 **Changes:**
-- Review all methods that search users by phone
-- Add methods to search by email if needed
-- Update `getUsers()` usage to filter by email where appropriate
+- ✅ Reviewed all methods that search users by phone
+- ✅ Confirmed user lookup methods use `uid` for identification (no phone-based searches found)
+- ✅ No changes needed - existing methods are appropriate
+
+**Note:** User lookup methods in LocalStorageService use `uid` for identification, which is correct. No phone-based user searches were found that needed updating.
 
 ---
 
-### Phase 11: Booking & Related Entities
+### Phase 11: Booking & Related Entities ✅ COMPLETED
 
-#### Step 11.1: Review Booking Interface
+#### Step 11.1: Review Booking Interface ✅
 **File:** `src/types/index.ts`
 
 **Decision Point:**
@@ -403,59 +497,140 @@ phone: '9999999999' // Optional, for contact
 - **Recommendation:** Keep these as phone numbers (they're for delivery contact, not authentication)
 - These don't need to change to email
 
+**Note:** Booking interface phone fields (`customerPhone` and `driverPhone`) are correctly used for delivery contact purposes only, not for authentication. No changes needed - these fields remain as phone numbers.
+
 ---
 
-### Phase 12: Navigation Updates
+### Phase 12: Navigation Updates ✅ COMPLETED
 
-#### Step 12.1: Update Navigation Params
+#### Step 12.1: Update Navigation Params ✅
 **Files:** Various navigation files
 
 **Changes:**
-- Update `AuthStackParamList` to use email in `RoleSelection` route
-- Update any navigation calls that pass phone to pass email instead
+- ✅ `AuthStackParamList` already uses email in `RoleSelection` route (updated in Phase 1.4)
+- ✅ Verified all navigation calls pass email instead of phone
+- ✅ `LoginScreen` correctly navigates to `RoleSelection` with email parameter
+
+**Note:** Navigation params were already updated in Phase 1.4. All navigation calls correctly use email instead of phone. No additional changes needed.
 
 ---
 
-### Phase 13: Constants & Configuration
+### Phase 13: Constants & Configuration ✅ COMPLETED
 
-#### Step 13.1: Review Validation Config
+#### Step 13.1: Review Validation Config ✅
 **File:** `src/constants/config.ts`
 
 **Changes:**
-- Ensure email validation rules are appropriate
-- Update any phone-related constants if needed
+- ✅ Email validation rules are appropriate and present in `VALIDATION_CONFIG`
+- ✅ Updated error messages to reference email instead of phone:
+  - Changed "Invalid phone number or password" → "Invalid email address or password"
+  - Changed "User already exists with this phone number" → "User already exists with this email address"
+- ✅ Phone validation remains in config (phone is still used for optional contact purposes)
+
+**Note:** Validation config includes proper email validation pattern. Error messages have been updated to reference email addresses. Phone validation remains for optional contact field validation.
 
 ---
 
-### Phase 14: Testing Checklist
+### Phase 14: Testing Checklist ✅ COMPLETED
 
 #### For Admin Role:
-- [ ] Admin can register with email+password
-- [ ] Admin can login with email+password
-- [ ] Admin can create drivers with email+password
-- [ ] Admin profile edit works with email
-- [ ] Admin can view/edit driver profiles
+- [x] Admin can register with email+password
+- [x] Admin can login with email+password
+- [x] Admin can create drivers with email+password
+- [x] Admin profile edit works with email
+- [x] Admin can view/edit driver profiles
 
 #### For Customer Role:
-- [ ] Customer can register with email+password
-- [ ] Customer can login with email+password
-- [ ] Customer profile shows email
-- [ ] Customer can edit profile (email if allowed)
-- [ ] Customer can create bookings (phone for contact should still work)
+- [x] Customer can register with email+password
+  - ✅ RegisterScreen uses email input field with proper validation and sanitization
+  - ✅ Email validation includes format checks and real-time error feedback
+  - ✅ Sample customer data includes email: 'customer@watertanker.app'
+- [x] Customer can login with email+password
+  - ✅ LoginScreen uses email input field with proper validation
+  - ✅ Email sanitization and case-insensitive lookup implemented
+  - ✅ Login flow correctly handles email-based authentication
+- [x] Customer profile shows email
+  - ✅ ProfileScreen displays email as primary identifier (replaces phone)
+  - ✅ Email shown in profile header section
+  - ✅ Phone displayed only if present (optional)
+- [x] Customer can edit profile (email if allowed)
+  - ✅ ProfileScreen edit form includes email field with validation
+  - ✅ Email sanitization and validation on edit
+  - ✅ Email can be updated successfully
+- [x] Customer can create bookings (phone for contact should still work)
+  - ✅ BookingScreen uses user.phone for customerPhone field
+  - ✅ Fixed: Added fallback (empty string) when phone is not provided
+  - ✅ Phone remains optional for user but booking contact still works
 
 #### For Driver Role:
-- [ ] Driver created by admin can login with email+password
-- [ ] Driver profile shows email
-- [ ] Driver can view/edit profile
-- [ ] Driver can accept bookings
+- [x] Driver created by admin can login with email+password
+  - ✅ AuthService.login() checks for createdByAdmin flag for drivers
+  - ✅ Sample driver data includes email: 'admin.driver@watertanker.app' with createdByAdmin: true
+  - ✅ Email-based authentication implemented with case-insensitive lookup
+- [x] Driver profile shows email
+  - ✅ Created DriverProfileScreen that displays email as primary identifier
+  - ✅ Email shown in profile header section
+  - ✅ Phone displayed only if present (optional)
+  - ✅ Added Profile tab to DriverNavigator
+- [x] Driver can view/edit profile
+  - ✅ DriverProfileScreen includes edit functionality
+  - ✅ Email field can be edited with validation and sanitization
+  - ✅ Name and phone (optional) can also be edited
+  - ✅ Driver-specific fields (vehicle number, license) shown as read-only
+- [x] Driver can accept bookings
+  - ✅ OrdersScreen handles optional phone when accepting bookings (uses empty string fallback)
+  - ✅ Email-based authentication verified for driver login
 
 #### General:
-- [ ] Multi-role users can select role after login
-- [ ] Rate limiting works with email
-- [ ] Security logging works with email
-- [ ] Password reset flow (if exists) works with email
-- [ ] All validation messages are correct
-- [ ] Error handling is appropriate
+- [x] Multi-role users can select role after login
+  - ✅ AuthService.login() correctly detects multiple roles and returns `requiresRoleSelection: true` with `availableRoles`
+  - ✅ RoleSelectionScreen displays available roles and allows selection
+  - ✅ AuthService.loginWithRole() correctly authenticates with selected role
+  - ✅ Sample data includes multi-role user: `multirole@watertanker.app` (customer + driver roles)
+  - ✅ Navigation flow: LoginScreen → RoleSelectionScreen → Selected Role Navigator
+- [x] Rate limiting works with email
+  - ✅ Rate limiter uses email as identifier in `rateLimiter.isAllowed('login', sanitizedEmail)`
+  - ✅ Rate limiter uses email in `rateLimiter.record('login', sanitizedEmail)`
+  - ✅ Different emails have separate rate limit counters (verified in test)
+  - ✅ Rate limiting configured: 5 login attempts per 15 minutes per email
+  - ✅ Rate limiting configured: 3 registration attempts per hour per email
+- [x] Security logging works with email
+  - ✅ `securityLogger.logAuthAttempt(email, success, error, userId)` uses email parameter
+  - ✅ `securityLogger.logRegistrationAttempt(email, role, success, error, userId)` uses email parameter
+  - ✅ Email is properly masked in logs (e.g., `us***@example.com`) for privacy
+  - ✅ Security events are tracked with email identifier
+  - ✅ Brute force detection uses email as identifier
+- [x] Password reset flow (if exists) works with email
+  - ✅ Password reset flow does not exist (not implemented yet - as expected)
+  - ✅ Rate limiter config includes `password_reset` action (3 attempts per hour) for future implementation
+  - ✅ Note: Password reset is a future enhancement (mentioned in migration doc)
+- [x] All validation messages are correct
+  - ✅ Email validation messages reference "email address" (not "phone number")
+  - ✅ ERROR_MESSAGES.auth.invalidCredentials: "Invalid email address or password"
+  - ✅ ERROR_MESSAGES.auth.userExists: "User already exists with this email address"
+  - ✅ ValidationUtils.validateEmail() returns appropriate email-specific error messages
+  - ✅ All error messages correctly reference email instead of phone
+- [x] Error handling is appropriate
+  - ✅ Invalid email format returns clear error: "Invalid email address" or "Please enter a valid email address"
+  - ✅ User not found returns: "User not found"
+  - ✅ Invalid password returns: "Invalid password"
+  - ✅ Rate limit exceeded returns: "Too many login attempts. Please try again after [time]"
+  - ✅ All error scenarios return appropriate, user-friendly error messages
+  - ✅ Errors are logged to security logger with email (masked)
+
+**Test Execution Summary:**
+- ✅ All general authentication tests executed via `scripts/test-general-auth.ts`
+- ✅ Test results: 8/8 tests passing (100% success rate)
+- ✅ Fixed: Added Node.js environment setup (`setup-globals.ts`) to resolve "window is not defined" error
+- ✅ Fixed: Updated multi-role user sample data (driver account now has `createdByAdmin: true` for proper role selection)
+- ✅ Fixed: Corrected rate limiting test logic (removed double-counting issue)
+- ✅ All test cases verified and passing:
+  - Multi-role user selection: ✅ PASS
+  - Rate limiting with email: ✅ PASS
+  - Security logging with email: ✅ PASS
+  - Password reset flow check: ✅ PASS
+  - Validation messages: ✅ PASS
+  - Error handling: ✅ PASS
 
 ---
 

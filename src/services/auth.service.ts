@@ -1,9 +1,10 @@
 import { LocalStorageService } from './localStorage';
-import { User as AppUser, UserRole, DriverUser } from '../types/index';
+import { User as AppUser, UserRole, DriverUser, AdminUser } from '../types/index';
 import { ERROR_MESSAGES } from '../constants/config';
 import { securityLogger, SecurityEventType, SecuritySeverity } from '../utils/securityLogger';
 import { rateLimiter } from '../utils/rateLimiter';
 import { SanitizationUtils } from '../utils/sanitization';
+import { ValidationUtils } from '../utils/validation';
 
 /**
  * Result of authentication operations
@@ -31,13 +32,13 @@ export interface AuthResult {
  * @example
  * ```typescript
  * // Register a new user
- * const result = await AuthService.register('9876543210', 'password123', 'John Doe', 'customer');
+ * const result = await AuthService.register('user@example.com', 'password123', 'John Doe', 'customer');
  * if (result.success) {
  *   console.log('User registered:', result.user);
  * }
  * 
  * // Login
- * const loginResult = await AuthService.login('9876543210', 'password123');
+ * const loginResult = await AuthService.login('user@example.com', 'password123');
  * if (loginResult.success && loginResult.user) {
  *   // User logged in successfully
  * }
@@ -50,7 +51,7 @@ export class AuthService {
    * Includes input sanitization, rate limiting, and security event logging.
    * Prevents driver self-registration (only admin-created drivers allowed).
    * 
-   * @param phone - User's phone number (will be sanitized automatically)
+   * @param email - User's email address (will be sanitized automatically)
    * @param password - User's password
    * @param name - User's name (will be sanitized automatically)
    * @param role - User role ('customer' | 'driver' | 'admin')
@@ -61,7 +62,7 @@ export class AuthService {
    * @example
    * ```typescript
    * const result = await AuthService.register(
-   *   '9876543210',
+   *   'user@example.com',
    *   'password123',
    *   'John Doe',
    *   'customer'
@@ -75,7 +76,7 @@ export class AuthService {
    * ```
    */
   static async register(
-    phone: string,
+    email: string,
     password: string,
     name: string,
     role: UserRole,
@@ -83,11 +84,20 @@ export class AuthService {
   ): Promise<AuthResult> {
     try {
       // Sanitize inputs
-      const sanitizedPhone = SanitizationUtils.sanitizePhone(phone);
+      const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
       const sanitizedName = SanitizationUtils.sanitizeName(name);
 
+      // Validate email format
+      const emailValidation = ValidationUtils.validateEmail(sanitizedEmail, true);
+      if (!emailValidation.isValid) {
+        return {
+          success: false,
+          error: emailValidation.error || 'Invalid email address'
+        };
+      }
+
       // Check rate limit for registration
-      const rateLimitCheck = rateLimiter.isAllowed('register', sanitizedPhone);
+      const rateLimitCheck = rateLimiter.isAllowed('register', sanitizedEmail);
       if (!rateLimitCheck.allowed) {
         securityLogger.logRateLimitExceeded('register');
         return {
@@ -98,29 +108,29 @@ export class AuthService {
 
       // Prevent driver self-registration - only admin-created drivers are allowed
       if (role === 'driver' && !(additionalData as Partial<DriverUser>)?.createdByAdmin) {
-        securityLogger.logRegistrationAttempt(sanitizedPhone, role, false, ERROR_MESSAGES.auth.adminCreatedDriverOnly);
+        securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, ERROR_MESSAGES.auth.adminCreatedDriverOnly);
         return {
           success: false,
           error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
         };
       }
 
-      // Check if user already exists with same phone AND role
+      // Check if user already exists with same email AND role
       const existingUsers = await LocalStorageService.getUsers();
       const existingUser = existingUsers.find(
-        u => u.phone === sanitizedPhone && u.role === role
+        u => u.email?.toLowerCase() === sanitizedEmail.toLowerCase() && u.role === role
       );
 
       if (existingUser) {
-        securityLogger.logRegistrationAttempt(sanitizedPhone, role, false, 'User already exists');
+        securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, 'User already exists');
         return {
           success: false,
-          error: `User already exists with this phone number as ${role}`
+          error: `User already exists with this email address as ${role}`
         };
       }
 
       // Record rate limit
-      rateLimiter.record('register', sanitizedPhone);
+      rateLimiter.record('register', sanitizedEmail);
 
       // Generate a unique uid for the user
       const uid = LocalStorageService.generateId();
@@ -128,11 +138,12 @@ export class AuthService {
       // Create user object
       const newUser: AppUser = {
         uid,
-        phone: sanitizedPhone,
+        email: sanitizedEmail, // Email is now required
         password, // Store password in local storage (in production, this should be hashed)
         name: sanitizedName,
         role,
         createdAt: new Date(),
+        ...(additionalData?.phone && { phone: additionalData.phone }), // Phone is now optional
         ...(role === 'customer' && { savedAddresses: [] }),
         ...(role === 'driver' && {
           vehicleNumber: (additionalData as Partial<DriverUser>)?.vehicleNumber,
@@ -149,9 +160,8 @@ export class AuthService {
           emergencyContactPhone: (additionalData as Partial<DriverUser>)?.emergencyContactPhone,
         }),
         ...(role === 'admin' && {
-          businessName: additionalData?.businessName,
+          businessName: (additionalData as Partial<AdminUser>)?.businessName,
         }),
-        ...(additionalData?.email && { email: additionalData.email }),
         ...(additionalData?.profileImage && { profileImage: additionalData.profileImage }),
       };
 
@@ -159,7 +169,7 @@ export class AuthService {
       await LocalStorageService.saveUserToCollection(newUser);
 
       // Log successful registration
-      securityLogger.logRegistrationAttempt(sanitizedPhone, role, true, undefined, newUser.uid);
+      securityLogger.logRegistrationAttempt(sanitizedEmail, role, true, undefined, newUser.uid);
 
       return {
         success: true,
@@ -167,7 +177,7 @@ export class AuthService {
       };
     } catch (error) {
       securityLogger.logRegistrationAttempt(
-        SanitizationUtils.sanitizePhone(phone),
+        SanitizationUtils.sanitizeEmail(email),
         role,
         false,
         error instanceof Error ? error.message : 'Registration failed'
@@ -180,19 +190,19 @@ export class AuthService {
   }
 
   /**
-   * Login with phone and password.
+   * Login with email and password.
    * 
    * Supports multi-role users - if user has multiple roles, returns requiresRoleSelection flag.
    * Includes rate limiting, brute force detection, and security event logging.
    * 
-   * @param phone - User's phone number (will be sanitized automatically)
+   * @param email - User's email address (will be sanitized automatically)
    * @param password - User's password
    * @returns Promise resolving to AuthResult with success status and user data
    * @throws Never throws - returns error in AuthResult.error instead
    * 
    * @example
    * ```typescript
-   * const result = await AuthService.login('9876543210', 'password123');
+   * const result = await AuthService.login('user@example.com', 'password123');
    * 
    * if (result.success && result.user) {
    *   // User logged in successfully
@@ -204,16 +214,25 @@ export class AuthService {
    * }
    * ```
    */
-  static async login(phone: string, password: string): Promise<AuthResult> {
+  static async login(email: string, password: string): Promise<AuthResult> {
     try {
-      // Sanitize phone input
-      const sanitizedPhone = SanitizationUtils.sanitizePhone(phone);
+      // Sanitize email input
+      const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
+
+      // Validate email format
+      const emailValidation = ValidationUtils.validateEmail(sanitizedEmail, true);
+      if (!emailValidation.isValid) {
+        return {
+          success: false,
+          error: emailValidation.error || 'Invalid email address'
+        };
+      }
 
       // Check rate limit for login
-      const rateLimitCheck = rateLimiter.isAllowed('login', sanitizedPhone);
+      const rateLimitCheck = rateLimiter.isAllowed('login', sanitizedEmail);
       if (!rateLimitCheck.allowed) {
         securityLogger.logRateLimitExceeded('login');
-        securityLogger.logBruteForceAttempt(sanitizedPhone, 5); // Assume 5+ attempts
+        securityLogger.logBruteForceAttempt(sanitizedEmail, 5); // Assume 5+ attempts
         return {
           success: false,
           error: `Too many login attempts. Please try again after ${new Date(rateLimitCheck.resetTime).toLocaleTimeString()}`
@@ -221,15 +240,15 @@ export class AuthService {
       }
 
       // Log login attempt
-      securityLogger.logAuthAttempt(sanitizedPhone, false);
+      securityLogger.logAuthAttempt(sanitizedEmail, false);
 
-      // Find all users with this phone number
+      // Find all users with this email address (case-insensitive)
       const allUsers = await LocalStorageService.getUsers();
-      const userAccounts = allUsers.filter(u => u.phone === sanitizedPhone);
+      const userAccounts = allUsers.filter(u => u.email?.toLowerCase() === sanitizedEmail.toLowerCase());
 
       if (!userAccounts || userAccounts.length === 0) {
-        securityLogger.logAuthAttempt(sanitizedPhone, false, 'User not found');
-        rateLimiter.record('login', sanitizedPhone);
+        securityLogger.logAuthAttempt(sanitizedEmail, false, 'User not found');
+        rateLimiter.record('login', sanitizedEmail);
         return {
           success: false,
           error: 'User not found'
@@ -245,8 +264,8 @@ export class AuthService {
       });
 
       if (validAccounts.length === 0) {
-        securityLogger.logAuthAttempt(sanitizedPhone, false, ERROR_MESSAGES.auth.adminCreatedDriverOnly);
-        rateLimiter.record('login', sanitizedPhone);
+        securityLogger.logAuthAttempt(sanitizedEmail, false, ERROR_MESSAGES.auth.adminCreatedDriverOnly);
+        rateLimiter.record('login', sanitizedEmail);
         return {
           success: false,
           error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
@@ -257,8 +276,8 @@ export class AuthService {
       const matchingAccounts = validAccounts.filter(account => account.password === password);
 
       if (matchingAccounts.length === 0) {
-        securityLogger.logAuthAttempt(sanitizedPhone, false, 'Invalid password');
-        rateLimiter.record('login', sanitizedPhone);
+        securityLogger.logAuthAttempt(sanitizedEmail, false, 'Invalid password');
+        rateLimiter.record('login', sanitizedEmail);
         return {
           success: false,
           error: 'Invalid password'
@@ -269,9 +288,12 @@ export class AuthService {
         // Single account - return user data
         const appUser = matchingAccounts[0] as AppUser;
 
+        // Save user to current session
+        await LocalStorageService.saveUser(appUser);
+
         // Record successful login
-        rateLimiter.record('login', sanitizedPhone);
-        securityLogger.logAuthAttempt(sanitizedPhone, true, undefined, appUser.uid);
+        rateLimiter.record('login', sanitizedEmail);
+        securityLogger.logAuthAttempt(sanitizedEmail, true, undefined, appUser.uid);
 
         return {
           success: true,
@@ -290,7 +312,7 @@ export class AuthService {
       }
     } catch (error) {
       securityLogger.logAuthAttempt(
-        SanitizationUtils.sanitizePhone(phone),
+        SanitizationUtils.sanitizeEmail(email),
         false,
         error instanceof Error ? error.message : 'Login failed'
       );
@@ -302,12 +324,12 @@ export class AuthService {
   }
 
   /**
-   * Login with phone and selected role (used after role selection).
+   * Login with email and selected role (used after role selection).
    * 
    * This method should be called after login() when user has multiple roles.
    * It selects the specific role for the user.
    * 
-   * @param phone - User's phone number
+   * @param email - User's email address
    * @param role - Selected user role
    * @returns Promise resolving to AuthResult with success status and user data
    * @throws Never throws - returns error in AuthResult.error instead
@@ -315,22 +337,25 @@ export class AuthService {
    * @example
    * ```typescript
    * // First login
-   * const loginResult = await AuthService.login('9876543210', 'password123');
+   * const loginResult = await AuthService.login('user@example.com', 'password123');
    * 
    * if (loginResult.requiresRoleSelection) {
    *   // User selected 'customer' role
-   *   const roleResult = await AuthService.loginWithRole('9876543210', 'customer');
+   *   const roleResult = await AuthService.loginWithRole('user@example.com', 'customer');
    *   if (roleResult.success && roleResult.user) {
    *     // User logged in as customer
    *   }
    * }
    * ```
    */
-  static async loginWithRole(phone: string, role: UserRole): Promise<AuthResult> {
+  static async loginWithRole(email: string, role: UserRole): Promise<AuthResult> {
     try {
+      // Sanitize email input
+      const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
+      
       const allUsers = await LocalStorageService.getUsers();
       const dbUser = allUsers.find(
-        u => u.phone === phone && u.role === role
+        u => u.email?.toLowerCase() === sanitizedEmail.toLowerCase() && u.role === role
       );
 
       if (!dbUser) {
@@ -349,6 +374,10 @@ export class AuthService {
       }
 
       const appUser = dbUser as AppUser;
+      
+      // Save user to current session
+      await LocalStorageService.saveUser(appUser);
+      
       return {
         success: true,
         user: appUser

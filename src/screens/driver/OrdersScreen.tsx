@@ -187,7 +187,7 @@ const OrdersScreen: React.FC = () => {
         status: 'accepted',
         driverId: user.uid,
         driverName: user.name,
-        driverPhone: user.phone,
+        driverPhone: user.phone || '',
         acceptedAt: new Date(),
         updatedAt: new Date(),
       };
@@ -208,7 +208,7 @@ const OrdersScreen: React.FC = () => {
       await updateBookingStatus(orderId, 'accepted', {
         driverId: user.uid,
         driverName: user.name,
-        driverPhone: user.phone,
+        driverPhone: user.phone || '',
         acceptedAt: new Date(),
       });
       

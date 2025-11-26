@@ -18,6 +18,7 @@ export interface AddDriverModalProps {
   onClose: () => void;
   formData: {
     name: string;
+    email: string;
     phone: string;
     password: string;
     confirmPassword: string;
@@ -95,10 +96,22 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 
           <View style={styles.formField}>
             <Input
-              label="Phone Number *"
+              label="Email Address *"
+              value={formData.email}
+              onChangeText={(text) => onFormChange('email', text)}
+              placeholder="Enter email address"
+              error={formErrors.email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.formField}>
+            <Input
+              label="Phone Number (Optional)"
               value={formData.phone}
               onChangeText={(text) => onFormChange('phone', text)}
-              placeholder="Enter 10-digit phone number"
+              placeholder="Enter 10-digit phone number (optional)"
               error={formErrors.phone}
               keyboardType="phone-pad"
               maxLength={10}
@@ -216,10 +229,22 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 
             <View style={styles.formField}>
               <Input
-                label="Phone Number *"
+                label="Email Address *"
+                value={formData.email}
+                onChangeText={(text) => onFormChange('email', text)}
+                placeholder="Enter email address"
+                error={formErrors.email}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <Input
+                label="Phone Number (Optional)"
                 value={formData.phone}
                 onChangeText={(text) => onFormChange('phone', text)}
-                placeholder="Enter 10-digit phone number"
+                placeholder="Enter 10-digit phone number (optional)"
                 error={formErrors.phone}
                 keyboardType="phone-pad"
                 maxLength={10}

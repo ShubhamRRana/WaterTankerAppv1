@@ -30,7 +30,7 @@ interface Props {
 }
 
 const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
@@ -38,7 +38,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const role: UserRole = route?.params?.preferredRole ?? 'customer';
   const [errors, setErrors] = useState<{
-    phone?: string;
+    email?: string;
     password?: string;
     confirmPassword?: string;
     name?: string;
@@ -72,25 +72,25 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-  const handlePhoneChange = (text: string) => {
-    const sanitized = SanitizationUtils.sanitizePhone(text);
-    setPhone(sanitized);
+  const handleEmailChange = (text: string) => {
+    const sanitized = SanitizationUtils.sanitizeEmail(text);
+    setEmail(sanitized);
     
     if (sanitized) {
-      const validation = ValidationUtils.validatePhone(sanitized);
+      const validation = ValidationUtils.validateEmail(sanitized);
       if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, phone: validation.error }));
+        setErrors(prev => ({ ...prev, email: validation.error }));
       } else {
         setErrors(prev => {
           const newErrors = { ...prev };
-          delete newErrors.phone;
+          delete newErrors.email;
           return newErrors;
         });
       }
     } else {
       setErrors(prev => {
         const newErrors = { ...prev };
-        delete newErrors.phone;
+        delete newErrors.email;
         return newErrors;
       });
     }
@@ -158,19 +158,19 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handleRegister = async () => {
     // Sanitize inputs
-    const sanitizedPhone = SanitizationUtils.sanitizePhone(phone);
+    const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
     const sanitizedName = SanitizationUtils.sanitizeName(name);
     
     // Validate inputs
-    const phoneValidation = ValidationUtils.validatePhone(sanitizedPhone);
+    const emailValidation = ValidationUtils.validateEmail(sanitizedEmail);
     const passwordValidation = ValidationUtils.validatePassword(password);
     const nameValidation = ValidationUtils.validateName(sanitizedName);
     const confirmPasswordValidation = ValidationUtils.validateConfirmPassword(password, confirmPassword);
     
     const newErrors: any = {};
     
-    if (!phoneValidation.isValid) {
-      newErrors.phone = phoneValidation.error;
+    if (!emailValidation.isValid) {
+      newErrors.email = emailValidation.error;
     }
     
     if (!passwordValidation.isValid) {
@@ -193,7 +193,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     setErrors({});
 
     try {
-      await register(sanitizedPhone, password, sanitizedName, role);
+      await register(sanitizedEmail, password, sanitizedName, role);
       Alert.alert('Success', SUCCESS_MESSAGES.auth.registerSuccess);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : ERROR_MESSAGES.auth.userExists;
@@ -226,16 +226,16 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           <View style={styles.inputContainer}>
-            <Typography variant="body" style={styles.label}>Phone Number</Typography>
+            <Typography variant="body" style={styles.label}>Email Address</Typography>
             <TextInput
-              style={[styles.input, errors.phone && styles.inputError]}
-              placeholder="Enter your phone number"
-              value={phone}
-              onChangeText={handlePhoneChange}
-              keyboardType="phone-pad"
-              maxLength={10}
+              style={[styles.input, errors.email && styles.inputError]}
+              placeholder="Enter your email address"
+              value={email}
+              onChangeText={handleEmailChange}
+              keyboardType="email-address"
+              autoCapitalize="none"
             />
-            {errors.phone && <Typography variant="caption" style={styles.errorText}>{errors.phone}</Typography>}
+            {errors.email && <Typography variant="caption" style={styles.errorText}>{errors.email}</Typography>}
           </View>
 
           <View style={styles.inputContainer}>

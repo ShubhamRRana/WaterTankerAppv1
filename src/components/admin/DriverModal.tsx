@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, Button } from '../common';
-import { User } from '../../types';
+import { User, DriverUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 
@@ -60,19 +60,25 @@ const DriverModal: React.FC<DriverModalProps> = ({
                   <Typography variant="body" style={styles.detailValue}>{driver.name}</Typography>
                 </View>
                 <View style={styles.detailItem}>
-                  <Typography variant="body" style={styles.detailLabel}>Phone</Typography>
-                  <Typography variant="body" style={styles.detailValue}>{driver.phone}</Typography>
+                  <Typography variant="body" style={styles.detailLabel}>Email</Typography>
+                  <Typography variant="body" style={styles.detailValue}>{driver.email}</Typography>
                 </View>
+                {driver.phone && (
+                  <View style={styles.detailItem}>
+                    <Typography variant="body" style={styles.detailLabel}>Phone</Typography>
+                    <Typography variant="body" style={styles.detailValue}>{driver.phone}</Typography>
+                  </View>
+                )}
                 <View style={styles.detailItem}>
                   <Typography variant="body" style={styles.detailLabel}>Emergency Contact</Typography>
                   <Typography variant="body" style={styles.detailValue}>
-                    {driver.emergencyContactName || 'Not provided'}
+                    {(driver as DriverUser).emergencyContactName || 'Not provided'}
                   </Typography>
                 </View>
                 <View style={styles.detailItem}>
                   <Typography variant="body" style={styles.detailLabel}>Emergency Number</Typography>
                   <Typography variant="body" style={styles.detailValue}>
-                    {driver.emergencyContactPhone || 'Not provided'}
+                    {(driver as DriverUser).emergencyContactPhone || 'Not provided'}
                   </Typography>
                 </View>
                 <View style={styles.detailItem}>
@@ -90,13 +96,13 @@ const DriverModal: React.FC<DriverModalProps> = ({
                 <View style={styles.detailItem}>
                   <Typography variant="body" style={styles.detailLabel}>License Number</Typography>
                   <Typography variant="body" style={styles.detailValue}>
-                    {driver.licenseNumber || 'Not provided'}
+                    {(driver as DriverUser).licenseNumber || 'Not provided'}
                   </Typography>
                 </View>
                 <View style={styles.detailItem}>
                   <Typography variant="body" style={styles.detailLabel}>Expiry Date</Typography>
                   <Typography variant="body" style={styles.detailValue}>
-                    {driver.licenseExpiry ? new Date(driver.licenseExpiry).toLocaleDateString() : 'Not provided'}
+                    {(driver as DriverUser).licenseExpiry ? new Date((driver as DriverUser).licenseExpiry!).toLocaleDateString() : 'Not provided'}
                   </Typography>
                 </View>
               </Card>
@@ -108,18 +114,18 @@ const DriverModal: React.FC<DriverModalProps> = ({
                 <View style={styles.detailItem}>
                   <Typography variant="body" style={styles.detailLabel}>Total Earnings</Typography>
                   <Typography variant="body" style={styles.detailValue}>
-                    {PricingUtils.formatPrice((driver as any).totalEarnings || 0)}
+                    {PricingUtils.formatPrice((driver as DriverUser).totalEarnings || 0)}
                   </Typography>
                 </View>
                 <View style={styles.detailItem}>
                   <Typography variant="body" style={styles.detailLabel}>Completed Orders</Typography>
                   <Typography variant="body" style={styles.detailValue}>
-                    {(driver as any).completedOrders || 0}
+                    {(driver as DriverUser).completedOrders || 0}
                   </Typography>
                 </View>
               </Card>
 
-              {driver.isApproved === undefined && onApprove && onReject && (
+              {(driver as DriverUser).isApproved === undefined && onApprove && onReject && (
                 <View style={styles.modalActions}>
                   <Button
                     title="Approve Driver"

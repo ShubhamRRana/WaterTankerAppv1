@@ -25,7 +25,7 @@ interface Props {
 }
 
 const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { phone, availableRoles } = route.params;
+  const { email, availableRoles } = route.params;
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -39,7 +39,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
 
     setIsLoading(true);
     try {
-      await loginWithRole(phone, selectedRole);
+      await loginWithRole(email, selectedRole);
       // Navigation will be handled by the auth store
     } catch (error) {
       Alert.alert('Login Failed', 'Failed to login with selected role. Please try again.');
@@ -85,7 +85,7 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.header}>
           <Typography variant="h1" style={styles.title}>Select Account Type</Typography>
           <Typography variant="body" style={styles.subtitle}>
-            You have multiple accounts with this phone number. Choose which account you want to access.
+            You have multiple accounts with this email address. Choose which account you want to access.
           </Typography>
         </View>
 

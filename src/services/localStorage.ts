@@ -179,18 +179,24 @@ export class LocalStorageService {
     if (hasInitialized) return;
 
     // Sample users - including multi-role example
+    // Note: Email is now the primary identifier for authentication
+    // Phone numbers are kept for contact purposes only
     const sampleUsers = [
       {
         uid: 'admin_001',
         role: 'admin',
-        phone: '9999999999',
+        email: 'admin@watertanker.app',
+        password: 'admin123', // In production, this should be hashed
+        phone: '9999999999', // Optional: for contact purposes
         name: 'Admin User',
         createdAt: new Date(),
       },
       {
         uid: 'driver_001',
         role: 'driver',
-        phone: '8888888888',
+        email: 'driver@watertanker.app',
+        password: 'driver123', // In production, this should be hashed
+        phone: '8888888888', // Optional: for contact purposes
         name: 'John Driver',
         vehicleNumber: 'DL01AB1234',
         licenseNumber: 'DL123456789',
@@ -200,7 +206,9 @@ export class LocalStorageService {
       {
         uid: 'driver_admin_001',
         role: 'driver',
-        phone: '6666666666',
+        email: 'admin.driver@watertanker.app',
+        password: 'driver123', // In production, this should be hashed
+        phone: '6666666666', // Optional: for contact purposes
         name: 'Admin Created Driver',
         vehicleNumber: 'DL03EF9012',
         licenseNumber: 'DL111222333',
@@ -214,27 +222,37 @@ export class LocalStorageService {
       {
         uid: 'customer_001',
         role: 'customer',
-        phone: '7777777777',
+        email: 'customer@watertanker.app',
+        password: 'customer123', // In production, this should be hashed
+        phone: '7777777777', // Optional: for contact purposes
         name: 'Jane Customer',
         createdAt: new Date(),
       },
-      // Multi-role user example - same phone number with different roles
+      // Multi-role user example - same email with different roles
       {
         uid: 'multi_customer_001',
         role: 'customer',
-        phone: '5555555555',
+        email: 'multirole@watertanker.app',
+        password: 'multi123', // In production, this should be hashed
+        phone: '5555555555', // Optional: for contact purposes
         name: 'Multi Role User',
         createdAt: new Date(),
       },
       {
         uid: 'multi_driver_001',
         role: 'driver',
-        phone: '5555555555',
+        email: 'multirole@watertanker.app',
+        password: 'multi123', // In production, this should be hashed
+        phone: '5555555555', // Optional: for contact purposes
         name: 'Multi Role User',
         vehicleNumber: 'DL02CD5678',
         licenseNumber: 'DL987654321',
         createdAt: new Date(),
-        createdByAdmin: false, // Regular driver - should not be able to login
+        createdByAdmin: true, // Admin-created driver - should be able to login for multi-role test
+        isApproved: true,
+        isAvailable: true,
+        totalEarnings: 0,
+        completedOrders: 0,
       }
     ];
 

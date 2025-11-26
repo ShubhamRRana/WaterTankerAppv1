@@ -152,9 +152,9 @@ export const STORAGE_KEYS = {
 export const ERROR_MESSAGES = {
   network: 'Network error. Please check your internet connection.',
   auth: {
-    invalidCredentials: 'Invalid phone number or password.',
+    invalidCredentials: 'Invalid email address or password.',
     userNotFound: 'User not found.',
-    userExists: 'User already exists with this phone number.',
+    userExists: 'User already exists with this email address.',
     weakPassword: 'Password is too weak.',
     networkError: 'Network error during authentication.',
     adminCreatedDriverOnly: 'Only admin-created drivers can login. Please contact the administrator to create your driver account.',

@@ -142,7 +142,7 @@ class SecurityLogger {
    * Log authentication attempt
    */
   logAuthAttempt(
-    phone: string,
+    email: string,
     success: boolean,
     error?: string,
     userId?: string
@@ -159,7 +159,7 @@ class SecurityLogger {
       eventType,
       severity,
       {
-        phone: this.maskPhone(phone), // Mask phone for privacy
+        email: this.maskEmail(email), // Mask email for privacy
         success,
         error,
       },
@@ -171,7 +171,7 @@ class SecurityLogger {
    * Log registration attempt
    */
   logRegistrationAttempt(
-    phone: string,
+    email: string,
     role: string,
     success: boolean,
     error?: string,
@@ -189,7 +189,7 @@ class SecurityLogger {
       eventType,
       severity,
       {
-        phone: this.maskPhone(phone),
+        email: this.maskEmail(email),
         role,
         success,
         error,
@@ -413,12 +413,27 @@ class SecurityLogger {
 
   /**
    * Mask phone number for privacy (show only last 4 digits)
+   * @deprecated Use maskEmail for email-based authentication
    */
   private maskPhone(phone: string): string {
     if (!phone || phone.length < 4) {
       return '****';
     }
     return `****${phone.slice(-4)}`;
+  }
+
+  /**
+   * Mask email address for privacy (show first 2 chars and domain)
+   */
+  private maskEmail(email: string): string {
+    if (!email || !email.includes('@')) {
+      return '****@****';
+    }
+    const [localPart, domain] = email.split('@');
+    if (localPart.length <= 2) {
+      return `**@${domain}`;
+    }
+    return `${localPart.slice(0, 2)}***@${domain}`;
   }
 
   /**

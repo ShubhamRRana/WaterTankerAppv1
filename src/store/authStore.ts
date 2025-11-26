@@ -7,10 +7,10 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   unsubscribeAuth: (() => void) | null;
-  login: (phone: string, password: string) => Promise<void>;
-  loginWithRole: (phone: string, role: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  loginWithRole: (email: string, role: UserRole) => Promise<void>;
   register: (
-    phone: string,
+    email: string,
     password: string,
     name: string,
     role: UserRole
@@ -48,10 +48,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  login: async (phone: string, password: string) => {
+  login: async (email: string, password: string) => {
     set({ isLoading: true });
     try {
-      const result = await AuthService.login(phone, password);
+      const result = await AuthService.login(email, password);
       if (result.success) {
         if (result.requiresRoleSelection) {
           // This will be handled by the navigation system
@@ -78,10 +78,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  loginWithRole: async (phone: string, role: UserRole) => {
+  loginWithRole: async (email: string, role: UserRole) => {
     set({ isLoading: true });
     try {
-      const result = await AuthService.loginWithRole(phone, role);
+      const result = await AuthService.loginWithRole(email, role);
       if (result.success && result.user) {
         set({
           user: result.user,
@@ -99,14 +99,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   register: async (
-    phone: string,
+    email: string,
     password: string,
     name: string,
     role: UserRole
   ) => {
     set({ isLoading: true });
     try {
-      const result = await AuthService.register(phone, password, name, role);
+      const result = await AuthService.register(email, password, name, role);
       if (result.success && result.user) {
         set({
           user: result.user,

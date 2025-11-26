@@ -20,7 +20,7 @@ import { useAuthStore } from '../../store/authStore';
 import { User, isAdminUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
-import { ValidationUtils } from '../../utils/validation';
+import { ValidationUtils, SanitizationUtils } from '../../utils';
 
 type AdminProfileScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Profile'>;
 
@@ -28,6 +28,7 @@ type AdminProfileScreenNavigationProp = StackNavigationProp<AdminStackParamList,
 interface FormState {
   businessName: string;
   name: string;
+  email: string;
   phone: string;
   password: string;
   confirmPassword: string;
@@ -36,6 +37,7 @@ interface FormState {
 interface FormErrors {
   businessName?: string;
   name?: string;
+  email?: string;
   phone?: string;
   password?: string;
   confirmPassword?: string;
@@ -79,6 +81,7 @@ const initialState: AppState = {
   editForm: {
     businessName: '',
     name: '',
+    email: '',
     phone: '',
     password: '',
     confirmPassword: '',
@@ -176,6 +179,7 @@ const AdminProfileScreen: React.FC = () => {
   // Debounced form values for validation
   const debouncedBusinessName = useDebounce(state.editForm.businessName, 500);
   const debouncedName = useDebounce(state.editForm.name, 500);
+  const debouncedEmail = useDebounce(state.editForm.email, 500);
   const debouncedPhone = useDebounce(state.editForm.phone, 500);
   const debouncedPassword = useDebounce(state.editForm.password, 500);
 
@@ -185,6 +189,7 @@ const AdminProfileScreen: React.FC = () => {
       const initialForm: FormState = {
         businessName: user.businessName || '',
         name: user.name || '',
+        email: user.email || '',
         phone: user.phone || '',
         password: '',
         confirmPassword: '',
@@ -201,6 +206,7 @@ const AdminProfileScreen: React.FC = () => {
     const hasChanges = 
       state.editForm.businessName.trim() !== (state.initialForm.businessName || '') ||
       state.editForm.name.trim() !== (state.initialForm.name || '') ||
+      state.editForm.email.trim() !== (state.initialForm.email || '') ||
       state.editForm.phone.trim() !== (state.initialForm.phone || '') ||
       (state.editForm.password !== '' && state.editForm.password.trim() !== '') ||
       (state.editForm.confirmPassword !== '' && state.editForm.confirmPassword.trim() !== '');
@@ -236,7 +242,17 @@ const AdminProfileScreen: React.FC = () => {
       }
     }
 
-    // Validate phone
+    // Validate email
+    if (debouncedEmail.trim()) {
+      const emailValidation = ValidationUtils.validateEmail(debouncedEmail.trim());
+      if (!emailValidation.isValid) {
+        errors.email = emailValidation.error;
+      } else {
+        delete errors.email;
+      }
+    }
+
+    // Validate phone (optional)
     if (debouncedPhone.trim()) {
       const phoneValidation = ValidationUtils.validatePhone(debouncedPhone.trim());
       if (!phoneValidation.isValid) {
@@ -263,7 +279,7 @@ const AdminProfileScreen: React.FC = () => {
     }
 
     dispatch({ type: 'SET_ERRORS', payload: errors });
-  }, [debouncedBusinessName, debouncedName, debouncedPhone, debouncedPassword, state.editForm.password, state.editForm.confirmPassword, state.isEditing]);
+  }, [debouncedBusinessName, debouncedName, debouncedEmail, debouncedPhone, debouncedPassword, state.editForm.password, state.editForm.confirmPassword, state.isEditing]);
 
 
   // Success animation
@@ -307,10 +323,18 @@ const AdminProfileScreen: React.FC = () => {
       errors.name = nameValidation.error;
     }
 
-    // Validate phone
-    const phoneValidation = ValidationUtils.validatePhone(state.editForm.phone.trim());
-    if (!phoneValidation.isValid) {
-      errors.phone = phoneValidation.error;
+    // Validate email
+    const emailValidation = ValidationUtils.validateEmail(state.editForm.email.trim());
+    if (!emailValidation.isValid) {
+      errors.email = emailValidation.error;
+    }
+
+    // Validate phone (optional)
+    if (state.editForm.phone.trim()) {
+      const phoneValidation = ValidationUtils.validatePhone(state.editForm.phone.trim());
+      if (!phoneValidation.isValid) {
+        errors.phone = phoneValidation.error;
+      }
     }
 
     // Validate password if provided
@@ -347,10 +371,15 @@ const AdminProfileScreen: React.FC = () => {
     dispatch({ type: 'SET_NETWORK_ERROR', payload: null });
     
     try {
+      // Sanitize inputs
+      const sanitizedEmail = SanitizationUtils.sanitizeEmail(state.editForm.email.trim());
+      const sanitizedPhone = state.editForm.phone.trim() ? SanitizationUtils.sanitizePhone(state.editForm.phone.trim()) : '';
+      
       const updates: Partial<User> = {
         businessName: state.editForm.businessName.trim(),
         name: state.editForm.name.trim(),
-        phone: state.editForm.phone.trim(),
+        email: sanitizedEmail,
+        ...(sanitizedPhone && { phone: sanitizedPhone }),
       };
       
       // Only update password if provided
@@ -428,7 +457,15 @@ const AdminProfileScreen: React.FC = () => {
             style: 'destructive',
             onPress: () => {
               if (user && state.initialForm) {
-                dispatch({ type: 'RESET_FORM', payload: state.initialForm });
+                const resetForm: FormState = {
+                  businessName: user.businessName || '',
+                  name: user.name || '',
+                  email: user.email || '',
+                  phone: user.phone || '',
+                  password: '',
+                  confirmPassword: '',
+                };
+                dispatch({ type: 'RESET_FORM', payload: resetForm });
                 dispatch({ type: 'SET_EDITING', payload: false });
                 AccessibilityInfo.announceForAccessibility('Changes discarded');
               }
@@ -438,7 +475,15 @@ const AdminProfileScreen: React.FC = () => {
       );
     } else {
       if (user && state.initialForm) {
-        dispatch({ type: 'RESET_FORM', payload: state.initialForm });
+        const resetForm: FormState = {
+          businessName: user.businessName || '',
+          name: user.name || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          password: '',
+          confirmPassword: '',
+        };
+        dispatch({ type: 'RESET_FORM', payload: resetForm });
       }
       dispatch({ type: 'SET_EDITING', payload: false });
     }
@@ -446,7 +491,12 @@ const AdminProfileScreen: React.FC = () => {
 
   const handleInputChange = useCallback((field: keyof FormState, value: string) => {
     // Trim input on change for better UX
-    const trimmedValue = field === 'phone' ? value.replace(/\s/g, '') : value;
+    let trimmedValue = value;
+    if (field === 'phone') {
+      trimmedValue = value.replace(/\s/g, '');
+    } else if (field === 'email') {
+      trimmedValue = value.trim().toLowerCase();
+    }
     dispatch({ type: 'UPDATE_FIELD', field, value: trimmedValue });
     
     // Clear error for this field when user starts typing
