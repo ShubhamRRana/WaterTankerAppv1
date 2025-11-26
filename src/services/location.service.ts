@@ -1,7 +1,6 @@
 // Location service for handling maps and distance calculations
 // Using Haversine formula for distance calculation in MVP
 // 
-// Note: Addresses are now stored in Supabase addresses table.
 // This service provides utility functions for distance calculations and location operations.
 // Uses expo-location for React Native compatibility.
 

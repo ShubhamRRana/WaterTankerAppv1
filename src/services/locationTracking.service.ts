@@ -2,10 +2,9 @@
  * Location Tracking Service
  * 
  * Handles real-time location tracking for drivers during active bookings.
- * Stores location updates in Supabase and provides real-time subscriptions.
+ * Provides real-time location updates for active bookings.
  */
 
-// import { supabase } from './supabase'; // Removed: Supabase dependency
 import { LocationService } from './location.service';
 import * as Location from 'expo-location';
 import { SubscriptionManager } from '../utils/subscriptionManager';

@@ -55,6 +55,10 @@ src/
 │   ├── booking.service.ts
 │   ├── payment.service.ts
 │   ├── location.service.ts
+│   ├── locationTracking.service.ts
+│   ├── notification.service.ts
+│   ├── user.service.ts
+│   ├── vehicle.service.ts
 │   └── index.ts
 ├── store/
 │   ├── authStore.ts
@@ -67,6 +71,14 @@ src/
 ├── utils/
 │   ├── pricing.ts          # Pricing calculations and Indian numbering system formatting
 │   ├── validation.ts
+│   ├── sanitization.ts
+│   ├── rateLimiter.ts
+│   ├── errorLogger.ts
+│   ├── securityLogger.ts
+│   ├── securityAudit.ts
+│   ├── sessionManager.ts
+│   ├── subscriptionManager.ts
+│   ├── reportCalculations.ts
 │   └── index.ts
 └── constants/
     └── config.ts
@@ -216,9 +228,9 @@ This formatting is applied consistently across:
 - **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Reports, Profile
 - **TypeScript Support**: All components properly typed with comprehensive type definitions
 - **State Management**: Zustand stores for authentication, bookings, users, and vehicles
-- **Services**: Local storage, auth, booking, payment, and location services
+- **Services**: Local storage, auth, booking, payment, location, location tracking, notification, user, and vehicle services
 - **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner, CustomerMenuDrawer)
-- **Utils**: Distance calculation, pricing, validation utilities
+- **Utils**: Distance calculation, pricing, validation, sanitization, rate limiting, error logging, security logging, security audit, session management, subscription management, and report calculations
 - **Number Formatting**: Indian numbering system implementation for all amounts and quantities (e.g., ₹12,34,567 instead of ₹1,234,567)
 - **Configuration**: Comprehensive app configuration with constants, error messages, and centralized UI_CONFIG color system
 
@@ -238,5 +250,4 @@ This formatting is applied consistently across:
 5. Driver self-registration workflow
 6. Ratings and reviews system
 7. Immediate/ASAP bookings
-8. Comprehensive testing suite
-9. Performance optimization and animations
+8. Performance optimization and animations

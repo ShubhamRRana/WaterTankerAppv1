@@ -1,17 +1,15 @@
 /**
  * Notification Service
  * 
- * Handles push notifications using expo-notifications and integrates with
- * Supabase notifications table for in-app notifications.
+ * Handles push notifications using expo-notifications and in-app notifications.
  */
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-// import { supabase } from './supabase'; // Removed: Supabase dependency
 import { SubscriptionManager } from '../utils/subscriptionManager';
 import { Notification } from '../types';
 
-// Type for Supabase Realtime payload
+// Type for Realtime payload
 interface RealtimePayload<T = any> {
   eventType: 'INSERT' | 'UPDATE' | 'DELETE';
   new?: T;
