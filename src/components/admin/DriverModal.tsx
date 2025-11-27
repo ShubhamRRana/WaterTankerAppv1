@@ -63,6 +63,10 @@ const DriverModal: React.FC<DriverModalProps> = ({
                   <Typography variant="body" style={styles.detailLabel}>Email</Typography>
                   <Typography variant="body" style={styles.detailValue}>{driver.email}</Typography>
                 </View>
+                <View style={styles.detailItem}>
+                  <Typography variant="body" style={styles.detailLabel}>Password</Typography>
+                  <Typography variant="body" style={styles.detailValue}>{driver.password || 'Not available'}</Typography>
+                </View>
                 {driver.phone && (
                   <View style={styles.detailItem}>
                     <Typography variant="body" style={styles.detailLabel}>Phone</Typography>

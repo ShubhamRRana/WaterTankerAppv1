@@ -1,5 +1,5 @@
-import React, { useEffect, Suspense, lazy } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import React, { useEffect, useRef, Suspense, lazy } from 'react';
+import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -33,6 +33,7 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 const App: React.FC = () => {
   const { user, initializeAuth, isLoading } = useAuthStore();
+  const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   // Load custom fonts
   const [fontsLoaded] = useFonts({
@@ -44,12 +45,28 @@ const App: React.FC = () => {
     initializeAuth();
   }, [initializeAuth]);
 
+  // Navigate when user state changes
+  useEffect(() => {
+    if (navigationRef.current && navigationRef.current.isReady()) {
+      const targetRoute = getInitialRouteName(user);
+      const currentRoute = navigationRef.current.getCurrentRoute()?.name;
+      
+      // Only navigate if we're not already on the target route
+      if (currentRoute !== targetRoute) {
+        navigationRef.current.reset({
+          index: 0,
+          routes: [{ name: targetRoute }],
+        });
+      }
+    }
+  }, [user]);
+
   // Don't render until fonts are loaded
   if (!fontsLoaded) {
     return null; // or a loading screen
   }
 
-  const getNavigatorForUser = (user: User | null) => {
+  const getInitialRouteName = (user: User | null): keyof RootStackParamList => {
     if (!user) return 'Auth';
     
     switch (user.role) {
@@ -71,35 +88,22 @@ const App: React.FC = () => {
     </View>
   );
 
-  const renderNavigator = () => {
-    if (!user) {
-      return <Stack.Screen name="Auth" component={AuthNavigator} />;
-    }
-
-    switch (user.role) {
-      case 'customer':
-        return <Stack.Screen name="Customer" component={CustomerNavigator} />;
-      case 'driver':
-        return <Stack.Screen name="Driver" component={DriverNavigator} />;
-      case 'admin':
-        return <Stack.Screen name="Admin" component={AdminNavigator} />;
-      default:
-        return <Stack.Screen name="Auth" component={AuthNavigator} />;
-    }
-  };
-
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           <StatusBar style="auto" />
           <Suspense fallback={<NavigatorLoadingFallback />}>
             <Stack.Navigator
+              initialRouteName={getInitialRouteName(user)}
               screenOptions={{
                 headerShown: false,
               }}
             >
-              {renderNavigator()}
+              <Stack.Screen name="Auth" component={AuthNavigator} />
+              <Stack.Screen name="Customer" component={CustomerNavigator} />
+              <Stack.Screen name="Driver" component={DriverNavigator} />
+              <Stack.Screen name="Admin" component={AdminNavigator} />
             </Stack.Navigator>
           </Suspense>
         </NavigationContainer>

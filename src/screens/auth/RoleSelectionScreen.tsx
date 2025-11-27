@@ -74,7 +74,6 @@ const RoleSelectionScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView

@@ -34,6 +34,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const role: UserRole = route?.params?.preferredRole ?? 'customer';
@@ -42,6 +43,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     password?: string;
     confirmPassword?: string;
     name?: string;
+    phone?: string;
   }>({});
   const [isButtonPressed, setIsButtonPressed] = useState(false);
   
@@ -49,11 +51,15 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
 
   // Real-time validation handlers
   const handleNameChange = (text: string) => {
-    const sanitized = SanitizationUtils.sanitizeName(text);
+    // Allow spaces during typing - only remove invalid characters, preserve spaces
+    const sanitized = text
+      .replace(/[^a-zA-Z\s\-'.]/g, '') // Keep only letters, spaces, hyphens, apostrophes, and periods
+      .replace(/\s+/g, ' '); // Normalize multiple spaces to single space
+    
     setName(sanitized);
     
-    if (sanitized) {
-      const validation = ValidationUtils.validateName(sanitized);
+    if (sanitized.trim()) {
+      const validation = ValidationUtils.validateName(sanitized.trim());
       if (!validation.isValid) {
         setErrors(prev => ({ ...prev, name: validation.error }));
       } else {
@@ -156,16 +162,45 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     }
   };
 
+  const handlePhoneChange = (text: string) => {
+    // Only allow digits
+    const sanitized = text.replace(/\D/g, '');
+    // Limit to 10 digits
+    const limited = sanitized.slice(0, 10);
+    setPhone(limited);
+    
+    if (limited) {
+      const validation = ValidationUtils.validatePhone(limited);
+      if (!validation.isValid) {
+        setErrors(prev => ({ ...prev, phone: validation.error }));
+      } else {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.phone;
+          return newErrors;
+        });
+      }
+    } else {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.phone;
+        return newErrors;
+      });
+    }
+  };
+
   const handleRegister = async () => {
     // Sanitize inputs
     const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
     const sanitizedName = SanitizationUtils.sanitizeName(name);
+    const sanitizedPhone = SanitizationUtils.sanitizePhone(phone);
     
     // Validate inputs
     const emailValidation = ValidationUtils.validateEmail(sanitizedEmail);
     const passwordValidation = ValidationUtils.validatePassword(password);
     const nameValidation = ValidationUtils.validateName(sanitizedName);
     const confirmPasswordValidation = ValidationUtils.validateConfirmPassword(password, confirmPassword);
+    const phoneValidation = ValidationUtils.validatePhone(sanitizedPhone);
     
     const newErrors: any = {};
     
@@ -185,6 +220,10 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
       newErrors.confirmPassword = confirmPasswordValidation.error;
     }
 
+    if (!phoneValidation.isValid) {
+      newErrors.phone = phoneValidation.error;
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -193,7 +232,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     setErrors({});
 
     try {
-      await register(sanitizedEmail, password, sanitizedName, role);
+      await register(sanitizedEmail, password, sanitizedName, role, sanitizedPhone);
       Alert.alert('Success', SUCCESS_MESSAGES.auth.registerSuccess);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : ERROR_MESSAGES.auth.userExists;
@@ -218,9 +257,10 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
             <Typography variant="body" style={styles.label}>Full Name</Typography>
             <TextInput
               style={[styles.input, errors.name && styles.inputError]}
-              placeholder="Enter your full name"
               value={name}
               onChangeText={handleNameChange}
+              autoCapitalize="words"
+              textContentType="name"
             />
             {errors.name && <Typography variant="caption" style={styles.errorText}>{errors.name}</Typography>}
           </View>
@@ -229,7 +269,6 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
             <Typography variant="body" style={styles.label}>Email Address</Typography>
             <TextInput
               style={[styles.input, errors.email && styles.inputError]}
-              placeholder="Enter your email address"
               value={email}
               onChangeText={handleEmailChange}
               keyboardType="email-address"
@@ -239,11 +278,22 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
 
           <View style={styles.inputContainer}>
+            <Typography variant="body" style={styles.label}>Phone Number</Typography>
+            <TextInput
+              style={[styles.input, errors.phone && styles.inputError]}
+              value={phone}
+              onChangeText={handlePhoneChange}
+              keyboardType="phone-pad"
+              maxLength={10}
+            />
+            {errors.phone && <Typography variant="caption" style={styles.errorText}>{errors.phone}</Typography>}
+          </View>
+
+          <View style={styles.inputContainer}>
             <Typography variant="body" style={styles.label}>Password</Typography>
             <View style={styles.passwordInputContainer}>
               <TextInput
                 style={[styles.input, styles.passwordInput, errors.password && styles.inputError]}
-                placeholder="Enter your password"
                 value={password}
                 onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
@@ -267,7 +317,6 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
             <View style={styles.passwordInputContainer}>
               <TextInput
                 style={[styles.input, styles.passwordInput, errors.confirmPassword && styles.inputError]}
-                placeholder="Confirm your password"
                 value={confirmPassword}
                 onChangeText={handleConfirmPasswordChange}
                 secureTextEntry={!showConfirmPassword}

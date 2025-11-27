@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,7 +20,7 @@ import { AuthStackParamList } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { AuthService } from '../../services/auth.service';
-import { Typography } from '../../components/common';
+import { Typography, DriverIcon, AdminIcon, CustomerIcon } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
@@ -106,47 +107,129 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     setErrors({});
 
     try {
-      // If preferredRole is provided, we need to validate role match
       const preferredRole = route?.params?.preferredRole;
       
-      if (preferredRole) {
-        // For role-specific login, use loginWithRole directly to ensure role match
-        await loginWithRole(sanitizedEmail, preferredRole);
-        // Navigation will be handled by the auth store
-      } else {
-        // No preferred role - proceed with normal login
-        await login(sanitizedEmail, password);
-        // Navigation will be handled by the auth store
+      // Always verify password first using login
+      const loginResult = await AuthService.login(sanitizedEmail, password);
+      
+      if (!loginResult.success) {
+        Alert.alert('Login Failed', loginResult.error || ERROR_MESSAGES.auth.invalidCredentials);
+        return;
       }
-    } catch (error) {
-      if (error instanceof Error && error.message === 'ROLE_SELECTION_REQUIRED') {
-        // Get available roles and act on preferred role if provided
-        const result = await AuthService.login(sanitizedEmail, password);
-        if (result.success && result.availableRoles) {
-          const preferredRole = route?.params?.preferredRole;
-          if (preferredRole && result.availableRoles.includes(preferredRole)) {
-            try {
-              await loginWithRole(sanitizedEmail, preferredRole);
-              return;
-            } catch (_) {
-              // fallback to role selection
-            }
-          }
+      
+      // If login requires role selection
+      if (loginResult.requiresRoleSelection && loginResult.availableRoles) {
+        // If preferredRole is provided and available, use it
+        if (preferredRole && loginResult.availableRoles.includes(preferredRole)) {
+          await loginWithRole(sanitizedEmail, preferredRole);
+          // Navigation will be handled by the auth store
+        } else {
+          // Navigate to role selection screen
           navigation.navigate('RoleSelection', {
             email: sanitizedEmail,
-            availableRoles: result.availableRoles,
+            availableRoles: loginResult.availableRoles,
           });
         }
-      } else {
-        // Check if error is due to role mismatch
-        const errorMessage = error instanceof Error ? error.message : 'Login failed';
-        if (errorMessage.includes('not found with selected role') || errorMessage.includes('User not found with selected role')) {
+        return;
+      }
+      
+      // Single account login successful
+      if (loginResult.user) {
+        // If preferredRole is provided, verify it matches the logged-in user's role
+        if (preferredRole && loginResult.user.role !== preferredRole) {
           Alert.alert('Login Failed', ERROR_MESSAGES.auth.roleMismatch);
-        } else {
-          Alert.alert('Login Failed', ERROR_MESSAGES.auth.invalidCredentials);
+          return;
         }
+        
+        // Use the store's login method to set the user state
+        // This will handle navigation automatically
+        await login(sanitizedEmail, password);
+      }
+    } catch (error) {
+      // Check if error is due to role mismatch
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      if (errorMessage.includes('not found with selected role') || errorMessage.includes('User not found with selected role')) {
+        Alert.alert('Login Failed', ERROR_MESSAGES.auth.roleMismatch);
+      } else {
+        Alert.alert('Login Failed', ERROR_MESSAGES.auth.invalidCredentials);
       }
     }
+  };
+
+  const preferredRole = route?.params?.preferredRole;
+
+  // Generate non-overlapping positions for watermarks
+  const watermarkPositions = useMemo(() => {
+    if (!preferredRole) return [];
+    
+    const screenWidth = Dimensions.get('window').width;
+    const screenHeight = Dimensions.get('window').height;
+    const iconSize = 10;
+    const minSpacing = 70; // Minimum spacing between icons to prevent overlap
+    const positions: Array<{ top: number; left: number }> = [];
+    const watermarkCount = 30;
+    const maxAttempts = 100; // Maximum attempts to find a non-overlapping position
+    
+    // Helper function to check if a position overlaps with existing positions
+    const hasOverlap = (newTop: number, newLeft: number, existingPositions: Array<{ top: number; left: number }>) => {
+      for (const pos of existingPositions) {
+        const distance = Math.sqrt(
+          Math.pow(newTop - pos.top, 2) + Math.pow(newLeft - pos.left, 2)
+        );
+        if (distance < minSpacing) {
+          return true;
+        }
+      }
+      return false;
+    };
+    
+    for (let i = 0; i < watermarkCount; i++) {
+      let attempts = 0;
+      let top: number, left: number;
+      
+      // Try to find a non-overlapping position
+      do {
+        top = Math.random() * (screenHeight - iconSize - 40) + 20; // Leave some margin from edges
+        left = Math.random() * (screenWidth - iconSize - 40) + 20;
+        attempts++;
+        
+        // If we've tried too many times, use a grid-based fallback
+        if (attempts > maxAttempts) {
+          // Use a grid-based approach as fallback
+          const cols = Math.floor(screenWidth / minSpacing);
+          const rows = Math.floor(screenHeight / minSpacing);
+          const gridIndex = i % (cols * rows);
+          const col = gridIndex % cols;
+          const row = Math.floor(gridIndex / cols);
+          top = row * minSpacing + 20;
+          left = col * minSpacing + 20;
+          break;
+        }
+      } while (hasOverlap(top, left, positions));
+      
+      positions.push({ top, left });
+    }
+    
+    return positions;
+  }, [preferredRole]);
+
+  const renderWatermarkIcon = () => {
+    if (!preferredRole) return null;
+    
+    const iconProps = {
+      size: 50,
+      color: UI_CONFIG.colors.textSecondary,
+    };
+
+    const IconComponent = 
+      preferredRole === 'customer' ? CustomerIcon :
+      preferredRole === 'driver' ? DriverIcon :
+      preferredRole === 'admin' ? AdminIcon :
+      null;
+
+    if (!IconComponent) return null;
+
+    return <IconComponent {...iconProps} />;
   };
 
   return (
@@ -155,6 +238,20 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        {preferredRole && watermarkPositions.map((position, index) => (
+          <View
+            key={index}
+            style={[
+              styles.watermarkContainer,
+              {
+                top: position.top,
+                left: position.left,
+              },
+            ]}
+          >
+            {renderWatermarkIcon()}
+          </View>
+        ))}
         <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
           <Typography variant="h1" style={styles.title}>Welcome Back</Typography>
@@ -166,7 +263,6 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
             <Typography variant="body" style={styles.label}>Email Address</Typography>
             <TextInput
               style={[styles.input, errors.email && styles.inputError]}
-              placeholder="Enter your email address"
               value={email}
               onChangeText={handleEmailChange}
               keyboardType="email-address"
@@ -180,7 +276,6 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
             <View style={styles.passwordInputContainer}>
               <TextInput
                 style={[styles.input, styles.passwordInput, errors.password && styles.inputError]}
-                placeholder="Enter your password"
                 value={password}
                 onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
@@ -234,11 +329,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: UI_CONFIG.colors.background,
+    position: 'relative',
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
+    zIndex: 1,
   },
   header: {
     alignItems: 'center',
@@ -347,6 +444,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: UI_CONFIG.colors.primary,
     fontWeight: '600',
+  },
+  watermarkContainer: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.06,
+    zIndex: 0,
+    pointerEvents: 'none',
   },
 });
 

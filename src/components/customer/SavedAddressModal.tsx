@@ -39,7 +39,10 @@ const SavedAddressModal: React.FC<SavedAddressModalProps> = ({
             <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
           </TouchableOpacity>
           <Typography variant="h3" style={styles.modalTitle}>Select Saved Address</Typography>
-          <TouchableOpacity onPress={() => navigation.navigate('SavedAddresses')}>
+          <TouchableOpacity onPress={() => {
+            onClose();
+            navigation.navigate('SavedAddresses');
+          }}>
             <Ionicons name="add" size={24} color={UI_CONFIG.colors.primary} />
           </TouchableOpacity>
         </View>
@@ -82,7 +85,10 @@ const SavedAddressModal: React.FC<SavedAddressModalProps> = ({
               <Typography variant="caption" style={styles.emptyStateSubtext}>Add your first address to get started</Typography>
               <TouchableOpacity
                 style={styles.emptyStateButton}
-                onPress={() => navigation.navigate('SavedAddresses')}
+                onPress={() => {
+                  onClose();
+                  navigation.navigate('SavedAddresses');
+                }}
               >
                 <Typography variant="body" style={styles.emptyStateButtonText}>Add Address</Typography>
               </TouchableOpacity>

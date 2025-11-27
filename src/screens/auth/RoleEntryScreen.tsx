@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
+import React, { useState, useMemo } from 'react';
+import { View, TouchableOpacity, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Typography, DriverIcon, AdminIcon, CustomerIcon } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
@@ -27,10 +27,80 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('Login', { preferredRole: selectedRole });
   };
 
+  // Generate non-overlapping positions for watermarks (10 customer, 10 admin, 10 driver = 30 total)
+  const watermarkPositions = useMemo(() => {
+    const screenWidth = Dimensions.get('window').width;
+    const screenHeight = Dimensions.get('window').height;
+    const iconSize = 50;
+    const minSpacing = 70; // Minimum spacing between icons to prevent overlap
+    const positions: Array<{ top: number; left: number }> = [];
+    const watermarkCount = 30;
+    const maxAttempts = 100; // Maximum attempts to find a non-overlapping position
+    
+    // Helper function to check if a position overlaps with existing positions
+    const hasOverlap = (newTop: number, newLeft: number, existingPositions: Array<{ top: number; left: number }>) => {
+      for (const pos of existingPositions) {
+        const distance = Math.sqrt(
+          Math.pow(newTop - pos.top, 2) + Math.pow(newLeft - pos.left, 2)
+        );
+        if (distance < minSpacing) {
+          return true;
+        }
+      }
+      return false;
+    };
+    
+    for (let i = 0; i < watermarkCount; i++) {
+      let attempts = 0;
+      let top: number, left: number;
+      
+      // Try to find a non-overlapping position
+      do {
+        top = Math.random() * (screenHeight - iconSize - 40) + 20; // Leave some margin from edges
+        left = Math.random() * (screenWidth - iconSize - 40) + 20;
+        attempts++;
+        
+        // If we've tried too many times, use a grid-based fallback
+        if (attempts > maxAttempts) {
+          // Use a grid-based approach as fallback
+          const cols = Math.floor(screenWidth / minSpacing);
+          const rows = Math.floor(screenHeight / minSpacing);
+          const gridIndex = i % (cols * rows);
+          const col = gridIndex % cols;
+          const row = Math.floor(gridIndex / cols);
+          top = row * minSpacing + 20;
+          left = col * minSpacing + 20;
+          break;
+        }
+      } while (hasOverlap(top, left, positions));
+      
+      positions.push({ top, left });
+    }
+    
+    return positions;
+  }, []);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        {watermarkPositions.map((position, index) => {
+          const IconComponent = index < 10 ? CustomerIcon : index < 20 ? AdminIcon : DriverIcon;
+          return (
+            <View
+              key={index}
+              style={[
+                styles.watermarkContainer,
+                {
+                  top: position.top,
+                  left: position.left,
+                },
+              ]}
+            >
+              <IconComponent size={50} color={UI_CONFIG.colors.textSecondary} />
+            </View>
+          );
+        })}
+        <ScrollView contentContainerStyle={styles.scrollContainer} style={styles.contentOverlay}>
           <View style={styles.header}>
             <Typography variant="h1" style={styles.title}>Choose Your Role</Typography>
             <Typography variant="body" style={styles.subtitle}>Select how you want to use the app</Typography>
@@ -95,6 +165,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: UI_CONFIG.colors.background,
+    position: 'relative',
+  },
+  watermarkContainer: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.06,
+    zIndex: 0,
+    pointerEvents: 'none',
+  },
+  contentOverlay: {
+    zIndex: 1,
   },
   scrollContainer: {
     flexGrow: 1,

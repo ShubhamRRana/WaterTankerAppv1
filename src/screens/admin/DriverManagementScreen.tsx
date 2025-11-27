@@ -25,6 +25,7 @@ import { ValidationUtils } from '../../utils/validation';
 import { SanitizationUtils } from '../../utils/sanitization';
 import { PricingUtils } from '../../utils/pricing';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
+import { AuthService } from '../../services/auth.service';
 
 type DriverManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Drivers'>;
 
@@ -263,37 +264,43 @@ const DriverManagementScreen: React.FC = () => {
     setIsSubmitting(true);
     try {
       if (!isEditMode) {
-        // Check if email already exists (only for new drivers)
-        const existingUser = users.find(user => user.email?.toLowerCase() === addDriverForm.email.toLowerCase());
-        if (existingUser) {
-          Alert.alert('Error', 'A user with this email address already exists');
+        // Use AuthService.register() to properly create driver account with authentication
+        const licenseExpiryDate = (() => {
+          const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+          if (!m) return undefined as any;
+          const d = parseInt(m[1], 10);
+          const mo = parseInt(m[2], 10) - 1;
+          const y = parseInt(m[3], 10);
+          return new Date(y, mo, d);
+        })();
+        
+        const registerResult = await AuthService.register(
+          addDriverForm.email,
+          addDriverForm.password,
+          addDriverForm.name.trim(),
+          'driver',
+          {
+            phone: addDriverForm.phone ? addDriverForm.phone : undefined,
+            isApproved: true, // Auto-approve when added by admin
+            isAvailable: true,
+            totalEarnings: 0,
+            completedOrders: 0,
+            createdByAdmin: true, // Mark as created by admin
+            licenseNumber: addDriverForm.licenseNumber.trim(),
+            emergencyContactName: addDriverForm.emergencyContactName.trim(),
+            emergencyContactPhone: addDriverForm.emergencyContactPhone,
+            licenseExpiry: licenseExpiryDate,
+          }
+        );
+        
+        if (!registerResult.success) {
+          Alert.alert('Error', registerResult.error || 'Failed to create driver account');
           setIsSubmitting(false);
           return;
         }
         
-        await addUser({
-          role: 'driver',
-          name: addDriverForm.name.trim(),
-          email: SanitizationUtils.sanitizeEmail(addDriverForm.email),
-          phone: addDriverForm.phone ? addDriverForm.phone : undefined,
-          password: addDriverForm.password, // In real app, this should be hashed
-          isApproved: true, // Auto-approve when added by admin
-          isAvailable: true,
-          totalEarnings: 0,
-          completedOrders: 0,
-          createdByAdmin: true, // Mark as created by admin
-          licenseNumber: addDriverForm.licenseNumber.trim(),
-          emergencyContactName: addDriverForm.emergencyContactName.trim(),
-          emergencyContactPhone: addDriverForm.emergencyContactPhone,
-          licenseExpiry: (() => {
-            const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
-            if (!m) return undefined as any;
-            const d = parseInt(m[1], 10);
-            const mo = parseInt(m[2], 10) - 1;
-            const y = parseInt(m[3], 10);
-            return new Date(y, mo, d);
-          })(),
-        } as Omit<DriverUser, 'uid' | 'createdAt'>);
+        // Refresh users list to show the newly created driver
+        await fetchAllUsers();
         
         Alert.alert('Success', 'Driver added successfully');
       } else {
@@ -355,7 +362,7 @@ const DriverManagementScreen: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [addDriverForm, users, addUser, updateUser, editingDriver]);
+  }, [addDriverForm, users, updateUser, editingDriver, fetchAllUsers]);
 
   const resetAddDriverForm = useCallback(() => {
     setAddDriverForm({

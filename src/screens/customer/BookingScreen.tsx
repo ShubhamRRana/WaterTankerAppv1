@@ -124,21 +124,23 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   }, [selectedAgency, fetchVehiclesByAgency]);
 
   useEffect(() => {
-    if (selectedVehicle) {
+    if (selectedVehicle && selectedVehicle.amount !== undefined) {
       calculatePrice();
+    } else if (!selectedVehicle) {
+      setPriceBreakdown(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedVehicle]);
 
   const calculatePrice = () => {
     if (!selectedVehicle) return;
-
+    
     // Only show base price, no distance-based charges
-    const basePrice = selectedVehicle.amount;
+    const basePrice = selectedVehicle.amount || 0;
     const totalPrice = basePrice;
     
     setPriceBreakdown({
-      tankerSize: `${selectedVehicle.capacity}L Tanker`,
+      tankerSize: `${selectedVehicle.capacity || 0}L Tanker`,
       basePrice: basePrice,
       totalPrice: totalPrice,
     });
@@ -147,9 +149,9 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   const handleVehicleSelection = (vehicle: any) => {
     setSelectedVehicle({
       id: vehicle.id,
-      capacity: vehicle.vehicleCapacity,
+      capacity: vehicle.capacity != null ? vehicle.capacity : 0,
       amount: vehicle.amount,
-      vehicleNumber: vehicle.vehicleNumber
+      vehicleNumber: vehicle.vehicleNumber || ''
     });
     setShowTankerModal(false);
   };
@@ -332,7 +334,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     }
 
     // Sanitize and validate address
-    const sanitizedAddress = SanitizationUtils.sanitizeAddress(deliveryAddress);
+    const sanitizedAddress = SanitizationUtils.sanitizeAddress(deliveryAddress.trim());
     const addressValidation = ValidationUtils.validateAddressText(sanitizedAddress);
     if (!addressValidation.isValid) {
       Alert.alert('Invalid Address', addressValidation.error || 'Please enter a valid delivery address');
@@ -462,7 +464,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
             <View style={styles.selectionInfo}>
               <Typography variant="body" style={styles.selectionLabel}>
                 {selectedVehicle 
-                  ? `${selectedVehicle.capacity}L Tanker - ${selectedVehicle.vehicleNumber}`
+                  ? `${selectedVehicle.capacity != null ? selectedVehicle.capacity : 'N/A'}L Tanker - ${selectedVehicle.vehicleNumber || 'N/A'}`
                   : selectedAgency 
                     ? 'Choose vehicle'
                     : 'Select agency first'}
@@ -487,8 +489,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
             placeholder="Enter your delivery address..."
             value={deliveryAddress}
             onChangeText={(text) => {
-              const sanitized = SanitizationUtils.sanitizeAddress(text);
-              setDeliveryAddress(sanitized);
+              setDeliveryAddress(text);
             }}
             multiline
             numberOfLines={3}
@@ -552,7 +553,15 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         <Button
           title="Book Now"
           onPress={handleBooking}
-          disabled={!selectedVehicle || !selectedAgency || !deliveryAddress.trim() || !deliveryDate.trim() || !deliveryTime.trim() || !priceBreakdown || !!dateError}
+          disabled={
+            !selectedVehicle || 
+            !selectedAgency || 
+            !deliveryAddress.trim() || 
+            !deliveryDate.trim() || 
+            !deliveryTime.trim() || 
+            !priceBreakdown || 
+            !!(dateError && dateError.length > 0)
+          }
           style={styles.bookButton}
         />
       </View>

@@ -204,13 +204,11 @@ export interface AuthStackParamList {
 export interface DriverTabParamList {
   Orders: undefined;
   Earnings: undefined;
-  Profile: undefined;
 }
 
 export interface DriverStackParamList {
   DriverTabs: undefined;
   CollectPayment: { orderId: string };
-  Profile: undefined;
 }
 
 // AdminStackParamList is now exported from AdminNavigator.tsx

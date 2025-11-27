@@ -14,16 +14,39 @@ src/
 │   │   ├── LoadingSpinner.tsx
 │   │   ├── Typography.tsx
 │   │   ├── CustomerMenuDrawer.tsx
+│   │   ├── AdminMenuDrawer.tsx
+│   │   ├── MenuDrawer.tsx
+│   │   ├── SuccessNotification.tsx
+│   │   ├── ErrorBoundary.tsx
+│   │   ├── CustomerIcon.tsx
+│   │   ├── DriverIcon.tsx
+│   │   ├── AdminIcon.tsx
 │   │   └── index.ts
 │   ├── customer/
+│   │   ├── AgencySelectionModal.tsx
+│   │   ├── DateTimeInput.tsx
+│   │   ├── PriceBreakdown.tsx
+│   │   ├── SavedAddressModal.tsx
+│   │   └── TankerSelectionModal.tsx
 │   ├── driver/
+│   │   ├── OrdersFilter.tsx
+│   │   ├── OrdersHeader.tsx
+│   │   └── OrdersList.tsx
 │   └── admin/
+│       ├── AddDriverModal.tsx
+│       ├── BookingCard.tsx
+│       ├── BookingDetailsModal.tsx
+│       ├── DriverCard.tsx
+│       ├── DriverModal.tsx
+│       ├── EditProfileForm.tsx
+│       ├── ProfileHeader.tsx
+│       └── StatusUpdateModal.tsx
 ├── screens/
 │   ├── auth/
 │   │   ├── RoleEntryScreen.tsx
 │   │   ├── LoginScreen.tsx
 │   │   ├── RegisterScreen.tsx
-│   │   ├── RoleSelectionScreen.tsx
+│   │   └── RoleSelectionScreen.tsx
 │   ├── customer/
 │   │   ├── CustomerHomeScreen.tsx
 │   │   ├── BookingScreen.tsx
@@ -34,10 +57,9 @@ src/
 │   │   └── SavedAddressesScreen.tsx
 │   ├── driver/
 │   │   ├── OrdersScreen.tsx
-│   │   ├── AvailableOrdersScreen.tsx
-│   │   ├── ActiveOrderScreen.tsx
 │   │   ├── CollectPaymentScreen.tsx
-│   │   └── DriverEarningsScreen.tsx
+│   │   ├── DriverEarningsScreen.tsx
+│   │   └── DriverProfileScreen.tsx
 │   └── admin/
 │       ├── AllBookingsScreen.tsx
 │       ├── DriverManagementScreen.tsx
@@ -99,7 +121,7 @@ src/
 ## Key Features
 
 ### Customer Features
-- Phone + password authentication
+- Email + password authentication
 - Burger menu navigation (Home, Orders, Profile) in header
 - Browse tanker sizes and prices
 - Select delivery location on map
@@ -110,13 +132,14 @@ src/
 - Save multiple delivery addresses
 
 ### Driver Features
-- Phone + password authentication
+- Email + password authentication
 - View available booking requests
 - Accept/reject bookings
 - Start delivery and update order status
 - Collect payment workflow with dedicated payment screen
 - View earnings and completed orders
 - Toggle availability status
+- Profile management with photo upload
 
 ### Admin Features
 - Tab-based navigation (Bookings, Drivers, Vehicles, Reports, Profile)
@@ -141,8 +164,10 @@ src/
 ## Auth Flow (Multi-Role)
 
 - Start at Role Entry screen to choose: Customer, Driver, or Admin.
+- Login uses email + password authentication (migrated from phone + password).
 - Login respects the chosen role when multiple accounts exist.
 - Sign Up no longer asks for role; it uses the chosen role from Role Entry/Login.
+- Multi-role users can select their role after login if they have multiple roles with the same email.
 
 ## Environment Variables
 
@@ -173,7 +198,7 @@ The app uses AsyncStorage (local storage) with the following data structures:
 
 This MVP includes:
 - ✅ All three user roles in single mobile app
-- ✅ Phone + password authentication with multi-role support
+- ✅ Email + password authentication with multi-role support (migrated from phone + password)
 - ✅ Scheduled bookings with date/time picker
 - ✅ Cash on delivery payment
 - ✅ Saved addresses for customers
@@ -189,6 +214,9 @@ This MVP includes:
 - ✅ Modern iOS-style UI with proper TypeScript support
 - ✅ State management with Zustand stores (auth, bookings, users, vehicles)
 - ✅ Profile management with photo upload for all roles
+- ✅ Security features: rate limiting, security logging, session management, security auditing
+- ✅ Input validation and sanitization for all user inputs
+- ✅ Error boundaries and error logging
 
 ## Future Enhancements (v2)
 
@@ -224,12 +252,12 @@ This formatting is applied consistently across:
   - Driver: Bottom tab navigation (Orders, Earnings)
   - Admin: Bottom tab navigation (Bookings, Drivers, Vehicles, Reports, Profile)
 - **Customer Screens**: Home, Booking, Order Tracking, Order History, Past Orders, Profile, Saved Addresses
-- **Driver Screens**: Orders, Active Order, Collect Payment, Earnings, Profile
-- **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Reports, Profile
+- **Driver Screens**: Orders, Collect Payment, Earnings, Driver Profile
+- **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Reports, Admin Profile
 - **TypeScript Support**: All components properly typed with comprehensive type definitions
 - **State Management**: Zustand stores for authentication, bookings, users, and vehicles
 - **Services**: Local storage, auth, booking, payment, location, location tracking, notification, user, and vehicle services
-- **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner, CustomerMenuDrawer)
+- **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner, CustomerMenuDrawer, AdminMenuDrawer, MenuDrawer, SuccessNotification, ErrorBoundary, CustomerIcon, DriverIcon, AdminIcon)
 - **Utils**: Distance calculation, pricing, validation, sanitization, rate limiting, error logging, security logging, security audit, session management, subscription management, and report calculations
 - **Number Formatting**: Indian numbering system implementation for all amounts and quantities (e.g., ₹12,34,567 instead of ₹1,234,567)
 - **Configuration**: Comprehensive app configuration with constants, error messages, and centralized UI_CONFIG color system
@@ -251,3 +279,9 @@ This formatting is applied consistently across:
 6. Ratings and reviews system
 7. Immediate/ASAP bookings
 8. Performance optimization and animations
+
+## Additional Documentation
+
+- **[MIGRATION_PHONE_TO_EMAIL_AUTH.md](./MIGRATION_PHONE_TO_EMAIL_AUTH.md)**: Comprehensive guide documenting the migration from phone+password to email+password authentication
+- **[SECURITY.md](./SECURITY.md)**: Detailed security documentation covering authentication, authorization, data protection, rate limiting, session management, and security monitoring
+- **[scripts/README.md](./scripts/README.md)**: Testing guides and scripts for admin role and general authentication testing

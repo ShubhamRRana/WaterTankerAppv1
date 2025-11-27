@@ -86,6 +86,7 @@ export class AuthService {
       // Sanitize inputs
       const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
       const sanitizedName = SanitizationUtils.sanitizeName(name);
+      const sanitizedPhone = additionalData?.phone ? SanitizationUtils.sanitizePhone(additionalData.phone) : undefined;
 
       // Validate email format
       const emailValidation = ValidationUtils.validateEmail(sanitizedEmail, true);
@@ -143,7 +144,7 @@ export class AuthService {
         name: sanitizedName,
         role,
         createdAt: new Date(),
-        ...(additionalData?.phone && { phone: additionalData.phone }), // Phone is now optional
+        ...(sanitizedPhone && { phone: sanitizedPhone }), // Phone is now optional
         ...(role === 'customer' && { savedAddresses: [] }),
         ...(role === 'driver' && {
           vehicleNumber: (additionalData as Partial<DriverUser>)?.vehicleNumber,

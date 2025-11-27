@@ -52,7 +52,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
 
   const handleSaveAddress = useCallback(async () => {
     // Sanitize and validate address
-    const sanitizedAddress = SanitizationUtils.sanitizeAddress(newAddressText);
+    const sanitizedAddress = SanitizationUtils.sanitizeAddress(newAddressText.trim());
     const addressValidation = ValidationUtils.validateAddressText(sanitizedAddress);
     
     if (!addressValidation.isValid) {
@@ -226,8 +226,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
               placeholder={editingAddress ? "Edit address..." : "Enter new address..."}
               value={newAddressText}
               onChangeText={(text) => {
-                const sanitized = SanitizationUtils.sanitizeAddress(text);
-                setNewAddressText(sanitized);
+                setNewAddressText(text);
               }}
               multiline
               numberOfLines={2}
