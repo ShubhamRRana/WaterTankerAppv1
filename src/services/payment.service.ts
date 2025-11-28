@@ -15,9 +15,18 @@ export class PaymentService {
    */
   static async processCODPayment(bookingId: string, amount: number): Promise<PaymentResult> {
     try {
+      // Check if booking exists first
+      const booking = await LocalStorageService.getBookingById(bookingId);
+      if (!booking) {
+        return {
+          success: false,
+          error: 'Booking not found',
+        };
+      }
+
       // For COD, we just mark the payment as pending in the booking
       // The actual payment happens when the driver delivers
-      const paymentId = `cod_${bookingId}_${Date.now()}`;
+      const paymentId = `cod_${bookingId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       await LocalStorageService.updateBooking(bookingId, {
         paymentStatus: 'pending',
@@ -41,7 +50,16 @@ export class PaymentService {
    */
   static async confirmCODPayment(bookingId: string): Promise<PaymentResult> {
     try {
-      const paymentId = `cod_confirmed_${bookingId}_${Date.now()}`;
+      // Check if booking exists first
+      const booking = await LocalStorageService.getBookingById(bookingId);
+      if (!booking) {
+        return {
+          success: false,
+          error: 'Booking not found',
+        };
+      }
+
+      const paymentId = `cod_confirmed_${bookingId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       await LocalStorageService.updateBooking(bookingId, {
         paymentStatus: 'completed',

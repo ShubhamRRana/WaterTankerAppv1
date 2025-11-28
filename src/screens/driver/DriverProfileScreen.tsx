@@ -18,11 +18,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Typography, LoadingSpinner } from '../../components/common';
 import { useAuthStore } from '../../store/authStore';
 import { DriverUser } from '../../types';
-import { DriverStackParamList } from '../../navigation/DriverNavigator';
 import { UI_CONFIG } from '../../constants/config';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 
-type DriverProfileScreenNavigationProp = StackNavigationProp<DriverStackParamList, 'Profile'>;
+type DriverProfileScreenNavigationProp = StackNavigationProp<any>;
 
 interface DriverProfileScreenProps {
   navigation: DriverProfileScreenNavigationProp;

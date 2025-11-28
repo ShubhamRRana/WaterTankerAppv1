@@ -1,9 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { User, Booking, Vehicle } from '../types/index';
+import {
+  serializeUserDates,
+  deserializeUserDates,
+  serializeBookingDates,
+  deserializeBookingDates,
+  serializeVehicleDates,
+  deserializeVehicleDates,
+} from '../utils/dateSerialization';
 
 // Local storage service to replace Firebase functionality
 export class LocalStorageService {
   // Generic methods for storing and retrieving data
-  static async setItem(key: string, value: any): Promise<void> {
+  static async setItem<T>(key: string, value: T): Promise<void> {
     try {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(key, jsonValue);
@@ -38,12 +47,14 @@ export class LocalStorageService {
   }
 
   // User management methods
-  static async saveUser(user: any): Promise<void> {
-    await this.setItem('current_user', user);
+  static async saveUser(user: User): Promise<void> {
+    const serialized = serializeUserDates(user as any);
+    await this.setItem('current_user', serialized);
   }
 
-  static async getCurrentUser(): Promise<any | null> {
-    return await this.getItem('current_user');
+  static async getCurrentUser(): Promise<User | null> {
+    const user = await this.getItem<any>('current_user');
+    return user ? (deserializeUserDates(user) as unknown as User) : null;
   }
 
   static async removeUser(): Promise<void> {
@@ -51,47 +62,53 @@ export class LocalStorageService {
   }
 
   // Booking management methods
-  static async saveBooking(booking: any): Promise<void> {
+  static async saveBooking(booking: Booking): Promise<void> {
     const bookings = await this.getBookings();
     const updatedBookings = [...bookings, booking];
-    await this.setItem('bookings', updatedBookings);
+    const serialized = updatedBookings.map(b => serializeBookingDates(b as any));
+    await this.setItem('bookings', serialized);
   }
 
-  static async updateBooking(bookingId: string, updates: any): Promise<void> {
+  static async updateBooking(bookingId: string, updates: Partial<Booking>): Promise<void> {
     const bookings = await this.getBookings();
-    const updatedBookings = bookings.map(booking => 
-      booking.id === bookingId ? { ...booking, ...updates } : booking
-    );
-    await this.setItem('bookings', updatedBookings);
+    const updatedBookings = bookings.map(booking => {
+      if (booking.id === bookingId) {
+        return { ...booking, ...updates };
+      }
+      return booking;
+    });
+    const serialized = updatedBookings.map(b => serializeBookingDates(b as any));
+    await this.setItem('bookings', serialized);
   }
 
-  static async getBookings(): Promise<any[]> {
+  static async getBookings(): Promise<Booking[]> {
     const bookings = await this.getItem<any[]>('bookings');
-    return bookings || [];
+    if (!bookings) return [];
+    return bookings.map(booking => deserializeBookingDates(booking) as unknown as Booking);
   }
 
-  static async getBookingById(bookingId: string): Promise<any | null> {
+  static async getBookingById(bookingId: string): Promise<Booking | null> {
     const bookings = await this.getBookings();
     return bookings.find(booking => booking.id === bookingId) || null;
   }
 
-  static async getBookingsByCustomer(customerId: string): Promise<any[]> {
+  static async getBookingsByCustomer(customerId: string): Promise<Booking[]> {
     const bookings = await this.getBookings();
     return bookings.filter(booking => booking.customerId === customerId);
   }
 
-  static async getBookingsByDriver(driverId: string): Promise<any[]> {
+  static async getBookingsByDriver(driverId: string): Promise<Booking[]> {
     const bookings = await this.getBookings();
     return bookings.filter(booking => booking.driverId === driverId);
   }
 
-  static async getAvailableBookings(): Promise<any[]> {
+  static async getAvailableBookings(): Promise<Booking[]> {
     const bookings = await this.getBookings();
     return bookings.filter(booking => booking.status === 'pending');
   }
 
   // User collection management
-  static async saveUserToCollection(user: any): Promise<void> {
+  static async saveUserToCollection(user: User): Promise<void> {
     const users = await this.getUsers();
     const existingUserIndex = users.findIndex(u => u.uid === user.uid);
     
@@ -101,62 +118,74 @@ export class LocalStorageService {
       users.push(user);
     }
     
-    await this.setItem('users_collection', users);
+    const serialized = users.map(u => serializeUserDates(u as any));
+    await this.setItem('users_collection', serialized);
   }
 
-  static async getUsers(): Promise<any[]> {
+  static async getUsers(): Promise<User[]> {
     const users = await this.getItem<any[]>('users_collection');
-    return users || [];
+    if (!users) return [];
+    return users.map(user => deserializeUserDates(user) as unknown as User);
   }
 
-  static async getUserById(uid: string): Promise<any | null> {
+  static async getUserById(uid: string): Promise<User | null> {
     const users = await this.getUsers();
     return users.find(user => user.uid === uid) || null;
   }
 
-  static async updateUserProfile(uid: string, updates: any): Promise<void> {
+  static async updateUserProfile(uid: string, updates: Partial<User>): Promise<void> {
     const users = await this.getUsers();
     const userIndex = users.findIndex(user => user.uid === uid);
     
     if (userIndex >= 0) {
-      users[userIndex] = { ...users[userIndex], ...updates };
-      await this.setItem('users_collection', users);
+      users[userIndex] = { ...users[userIndex], ...updates } as User;
+      const serialized = users.map(u => serializeUserDates(u as any));
+      await this.setItem('users_collection', serialized);
     } else {
       throw new Error('User not found');
     }
   }
 
   // Vehicle management methods
-  static async saveVehicle(vehicle: any): Promise<void> {
+  static async saveVehicle(vehicle: Vehicle): Promise<void> {
     const vehicles = await this.getVehicles();
     const existingVehicleIndex = vehicles.findIndex(v => v.id === vehicle.id);
     
     if (existingVehicleIndex >= 0) {
       vehicles[existingVehicleIndex] = { ...vehicle, updatedAt: new Date() };
     } else {
-      vehicles.push({ ...vehicle, createdAt: new Date(), updatedAt: new Date() });
+      // Preserve existing dates if provided, otherwise create new ones
+      const vehicleToAdd = {
+        ...vehicle,
+        createdAt: vehicle.createdAt || new Date(),
+        updatedAt: vehicle.updatedAt || new Date(),
+      };
+      vehicles.push(vehicleToAdd);
     }
     
-    await this.setItem('vehicles_collection', vehicles);
+    const serialized = vehicles.map(v => serializeVehicleDates(v as any));
+    await this.setItem('vehicles_collection', serialized);
   }
 
-  static async getVehicles(): Promise<any[]> {
+  static async getVehicles(): Promise<Vehicle[]> {
     const vehicles = await this.getItem<any[]>('vehicles_collection');
-    return vehicles || [];
+    if (!vehicles) return [];
+    return vehicles.map(vehicle => deserializeVehicleDates(vehicle) as unknown as Vehicle);
   }
 
-  static async getVehicleById(vehicleId: string): Promise<any | null> {
+  static async getVehicleById(vehicleId: string): Promise<Vehicle | null> {
     const vehicles = await this.getVehicles();
     return vehicles.find(vehicle => vehicle.id === vehicleId) || null;
   }
 
-  static async updateVehicle(vehicleId: string, updates: any): Promise<void> {
+  static async updateVehicle(vehicleId: string, updates: Partial<Vehicle>): Promise<void> {
     const vehicles = await this.getVehicles();
     const vehicleIndex = vehicles.findIndex(vehicle => vehicle.id === vehicleId);
     
     if (vehicleIndex >= 0) {
-      vehicles[vehicleIndex] = { ...vehicles[vehicleIndex], ...updates, updatedAt: new Date() };
-      await this.setItem('vehicles_collection', vehicles);
+      vehicles[vehicleIndex] = { ...vehicles[vehicleIndex], ...updates, updatedAt: new Date() } as Vehicle;
+      const serialized = vehicles.map(v => serializeVehicleDates(v as any));
+      await this.setItem('vehicles_collection', serialized);
     } else {
       throw new Error('Vehicle not found');
     }
@@ -165,7 +194,8 @@ export class LocalStorageService {
   static async deleteVehicle(vehicleId: string): Promise<void> {
     const vehicles = await this.getVehicles();
     const updatedVehicles = vehicles.filter(vehicle => vehicle.id !== vehicleId);
-    await this.setItem('vehicles_collection', updatedVehicles);
+    const serialized = updatedVehicles.map(vehicle => serializeVehicleDates(vehicle as any));
+    await this.setItem('vehicles_collection', serialized);
   }
 
   // Generate unique IDs
@@ -256,7 +286,9 @@ export class LocalStorageService {
       }
     ];
 
-    await this.setItem('users_collection', sampleUsers);
+    // Serialize dates before storing
+    const serializedUsers = sampleUsers.map(user => serializeUserDates(user as any));
+    await this.setItem('users_collection', serializedUsers);
     await this.setItem('initialized', true);
   }
 }

@@ -6,14 +6,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card } from '../common';
-import { User } from '../../types';
+import { DriverUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 
 export interface DriverCardProps {
-  driver: User;
+  driver: DriverUser;
   onPress: () => void;
-  onEdit: (driver: User) => void;
+  onEdit: (driver: DriverUser) => void;
   onApprove?: (driverId: string) => void;
   onReject?: (driverId: string) => void;
 }
@@ -30,8 +30,8 @@ const DriverCard: React.FC<DriverCardProps> = ({
   }, [driver.licenseExpiry]);
   
   const formattedEarnings = useMemo(() => {
-    return PricingUtils.formatPrice((driver as any).totalEarnings || 0);
-  }, [(driver as any).totalEarnings]);
+    return PricingUtils.formatPrice(driver.totalEarnings || 0);
+  }, [driver.totalEarnings]);
 
   const emergencyContact = useMemo(() => {
     return driver.emergencyContactName ? `${driver.emergencyContactName} - ${driver.emergencyContactPhone}` : 'Emergency contact not provided';

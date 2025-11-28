@@ -4,7 +4,7 @@
 // This service provides utility functions for distance calculations and location operations.
 // Uses expo-location for React Native compatibility.
 
-import * as Location from 'expo-location';
+import * as ExpoLocation from 'expo-location';
 
 export interface Location {
   latitude: number;
@@ -45,7 +45,7 @@ export class LocationService {
    */
   static async requestPermissions(): Promise<boolean> {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
       return status === 'granted';
     } catch (error) {
       return false;
@@ -57,7 +57,7 @@ export class LocationService {
    */
   static async hasPermissions(): Promise<boolean> {
     try {
-      const { status } = await Location.getForegroundPermissionsAsync();
+      const { status } = await ExpoLocation.getForegroundPermissionsAsync();
       return status === 'granted';
     } catch (error) {
       return false;
@@ -79,8 +79,8 @@ export class LocationService {
       }
 
       // Get current position
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
+      const location = await ExpoLocation.getCurrentPositionAsync({
+        accuracy: ExpoLocation.Accuracy.High,
         timeInterval: 10000,
         distanceInterval: 10,
       });
@@ -101,11 +101,11 @@ export class LocationService {
   static async watchPositionAsync(
     callback: (location: Location) => void,
     options?: {
-      accuracy?: Location.Accuracy;
+      accuracy?: ExpoLocation.Accuracy;
       timeInterval?: number;
       distanceInterval?: number;
     }
-  ): Promise<Location.LocationSubscription> {
+  ): Promise<ExpoLocation.LocationSubscription> {
     try {
       const hasPermission = await this.hasPermissions();
       if (!hasPermission) {
@@ -115,9 +115,9 @@ export class LocationService {
         }
       }
 
-      return await Location.watchPositionAsync(
+      return await ExpoLocation.watchPositionAsync(
         {
-          accuracy: options?.accuracy ?? Location.Accuracy.High,
+          accuracy: options?.accuracy ?? ExpoLocation.Accuracy.High,
           timeInterval: options?.timeInterval ?? 5000,
           distanceInterval: options?.distanceInterval ?? 10,
         },
@@ -152,6 +152,10 @@ export class LocationService {
       // For MVP, we'll return a placeholder
       throw new Error('Address geocoding not implemented in MVP');
     } catch (error) {
+      // Preserve the original error message if it's our intentional error
+      if (error instanceof Error && error.message === 'Address geocoding not implemented in MVP') {
+        throw error;
+      }
       throw new Error('Failed to get coordinates from address');
     }
   }

@@ -32,7 +32,7 @@ export class BookingService {
     additionalData?: Partial<Booking>
   ): Promise<void> {
     try {
-      const updates: any = {
+      const updates: Partial<Booking> = {
         status,
         updatedAt: new Date(),
       };

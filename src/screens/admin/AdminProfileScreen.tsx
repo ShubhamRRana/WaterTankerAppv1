@@ -358,7 +358,7 @@ const AdminProfileScreen: React.FC = () => {
   };
 
   const handleSaveProfile = async () => {
-    if (!user) return;
+    if (!user || !isAdminUser(user)) return;
     
     // Validate all fields
     if (!validateForm()) {
@@ -380,7 +380,7 @@ const AdminProfileScreen: React.FC = () => {
         name: state.editForm.name.trim(),
         email: sanitizedEmail,
         ...(sanitizedPhone && { phone: sanitizedPhone }),
-      };
+      } as Partial<User>;
       
       // Only update password if provided
       if (state.editForm.password) {
@@ -456,7 +456,7 @@ const AdminProfileScreen: React.FC = () => {
             text: 'Discard',
             style: 'destructive',
             onPress: () => {
-              if (user && state.initialForm) {
+              if (user && isAdminUser(user) && state.initialForm) {
                 const resetForm: FormState = {
                   businessName: user.businessName || '',
                   name: user.name || '',
@@ -474,7 +474,7 @@ const AdminProfileScreen: React.FC = () => {
         ]
       );
     } else {
-      if (user && state.initialForm) {
+      if (user && isAdminUser(user) && state.initialForm) {
         const resetForm: FormState = {
           businessName: user.businessName || '',
           name: user.name || '',
@@ -588,12 +588,14 @@ const AdminProfileScreen: React.FC = () => {
           </View>
         </View>
 
-        <ProfileHeader
-          user={user}
-          imageError={state.imageError}
-          imageLoading={state.imageLoading}
-          onRetryImage={handleRetryImage}
-        />
+        {isAdminUser(user) && (
+          <ProfileHeader
+            user={user}
+            imageError={state.imageError}
+            imageLoading={state.imageLoading}
+            onRetryImage={handleRetryImage}
+          />
+        )}
         {!state.isEditing && (
           <View style={styles.editButtonContainer}>
             <Button 

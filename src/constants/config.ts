@@ -120,11 +120,11 @@ export const VALIDATION_CONFIG = {
   },
   password: {
     minLength: 6,
-    maxLength: 50,
+    maxLength: 128,
   },
   name: {
-    minLength: 3,
-    maxLength: 50,
+    minLength: 2,
+    maxLength: 100,
     pattern: /^[a-zA-Z\s\-]+$/,
   },
   email: {

@@ -59,7 +59,7 @@ const MenuDrawer = <T extends string>({
                         activeOpacity={0.7}
                       >
                         <Ionicons
-                          name={isActive ? item.icon.replace('-outline', '') : item.icon}
+                          name={isActive ? (item.icon.replace('-outline', '') as keyof typeof Ionicons.glyphMap) : item.icon}
                           size={24}
                           color={isActive ? UI_CONFIG.colors.primary : UI_CONFIG.colors.text}
                         />

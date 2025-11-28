@@ -72,7 +72,8 @@ export class ValidationUtils {
     }
     
     // Validate domain (after @)
-    if (!domain || domain.length === 0 || domain.length > 255) {
+    // RFC 5321 allows up to 255 characters, but we use 254 as the limit to be more conservative
+    if (!domain || domain.length === 0 || domain.length >= 254) {
       return { isValid: false, error: 'Email address is invalid' };
     }
     
@@ -84,6 +85,14 @@ export class ValidationUtils {
     // Check domain doesn't start or end with dot or hyphen
     if (domain.startsWith('.') || domain.endsWith('.') || domain.startsWith('-') || domain.endsWith('-')) {
       return { isValid: false, error: 'Please enter a valid email address' };
+    }
+    
+    // Check each label in domain doesn't start or end with hyphen
+    const labels = domain.split('.');
+    for (const label of labels) {
+      if (label.startsWith('-') || label.endsWith('-')) {
+        return { isValid: false, error: 'Please enter a valid email address' };
+      }
     }
     
     return { isValid: true };
@@ -246,9 +255,6 @@ export class ValidationUtils {
 
   // Date validation (for Date objects)
   static validateDate(date: Date): { isValid: boolean; error?: string } {
-    const now = new Date();
-    const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    
     if (!date) {
       return { isValid: false, error: 'Date is required' };
     }
@@ -257,13 +263,24 @@ export class ValidationUtils {
       return { isValid: false, error: 'Invalid date' };
     }
     
-    if (date < tomorrow) {
+    // Normalize dates to midnight for date-only comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const inputDate = new Date(date);
+    inputDate.setHours(0, 0, 0, 0);
+    
+    if (inputDate < tomorrow) {
       return { isValid: false, error: 'Date must be at least tomorrow' };
     }
     
     // Check if date is not more than 30 days in future
-    const maxDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    if (date > maxDate) {
+    const maxDate = new Date(today);
+    maxDate.setDate(maxDate.getDate() + 30);
+    if (inputDate > maxDate) {
       return { isValid: false, error: 'Date cannot be more than 30 days in future' };
     }
     
@@ -297,6 +314,12 @@ export class ValidationUtils {
       // Check if the date components are valid numbers
       if (isNaN(day) || isNaN(month) || isNaN(year)) {
         return { isValid: false, error: 'Date must contain only numbers' };
+      }
+
+      // Detect if format is YYYY-MM-DD instead of DD-MM-YYYY
+      // If first part is 4 digits and > 31, or if day > 31, it's likely YYYY-MM-DD format
+      if ((dayStr.length === 4 && day > 31) || day > 31) {
+        return { isValid: false, error: 'Invalid date format. Use DD-MM-YYYY' };
       }
 
       // Create date object (month is 0-indexed in JavaScript Date)
@@ -380,8 +403,8 @@ export class ValidationUtils {
         : { isValid: true };
     }
 
-    if (timeString.length < 5) {
-      return { isValid: false, error: 'Please enter a complete time (HH:MM)' };
+    if (timeString.length < 4) {
+      return { isValid: false, error: 'Please enter a complete time (H:MM or HH:MM)' };
     }
 
     try {
@@ -544,16 +567,19 @@ export class ValidationUtils {
   // Form validation helper
   static validateForm<T>(
     data: T,
-    validators: { [K in keyof T]: (value: T[K]) => { isValid: boolean; error?: string } }
+    validators: Partial<{ [K in keyof T]: (value: T[K]) => { isValid: boolean; error?: string } }>
   ): { isValid: boolean; errors: { [K in keyof T]?: string } } {
     const errors: { [K in keyof T]?: string } = {};
     let isValid = true;
     
     for (const key in validators) {
-      const result = validators[key](data[key]);
-      if (!result.isValid) {
-        errors[key] = result.error;
-        isValid = false;
+      const validator = validators[key];
+      if (validator) {
+        const result = validator(data[key]);
+        if (!result.isValid) {
+          errors[key] = result.error;
+          isValid = false;
+        }
       }
     }
     

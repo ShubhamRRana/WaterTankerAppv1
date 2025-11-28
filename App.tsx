@@ -45,6 +45,22 @@ const App: React.FC = () => {
     initializeAuth();
   }, [initializeAuth]);
 
+  // Helper function to determine initial route based on user
+  const getInitialRouteName = (user: User | null): keyof RootStackParamList => {
+    if (!user) return 'Auth';
+    
+    switch (user.role) {
+      case 'customer':
+        return 'Customer';
+      case 'driver':
+        return 'Driver';
+      case 'admin':
+        return 'Admin';
+      default:
+        return 'Auth';
+    }
+  };
+
   // Navigate when user state changes
   useEffect(() => {
     if (navigationRef.current && navigationRef.current.isReady()) {
@@ -65,21 +81,6 @@ const App: React.FC = () => {
   if (!fontsLoaded) {
     return null; // or a loading screen
   }
-
-  const getInitialRouteName = (user: User | null): keyof RootStackParamList => {
-    if (!user) return 'Auth';
-    
-    switch (user.role) {
-      case 'customer':
-        return 'Customer';
-      case 'driver':
-        return 'Driver';
-      case 'admin':
-        return 'Admin';
-      default:
-        return 'Auth';
-    }
-  };
 
   // Loading component for lazy-loaded navigators
   const NavigatorLoadingFallback = () => (

@@ -9,11 +9,11 @@ import { Ionicons } from '@expo/vector-icons';
 import Card from '../common/Card';
 import LoadingSpinner from '../common/LoadingSpinner';
 import { Typography } from '../common';
-import { User } from '../../types';
+import { AdminUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 
 interface ProfileHeaderProps {
-  user: User;
+  user: AdminUser;
   imageError: boolean;
   imageLoading: boolean;
   onRetryImage: () => void;

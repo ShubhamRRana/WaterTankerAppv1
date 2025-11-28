@@ -17,7 +17,7 @@ export interface ErrorLog {
   message: string;
   error: Error | unknown;
   severity: ErrorSeverity;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
   timestamp: Date;
   stack?: string;
   componentStack?: string;
@@ -34,7 +34,7 @@ class ErrorLogger {
     message: string,
     error: Error | unknown,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
-    context?: Record<string, any>
+    context?: Record<string, unknown>
   ): void {
     const errorLog: ErrorLog = {
       message,
