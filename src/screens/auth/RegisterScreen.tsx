@@ -169,17 +169,10 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     const limited = sanitized.slice(0, 10);
     setPhone(limited);
     
-    if (limited) {
-      const validation = ValidationUtils.validatePhone(limited);
-      if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, phone: validation.error }));
-      } else {
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.phone;
-          return newErrors;
-        });
-      }
+    // Always validate phone as required
+    const validation = ValidationUtils.validatePhone(limited);
+    if (!validation.isValid) {
+      setErrors(prev => ({ ...prev, phone: validation.error }));
     } else {
       setErrors(prev => {
         const newErrors = { ...prev };

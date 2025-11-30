@@ -28,11 +28,11 @@ export interface IUserDataAccess {
   getCurrentUser(): Promise<User | null>;
   saveUser(user: User): Promise<void>;
   removeUser(): Promise<void>;
-  getUserById(uid: string): Promise<User | null>;
+  getUserById(id: string): Promise<User | null>;
   getUsers(): Promise<User[]>;
   saveUserToCollection(user: User): Promise<void>;
-  updateUserProfile(uid: string, updates: Partial<User>): Promise<void>;
-  subscribeToUserUpdates(uid: string, callback: SubscriptionCallback<User>): Unsubscribe;
+  updateUserProfile(id: string, updates: Partial<User>): Promise<void>;
+  subscribeToUserUpdates(id: string, callback: SubscriptionCallback<User>): Unsubscribe;
   subscribeToAllUsersUpdates(callback: CollectionSubscriptionCallback<User>): Unsubscribe;
 }
 

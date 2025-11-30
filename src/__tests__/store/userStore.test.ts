@@ -11,7 +11,7 @@ jest.mock('../../services/user.service');
 
 describe('useUserStore', () => {
   const mockUser: User = {
-    uid: 'user-1',
+    id: 'user-1',
     email: 'test@example.com',
     password: 'hashed',
     name: 'Test User',
@@ -20,7 +20,7 @@ describe('useUserStore', () => {
   };
 
   const mockDriver: User = {
-    uid: 'driver-1',
+    id: 'driver-1',
     email: 'driver@example.com',
     password: 'hashed',
     name: 'Test Driver',
@@ -184,7 +184,7 @@ describe('useUserStore', () => {
 
     it('should not clear selectedUser if it is different user', async () => {
       const otherUser: User = {
-        uid: 'user-2',
+        id: 'user-2',
         email: 'other@example.com',
         password: 'hashed',
         name: 'Other User',

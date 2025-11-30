@@ -142,7 +142,7 @@ describe('AuthService', () => {
       // Create existing user
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'existing-user',
+        id: 'existing-user',
         createdAt: new Date(),
       } as User);
 
@@ -161,7 +161,7 @@ describe('AuthService', () => {
       // Create existing customer
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
 
@@ -249,7 +249,7 @@ describe('AuthService', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
     });
@@ -307,12 +307,12 @@ describe('AuthService', () => {
       // Create multiple accounts with same email
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
-        uid: 'driver-1',
+        id: 'driver-1',
         email: 'customer@test.com',
         password: 'password123',
         createdAt: new Date(),
@@ -331,7 +331,7 @@ describe('AuthService', () => {
       // Create driver not created by admin
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
-        uid: 'driver-1',
+        id: 'driver-1',
         createdByAdmin: false,
         createdAt: new Date(),
       } as DriverUser);
@@ -364,12 +364,12 @@ describe('AuthService', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
-        uid: 'driver-1',
+        id: 'driver-1',
         email: 'customer@test.com',
         password: 'password123',
         createdAt: new Date(),
@@ -394,7 +394,7 @@ describe('AuthService', () => {
     it('should reject login for non-admin-created driver', async () => {
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
-        uid: 'driver-2',
+        id: 'driver-2',
         email: 'driver2@test.com',
         createdByAdmin: false,
         createdAt: new Date(),
@@ -420,7 +420,7 @@ describe('AuthService', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUser({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
     });
@@ -451,7 +451,7 @@ describe('AuthService', () => {
     beforeEach(async () => {
       const userData = {
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User;
       await LocalStorageService.saveUser(userData);
@@ -501,7 +501,7 @@ describe('AuthService', () => {
     beforeEach(async () => {
       const user = await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
       userId = 'customer-1';
@@ -521,7 +521,7 @@ describe('AuthService', () => {
     it('should update current session when updating logged-in user', async () => {
       await LocalStorageService.saveUser({
         ...mockCustomerUser,
-        uid: userId,
+        id: userId,
         createdAt: new Date(),
       } as User);
 
@@ -535,7 +535,7 @@ describe('AuthService', () => {
 
     it('should not allow updating uid', async () => {
       await AuthService.updateUserProfile(userId, {
-        uid: 'new-uid',
+        id: 'new-uid',
       } as Partial<User>);
 
       const user = await LocalStorageService.getUserById(userId);

@@ -46,10 +46,10 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
   };
 
   useEffect(() => {
-    if (user?.uid) {
+    if (user?.id) {
       loadBookings();
     }
-  }, [user?.uid]);
+  }, [user?.id]);
 
   const filteredBookings = useMemo(() => {
     let filtered = [...bookings];
@@ -74,9 +74,9 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
   }, [bookings, searchQuery, selectedFilter]);
 
   const loadBookings = async () => {
-    if (!user?.uid) return;
+    if (!user?.id) return;
     try {
-      await fetchCustomerBookings(user.uid);
+      await fetchCustomerBookings(user.id);
     } catch (error) {
           }
   };

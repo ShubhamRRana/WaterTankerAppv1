@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 describe('UserService', () => {
-  const mockCustomerUser: Omit<User, 'uid' | 'createdAt'> = {
+  const mockCustomerUser: Omit<User, 'id' | 'createdAt'> = {
     email: 'customer@test.com',
     password: 'hashed-password',
     name: 'Test Customer',
@@ -26,7 +26,7 @@ describe('UserService', () => {
     role: 'customer',
   };
 
-  const mockDriverUser: Omit<User, 'uid' | 'createdAt'> = {
+  const mockDriverUser: Omit<User, 'id' | 'createdAt'> = {
     email: 'driver@test.com',
     password: 'hashed-password',
     name: 'Test Driver',
@@ -36,7 +36,7 @@ describe('UserService', () => {
     vehicleNumber: 'ABC123',
   };
 
-  const mockAdminUser: Omit<User, 'uid' | 'createdAt'> = {
+  const mockAdminUser: Omit<User, 'id' | 'createdAt'> = {
     email: 'admin@test.com',
     password: 'hashed-password',
     name: 'Test Admin',
@@ -48,12 +48,12 @@ describe('UserService', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'user-1',
+        id: 'user-1',
         createdAt: new Date(),
       } as User);
     });
 
-    it('should return uid when user exists', async () => {
+    it('should return id when user exists', async () => {
       const id = await UserService.getUsersTableIdByAuthId('user-1');
       
       expect(id).toBe('user-1');
@@ -78,12 +78,12 @@ describe('UserService', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'user-1',
+        id: 'user-1',
         createdAt: new Date(),
       } as User);
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
-        uid: 'user-2',
+        id: 'user-2',
         createdAt: new Date(),
       } as User);
     });
@@ -107,18 +107,18 @@ describe('UserService', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-2',
+        id: 'customer-2',
         email: 'customer2@test.com',
         createdAt: new Date(),
       } as User);
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
-        uid: 'driver-1',
+        id: 'driver-1',
         createdAt: new Date(),
       } as User);
     });
@@ -156,12 +156,12 @@ describe('UserService', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'user-1',
+        id: 'user-1',
         createdAt: new Date(),
       } as User);
     });
 
-    it('should return user by uid', async () => {
+    it('should return user by id', async () => {
       const user = await UserService.getUserById('user-1');
       
       expect(user).toBeTruthy();
@@ -229,7 +229,7 @@ describe('UserService', () => {
     });
 
     it('should not allow updating uid', async () => {
-      const updates = { uid: 'new-uid' } as Partial<User>;
+      const updates = { id: 'new-uid' } as Partial<User>;
       await UserService.updateUser(userId, updates);
       
       const user = await LocalStorageService.getUserById(userId);

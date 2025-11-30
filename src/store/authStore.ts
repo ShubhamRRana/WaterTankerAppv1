@@ -14,7 +14,7 @@ interface AuthState {
     password: string,
     name: string,
     role: UserRole,
-    phone?: string
+    phone: string
   ) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
@@ -104,11 +104,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     password: string,
     name: string,
     role: UserRole,
-    phone?: string
+    phone: string
   ) => {
     set({ isLoading: true });
     try {
-      const result = await AuthService.register(email, password, name, role, phone ? { phone } : undefined);
+      const result = await AuthService.register(email, password, name, role, { phone });
       if (result.success && result.user) {
         set({
           user: result.user,
@@ -146,7 +146,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      await AuthService.updateUserProfile(user.uid, updates);
+      await AuthService.updateUserProfile(user.id, updates);
       const updatedUser = { ...user, ...updates };
       set({
         user: updatedUser,

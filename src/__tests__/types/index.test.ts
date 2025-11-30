@@ -18,7 +18,7 @@ describe('Type Guards', () => {
   describe('isCustomerUser', () => {
     it('should return true for customer user', () => {
       const customer: CustomerUser = {
-        uid: '1',
+        id: '1',
         email: 'customer@test.com',
         password: 'hashed',
         name: 'Test Customer',
@@ -30,7 +30,7 @@ describe('Type Guards', () => {
 
     it('should return false for driver user', () => {
       const driver: DriverUser = {
-        uid: '2',
+        id: '2',
         email: 'driver@test.com',
         password: 'hashed',
         name: 'Test Driver',
@@ -42,7 +42,7 @@ describe('Type Guards', () => {
 
     it('should return false for admin user', () => {
       const admin: AdminUser = {
-        uid: '3',
+        id: '3',
         email: 'admin@test.com',
         password: 'hashed',
         name: 'Test Admin',
@@ -54,7 +54,7 @@ describe('Type Guards', () => {
 
     it('should narrow type correctly in TypeScript', () => {
       const user: User = {
-        uid: '1',
+        id: '1',
         email: 'customer@test.com',
         password: 'hashed',
         name: 'Test Customer',
@@ -74,7 +74,7 @@ describe('Type Guards', () => {
   describe('isDriverUser', () => {
     it('should return true for driver user', () => {
       const driver: DriverUser = {
-        uid: '2',
+        id: '2',
         email: 'driver@test.com',
         password: 'hashed',
         name: 'Test Driver',
@@ -86,7 +86,7 @@ describe('Type Guards', () => {
 
     it('should return false for customer user', () => {
       const customer: CustomerUser = {
-        uid: '1',
+        id: '1',
         email: 'customer@test.com',
         password: 'hashed',
         name: 'Test Customer',
@@ -98,7 +98,7 @@ describe('Type Guards', () => {
 
     it('should return false for admin user', () => {
       const admin: AdminUser = {
-        uid: '3',
+        id: '3',
         email: 'admin@test.com',
         password: 'hashed',
         name: 'Test Admin',
@@ -110,7 +110,7 @@ describe('Type Guards', () => {
 
     it('should narrow type correctly in TypeScript', () => {
       const user: User = {
-        uid: '2',
+        id: '2',
         email: 'driver@test.com',
         password: 'hashed',
         name: 'Test Driver',
@@ -131,7 +131,7 @@ describe('Type Guards', () => {
   describe('isAdminUser', () => {
     it('should return true for admin user', () => {
       const admin: AdminUser = {
-        uid: '3',
+        id: '3',
         email: 'admin@test.com',
         password: 'hashed',
         name: 'Test Admin',
@@ -143,7 +143,7 @@ describe('Type Guards', () => {
 
     it('should return false for customer user', () => {
       const customer: CustomerUser = {
-        uid: '1',
+        id: '1',
         email: 'customer@test.com',
         password: 'hashed',
         name: 'Test Customer',
@@ -155,7 +155,7 @@ describe('Type Guards', () => {
 
     it('should return false for driver user', () => {
       const driver: DriverUser = {
-        uid: '2',
+        id: '2',
         email: 'driver@test.com',
         password: 'hashed',
         name: 'Test Driver',
@@ -167,7 +167,7 @@ describe('Type Guards', () => {
 
     it('should narrow type correctly in TypeScript', () => {
       const user: User = {
-        uid: '3',
+        id: '3',
         email: 'admin@test.com',
         password: 'hashed',
         name: 'Test Admin',
@@ -187,7 +187,7 @@ describe('Type Guards', () => {
   describe('Type guard combinations', () => {
     it('should correctly identify all user types', () => {
       const customer: User = {
-        uid: '1',
+        id: '1',
         email: 'customer@test.com',
         password: 'hashed',
         name: 'Test Customer',
@@ -196,7 +196,7 @@ describe('Type Guards', () => {
       };
 
       const driver: User = {
-        uid: '2',
+        id: '2',
         email: 'driver@test.com',
         password: 'hashed',
         name: 'Test Driver',
@@ -205,7 +205,7 @@ describe('Type Guards', () => {
       };
 
       const admin: User = {
-        uid: '3',
+        id: '3',
         email: 'admin@test.com',
         password: 'hashed',
         name: 'Test Admin',
@@ -239,7 +239,7 @@ describe('Type Guards', () => {
   describe('User type union', () => {
     it('should accept customer user', () => {
       const user: User = {
-        uid: '1',
+        id: '1',
         email: 'customer@test.com',
         password: 'hashed',
         name: 'Test Customer',
@@ -251,7 +251,7 @@ describe('Type Guards', () => {
 
     it('should accept driver user', () => {
       const user: User = {
-        uid: '2',
+        id: '2',
         email: 'driver@test.com',
         password: 'hashed',
         name: 'Test Driver',
@@ -263,7 +263,7 @@ describe('Type Guards', () => {
 
     it('should accept admin user', () => {
       const user: User = {
-        uid: '3',
+        id: '3',
         email: 'admin@test.com',
         password: 'hashed',
         name: 'Test Admin',
@@ -276,7 +276,7 @@ describe('Type Guards', () => {
     it('should have common base properties for all user types', () => {
       const users: User[] = [
         {
-          uid: '1',
+          id: '1',
           email: 'customer@test.com',
           password: 'hashed',
           name: 'Test Customer',
@@ -284,7 +284,7 @@ describe('Type Guards', () => {
           createdAt: new Date(),
         },
         {
-          uid: '2',
+          id: '2',
           email: 'driver@test.com',
           password: 'hashed',
           name: 'Test Driver',
@@ -292,7 +292,7 @@ describe('Type Guards', () => {
           createdAt: new Date(),
         },
         {
-          uid: '3',
+          id: '3',
           email: 'admin@test.com',
           password: 'hashed',
           name: 'Test Admin',
@@ -302,13 +302,13 @@ describe('Type Guards', () => {
       ];
 
       users.forEach(user => {
-        expect(user).toHaveProperty('uid');
+        expect(user).toHaveProperty('id');
         expect(user).toHaveProperty('email');
         expect(user).toHaveProperty('password');
         expect(user).toHaveProperty('name');
         expect(user).toHaveProperty('role');
         expect(user).toHaveProperty('createdAt');
-        expect(typeof user.uid).toBe('string');
+        expect(typeof user.id).toBe('string');
         expect(typeof user.email).toBe('string');
         expect(typeof user.name).toBe('string');
         expect(['customer', 'driver', 'admin']).toContain(user.role);

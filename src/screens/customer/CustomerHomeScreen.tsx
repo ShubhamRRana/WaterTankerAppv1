@@ -47,16 +47,16 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
   const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
-    if (user?.uid) {
+    if (user?.id) {
       loadCustomerData();
     }
-  }, [user?.uid]);
+  }, [user?.id]);
 
   const loadCustomerData = async () => {
-    if (!user?.uid) return;
+    if (!user?.id) return;
     
     try {
-      await fetchCustomerBookings(user.uid);
+      await fetchCustomerBookings(user.id);
     } catch (error) {
           }
   };

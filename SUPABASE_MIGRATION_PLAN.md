@@ -42,9 +42,11 @@ npm install @supabase/supabase-js
 
 ## Database Schema Design
 
+**Multi-Role Support**: This schema supports users who can have multiple roles (e.g., a user can be both a customer and an admin). The design uses a base `users` table for common user data and separate tables for role-specific data, connected via a `user_roles` junction table.
+
 ### Table 1: `users`
 
-**Purpose**: Store all user accounts (customers, drivers, admins) with role-specific attributes.
+**Purpose**: Store base user information (one row per person, regardless of roles).
 
 | Column Name | Type | Constraints | Description |
 |------------|------|-------------|-------------|
@@ -54,42 +56,114 @@ npm install @supabase/supabase-js
 | `name` | `text` | NOT NULL | User's full name |
 | `phone` | `text` | NULLABLE | Contact phone number (optional) |
 | `profile_image_url` | `text` | NULLABLE | URL to profile image |
-| `role` | `text` | NOT NULL, CHECK (`role` IN ('customer', 'driver', 'admin')) | User role type |
 | `created_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Account creation timestamp |
 | `updated_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Last update timestamp |
 
-**Role-Specific Columns** (nullable, populated based on role):
-
-| Column Name | Type | Constraints | Description |
-|------------|------|-------------|-------------|
-| `saved_addresses` | `jsonb` | NULLABLE | Array of saved addresses (for customers) |
-| `vehicle_number` | `text` | NULLABLE | Vehicle registration number (for drivers) |
-| `license_number` | `text` | NULLABLE | Driver license number (for drivers) |
-| `license_expiry` | `date` | NULLABLE | License expiration date (for drivers) |
-| `driver_license_image_url` | `text` | NULLABLE | URL to license image (for drivers) |
-| `vehicle_registration_image_url` | `text` | NULLABLE | URL to registration image (for drivers) |
-| `is_approved` | `boolean` | NULLABLE, DEFAULT `false` | Driver approval status (for drivers) |
-| `is_available` | `boolean` | NULLABLE, DEFAULT `false` | Driver availability status (for drivers) |
-| `total_earnings` | `numeric(10,2)` | NULLABLE, DEFAULT `0` | Total earnings in INR (for drivers) |
-| `completed_orders` | `integer` | NULLABLE, DEFAULT `0` | Number of completed orders (for drivers) |
-| `created_by_admin` | `boolean` | NULLABLE, DEFAULT `false` | Whether driver was created by admin |
-| `emergency_contact_name` | `text` | NULLABLE | Emergency contact name (for drivers) |
-| `emergency_contact_phone` | `text` | NULLABLE | Emergency contact phone (for drivers) |
-| `business_name` | `text` | NULLABLE | Business/agency name (for admins) |
-
 **Indexes**:
 - `idx_users_email` on `email` (for fast lookups)
-- `idx_users_role` on `role` (for filtering by role)
-- `idx_users_driver_approved` on `(role, is_approved)` WHERE `role = 'driver'` (for finding available drivers)
 
 **Notes**:
-- `saved_addresses` will store JSON array: `[{"id": "...", "street": "...", "city": "...", ...}]`
+- One row per person (no role duplication)
 - All dates stored as `timestamptz` for timezone support
 - `password_hash` is temporary - will migrate to Supabase Auth later
+- Roles are managed via `user_roles` junction table
 
 ---
 
-### Table 2: `bookings`
+### Table 2: `user_roles`
+
+**Purpose**: Junction table to support multi-role users (many-to-many relationship).
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `user_id` | `uuid` | PRIMARY KEY (part 1), FOREIGN KEY → `users(id)` ON DELETE CASCADE | Reference to user |
+| `role` | `text` | PRIMARY KEY (part 2), CHECK (`role` IN ('customer', 'driver', 'admin')) | User role type |
+| `created_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Role assignment timestamp |
+
+**Indexes**:
+- `idx_user_roles_user_id` on `user_id` (for user role lookups)
+- `idx_user_roles_role` on `role` (for role-based queries)
+
+**Notes**:
+- Composite primary key ensures one role per user (no duplicates)
+- A user can have multiple rows (one per role)
+- Example: User with ID `abc-123` can have rows: `(abc-123, 'customer')` and `(abc-123, 'admin')`
+
+---
+
+### Table 3: `customers`
+
+**Purpose**: Store customer-specific data.
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `user_id` | `uuid` | PRIMARY KEY, FOREIGN KEY → `users(id)` ON DELETE CASCADE | Reference to user |
+| `saved_addresses` | `jsonb` | NULLABLE | Array of saved addresses |
+| `created_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Customer profile creation timestamp |
+| `updated_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Last update timestamp |
+
+**Indexes**:
+- `idx_customers_user_id` on `user_id` (for fast lookups)
+
+**Notes**:
+- `saved_addresses` stores JSON array: `[{"id": "...", "street": "...", "city": "...", ...}]`
+- Only created when user has 'customer' role in `user_roles`
+
+---
+
+### Table 4: `drivers`
+
+**Purpose**: Store driver-specific data.
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `user_id` | `uuid` | PRIMARY KEY, FOREIGN KEY → `users(id)` ON DELETE CASCADE | Reference to user |
+| `vehicle_number` | `text` | NOT NULL | Vehicle registration number |
+| `license_number` | `text` | NOT NULL | Driver license number |
+| `license_expiry` | `date` | NOT NULL | License expiration date |
+| `driver_license_image_url` | `text` | NOT NULL | URL to license image |
+| `vehicle_registration_image_url` | `text` | NOT NULL | URL to registration image |
+| `is_approved` | `boolean` | NOT NULL, DEFAULT `false` | Driver approval status |
+| `is_available` | `boolean` | NOT NULL, DEFAULT `false` | Driver availability status |
+| `total_earnings` | `numeric(10,2)` | NOT NULL, DEFAULT `0` | Total earnings in INR |
+| `completed_orders` | `integer` | NOT NULL, DEFAULT `0` | Number of completed orders |
+| `created_by_admin` | `boolean` | NOT NULL, DEFAULT `false` | Whether driver was created by admin |
+| `emergency_contact_name` | `text` | NULLABLE | Emergency contact name |
+| `emergency_contact_phone` | `text` | NULLABLE | Emergency contact phone |
+| `created_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Driver profile creation timestamp |
+| `updated_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Last update timestamp |
+
+**Indexes**:
+- `idx_drivers_user_id` on `user_id` (for fast lookups)
+- `idx_drivers_approved_available` on `(is_approved, is_available)` WHERE `is_approved = true AND is_available = true` (for finding available drivers)
+- `idx_drivers_vehicle_number` on `vehicle_number` (for unique lookups)
+
+**Notes**:
+- Only created when user has 'driver' role in `user_roles`
+- Driver-specific fields are NOT NULL (better data integrity than single-table approach)
+
+---
+
+### Table 5: `admins`
+
+**Purpose**: Store admin-specific data.
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `user_id` | `uuid` | PRIMARY KEY, FOREIGN KEY → `users(id)` ON DELETE CASCADE | Reference to user |
+| `business_name` | `text` | NULLABLE | Business/agency name |
+| `created_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Admin profile creation timestamp |
+| `updated_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Last update timestamp |
+
+**Indexes**:
+- `idx_admins_user_id` on `user_id` (for fast lookups)
+
+**Notes**:
+- Only created when user has 'admin' role in `user_roles`
+
+---
+
+### Table 6: `bookings`
 
 **Purpose**: Store all water tanker booking orders.
 
@@ -138,7 +212,7 @@ npm install @supabase/supabase-js
 
 ---
 
-### Table 3: `vehicles`
+### Table 7: `vehicles`
 
 **Purpose**: Store vehicle/agency fleet information managed by admins.
 
@@ -166,7 +240,7 @@ npm install @supabase/supabase-js
 
 ---
 
-### Table 4: `tanker_sizes`
+### Table 8: `tanker_sizes`
 
 **Purpose**: Store available tanker sizes and their base pricing (configuration table).
 
@@ -189,7 +263,7 @@ npm install @supabase/supabase-js
 
 ---
 
-### Table 5: `pricing`
+### Table 9: `pricing`
 
 **Purpose**: Store distance-based pricing configuration (singleton table).
 
@@ -211,7 +285,7 @@ npm install @supabase/supabase-js
 
 ---
 
-### Table 6: `driver_applications`
+### Table 10: `driver_applications`
 
 **Purpose**: Store driver registration/application requests.
 
@@ -241,7 +315,7 @@ npm install @supabase/supabase-js
 
 ---
 
-### Table 7: `notifications`
+### Table 11: `notifications`
 
 **Purpose**: Store in-app notifications for users.
 
@@ -364,15 +438,17 @@ npm install @supabase/supabase-js
 
 1. **Enable Realtime**
    - Go to Database → Replication
-   - Enable replication for: `bookings`, `notifications`, `users`
+   - Enable replication for: `bookings`, `notifications`, `users`, `user_roles`, `customers`, `drivers`, `admins`
 
 2. **Update SubscriptionManager**
    - File: `src/utils/subscriptionManager.ts`
    - Replace local subscriptions with Supabase Realtime channels
+   - Subscribe to `user_roles` changes for role updates
 
 3. **Test Real-time Updates**
    - Verify bookings update in real-time
    - Verify notifications appear instantly
+   - Verify role changes propagate correctly
 
 ---
 
@@ -442,7 +518,7 @@ npm install @supabase/supabase-js
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================================
--- Table: users
+-- Table: users (Base user table - one row per person)
 -- ============================================================================
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -451,35 +527,79 @@ CREATE TABLE users (
   name TEXT NOT NULL,
   phone TEXT,
   profile_image_url TEXT,
-  role TEXT NOT NULL CHECK (role IN ('customer', 'driver', 'admin')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  
-  -- Customer-specific fields
-  saved_addresses JSONB,
-  
-  -- Driver-specific fields
-  vehicle_number TEXT,
-  license_number TEXT,
-  license_expiry DATE,
-  driver_license_image_url TEXT,
-  vehicle_registration_image_url TEXT,
-  is_approved BOOLEAN DEFAULT false,
-  is_available BOOLEAN DEFAULT false,
-  total_earnings NUMERIC(10,2) DEFAULT 0,
-  completed_orders INTEGER DEFAULT 0,
-  created_by_admin BOOLEAN DEFAULT false,
-  emergency_contact_name TEXT,
-  emergency_contact_phone TEXT,
-  
-  -- Admin-specific fields
-  business_name TEXT
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Indexes for users
 CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_users_driver_approved ON users(role, is_approved) WHERE role = 'driver';
+
+-- ============================================================================
+-- Table: user_roles (Junction table for multi-role support)
+-- ============================================================================
+CREATE TABLE user_roles (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL CHECK (role IN ('customer', 'driver', 'admin')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, role)
+);
+
+-- Indexes for user_roles
+CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
+CREATE INDEX idx_user_roles_role ON user_roles(role);
+
+-- ============================================================================
+-- Table: customers (Customer-specific data)
+-- ============================================================================
+CREATE TABLE customers (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  saved_addresses JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Indexes for customers
+CREATE INDEX idx_customers_user_id ON customers(user_id);
+
+-- ============================================================================
+-- Table: drivers (Driver-specific data)
+-- ============================================================================
+CREATE TABLE drivers (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  vehicle_number TEXT NOT NULL,
+  license_number TEXT NOT NULL,
+  license_expiry DATE NOT NULL,
+  driver_license_image_url TEXT NOT NULL,
+  vehicle_registration_image_url TEXT NOT NULL,
+  is_approved BOOLEAN NOT NULL DEFAULT false,
+  is_available BOOLEAN NOT NULL DEFAULT false,
+  total_earnings NUMERIC(10,2) NOT NULL DEFAULT 0,
+  completed_orders INTEGER NOT NULL DEFAULT 0,
+  created_by_admin BOOLEAN NOT NULL DEFAULT false,
+  emergency_contact_name TEXT,
+  emergency_contact_phone TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Indexes for drivers
+CREATE INDEX idx_drivers_user_id ON drivers(user_id);
+CREATE INDEX idx_drivers_approved_available ON drivers(is_approved, is_available) 
+  WHERE is_approved = true AND is_available = true;
+CREATE INDEX idx_drivers_vehicle_number ON drivers(vehicle_number);
+
+-- ============================================================================
+-- Table: admins (Admin-specific data)
+-- ============================================================================
+CREATE TABLE admins (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  business_name TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Indexes for admins
+CREATE INDEX idx_admins_user_id ON admins(user_id);
 
 -- ============================================================================
 -- Table: bookings
@@ -633,6 +753,21 @@ CREATE TRIGGER update_users_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_customers_updated_at
+  BEFORE UPDATE ON customers
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_drivers_updated_at
+  BEFORE UPDATE ON drivers
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_admins_updated_at
+  BEFORE UPDATE ON admins
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TRIGGER update_bookings_updated_at
   BEFORE UPDATE ON bookings
   FOR EACH ROW
@@ -674,6 +809,10 @@ INSERT INTO tanker_sizes (size, base_price, is_active, display_name) VALUES
 
 -- Enable RLS on all tables
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE drivers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vehicles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tanker_sizes ENABLE ROW LEVEL SECURITY;
@@ -694,11 +833,94 @@ CREATE POLICY "Admins can view all users"
   ON users FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM users
-      WHERE id::text = auth.uid()::text
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
       AND role = 'admin'
     )
   );
+
+-- User roles policies
+CREATE POLICY "Users can view their own roles"
+  ON user_roles FOR SELECT
+  USING (user_id::text = auth.uid()::text);
+
+CREATE POLICY "Admins can view all user roles"
+  ON user_roles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'admin'
+    )
+  );
+
+-- Customers policies
+CREATE POLICY "Customers can view their own customer data"
+  ON customers FOR SELECT
+  USING (
+    user_id::text = auth.uid()::text
+    OR EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Customers can update their own customer data"
+  ON customers FOR UPDATE
+  USING (user_id::text = auth.uid()::text);
+
+-- Drivers policies
+CREATE POLICY "Drivers can view their own driver data"
+  ON drivers FOR SELECT
+  USING (
+    user_id::text = auth.uid()::text
+    OR EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Drivers can update their own driver data"
+  ON drivers FOR UPDATE
+  USING (user_id::text = auth.uid()::text);
+
+CREATE POLICY "Admins can view all driver data"
+  ON drivers FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Admins can update driver data"
+  ON drivers FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'admin'
+    )
+  );
+
+-- Admins policies
+CREATE POLICY "Admins can view their own admin data"
+  ON admins FOR SELECT
+  USING (
+    user_id::text = auth.uid()::text
+    OR EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Admins can update their own admin data"
+  ON admins FOR UPDATE
+  USING (user_id::text = auth.uid()::text);
 
 -- Bookings policies
 CREATE POLICY "Customers can view their own bookings"
@@ -706,15 +928,22 @@ CREATE POLICY "Customers can view their own bookings"
   USING (
     customer_id::text = auth.uid()::text
     OR EXISTS (
-      SELECT 1 FROM users
-      WHERE id::text = auth.uid()::text
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
       AND role IN ('admin', 'driver')
     )
   );
 
 CREATE POLICY "Customers can create bookings"
   ON bookings FOR INSERT
-  WITH CHECK (customer_id::text = auth.uid()::text);
+  WITH CHECK (
+    customer_id::text = auth.uid()::text
+    AND EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'customer'
+    )
+  );
 
 CREATE POLICY "Customers can update their own bookings"
   ON bookings FOR UPDATE
@@ -725,8 +954,8 @@ CREATE POLICY "Drivers can update assigned bookings"
   USING (
     driver_id::text = auth.uid()::text
     OR EXISTS (
-      SELECT 1 FROM users
-      WHERE id::text = auth.uid()::text
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
       AND role = 'admin'
     )
   );
@@ -737,8 +966,8 @@ CREATE POLICY "Agencies can manage their own vehicles"
   USING (
     agency_id::text = auth.uid()::text
     OR EXISTS (
-      SELECT 1 FROM users
-      WHERE id::text = auth.uid()::text
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
       AND role = 'admin'
     )
   );
@@ -752,8 +981,8 @@ CREATE POLICY "Admins can manage tanker sizes"
   ON tanker_sizes FOR ALL
   USING (
     EXISTS (
-      SELECT 1 FROM users
-      WHERE id::text = auth.uid()::text
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
       AND role = 'admin'
     )
   );
@@ -767,8 +996,8 @@ CREATE POLICY "Admins can update pricing"
   ON pricing FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM users
-      WHERE id::text = auth.uid()::text
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
       AND role = 'admin'
     )
   );
@@ -782,8 +1011,8 @@ CREATE POLICY "Admins can view all applications"
   ON driver_applications FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM users
-      WHERE id::text = auth.uid()::text
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
       AND role = 'admin'
     )
   );
@@ -792,8 +1021,8 @@ CREATE POLICY "Admins can update applications"
   ON driver_applications FOR UPDATE
   USING (
     EXISTS (
-      SELECT 1 FROM users
-      WHERE id::text = auth.uid()::text
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
       AND role = 'admin'
     )
   );
@@ -814,12 +1043,97 @@ CREATE POLICY "Users can update their own notifications"
 
 ---
 
+## Query Examples for Multi-Role Schema
+
+### Get User with All Roles
+```sql
+SELECT 
+  u.*,
+  array_agg(ur.role) as roles
+FROM users u
+LEFT JOIN user_roles ur ON u.id = ur.user_id
+WHERE u.email = 'user@example.com'
+GROUP BY u.id;
+```
+
+### Login: Check if User Has Specific Role
+```sql
+SELECT u.*, ur.role
+FROM users u
+JOIN user_roles ur ON u.id = ur.user_id
+WHERE u.email = 'user@example.com' 
+  AND ur.role = 'customer';
+```
+
+### Get Customer Data for User
+```sql
+SELECT u.*, c.saved_addresses
+FROM users u
+JOIN user_roles ur ON u.id = ur.user_id AND ur.role = 'customer'
+JOIN customers c ON u.id = c.user_id
+WHERE u.id = $1;
+```
+
+### Get Driver Data with Availability Status
+```sql
+SELECT u.*, d.*
+FROM users u
+JOIN user_roles ur ON u.id = ur.user_id AND ur.role = 'driver'
+JOIN drivers d ON u.id = d.user_id
+WHERE d.is_approved = true AND d.is_available = true;
+```
+
+### Get All Roles for Current User (for role selection)
+```sql
+SELECT role
+FROM user_roles
+WHERE user_id = $1
+ORDER BY created_at;
+```
+
+### Create Multi-Role User
+```sql
+-- 1. Create base user
+INSERT INTO users (email, password_hash, name, phone)
+VALUES ('user@example.com', 'hashed_password', 'John Doe', '1234567890')
+RETURNING id;
+
+-- 2. Add roles
+INSERT INTO user_roles (user_id, role) VALUES
+  (user_id, 'customer'),
+  (user_id, 'admin');
+
+-- 3. Create role-specific entries
+INSERT INTO customers (user_id, saved_addresses) 
+VALUES (user_id, '[]'::jsonb);
+
+INSERT INTO admins (user_id, business_name) 
+VALUES (user_id, 'My Business');
+```
+
+---
+
 ## Row Level Security (RLS) Policies Summary
 
 ### Users Table
 - Users can view and update their own profile
 - Admins can view all users
-- Drivers can view customer profiles (for bookings)
+
+### User Roles Table
+- Users can view their own roles
+- Admins can view all user roles
+
+### Customers Table
+- Customers can view and update their own customer data
+- Admins can view all customer data
+
+### Drivers Table
+- Drivers can view and update their own driver data
+- Admins can view and update all driver data
+
+### Admins Table
+- Admins can view and update their own admin data
+- Admins can view all admin data
 
 ### Bookings Table
 - Customers can view, create, and update their own bookings
@@ -860,44 +1174,79 @@ Create a migration script (`scripts/migrate-to-supabase.ts`):
 2. Convert Date objects to ISO strings
 3. Handle nested JSON (addresses)
 4. Map old `uid` to new `id` (UUID)
-5. Export to JSON file
+5. Group users by email (for multi-role consolidation)
+6. Export to JSON file
 ```
 
 ### Step 2: Data Transformation
 
-- Convert `uid` (string) → `id` (UUID)
+**Important**: Your current implementation stores separate user records for each role (same email, different `uid`). The new schema consolidates these into one user with multiple roles.
+
+**Transformation Steps**:
+- Group users by email address
+- For each unique email:
+  - Create ONE `users` row with common data (email, name, phone, etc.)
+  - Create multiple `user_roles` rows (one per role)
+  - Create role-specific table entries (`customers`, `drivers`, `admins`) based on roles
+- Convert `uid` (string) → `id` (UUID) and maintain mapping
 - Convert `Date` objects → ISO strings
-- Flatten nested objects where needed
-- Handle role-specific fields
+- Handle nested JSON (addresses in `customers` table)
+- Map old user IDs to new user IDs for foreign keys in `bookings`, `vehicles`, etc.
+
+**Example Transformation**:
+```
+Old (AsyncStorage):
+- User 1: email="john@example.com", role="customer", uid="abc-123"
+- User 2: email="john@example.com", role="admin", uid="def-456"
+
+New (Supabase):
+- users: { id="new-uuid-1", email="john@example.com", name="John", ... }
+- user_roles: 
+  - { user_id="new-uuid-1", role="customer" }
+  - { user_id="new-uuid-1", role="admin" }
+- customers: { user_id="new-uuid-1", saved_addresses=[...] }
+- admins: { user_id="new-uuid-1", business_name="..." }
+```
 
 ### Step 3: Import to Supabase
 
-- Insert users first (to establish foreign keys)
-- Insert bookings (with proper foreign key references)
-- Insert vehicles
-- Insert configuration data (tanker sizes, pricing)
-- Insert notifications
+**Order of Operations**:
+1. Insert users (base table) - one per unique email
+2. Insert user_roles (junction table) - multiple per user if multi-role
+3. Insert customers (role-specific data)
+4. Insert drivers (role-specific data)
+5. Insert admins (role-specific data)
+6. Insert bookings (with updated foreign key references)
+7. Insert vehicles (with updated foreign key references)
+8. Insert configuration data (tanker sizes, pricing)
+9. Insert notifications (with updated user references)
 
 ### Step 4: Verify Data Integrity
 
 - Check foreign key relationships
+- Verify multi-role users have correct entries in `user_roles` and role-specific tables
 - Verify date conversions
 - Test queries match expected results
-- Compare record counts
+- Compare record counts:
+  - Old: N user records (may have duplicates by email)
+  - New: M unique users (M ≤ N), with N role entries in `user_roles`
+- Test login flow with multi-role users
 
 ---
 
 ## Authentication Migration
 
 ### Current State
-- Email + password stored in `users` table
+- Email + password stored in `users` table (separate records per role)
 - Password hashed locally
 - Session stored in AsyncStorage
+- Multi-role users have separate user records (same email, different `uid`)
 
 ### Target State
 - Use Supabase Auth for authentication
-- Email + password managed by Supabase
+- Email + password managed by Supabase (one auth user per email)
 - Session managed by Supabase client
+- Multi-role support via `user_roles` junction table
 
 ### Migration Steps
 
@@ -907,19 +1256,31 @@ Create a migration script (`scripts/migrate-to-supabase.ts`):
    - Configure email templates
 
 2. **Migrate Existing Users**
-   - For each user in local storage:
-     - Create user in Supabase Auth using `auth.admin.createUser()`
-     - Set password using `auth.admin.updateUserById()`
-     - Link to `users` table record
+   - Group users by email (consolidate multi-role users)
+   - For each unique email:
+     - Create ONE user in Supabase Auth using `auth.admin.createUser()`
+     - Set password using `auth.admin.updateUserById()` (use password from any role record)
+     - Create ONE `users` table record
+     - Create `user_roles` entries for each role the user has
+     - Create role-specific table entries (`customers`, `drivers`, `admins`)
 
 3. **Update Auth Service**
    - Replace local auth with Supabase Auth methods:
-     - `signInWithPassword()`
-     - `signUp()`
-     - `signOut()`
-     - `getSession()`
+     - `signInWithPassword()` - authenticates user
+     - Check `user_roles` table to determine available roles
+     - If multiple roles exist, show role selection screen
+     - `loginWithRole()` - selects specific role context
+     - `signUp()` - creates user and role entry
+     - `signOut()` - clears session
+     - `getSession()` - gets current session
 
-4. **Remove Password Hash Column**
+4. **Update Login Flow**
+   - After `signInWithPassword()`, query `user_roles` for user's roles
+   - If multiple roles: show role selection screen
+   - If single role: proceed directly
+   - Store selected role in session/context
+
+5. **Remove Password Hash Column**
    - After migration complete, remove `password_hash` from `users` table
    - Users will authenticate via Supabase Auth only
 
@@ -952,6 +1313,9 @@ Create a migration script (`scripts/migrate-to-supabase.ts`):
 - [ ] Users can sign in
 - [ ] Session management working
 - [ ] Multi-role support working
+- [ ] Role selection screen works for multi-role users
+- [ ] Single-role users login directly without selection
+- [ ] Role switching works correctly
 
 ### Real-time
 - [ ] Realtime enabled on tables
@@ -1049,12 +1413,15 @@ Create a migration script (`scripts/migrate-to-supabase.ts`):
 
 ## Notes
 
+- **Multi-Role Support**: Users can have multiple roles (e.g., customer + admin). This is handled via the `user_roles` junction table and separate role-specific tables (`customers`, `drivers`, `admins`).
+- **Data Consolidation**: During migration, users with the same email but different roles will be consolidated into one `users` row with multiple `user_roles` entries.
 - All timestamps use `TIMESTAMPTZ` for timezone support
 - JSONB columns used for flexible nested data (addresses)
 - Foreign keys ensure data integrity
 - RLS policies provide security at database level
 - Indexes optimize query performance
 - Triggers automate `updated_at` maintenance
+- Role-specific tables only contain relevant columns (no nullable fields for unrelated roles)
 
 ---
 

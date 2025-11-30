@@ -135,7 +135,7 @@ const DriverModal: React.FC<DriverModalProps> = ({
                     title="Approve Driver"
                     onPress={() => {
                       onClose();
-                      onApprove(driver.uid);
+                      onApprove(driver.id);
                     }}
                     style={styles.approveButtonLarge}
                   />
@@ -143,7 +143,7 @@ const DriverModal: React.FC<DriverModalProps> = ({
                     title="Reject Driver"
                     onPress={() => {
                       onClose();
-                      onReject(driver.uid);
+                      onReject(driver.id);
                     }}
                     style={styles.rejectButtonLarge}
                   />

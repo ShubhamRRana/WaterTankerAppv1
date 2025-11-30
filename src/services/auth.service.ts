@@ -133,18 +133,26 @@ export class AuthService {
       // Record rate limit
       rateLimiter.record('register', sanitizedEmail);
 
-      // Generate a unique uid for the user
-      const uid = LocalStorageService.generateId();
+      // Generate a unique id for the user
+      const id = LocalStorageService.generateId();
+
+      // Validate phone is provided (required)
+      if (!sanitizedPhone || !sanitizedPhone.trim()) {
+        return {
+          success: false,
+          error: 'Phone number is required'
+        };
+      }
 
       // Create user object
       const newUser: AppUser = {
-        uid,
+        id,
         email: sanitizedEmail, // Email is now required
         password, // Store password in local storage (in production, this should be hashed)
         name: sanitizedName,
         role,
         createdAt: new Date(),
-        ...(sanitizedPhone && { phone: sanitizedPhone }), // Phone is now optional
+        phone: sanitizedPhone, // Phone is now required
         ...(role === 'customer' && { savedAddresses: [] }),
         ...(role === 'driver' && {
           vehicleNumber: (additionalData as Partial<DriverUser>)?.vehicleNumber,
@@ -170,7 +178,7 @@ export class AuthService {
       await LocalStorageService.saveUserToCollection(newUser);
 
       // Log successful registration
-      securityLogger.logRegistrationAttempt(sanitizedEmail, role, true, undefined, newUser.uid);
+      securityLogger.logRegistrationAttempt(sanitizedEmail, role, true, undefined, newUser.id);
 
       return {
         success: true,
@@ -294,7 +302,7 @@ export class AuthService {
 
         // Record successful login
         rateLimiter.record('login', sanitizedEmail);
-        securityLogger.logAuthAttempt(sanitizedEmail, true, undefined, appUser.uid);
+        securityLogger.logAuthAttempt(sanitizedEmail, true, undefined, appUser.id);
 
         return {
           success: true,
@@ -407,7 +415,7 @@ export class AuthService {
   static async logout(): Promise<void> {
     try {
       const currentUser = await LocalStorageService.getCurrentUser();
-      const userId = currentUser?.uid || 'unknown';
+      const userId = currentUser?.id || 'unknown';
       
       // Remove current user from storage
       await LocalStorageService.removeUser();
@@ -429,7 +437,7 @@ export class AuthService {
    * 
    * Fetches the user profile from local storage based on the current session.
    * 
-   * @param uid - Optional user ID to fetch user by. If not provided, gets from current session.
+   * @param id - Optional user ID to fetch user by. If not provided, gets from current session.
    * @returns Promise resolving to User object if authenticated, null otherwise
    * @throws Never throws - returns null on error
    * 
@@ -443,11 +451,11 @@ export class AuthService {
    * }
    * ```
    */
-  static async getCurrentUserData(uid?: string): Promise<AppUser | null> {
+  static async getCurrentUserData(id?: string): Promise<AppUser | null> {
     try {
-      if (uid) {
-        // Fetch by uid
-        const user = await LocalStorageService.getUserById(uid);
+      if (id) {
+        // Fetch by id
+        const user = await LocalStorageService.getUserById(id);
         return user as AppUser | null;
       } else {
         // Get from current session
@@ -463,9 +471,9 @@ export class AuthService {
   /**
    * Update user profile in local storage.
    * 
-   * Updates user profile data. Note: role and uid cannot be updated via this method.
+   * Updates user profile data. Note: role and id cannot be updated via this method.
    * 
-   * @param uid - User ID to update
+   * @param id - User ID to update
    * @param updates - Partial user object with fields to update
    * @returns Promise that resolves when update is complete
    * @throws Error if user not found or update fails
@@ -478,25 +486,25 @@ export class AuthService {
    * });
    * ```
    */
-  static async updateUserProfile(uid: string, updates: Partial<AppUser>): Promise<void> {
+  static async updateUserProfile(id: string, updates: Partial<AppUser>): Promise<void> {
     try {
       // Get current user
-      const currentUser = await LocalStorageService.getUserById(uid);
+      const currentUser = await LocalStorageService.getUserById(id);
       
       if (!currentUser) {
         throw new Error('User not found');
       }
 
-      // Merge updates (excluding role and uid)
-      const { role, uid: userId, ...allowedUpdates } = updates;
+      // Merge updates (excluding role and id)
+      const { role, id: userId, ...allowedUpdates } = updates;
       const updatedUser = { ...currentUser, ...allowedUpdates };
 
       // Update in collection
-      await LocalStorageService.updateUserProfile(uid, updatedUser);
+      await LocalStorageService.updateUserProfile(id, updatedUser);
       
       // Also update current user if it's the same user
       const currentSessionUser = await LocalStorageService.getCurrentUser();
-      if (currentSessionUser?.uid === uid) {
+      if (currentSessionUser?.id === id) {
         await LocalStorageService.saveUser(updatedUser);
       }
     } catch (error) {

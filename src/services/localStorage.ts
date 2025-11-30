@@ -110,7 +110,7 @@ export class LocalStorageService {
   // User collection management
   static async saveUserToCollection(user: User): Promise<void> {
     const users = await this.getUsers();
-    const existingUserIndex = users.findIndex(u => u.uid === user.uid);
+    const existingUserIndex = users.findIndex(u => u.id === user.id);
     
     if (existingUserIndex >= 0) {
       users[existingUserIndex] = user;
@@ -128,14 +128,14 @@ export class LocalStorageService {
     return users.map(user => deserializeUserDates(user) as unknown as User);
   }
 
-  static async getUserById(uid: string): Promise<User | null> {
+  static async getUserById(id: string): Promise<User | null> {
     const users = await this.getUsers();
-    return users.find(user => user.uid === uid) || null;
+    return users.find(user => user.id === id) || null;
   }
 
-  static async updateUserProfile(uid: string, updates: Partial<User>): Promise<void> {
+  static async updateUserProfile(id: string, updates: Partial<User>): Promise<void> {
     const users = await this.getUsers();
-    const userIndex = users.findIndex(user => user.uid === uid);
+    const userIndex = users.findIndex(user => user.id === id);
     
     if (userIndex >= 0) {
       users[userIndex] = { ...users[userIndex], ...updates } as User;
@@ -213,7 +213,7 @@ export class LocalStorageService {
     // Phone numbers are kept for contact purposes only
     const sampleUsers = [
       {
-        uid: 'admin_001',
+        id: 'admin_001',
         role: 'admin',
         email: 'admin@watertanker.app',
         password: 'admin123', // In production, this should be hashed
@@ -222,7 +222,7 @@ export class LocalStorageService {
         createdAt: new Date(),
       },
       {
-        uid: 'driver_001',
+        id: 'driver_001',
         role: 'driver',
         email: 'driver@watertanker.app',
         password: 'driver123', // In production, this should be hashed
@@ -234,7 +234,7 @@ export class LocalStorageService {
         createdByAdmin: false, // Regular driver - should not be able to login
       },
       {
-        uid: 'driver_admin_001',
+        id: 'driver_admin_001',
         role: 'driver',
         email: 'admin.driver@watertanker.app',
         password: 'driver123', // In production, this should be hashed
@@ -250,7 +250,7 @@ export class LocalStorageService {
         completedOrders: 0,
       },
       {
-        uid: 'customer_001',
+        id: 'customer_001',
         role: 'customer',
         email: 'customer@watertanker.app',
         password: 'customer123', // In production, this should be hashed
@@ -260,7 +260,7 @@ export class LocalStorageService {
       },
       // Multi-role user example - same email with different roles
       {
-        uid: 'multi_customer_001',
+        id: 'multi_customer_001',
         role: 'customer',
         email: 'multirole@watertanker.app',
         password: 'multi123', // In production, this should be hashed
@@ -269,7 +269,7 @@ export class LocalStorageService {
         createdAt: new Date(),
       },
       {
-        uid: 'multi_driver_001',
+        id: 'multi_driver_001',
         role: 'driver',
         email: 'multirole@watertanker.app',
         password: 'multi123', // In production, this should be hashed

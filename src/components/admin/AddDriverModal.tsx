@@ -108,10 +108,10 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 
           <View style={styles.formField}>
             <Input
-              label="Phone Number (Optional)"
+              label="Phone Number *"
               value={formData.phone}
               onChangeText={(text) => onFormChange('phone', text)}
-              placeholder="Enter 10-digit phone number (optional)"
+              placeholder="Enter 10-digit phone number"
               error={formErrors.phone}
               keyboardType="phone-pad"
               maxLength={10}
@@ -241,10 +241,10 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 
             <View style={styles.formField}>
               <Input
-                label="Phone Number (Optional)"
+                label="Phone Number *"
                 value={formData.phone}
                 onChangeText={(text) => onFormChange('phone', text)}
-                placeholder="Enter 10-digit phone number (optional)"
+                placeholder="Enter 10-digit phone number"
                 error={formErrors.phone}
                 keyboardType="phone-pad"
                 maxLength={10}

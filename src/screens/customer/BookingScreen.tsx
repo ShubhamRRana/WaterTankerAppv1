@@ -93,7 +93,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       .filter(isAdminUser)
       .filter(admin => admin.businessName || admin.name)
       .map(admin => ({
-        id: admin.uid,
+        id: admin.id,
         name: admin.businessName || admin.name || 'Unnamed Agency'
       }));
   }, [allUsers]);
@@ -377,7 +377,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       };
 
       const bookingData = {
-        customerId: user.uid,
+        customerId: user.id,
         customerName: user.name,
         customerPhone: user.phone || '', // Phone is optional, use empty string as fallback
         agencyId: selectedAgency.id,

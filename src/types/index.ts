@@ -25,7 +25,7 @@ export interface Address {
  * Email is the primary identifier for authentication
  */
 interface BaseUser {
-  uid: string;
+  id: string;
   email: string; // Required: primary identifier for authentication
   password: string; // hashed
   name: string;
@@ -132,7 +132,7 @@ export interface Pricing {
   pricePerKm: number;
   minimumCharge: number;
   updatedAt: Date;
-  updatedBy: string; // admin uid
+  updatedBy: string; // admin id
 }
 
 /**
@@ -149,7 +149,7 @@ export interface DriverApplication {
   vehicleRegistrationImage: string;
   status: 'pending' | 'approved' | 'rejected';
   appliedAt: Date;
-  reviewedBy?: string; // admin uid
+  reviewedBy?: string; // admin id
   reviewedAt?: Date;
   rejectionReason?: string;
 }
@@ -159,7 +159,7 @@ export interface DriverApplication {
  */
 export interface Vehicle {
   id: string;
-  agencyId: string; // Admin user uid (agency)
+  agencyId: string; // Admin user id (agency)
   vehicleNumber: string;
   insuranceCompanyName: string;
   insuranceExpiryDate: Date;
@@ -228,7 +228,7 @@ export interface RegisterForm {
   confirmPassword: string;
   name: string;
   role: UserRole;
-  phone?: string; // Optional: for contact purposes
+  phone: string; // Required: for contact purposes
 }
 
 export interface BookingForm {

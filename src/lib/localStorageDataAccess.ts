@@ -47,11 +47,11 @@ class LocalStorageUserDataAccess implements IUserDataAccess {
     }
   }
 
-  async getUserById(uid: string): Promise<User | null> {
+  async getUserById(id: string): Promise<User | null> {
     try {
-      return await LocalStorageService.getUserById(uid);
+      return await LocalStorageService.getUserById(id);
     } catch (error) {
-      throw new DataAccessError('Failed to get user by id', 'getUserById', { error, uid });
+      throw new DataAccessError('Failed to get user by id', 'getUserById', { error, id });
     }
   }
 
@@ -71,18 +71,18 @@ class LocalStorageUserDataAccess implements IUserDataAccess {
     }
   }
 
-  async updateUserProfile(uid: string, updates: Partial<User>): Promise<void> {
+  async updateUserProfile(id: string, updates: Partial<User>): Promise<void> {
     try {
-      await LocalStorageService.updateUserProfile(uid, updates);
+      await LocalStorageService.updateUserProfile(id, updates);
     } catch (error) {
       if (error instanceof Error && error.message === 'User not found') {
-        throw new NotFoundError('User', uid);
+        throw new NotFoundError('User', id);
       }
-      throw new DataAccessError('Failed to update user profile', 'updateUserProfile', { error, uid });
+      throw new DataAccessError('Failed to update user profile', 'updateUserProfile', { error, id });
     }
   }
 
-  subscribeToUserUpdates(uid: string, callback: SubscriptionCallback<User>): Unsubscribe {
+  subscribeToUserUpdates(id: string, callback: SubscriptionCallback<User>): Unsubscribe {
     // LocalStorage doesn't support real-time updates
     // Return no-op unsubscribe function
     // When migrating to Supabase, this will use Supabase Realtime

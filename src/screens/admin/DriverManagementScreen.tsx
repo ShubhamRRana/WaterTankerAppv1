@@ -78,7 +78,7 @@ const DriverManagementScreen: React.FC = () => {
     return users
       .filter((user): user is DriverUser => user.role === 'driver')
       .map(driver => {
-        const stats = calculateDriverStats(driver.uid);
+        const stats = calculateDriverStats(driver.id);
         return {
           ...driver,
           totalEarnings: stats.totalEarnings,
@@ -94,7 +94,7 @@ const DriverManagementScreen: React.FC = () => {
   // Update selectedDriver with enriched data when drivers/bookings change
   useEffect(() => {
     if (selectedDriver) {
-      const updatedDriver = drivers.find(d => d.uid === selectedDriver.uid);
+      const updatedDriver = drivers.find(d => d.id === selectedDriver.id);
       if (updatedDriver && (
         updatedDriver.totalEarnings !== selectedDriver.totalEarnings ||
         updatedDriver.completedOrders !== selectedDriver.completedOrders
@@ -195,12 +195,10 @@ const DriverManagementScreen: React.FC = () => {
       errors.email = emailValidation.error || 'Invalid email';
     }
     
-    // Validate phone (optional)
-    if (addDriverForm.phone) {
-      const phoneValidation = ValidationUtils.validatePhone(addDriverForm.phone);
-      if (!phoneValidation.isValid) {
-        errors.phone = phoneValidation.error || 'Invalid phone';
-      }
+    // Validate phone (required)
+    const phoneValidation = ValidationUtils.validatePhone(addDriverForm.phone);
+    if (!phoneValidation.isValid) {
+      errors.phone = phoneValidation.error || 'Invalid phone';
     }
     
     // Validate password (required for add, optional for edit)
@@ -306,7 +304,7 @@ const DriverManagementScreen: React.FC = () => {
       } else {
         // Check if email was changed and if it already exists for another user
         if (addDriverForm.email.toLowerCase() !== editingDriver.email?.toLowerCase()) {
-          const existingUser = users.find(user => user.email?.toLowerCase() === addDriverForm.email.toLowerCase() && user.uid !== editingDriver.uid);
+          const existingUser = users.find(user => user.email?.toLowerCase() === addDriverForm.email.toLowerCase() && user.id !== editingDriver.id);
           if (existingUser) {
             Alert.alert('Error', 'A user with this email address already exists');
             setIsSubmitting(false);
@@ -337,7 +335,7 @@ const DriverManagementScreen: React.FC = () => {
           updateData.password = addDriverForm.password; // In real app, this should be hashed
         }
         
-        await updateUser(editingDriver.uid, updateData);
+        await updateUser(editingDriver.id, updateData);
         
         Alert.alert('Success', 'Driver updated successfully');
       }
@@ -423,14 +421,14 @@ const DriverManagementScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              const driverId = editingDriver.uid;
+              const driverId = editingDriver.id;
               const driverEmail = editingDriver.email;
               
               // Delete the driver
               await deleteUser(driverId);
               
               // Check if the deleted driver is currently logged in
-              if (currentUser && (currentUser.uid === driverId || currentUser.email?.toLowerCase() === driverEmail?.toLowerCase())) {
+              if (currentUser && (currentUser.id === driverId || currentUser.email?.toLowerCase() === driverEmail?.toLowerCase())) {
                 // Logout the deleted driver
                 await logout();
                 Alert.alert(
@@ -581,7 +579,7 @@ const DriverManagementScreen: React.FC = () => {
           ) : (
             filteredDrivers.map((driver) => (
               <DriverCard 
-                key={driver.uid} 
+                key={driver.id} 
                 driver={driver}
                 onPress={() => {
                   if (showDriverModal) return;

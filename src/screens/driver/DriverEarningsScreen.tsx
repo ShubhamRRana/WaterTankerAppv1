@@ -101,7 +101,7 @@ const DriverEarningsScreen: React.FC = () => {
       return;
     }
 
-    const driverBookings = bookings.filter(booking => booking.driverId === user.uid);
+    const driverBookings = bookings.filter(booking => booking.driverId === user.id);
     const completedBookings = driverBookings.filter(booking => booking.status === 'delivered');
     const pendingBookings = driverBookings.filter(booking => booking.status === 'pending');
     const activeBookings = driverBookings.filter(booking => 
@@ -166,7 +166,7 @@ const DriverEarningsScreen: React.FC = () => {
   const getCompletedOrdersForPeriod = () => {
     if (!user?.uid || !bookings.length) return [];
     
-    const driverBookings = bookings.filter(booking => booking.driverId === user.uid);
+    const driverBookings = bookings.filter(booking => booking.driverId === user.id);
     const completedBookings = driverBookings.filter(booking => booking.status === 'delivered');
     
     const now = new Date();

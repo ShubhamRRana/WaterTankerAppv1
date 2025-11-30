@@ -181,7 +181,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
 
       <View style={styles.inputContainer}>
         <View style={styles.labelRow}>
-          <Typography variant="body" style={styles.inputLabel}>Phone Number (Optional)</Typography>
+          <Typography variant="body" style={styles.inputLabel}>Phone Number</Typography>
           <Typography 
             variant="caption" 
             style={[
@@ -197,12 +197,12 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           style={[styles.textInput, formErrors.phone && styles.textInputError]}
           value={formData.phone}
           onChangeText={(t) => onFieldChange('phone', t)}
-          placeholder="Enter phone number (optional)"
+          placeholder="Enter phone number"
           placeholderTextColor={UI_CONFIG.colors.textSecondary}
           keyboardType="phone-pad"
           maxLength={10}
           accessibilityLabel="Phone number input"
-          accessibilityHint="Enter your 10-digit phone number starting with 6-9. This field is optional."
+          accessibilityHint="Enter your 10-digit phone number starting with 6-9. This field is required."
           returnKeyType="next"
           onSubmitEditing={() => passwordInputRef.current?.focus()}
         />

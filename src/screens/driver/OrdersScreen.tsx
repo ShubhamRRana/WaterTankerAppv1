@@ -50,7 +50,7 @@ const OrdersScreen: React.FC = () => {
   const CACHE_EXPIRY = 5 * 60 * 1000;
 
   const loadOrdersData = useCallback(async (forceRefresh = false) => {
-    if (!user?.uid) return;
+    if (!user?.id) return;
     
     // Cancel any in-flight request
     if (abortControllerRef.current) {
@@ -78,7 +78,7 @@ const OrdersScreen: React.FC = () => {
       if (activeTab === 'available') {
         await fetchAvailableBookings();
       } else {
-        await fetchDriverBookings(user.uid);
+        await fetchDriverBookings(user.id);
       }
       
       // Cache will be updated from the store's bookings via useEffect after fetch completes
@@ -89,7 +89,7 @@ const OrdersScreen: React.FC = () => {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load orders';
       setLocalError(errorMessage);
           }
-  }, [activeTab, user?.uid, fetchAvailableBookings, fetchDriverBookings, clearError]);
+  }, [activeTab, user?.id, fetchAvailableBookings, fetchDriverBookings, clearError]);
 
   // Load data when tab changes (only once, not on focus)
   useEffect(() => {
@@ -108,7 +108,7 @@ const OrdersScreen: React.FC = () => {
     loadOrdersData().finally(() => {
       setIsInitialLoading(false);
     });
-  }, [activeTab, user?.uid]); // Only depend on activeTab and user, not loadOrdersData
+  }, [activeTab, user?.id]); // Only depend on activeTab and user, not loadOrdersData
 
   // Update cache when bookings change (after fetch completes)
   useEffect(() => {
@@ -151,7 +151,7 @@ const OrdersScreen: React.FC = () => {
         // For other tabs, use normal cache expiry logic
         loadOrdersData(true);
       }
-    }, [activeTab, user?.uid, loadOrdersData])
+    }, [activeTab, user?.id, loadOrdersData])
   );
   
   // Cleanup on unmount
@@ -175,7 +175,7 @@ const OrdersScreen: React.FC = () => {
   };
 
   const handleAcceptOrder = async (orderId: string) => {
-    if (!user?.uid) return;
+    if (!user?.id) return;
     
     setProcessingOrder(orderId);
     
@@ -185,7 +185,7 @@ const OrdersScreen: React.FC = () => {
       const optimisticBooking: Booking = {
         ...currentBooking,
         status: 'accepted',
-        driverId: user.uid,
+        driverId: user.id,
         driverName: user.name,
         driverPhone: user.phone || '',
         acceptedAt: new Date(),
@@ -206,7 +206,7 @@ const OrdersScreen: React.FC = () => {
     
     try {
       await updateBookingStatus(orderId, 'accepted', {
-        driverId: user.uid,
+        driverId: user.id,
         driverName: user.name,
         driverPhone: user.phone || '',
         acceptedAt: new Date(),
@@ -295,7 +295,7 @@ const OrdersScreen: React.FC = () => {
   };
 
   const filteredOrders = useMemo((): Booking[] => {
-    if (!user?.uid) return [];
+    if (!user?.id) return [];
 
     // Use cached data if available and fresh, otherwise use store data
     const cacheKey = activeTab as 'available' | 'active' | 'completed';

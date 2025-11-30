@@ -4,7 +4,7 @@ import { Booking, BookingStatus } from '../types/index';
 export class BookingService {
   /**
    * Create a new booking in local storage
-   * Note: bookingData.customerId, agencyId, driverId should be uid values
+   * Note: bookingData.customerId, agencyId, driverId should be id values
    */
   static async createBooking(bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
@@ -55,11 +55,11 @@ export class BookingService {
   }
 
   /**
-   * Get all bookings for a customer by uid
+   * Get all bookings for a customer by id
    */
-  static async getBookingsByCustomer(customerUid: string): Promise<Booking[]> {
+  static async getBookingsByCustomer(customerId: string): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getBookingsByCustomer(customerUid);
+      const bookings = await LocalStorageService.getBookingsByCustomer(customerId);
       return bookings as Booking[];
     } catch (error) {
       throw error;
@@ -79,11 +79,11 @@ export class BookingService {
   }
 
   /**
-   * Get all bookings for a driver by uid
+   * Get all bookings for a driver by id
    */
-  static async getBookingsByDriver(driverUid: string): Promise<Booking[]> {
+  static async getBookingsByDriver(driverId: string): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getBookingsByDriver(driverUid);
+      const bookings = await LocalStorageService.getBookingsByDriver(driverId);
       return bookings as Booking[];
     } catch (error) {
       throw error;

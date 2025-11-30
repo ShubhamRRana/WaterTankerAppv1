@@ -67,7 +67,7 @@ const AllBookingsScreen: React.FC = () => {
     // Filter by admin's agency (only show bookings for this admin's agency)
     if (currentAdmin) {
       filtered = filtered.filter(booking => 
-        booking.agencyId === currentAdmin.uid
+        booking.agencyId === currentAdmin.id
       );
     }
 

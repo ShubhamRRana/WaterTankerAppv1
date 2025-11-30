@@ -36,7 +36,7 @@ describe('LocalStorageDataAccess', () => {
 
   describe('User Data Access', () => {
     const mockUser: User = {
-      uid: 'test-user-1',
+      id: 'test-user-1',
       email: 'test@example.com',
       password: 'hashed-password',
       name: 'Test User',

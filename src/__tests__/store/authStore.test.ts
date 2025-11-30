@@ -35,7 +35,7 @@ describe('useAuthStore', () => {
   describe('initializeAuth', () => {
     it('should initialize auth and set user when user exists', async () => {
       const mockUser: User = {
-        uid: 'user-1',
+        id: 'user-1',
         email: 'test@example.com',
         password: 'hashed',
         name: 'Test User',
@@ -84,7 +84,7 @@ describe('useAuthStore', () => {
   describe('login', () => {
     it('should login successfully and set user', async () => {
       const mockUser: User = {
-        uid: 'user-1',
+        id: 'user-1',
         email: 'test@example.com',
         password: 'hashed',
         name: 'Test User',
@@ -149,7 +149,7 @@ describe('useAuthStore', () => {
   describe('loginWithRole', () => {
     it('should login with role successfully', async () => {
       const mockUser: User = {
-        uid: 'user-1',
+        id: 'user-1',
         email: 'test@example.com',
         password: 'hashed',
         name: 'Test User',
@@ -188,7 +188,7 @@ describe('useAuthStore', () => {
   describe('register', () => {
     it('should register successfully and set user', async () => {
       const mockUser: User = {
-        uid: 'user-1',
+        id: 'user-1',
         email: 'test@example.com',
         password: 'hashed',
         name: 'Test User',
@@ -237,7 +237,7 @@ describe('useAuthStore', () => {
   describe('logout', () => {
     it('should logout successfully', async () => {
       const mockUser: User = {
-        uid: 'user-1',
+        id: 'user-1',
         email: 'test@example.com',
         password: 'hashed',
         name: 'Test User',
@@ -270,7 +270,7 @@ describe('useAuthStore', () => {
   describe('updateUser', () => {
     it('should update user successfully', async () => {
       const mockUser: User = {
-        uid: 'user-1',
+        id: 'user-1',
         email: 'test@example.com',
         password: 'hashed',
         name: 'Test User',
@@ -299,7 +299,7 @@ describe('useAuthStore', () => {
 
     it('should handle update errors', async () => {
       const mockUser: User = {
-        uid: 'user-1',
+        id: 'user-1',
         email: 'test@example.com',
         password: 'hashed',
         name: 'Test User',
@@ -322,7 +322,7 @@ describe('useAuthStore', () => {
   describe('setUser', () => {
     it('should set user and update isAuthenticated', () => {
       const mockUser: User = {
-        uid: 'user-1',
+        id: 'user-1',
         email: 'test@example.com',
         password: 'hashed',
         name: 'Test User',

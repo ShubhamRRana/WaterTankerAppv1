@@ -378,7 +378,7 @@ const VehicleManagementScreen: React.FC = () => {
         }
         
         await addVehicle({
-          agencyId: currentUser.uid,
+          agencyId: currentUser.id,
           vehicleNumber: SanitizationUtils.sanitizeVehicleNumber(addVehicleForm.vehicleNumber).toUpperCase(),
           insuranceCompanyName: SanitizationUtils.sanitizeBusinessName(addVehicleForm.insuranceCompanyName),
           insuranceExpiryDate: insuranceExpiryDate,
@@ -534,7 +534,7 @@ const VehicleManagementScreen: React.FC = () => {
 
   const filteredVehicles = vehicles.filter(vehicle => {
     // Show only vehicles for current admin
-    const belongsToCurrentAdmin = currentUser && currentUser.role === 'admin' && vehicle.agencyId === currentUser.uid;
+    const belongsToCurrentAdmin = currentUser && currentUser.role === 'admin' && vehicle.agencyId === currentUser.id;
     const matchesSearch = vehicle.vehicleNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          vehicle.insuranceCompanyName.toLowerCase().includes(searchQuery.toLowerCase());
     return belongsToCurrentAdmin && matchesSearch;

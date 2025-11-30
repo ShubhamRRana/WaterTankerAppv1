@@ -135,12 +135,12 @@ const DriverProfileScreen: React.FC<DriverProfileScreenProps> = ({ navigation })
     // Sanitize inputs
     const sanitizedName = SanitizationUtils.sanitizeName(editForm.name);
     const sanitizedEmail = SanitizationUtils.sanitizeEmail(editForm.email);
-    const sanitizedPhone = editForm.phone ? SanitizationUtils.sanitizePhone(editForm.phone) : '';
+    const sanitizedPhone = SanitizationUtils.sanitizePhone(editForm.phone);
 
     // Validate inputs
     const nameValidation = ValidationUtils.validateName(sanitizedName);
     const emailValidation = ValidationUtils.validateEmail(sanitizedEmail);
-    const phoneValidation = sanitizedPhone ? ValidationUtils.validatePhone(sanitizedPhone) : { isValid: true };
+    const phoneValidation = ValidationUtils.validatePhone(sanitizedPhone);
 
     const errors: { name?: string; email?: string; phone?: string } = {};
     if (!nameValidation.isValid) {
@@ -164,7 +164,7 @@ const DriverProfileScreen: React.FC<DriverProfileScreenProps> = ({ navigation })
       await updateUser({
         name: sanitizedName,
         email: sanitizedEmail,
-        phone: sanitizedPhone || undefined,
+        phone: sanitizedPhone,
       });
 
       setIsEditing(false);
@@ -473,7 +473,7 @@ const DriverProfileScreen: React.FC<DriverProfileScreenProps> = ({ navigation })
                   <View style={styles.inputLabelContainer}>
                     <Ionicons name="call" size={16} color={UI_CONFIG.colors.textSecondary} />
                     <Typography variant="body" style={styles.inputLabel}>
-                      Phone Number (Optional)
+                      Phone Number
                     </Typography>
                   </View>
                   <TextInput
@@ -490,7 +490,7 @@ const DriverProfileScreen: React.FC<DriverProfileScreenProps> = ({ navigation })
                         });
                       }
                     }}
-                    placeholder="Enter your phone number (optional)"
+                    placeholder="Enter your phone number"
                     placeholderTextColor={UI_CONFIG.colors.textSecondary}
                     keyboardType="phone-pad"
                     maxLength={10}

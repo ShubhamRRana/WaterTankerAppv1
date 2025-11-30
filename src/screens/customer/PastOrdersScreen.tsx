@@ -108,9 +108,9 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
   }, [selectedYear, yearOptionWidth]);
 
   const loadReportData = async () => {
-    if (!user?.uid) return;
+    if (!user?.id) return;
     try {
-      await fetchCustomerBookings(user.uid);
+      await fetchCustomerBookings(user.id);
     } catch (error) {
           }
   };

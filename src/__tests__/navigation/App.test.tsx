@@ -131,7 +131,7 @@ describe('App Navigation Logic', () => {
 
     it('should return Customer route when user is customer', () => {
       const customerUser: CustomerUser = {
-        uid: '1',
+        id: '1',
         email: 'customer@test.com',
         password: 'hashed',
         name: 'Test Customer',
@@ -144,7 +144,7 @@ describe('App Navigation Logic', () => {
 
     it('should return Driver route when user is driver', () => {
       const driverUser: DriverUser = {
-        uid: '2',
+        id: '2',
         email: 'driver@test.com',
         password: 'hashed',
         name: 'Test Driver',
@@ -157,7 +157,7 @@ describe('App Navigation Logic', () => {
 
     it('should return Admin route when user is admin', () => {
       const adminUser: AdminUser = {
-        uid: '3',
+        id: '3',
         email: 'admin@test.com',
         password: 'hashed',
         name: 'Test Admin',

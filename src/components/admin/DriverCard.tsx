@@ -97,7 +97,7 @@ const DriverCard: React.FC<DriverCardProps> = ({
           <View style={styles.actionButtons}>
             <TouchableOpacity
               style={[styles.actionButton, styles.approveButton]}
-              onPress={() => onApprove(driver.uid)}
+              onPress={() => onApprove(driver.id)}
             >
               <Ionicons name="checkmark" size={16} color={UI_CONFIG.colors.textLight} />
               <Typography variant="caption" style={styles.actionButtonText}>
@@ -106,7 +106,7 @@ const DriverCard: React.FC<DriverCardProps> = ({
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => onReject(driver.uid)}
+              onPress={() => onReject(driver.id)}
             >
               <Ionicons name="close" size={16} color={UI_CONFIG.colors.textLight} />
               <Typography variant="caption" style={styles.actionButtonText}>
