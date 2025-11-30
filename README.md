@@ -45,8 +45,7 @@ src/
 │   ├── auth/
 │   │   ├── RoleEntryScreen.tsx
 │   │   ├── LoginScreen.tsx
-│   │   ├── RegisterScreen.tsx
-│   │   └── RoleSelectionScreen.tsx
+│   │   └── RegisterScreen.tsx
 │   ├── customer/
 │   │   ├── CustomerHomeScreen.tsx
 │   │   ├── BookingScreen.tsx
