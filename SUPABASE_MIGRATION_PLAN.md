@@ -1266,18 +1266,19 @@ New (Supabase):
 
 3. **Update Auth Service**
    - Replace local auth with Supabase Auth methods:
-     - `signInWithPassword()` - authenticates user
-     - Check `user_roles` table to determine available roles
-     - If multiple roles exist, show role selection screen
-     - `loginWithRole()` - selects specific role context
+     - `signInWithPassword(email, password, preferredRole?)` - authenticates user with optional preferred role
+     - If `preferredRole` is provided, login directly with that role (even if user has multiple roles)
+     - If `preferredRole` is not provided and user has multiple roles, return error asking to select role first
+     - `loginWithRole()` - selects specific role context (used when preferredRole is provided)
      - `signUp()` - creates user and role entry
      - `signOut()` - clears session
      - `getSession()` - gets current session
 
 4. **Update Login Flow**
-   - After `signInWithPassword()`, query `user_roles` for user's roles
-   - If multiple roles: show role selection screen
-   - If single role: proceed directly
+   - User selects role from RoleEntryScreen before login
+   - RoleEntryScreen navigates to Login with `preferredRole` parameter
+   - Login screen uses `preferredRole` directly - no role selection screen after login
+   - Even if user has multiple roles with same credentials, only the selected role is used
    - Store selected role in session/context
 
 5. **Remove Password Hash Column**
@@ -1312,10 +1313,10 @@ New (Supabase):
 - [ ] Users can sign up
 - [ ] Users can sign in
 - [ ] Session management working
-- [ ] Multi-role support working
-- [ ] Role selection screen works for multi-role users
-- [ ] Single-role users login directly without selection
-- [ ] Role switching works correctly
+- [ ] Multi-role support working (users can have multiple roles in database)
+- [ ] RoleEntryScreen allows users to select role before login
+- [ ] Login uses selected role directly (no role selection screen after login)
+- [ ] Users with multiple roles login with selected role only (even if credentials are same)
 
 ### Real-time
 - [ ] Realtime enabled on tables
@@ -1413,7 +1414,8 @@ New (Supabase):
 
 ## Notes
 
-- **Multi-Role Support**: Users can have multiple roles (e.g., customer + admin). This is handled via the `user_roles` junction table and separate role-specific tables (`customers`, `drivers`, `admins`).
+- **Multi-Role Support**: Users can have multiple roles (e.g., customer + admin) stored in the database via the `user_roles` junction table and separate role-specific tables (`customers`, `drivers`, `admins`). However, the login flow requires users to select a role from RoleEntryScreen before login, and only that selected role is used for the session.
+- **Single-Role Login**: Even if a user has multiple roles with the same credentials, they must select a role from RoleEntryScreen first. The login process uses only the selected role - there is no role selection screen after login.
 - **Data Consolidation**: During migration, users with the same email but different roles will be consolidated into one `users` row with multiple `user_roles` entries.
 - All timestamps use `TIMESTAMPTZ` for timezone support
 - JSONB columns used for flexible nested data (addresses)
