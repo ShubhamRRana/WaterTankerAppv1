@@ -55,7 +55,6 @@ npm install @supabase/supabase-js
 | `password_hash` | `text` | NOT NULL | Hashed password (temporary, will use Supabase Auth) |
 | `name` | `text` | NOT NULL | User's full name |
 | `phone` | `text` | NULLABLE | Contact phone number (optional) |
-| `profile_image_url` | `text` | NULLABLE | URL to profile image |
 | `created_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Account creation timestamp |
 | `updated_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Last update timestamp |
 
@@ -106,7 +105,8 @@ npm install @supabase/supabase-js
 - `idx_customers_user_id` on `user_id` (for fast lookups)
 
 **Notes**:
-- `saved_addresses` stores JSON array: `[{"id": "...", "street": "...", "city": "...", ...}]`
+- `saved_addresses` stores JSON array: `[{"id": "...", "address": "123 Main St, City, State 12345", "latitude": 0.0, "longitude": 0.0}]`
+- Address is stored as a continuous string, not separated into street, city, state, etc.
 - Only created when user has 'customer' role in `user_roles`
 
 ---
@@ -123,8 +123,6 @@ npm install @supabase/supabase-js
 | `license_expiry` | `date` | NOT NULL | License expiration date |
 | `driver_license_image_url` | `text` | NOT NULL | URL to license image |
 | `vehicle_registration_image_url` | `text` | NOT NULL | URL to registration image |
-| `is_approved` | `boolean` | NOT NULL, DEFAULT `false` | Driver approval status |
-| `is_available` | `boolean` | NOT NULL, DEFAULT `false` | Driver availability status |
 | `total_earnings` | `numeric(10,2)` | NOT NULL, DEFAULT `0` | Total earnings in INR |
 | `completed_orders` | `integer` | NOT NULL, DEFAULT `0` | Number of completed orders |
 | `created_by_admin` | `boolean` | NOT NULL, DEFAULT `false` | Whether driver was created by admin |
@@ -135,7 +133,6 @@ npm install @supabase/supabase-js
 
 **Indexes**:
 - `idx_drivers_user_id` on `user_id` (for fast lookups)
-- `idx_drivers_approved_available` on `(is_approved, is_available)` WHERE `is_approved = true AND is_available = true` (for finding available drivers)
 - `idx_drivers_vehicle_number` on `vehicle_number` (for unique lookups)
 
 **Notes**:
@@ -187,7 +184,6 @@ npm install @supabase/supabase-js
 | `delivery_address` | `jsonb` | NOT NULL | Complete address object (JSON) |
 | `distance` | `numeric(8,2)` | NOT NULL | Distance in kilometers |
 | `scheduled_for` | `timestamptz` | NULLABLE | Scheduled delivery date/time |
-| `is_immediate` | `boolean` | NOT NULL, DEFAULT `false` | Whether booking is immediate |
 | `payment_status` | `text` | NOT NULL, CHECK (`payment_status` IN ('pending', 'completed', 'failed', 'refunded')) | Payment status |
 | `payment_id` | `text` | NULLABLE | Payment transaction ID |
 | `cancellation_reason` | `text` | NULLABLE | Reason for cancellation |
@@ -206,7 +202,8 @@ npm install @supabase/supabase-js
 - `idx_bookings_pending` on `(status, created_at)` WHERE `status = 'pending'` (for available bookings)
 
 **Notes**:
-- `delivery_address` stores JSON: `{"id": "...", "street": "...", "city": "...", "state": "...", "pincode": "...", "landmark": "...", "latitude": 0.0, "longitude": 0.0, "isDefault": false}`
+- `delivery_address` stores JSON: `{"address": "123 Main St, City, State 12345", "latitude": 0.0, "longitude": 0.0}`
+- Address is stored as a continuous string, not separated into street, city, state, pincode, or landmark
 - Foreign keys have `ON DELETE SET NULL` for optional relationships
 - Foreign key on `customer_id` has `ON DELETE CASCADE` (if customer deleted, bookings deleted)
 
@@ -526,7 +523,6 @@ CREATE TABLE users (
   password_hash TEXT NOT NULL, -- Temporary, will migrate to Supabase Auth
   name TEXT NOT NULL,
   phone TEXT,
-  profile_image_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -571,8 +567,6 @@ CREATE TABLE drivers (
   license_expiry DATE NOT NULL,
   driver_license_image_url TEXT NOT NULL,
   vehicle_registration_image_url TEXT NOT NULL,
-  is_approved BOOLEAN NOT NULL DEFAULT false,
-  is_available BOOLEAN NOT NULL DEFAULT false,
   total_earnings NUMERIC(10,2) NOT NULL DEFAULT 0,
   completed_orders INTEGER NOT NULL DEFAULT 0,
   created_by_admin BOOLEAN NOT NULL DEFAULT false,
@@ -584,8 +578,6 @@ CREATE TABLE drivers (
 
 -- Indexes for drivers
 CREATE INDEX idx_drivers_user_id ON drivers(user_id);
-CREATE INDEX idx_drivers_approved_available ON drivers(is_approved, is_available) 
-  WHERE is_approved = true AND is_available = true;
 CREATE INDEX idx_drivers_vehicle_number ON drivers(vehicle_number);
 
 -- ============================================================================
@@ -623,7 +615,6 @@ CREATE TABLE bookings (
   delivery_address JSONB NOT NULL,
   distance NUMERIC(8,2) NOT NULL,
   scheduled_for TIMESTAMPTZ,
-  is_immediate BOOLEAN NOT NULL DEFAULT false,
   payment_status TEXT NOT NULL CHECK (payment_status IN ('pending', 'completed', 'failed', 'refunded')),
   payment_id TEXT,
   cancellation_reason TEXT,
@@ -1074,13 +1065,12 @@ JOIN customers c ON u.id = c.user_id
 WHERE u.id = $1;
 ```
 
-### Get Driver Data with Availability Status
+### Get Driver Data
 ```sql
 SELECT u.*, d.*
 FROM users u
 JOIN user_roles ur ON u.id = ur.user_id AND ur.role = 'driver'
-JOIN drivers d ON u.id = d.user_id
-WHERE d.is_approved = true AND d.is_available = true;
+JOIN drivers d ON u.id = d.user_id;
 ```
 
 ### Get All Roles for Current User (for role selection)

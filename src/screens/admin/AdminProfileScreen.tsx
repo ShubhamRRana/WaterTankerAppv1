@@ -528,13 +528,10 @@ const AdminProfileScreen: React.FC = () => {
   const handleRetryImage = () => {
     dispatch({ type: 'SET_IMAGE_ERROR', payload: false });
     dispatch({ type: 'SET_IMAGE_LOADING', payload: true });
-    // Trigger image reload by updating user state
-    if (user?.profileImage) {
-      // Force re-render by updating a dummy state
-      setTimeout(() => {
-        dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
-      }, 100);
-    }
+    // Force re-render by updating a dummy state
+    setTimeout(() => {
+      dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
+    }, 100);
   };
 
   if (isLoading) {

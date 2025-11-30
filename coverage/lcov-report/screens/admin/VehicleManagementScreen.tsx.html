@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/407</span>
+                <span class='fraction'>0/408</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/340</span>
+                <span class='fraction'>0/341</span>
             </div>
         
             
@@ -1074,7 +1074,8 @@
 <a name='L1009'></a><a href='#L1009'>1009</a>
 <a name='L1010'></a><a href='#L1010'>1010</a>
 <a name='L1011'></a><a href='#L1011'>1011</a>
-<a name='L1012'></a><a href='#L1012'>1012</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1012'></a><a href='#L1012'>1012</a>
+<a name='L1013'></a><a href='#L1013'>1013</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1108,6 +1109,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -2108,27 +2110,28 @@ import {<span class="cstat-no" title="statement not covered" > Typography, Card,
 import { Vehicle } fr<span class="cstat-no" title="statement not covered" >om </span>'../../types';
 import { UI_<span class="cstat-no" title="statement not covered" >CONFIG } from '..<span class="cstat-no" title="statement not covered" >/../constants/config';<span class="cstat-no" title="statement not covered" ></span></span></span>
 import { Pri<span class="cstat-no" title="statement not covered" >cingUtils, </span>ValidationUtils, SanitizationUtils } from '../../utils';
-import { AdminStackParamList } from '../../navigation/AdminNavigator';
-<span class="cstat-no" title="statement not covered" ></span>
-type VehicleManagementScreenNavigationProp = StackNavigationProp&lt;AdminStackParamList, 'Vehicles'&gt;;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span>
-interfac<span class="cstat-no" title="statement not covered" >e AddVehicleModalProps {<span class="cstat-no" title="statement not covered" ></span></span>
-  visible: boolean;<span class="cstat-no" title="statement not covered" ></span>
-  onClos<span class="cstat-no" title="statement not covered" >e: () =&gt; void;<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ></span></span></span></span></span></span>
+import { formatDateOnly } from '../../utils/dateUtils';
+import {<span class="cstat-no" title="statement not covered" > AdminStackParamLis</span>t } from '../../navigation/AdminNavigator';
+&nbsp;
+type<span class="cstat-no" title="statement not covered" > Vehicl<span class="fstat-no" title="function not covered" >eM</span>anagementScreenNavigationProp = StackNavigationProp&lt;AdminStackParamList, 'Vehicles'&gt;;</span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ></span></span>
+interface AddVehicleM<span class="cstat-no" title="statement not covered" >oda</span>lProps {
+  visibl<span class="cstat-no" title="statement not covered" >e: boolean;<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ></span></span></span></span></span></span>
+  onClos<span class="cstat-no" title="statement not covered" >e: () =&gt; void;</span>
   formDa<span class="cstat-no" title="statement not covered" >ta: {</span>
-    vehi<span class="cstat-no" title="statement not covered" >cleNumber: stri</span>ng;
+    vehicleNumber: string;
     insuranceCompanyName: string;
-    insuranceExpiryDate: string;
-<span class="cstat-no" title="statement not covered" >    vehicleCapacity: string;</span>
-    amount: stri<span class="cstat-no" title="statement not covered" >ng;</span>
+<span class="cstat-no" title="statement not covered" >    insuranceExpiryDate: string;</span>
+    vehicleCapac<span class="cstat-no" title="statement not covered" >ity: string;</span>
+    amount: string;<span class="cstat-no" title="statement not covered" ></span>
   };<span class="cstat-no" title="statement not covered" ></span>
-  formErrors: {[key: string]: string};<span class="cstat-no" title="statement not covered" ></span>
-  isSubmitting: boolean<span class="cstat-no" title="statement not covered" >;</span>
-  onFormChange: (<span class="cstat-no" title="statement not covered" >field: string, value: string) =&gt; voi</span>d;
-  onSubmit: () =&gt; void;<span class="cstat-no" title="statement not covered" ></span>
-  onReset: () =&gt; voi<span class="cstat-no" title="statement not covered" >d;</span>
+  formErrors: {[key: st<span class="cstat-no" title="statement not covered" >ring]: string};</span>
+  isSubmitting: b<span class="cstat-no" title="statement not covered" >oolean;</span>
+  onFormChange: (field:<span class="cstat-no" title="statement not covered" > string, value: string) =&gt; void;</span>
+  onSubmit: () =&gt; vo<span class="cstat-no" title="statement not covered" >id;</span>
+  onReset: () =&gt; <span class="cstat-no" title="statement not covered" >void;</span>
   onDelete?: () =<span class="cstat-no" title="statement not covered" >&gt; void;</span>
-  isEditMode?: bo<span class="cstat-no" title="statement not covered" >olean;</span>
+  isEditMode?: b<span class="cstat-no" title="statement not covered" >oolean;</span>
 }<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ><span class="branch-0 cbranch-no" title="branch not covered" ></span></span></span></span>
 const AddVehicleModal: React.FC&lt;AddVehicleModalProps&gt; = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span></span>
@@ -2663,7 +2666,7 @@ const VehicleManagementScreen: React.FC = <span class="cstat-no" title="statemen
           &lt;View style={styles.detailRow}&gt;
             &lt;Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} /&gt;
             &lt;Typography variant="caption" style={styles.detailText}&gt;
-              Insurance Expiry: {new Date(vehicle.insuranceExpiryDate).toLocaleDateString()}
+              Insurance Expiry: {formatDateOnly(vehicle.insuranceExpiryDate)}
             &lt;/Typography&gt;
           &lt;/View&gt;
           &lt;View style={styles.detailRow}&gt;
@@ -2723,7 +2726,7 @@ const VehicleManagementScreen: React.FC = <span class="cstat-no" title="statemen
               &lt;View style={styles.detailItem}&gt;
                 &lt;Typography variant="body" style={styles.detailLabel}&gt;Insurance Expiry Date&lt;/Typography&gt;
                 &lt;Typography variant="body" style={styles.detailValue}&gt;
-                  {new Date(selectedVehicle.insuranceExpiryDate).toLocaleDateString()}
+                  {formatDateOnly(selectedVehicle.insuranceExpiryDate)}
                 &lt;/Typography&gt;
               &lt;/View&gt;
               &lt;View style={styles.detailItem}&gt;
@@ -2741,7 +2744,7 @@ const VehicleManagementScreen: React.FC = <span class="cstat-no" title="statemen
               &lt;View style={styles.detailItem}&gt;
                 &lt;Typography variant="body" style={styles.detailLabel}&gt;Created At&lt;/Typography&gt;
                 &lt;Typography variant="body" style={styles.detailValue}&gt;
-                  {new Date(selectedVehicle.createdAt).toLocaleDateString()}
+                  {formatDateOnly(selectedVehicle.createdAt)}
                 &lt;/Typography&gt;
               &lt;/View&gt;
             &lt;/Card&gt;
@@ -3103,7 +3106,7 @@ export default VehicleManagementScreen;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-30T10:10:31.172Z
+                at 2025-11-30T13:56:33.409Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

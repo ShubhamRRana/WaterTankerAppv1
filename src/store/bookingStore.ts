@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import { Booking, BookingStatus } from '../types';
 import { BookingService } from '../services/booking.service';
 
+/**
+ * Booking store state interface
+ * 
+ * Manages booking data, loading states, and booking operations.
+ * Provides methods for creating, updating, and fetching bookings.
+ */
 interface BookingState {
   bookings: Booking[];
   currentBooking: Booking | null;
@@ -26,6 +32,26 @@ interface BookingState {
   clearError: () => void;
 }
 
+/**
+ * Booking store using Zustand
+ * 
+ * Provides global booking state management including:
+ * - Booking list and current booking state
+ * - CRUD operations for bookings
+ * - Status updates and cancellations
+ * - Real-time booking subscriptions (placeholder for Supabase)
+ * 
+ * @example
+ * ```tsx
+ * const { bookings, createBooking, updateBookingStatus, isLoading } = useBookingStore();
+ * 
+ * await createBooking({
+ *   customerId: 'customer-123',
+ *   agencyId: 'agency-456',
+ *   // ... other booking data
+ * });
+ * ```
+ */
 export const useBookingStore = create<BookingState>((set, get) => ({
   bookings: [],
   currentBooking: null,

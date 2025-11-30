@@ -160,8 +160,6 @@ export class AuthService {
           licenseExpiry: (additionalData as Partial<DriverUser>)?.licenseExpiry,
           driverLicenseImage: (additionalData as Partial<DriverUser>)?.driverLicenseImage,
           vehicleRegistrationImage: (additionalData as Partial<DriverUser>)?.vehicleRegistrationImage,
-          isApproved: (additionalData as Partial<DriverUser>)?.isApproved ?? false,
-          isAvailable: (additionalData as Partial<DriverUser>)?.isAvailable ?? true,
           totalEarnings: (additionalData as Partial<DriverUser>)?.totalEarnings ?? 0,
           completedOrders: (additionalData as Partial<DriverUser>)?.completedOrders ?? 0,
           createdByAdmin: (additionalData as Partial<DriverUser>)?.createdByAdmin ?? false,
@@ -171,7 +169,6 @@ export class AuthService {
         ...(role === 'admin' && {
           businessName: (additionalData as Partial<AdminUser>)?.businessName,
         }),
-        ...(additionalData?.profileImage && { profileImage: additionalData.profileImage }),
       };
 
       // Save user to collection

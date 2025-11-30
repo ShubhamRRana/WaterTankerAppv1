@@ -20,6 +20,8 @@ import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
 import { UI_CONFIG } from '../../constants/config';
 import { LocationTrackingService, DriverLocation } from '../../services/locationTracking.service';
+import { errorLogger } from '../../utils/errorLogger';
+import { formatDateTime } from '../../utils/dateUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -67,7 +69,8 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
           }
         );
       } catch (error) {
-              }
+        errorLogger.medium('Failed to setup location tracking', error, { orderId });
+      }
     };
     
     setupLocationTracking();
@@ -101,7 +104,8 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
               setDriverLocation(location);
             }
           } catch (error) {
-                      }
+            errorLogger.medium('Failed to load driver location', error, { orderId, status: bookingData.status });
+          }
         }
       }
     } catch (error) {
@@ -173,25 +177,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
   };
 
   const formatDate = (date: Date | string) => {
-    try {
-      // Handle both Date objects and date strings
-      const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
-      
-      // Check if the date is valid
-      if (isNaN(dateObj.getTime())) {
-        return 'Unknown date';
-      }
-      
-      return dateObj.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch (error) {
-            return 'Unknown date';
-    }
+    return formatDateTime(date);
   };
 
   const formatTime = (minutes: number) => {
@@ -349,7 +335,9 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
               </View>
               <View style={styles.driverInfo}>
                 <Typography variant="body" style={styles.driverName}>{booking.driverName}</Typography>
-                <Typography variant="caption" style={styles.driverPhone}>{booking.driverPhone}</Typography>
+                {booking.driverPhone && (
+                  <Typography variant="caption" style={styles.driverPhone}>{booking.driverPhone}</Typography>
+                )}
               </View>
               <TouchableOpacity style={styles.callButton} onPress={handleCallDriver}>
                 <Ionicons name="call" size={20} color={UI_CONFIG.colors.success} />

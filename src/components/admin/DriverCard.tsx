@@ -9,24 +9,21 @@ import { Typography, Card } from '../common';
 import { DriverUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
+import { formatDateOnly } from '../../utils/dateUtils';
 
 export interface DriverCardProps {
   driver: DriverUser;
   onPress: () => void;
   onEdit: (driver: DriverUser) => void;
-  onApprove?: (driverId: string) => void;
-  onReject?: (driverId: string) => void;
 }
 
 const DriverCard: React.FC<DriverCardProps> = ({
   driver,
   onPress,
   onEdit,
-  onApprove,
-  onReject,
 }) => {
   const formattedLicenseExpiry = useMemo(() => {
-    return driver.licenseExpiry ? new Date(driver.licenseExpiry).toLocaleDateString() : 'Expiry not provided';
+    return driver.licenseExpiry ? formatDateOnly(driver.licenseExpiry) : 'Expiry not provided';
   }, [driver.licenseExpiry]);
   
   const formattedEarnings = useMemo(() => {
@@ -92,30 +89,6 @@ const DriverCard: React.FC<DriverCardProps> = ({
         </View>
       </View>
 
-      <View style={styles.driverActions}>
-        {driver.isApproved === undefined && onApprove && onReject && (
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.approveButton]}
-              onPress={() => onApprove(driver.id)}
-            >
-              <Ionicons name="checkmark" size={16} color={UI_CONFIG.colors.textLight} />
-              <Typography variant="caption" style={styles.actionButtonText}>
-                Approve
-              </Typography>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => onReject(driver.id)}
-            >
-              <Ionicons name="close" size={16} color={UI_CONFIG.colors.textLight} />
-              <Typography variant="caption" style={styles.actionButtonText}>
-                Reject
-              </Typography>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
     </TouchableOpacity>
   </Card>
   );
@@ -168,34 +141,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: UI_CONFIG.colors.textSecondary,
     marginLeft: UI_CONFIG.spacing.sm,
-  },
-  driverActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: UI_CONFIG.spacing.sm,
-    paddingVertical: UI_CONFIG.spacing.xs,
-    borderRadius: 6,
-    marginLeft: UI_CONFIG.spacing.sm,
-  },
-  approveButton: {
-    backgroundColor: UI_CONFIG.colors.success,
-  },
-  rejectButton: {
-    backgroundColor: UI_CONFIG.colors.error,
-  },
-  actionButtonText: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textLight,
-    fontWeight: '600',
-    marginLeft: 4,
   },
 });
 

@@ -117,7 +117,6 @@ describe('LocalStorageDataAccess', () => {
         longitude: 0,
       },
       distance: 10,
-      isImmediate: true,
       paymentStatus: 'pending',
       canCancel: true,
       createdAt: new Date(),

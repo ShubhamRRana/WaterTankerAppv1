@@ -12,21 +12,18 @@ import { Typography, Card, Button } from '../common';
 import { User, DriverUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
+import { formatDateOnly } from '../../utils/dateUtils';
 
 export interface DriverModalProps {
   visible: boolean;
   onClose: () => void;
   driver: User | null;
-  onApprove?: (driverId: string) => void;
-  onReject?: (driverId: string) => void;
 }
 
 const DriverModal: React.FC<DriverModalProps> = ({
   visible,
   onClose,
   driver,
-  onApprove,
-  onReject,
 }) => (
   <Modal
     visible={visible}
@@ -88,7 +85,7 @@ const DriverModal: React.FC<DriverModalProps> = ({
                 <View style={styles.detailItem}>
                   <Typography variant="body" style={styles.detailLabel}>Joined</Typography>
                   <Typography variant="body" style={styles.detailValue}>
-                    {new Date(driver.createdAt).toLocaleDateString()}
+                    {formatDateOnly(driver.createdAt)}
                   </Typography>
                 </View>
               </Card>
@@ -106,7 +103,7 @@ const DriverModal: React.FC<DriverModalProps> = ({
                 <View style={styles.detailItem}>
                   <Typography variant="body" style={styles.detailLabel}>Expiry Date</Typography>
                   <Typography variant="body" style={styles.detailValue}>
-                    {(driver as DriverUser).licenseExpiry ? new Date((driver as DriverUser).licenseExpiry!).toLocaleDateString() : 'Not provided'}
+                    {(driver as DriverUser).licenseExpiry ? formatDateOnly((driver as DriverUser).licenseExpiry!) : 'Not provided'}
                   </Typography>
                 </View>
               </Card>
@@ -129,26 +126,6 @@ const DriverModal: React.FC<DriverModalProps> = ({
                 </View>
               </Card>
 
-              {(driver as DriverUser).isApproved === undefined && onApprove && onReject && (
-                <View style={styles.modalActions}>
-                  <Button
-                    title="Approve Driver"
-                    onPress={() => {
-                      onClose();
-                      onApprove(driver.id);
-                    }}
-                    style={styles.approveButtonLarge}
-                  />
-                  <Button
-                    title="Reject Driver"
-                    onPress={() => {
-                      onClose();
-                      onReject(driver.id);
-                    }}
-                    style={styles.rejectButtonLarge}
-                  />
-                </View>
-              )}
             </>
         </ScrollView>
       )}
@@ -211,16 +188,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     flex: 1,
     marginLeft: UI_CONFIG.spacing.md,
-  },
-  modalActions: {
-    marginTop: UI_CONFIG.spacing.lg,
-  },
-  approveButtonLarge: {
-    backgroundColor: UI_CONFIG.colors.success,
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  rejectButtonLarge: {
-    backgroundColor: UI_CONFIG.colors.error,
   },
 });
 

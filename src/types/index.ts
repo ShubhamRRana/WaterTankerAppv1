@@ -26,7 +26,6 @@ interface BaseUser {
   password: string; // hashed
   name: string;
   phone?: string; // Optional: kept for contact purposes
-  profileImage?: string;
   createdAt: Date;
 }
 
@@ -48,8 +47,6 @@ export interface DriverUser extends BaseUser {
   licenseExpiry?: Date;
   driverLicenseImage?: string;
   vehicleRegistrationImage?: string;
-  isApproved?: boolean;
-  isAvailable?: boolean;
   totalEarnings?: number;
   completedOrders?: number;
   createdByAdmin?: boolean; // Track if driver was created by admin
@@ -98,8 +95,7 @@ export interface Booking {
   totalPrice: number;
   deliveryAddress: Address;
   distance: number; // in km
-  scheduledFor?: Date; // null for immediate, date/time for scheduled
-  isImmediate: boolean;
+  scheduledFor?: Date; // scheduled delivery date/time
   paymentStatus: 'pending' | 'completed' | 'failed' | 'refunded';
   paymentId?: string;
   cancellationReason?: string;
@@ -228,7 +224,6 @@ export interface BookingForm {
   tankerSize: number;
   deliveryAddress: Address;
   scheduledFor?: Date;
-  isImmediate: boolean;
   specialInstructions?: string;
 }
 
@@ -259,7 +254,7 @@ export interface PaginatedResponse<T> {
 export interface AppError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 // Location types

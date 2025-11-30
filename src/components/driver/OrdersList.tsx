@@ -7,6 +7,8 @@ import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 import { OrderTab } from './OrdersFilter';
 import { UserService } from '../../services/user.service';
+import { errorLogger } from '../../utils/errorLogger';
+import { formatDateTime } from '../../utils/dateUtils';
 
 interface OrdersListProps {
   orders: Booking[];
@@ -56,12 +58,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
   }, []);
 
   const formatDate = useCallback((date: Date): string => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return formatDateTime(date);
   }, []);
 
   const OrderCardWithProfileAddress = memo(({ 
@@ -100,7 +97,11 @@ const OrdersList: React.FC<OrdersListProps> = ({
             }
           }
         } catch (error) {
-          // Silently fail - profile address is optional
+          // Profile address is optional, but log for debugging
+          errorLogger.low('Failed to fetch customer profile address', error, { 
+            orderId: order.id, 
+            customerId: order.customerId 
+          });
         }
       };
       fetchCustomerAddress();
@@ -212,7 +213,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
     const isProcessing = processingOrder === order.id;
     const statusColor = getStatusColor(order.status);
     const statusText = getStatusText(order.status);
-    const formattedDate = order.isImmediate ? 'Immediate' : (order.scheduledFor ? formatDate(order.scheduledFor) : '');
+    const formattedDate = order.scheduledFor ? formatDate(order.scheduledFor) : '';
     const formattedDeliveredDate = order.deliveredAt ? formatDate(order.deliveredAt) : '';
     
     return (

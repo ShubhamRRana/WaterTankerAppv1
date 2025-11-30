@@ -29,7 +29,9 @@ import PriceBreakdown from '../../components/customer/PriceBreakdown';
 import { Address, BookingForm, TankerSize, isAdminUser, isCustomerUser } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
-import { UI_CONFIG } from '../../constants/config';
+import { UI_CONFIG, LOCATION_CONFIG } from '../../constants/config';
+import { errorLogger } from '../../utils/errorLogger';
+import { createScheduledDate as createScheduledDateFromUtils } from '../../utils/dateUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -47,7 +49,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
 
   const [selectedVehicle, setSelectedVehicle] = useState<{ id: string; capacity: number; amount: number; vehicleNumber: string } | null>(null);
   const [selectedAgency, setSelectedAgency] = useState<{ id: string; name: string } | null>(null);
-  const [availableVehicles, setAvailableVehicles] = useState<any[]>([]);
+  const [availableVehicles, setAvailableVehicles] = useState<Array<{ id: string; vehicleCapacity: number; amount: number; vehicleNumber: string }>>([]);
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<string>('');
@@ -92,7 +94,8 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
       try {
         await fetchUsersByRole('admin');
       } catch (error) {
-              }
+        errorLogger.medium('Failed to load agencies', error);
+      }
     };
     loadAgencies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,7 +124,8 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
           setSelectedVehicle(null);
           setPriceBreakdown(null);
         } catch (error) {
-                    setAvailableVehicles([]);
+          errorLogger.medium('Failed to load vehicles for agency', error, { agencyId: selectedAgency.id });
+          setAvailableVehicles([]);
         } finally {
           setVehiclesLoading(false);
         }
@@ -157,7 +161,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
     });
   };
 
-  const handleVehicleSelection = (vehicle: any) => {
+  const handleVehicleSelection = (vehicle: { id: string; capacity: number; amount: number; vehicleNumber: string }) => {
     setSelectedVehicle({
       id: vehicle.id,
       capacity: vehicle.capacity != null ? vehicle.capacity : 0,
@@ -251,90 +255,15 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
 
   // Convert 12-hour format to 24-hour format for date creation
   const createScheduledDate = (dateString: string, timeString: string, period: 'AM' | 'PM'): Date => {
-    try {
-      // Validate inputs
-      if (!dateString || !timeString || !period) {
-        throw new Error('Missing required parameters');
-      }
-
-      // Parse date (DD-MM-YYYY format)
-      const dateParts = dateString.split('-');
-      if (dateParts.length !== 3) {
-        throw new Error('Invalid date format - expected DD-MM-YYYY');
-      }
-
-      const [dayStr, monthStr, yearStr] = dateParts;
-      const day = parseInt(dayStr, 10);
-      const month = parseInt(monthStr, 10);
-      const year = parseInt(yearStr, 10);
-      
-      // Validate date components
-      if (isNaN(day) || isNaN(month) || isNaN(year)) {
-        throw new Error('Invalid date components - must be numbers');
-      }
-
-      if (year < 2024 || year > 2030) {
-        throw new Error('Year must be between 2024 and 2030');
-      }
-
-      if (month < 1 || month > 12) {
-        throw new Error('Month must be between 1 and 12');
-      }
-
-      if (day < 1 || day > 31) {
-        throw new Error('Day must be between 1 and 31');
-      }
-
-      // Parse time (HH:MM format)
-      const timeMatch = timeString.match(/^(\d{1,2}):(\d{2})$/);
-      if (!timeMatch) {
-        throw new Error('Invalid time format - expected HH:MM');
-      }
-      
-      let hours = parseInt(timeMatch[1], 10);
-      const minutes = parseInt(timeMatch[2], 10);
-      
-      // Validate time components
-      if (isNaN(hours) || isNaN(minutes)) {
-        throw new Error('Invalid time components - must be numbers');
-      }
-
-      if (hours < 1 || hours > 12) {
-        throw new Error('Hours must be between 1 and 12');
-      }
-
-      if (minutes < 0 || minutes > 59) {
-        throw new Error('Minutes must be between 0 and 59');
-      }
-      
-      // Convert to 24-hour format
-      if (period === 'AM') {
-        if (hours === 12) hours = 0;
-      } else { // PM
-        if (hours !== 12) hours += 12;
-      }
-      
-      // Create date object with additional validation
-      const date = new Date(year, month - 1, day, hours, minutes);
-      
-      // Verify the date is valid (handles cases like Feb 30, etc.)
-      if (isNaN(date.getTime())) {
-        throw new Error('Invalid date - date does not exist');
-      }
-
-      // Double-check that the created date matches our input
-      if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
-        throw new Error('Invalid date - date components do not match');
-      }
-
-      return date;
-    } catch (error) {
-            // Return a fallback date (tomorrow at 9 AM) instead of current time
+    const scheduledDate = createScheduledDateFromUtils(dateString, timeString, period);
+    if (!scheduledDate) {
+      // Return a fallback date (tomorrow at 9 AM) instead of current time
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
       tomorrow.setHours(9, 0, 0, 0);
       return tomorrow;
     }
+    return scheduledDate;
   };
 
 
@@ -431,10 +360,11 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
       }
 
       // Create Address object from the sanitized address string
+      // TODO: Replace mock coordinates with actual geocoding service
       const bookingAddress: Address = {
         address: sanitizedAddress,
-        latitude: 28.6139 + (Math.random() - 0.5) * 0.1, // Mock coordinates
-        longitude: 77.2090 + (Math.random() - 0.5) * 0.1,
+        latitude: LOCATION_CONFIG.defaultCenter.latitude + (Math.random() - 0.5) * 0.1, // Mock coordinates
+        longitude: LOCATION_CONFIG.defaultCenter.longitude + (Math.random() - 0.5) * 0.1,
       };
 
       // Create scheduled date if provided, otherwise undefined
@@ -466,7 +396,6 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
         deliveryAddress: bookingAddress,
         distance: 0, // Distance not used for pricing
         scheduledFor: scheduledForDate,
-        isImmediate: false,
         paymentStatus: 'pending' as const,
         canCancel: true,
       };

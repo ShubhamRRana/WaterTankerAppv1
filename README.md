@@ -25,6 +25,7 @@ src/
 │   ├── customer/
 │   │   ├── AgencySelectionModal.tsx
 │   │   ├── DateTimeInput.tsx
+│   │   ├── DeliverySummary.tsx
 │   │   ├── PriceBreakdown.tsx
 │   │   ├── SavedAddressModal.tsx
 │   │   └── TankerSelectionModal.tsx
@@ -57,8 +58,7 @@ src/
 │   ├── driver/
 │   │   ├── OrdersScreen.tsx
 │   │   ├── CollectPaymentScreen.tsx
-│   │   ├── DriverEarningsScreen.tsx
-│   │   └── DriverProfileScreen.tsx
+│   │   └── DriverEarningsScreen.tsx
 │   └── admin/
 │       ├── AllBookingsScreen.tsx
 │       ├── DriverManagementScreen.tsx
@@ -87,6 +87,11 @@ src/
 │   ├── userStore.ts
 │   ├── vehicleStore.ts
 │   └── index.ts
+├── lib/                    # Data access layer and business logic
+│   ├── dataAccess.interface.ts
+│   ├── localStorageDataAccess.ts
+│   ├── subscriptionManager.ts
+│   └── index.ts
 ├── types/
 │   └── index.ts
 ├── utils/
@@ -94,12 +99,16 @@ src/
 │   ├── validation.ts
 │   ├── sanitization.ts
 │   ├── rateLimiter.ts
+│   ├── errorHandler.ts     # Centralized error handling
 │   ├── errorLogger.ts
+│   ├── errors.ts           # Error definitions and types
 │   ├── securityLogger.ts
 │   ├── securityAudit.ts
 │   ├── sessionManager.ts
 │   ├── subscriptionManager.ts
 │   ├── reportCalculations.ts
+│   ├── dateUtils.ts        # Date formatting and manipulation utilities
+│   ├── dateSerialization.ts # Date serialization for storage
 │   └── index.ts
 └── constants/
     └── config.ts
@@ -116,6 +125,8 @@ src/
 - **UI Design**: iOS-style design system with centralized color configuration (UI_CONFIG)
 - **Icons**: Expo Vector Icons (Ionicons)
 - **Number Formatting**: Indian numbering system (lakhs/crores) for amounts and quantities
+- **Testing**: Jest with React Native Testing Library
+- **Data Access Layer**: Abstracted data access interface for future backend migration
 
 ## Key Features
 
@@ -155,9 +166,19 @@ src/
    npm install
    ```
 
-2. Install dependencies and start the development server:
+2. Start the development server:
    ```bash
    npm start
+   ```
+
+3. Run tests:
+   ```bash
+   npm test
+   ```
+
+4. Run tests with coverage:
+   ```bash
+   npm run test:coverage
    ```
 
 ## Auth Flow (Multi-Role)
@@ -251,23 +272,27 @@ This formatting is applied consistently across:
   - Driver: Bottom tab navigation (Orders, Earnings)
   - Admin: Bottom tab navigation (Bookings, Drivers, Vehicles, Reports, Profile)
 - **Customer Screens**: Home, Booking, Order Tracking, Order History, Past Orders, Profile, Saved Addresses
-- **Driver Screens**: Orders, Collect Payment, Earnings, Driver Profile
+- **Driver Screens**: Orders, Collect Payment, Earnings
 - **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Reports, Admin Profile
 - **TypeScript Support**: All components properly typed with comprehensive type definitions
 - **State Management**: Zustand stores for authentication, bookings, users, and vehicles
 - **Services**: Local storage, auth, booking, payment, location, location tracking, notification, user, and vehicle services
 - **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner, CustomerMenuDrawer, AdminMenuDrawer, MenuDrawer, SuccessNotification, ErrorBoundary, CustomerIcon, DriverIcon, AdminIcon)
-- **Utils**: Distance calculation, pricing, validation, sanitization, rate limiting, error logging, security logging, security audit, session management, subscription management, and report calculations
+- **Utils**: Distance calculation, pricing, validation, sanitization, rate limiting, error handling, error logging, security logging, security audit, session management, subscription management, report calculations, date utilities, and date serialization
+- **Data Access Layer**: Abstracted data access interface (`lib/`) for seamless migration to backend services
+- **Testing**: Comprehensive test suite with Jest and React Native Testing Library covering components, services, stores, utils, and integration flows
 - **Number Formatting**: Indian numbering system implementation for all amounts and quantities (e.g., ₹12,34,567 instead of ₹1,234,567)
 - **Configuration**: Comprehensive app configuration with constants, error messages, and centralized UI_CONFIG color system
 
 ### 🔧 **Current Implementation Details:**
-- **Local Storage**: All data persisted using AsyncStorage
+- **Local Storage**: All data persisted using AsyncStorage with abstracted data access layer
 - **Maps**: React Native Maps integration for location selection
 - **Image Picker**: Expo Image Picker for profile photo uploads
 - **Document Picker**: Support for driver license and vehicle registration documents
 - **Location Services**: Expo Location for GPS and location services
 - **Notifications**: Expo Notifications setup (in-app notifications)
+- **Testing**: Jest test suite with coverage reporting for components, services, stores, utils, and integration flows
+- **Error Handling**: Centralized error handling with comprehensive error types and logging
 
 ### 📋 **Future Enhancements:**
 1. Online payment gateway integration (Razorpay/Stripe)
@@ -279,8 +304,44 @@ This formatting is applied consistently across:
 7. Immediate/ASAP bookings
 8. Performance optimization and animations
 
+## Testing
+
+The project includes a comprehensive test suite using Jest and React Native Testing Library:
+
+- **Component Tests**: Tests for admin, customer, and driver components
+- **Service Tests**: Tests for all service layers (auth, booking, payment, location, etc.)
+- **Store Tests**: Tests for Zustand stores (auth, booking, user, vehicle)
+- **Utility Tests**: Tests for validation, sanitization, pricing, error handling, and other utilities
+- **Integration Tests**: End-to-end flow tests for booking and payment workflows
+- **Coverage Reports**: Generate coverage reports with `npm run test:coverage`
+
+Test files are located in `src/__tests__/` mirroring the source structure.
+
+## Scripts
+
+Available npm scripts:
+
+- `npm start` - Start Expo development server
+- `npm run android` - Start Expo with Android
+- `npm run ios` - Start Expo with iOS
+- `npm run web` - Start Expo with web
+- `npm test` - Run Jest tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage report
+
+Additional utility scripts in `scripts/`:
+- `test-admin-role.ts` - Admin role testing utilities
+- `test-general-auth.ts` - General authentication testing
+- `reset-rate-limits.ts` - Reset rate limiting for testing
+
 ## Additional Documentation
 
 - **[MIGRATION_PHONE_TO_EMAIL_AUTH.md](./MIGRATION_PHONE_TO_EMAIL_AUTH.md)**: Comprehensive guide documenting the migration from phone+password to email+password authentication
 - **[SECURITY.md](./SECURITY.md)**: Detailed security documentation covering authentication, authorization, data protection, rate limiting, session management, and security monitoring
+- **[SUPABASE_MIGRATION_PLAN.md](./SUPABASE_MIGRATION_PLAN.md)**: Complete migration plan from AsyncStorage to Supabase with database schema design
+- **[PENDING_ITEMS_SUPABASE.md](./PENDING_ITEMS_SUPABASE.md)**: Pending items and tasks for Supabase migration
+- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)**: Summary of implementation details and decisions
+- **[CODE_QUALITY_REPORT.md](./CODE_QUALITY_REPORT.md)**: Code quality analysis and recommendations
+- **[CODE_REVIEW_PRE_MIGRATION.md](./CODE_REVIEW_PRE_MIGRATION.md)**: Pre-migration code review findings
+- **[ERROR_HANDLING_ANALYSIS.md](./ERROR_HANDLING_ANALYSIS.md)**: Error handling patterns and analysis
 - **[scripts/README.md](./scripts/README.md)**: Testing guides and scripts for admin role and general authentication testing

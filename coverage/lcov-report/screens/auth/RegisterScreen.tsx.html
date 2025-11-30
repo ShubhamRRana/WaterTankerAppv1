@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/122</span>
+                <span class='fraction'>0/142</span>
             </div>
         
             
@@ -1224,28 +1224,28 @@ const RegisterScreen: React.FC&lt;Props&gt; = <span class="cstat-no" title="stat
     const passwordValidation = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >ValidationUtils.validatePassword(password);</span></span>
     const nameValidation<span class="cstat-no" title="statement not covered" > = <span class="cstat-no" title="statement not covered" >ValidationUtils.validateName(sanitizedName)</span>;</span>
     const confirmPasswordValidation = <span class="cstat-no" title="statement not covered" >ValidationUtils.validateConfirmPassword(password, confirmPassword);</span>
-    const <span class="cstat-no" title="statement not covered" >phoneValidation </span>= <span class="cstat-no" title="statement not covered" >ValidationUtils.validatePhone(sanitizedPhone);</span>
+    const phoneValidation = <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >ValidationUtils.</span>validatePhone(sanitizedPhone);</span>
     
-    const newErrors: any = <span class="cstat-no" title="statement not covered" >{};</span>
+    const newErrors: Record&lt;string, string&gt; = <span class="cstat-no" title="statement not covered" >{};</span>
     
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!emailValidation.isValid) {</span>
-<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >      newErrors.email = emailValidation.e</span>rror;</span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >      newErrors.email = emailValidation.error || '</span>';</span>
     }
     
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!passwordValidation.isValid) {</span>
-<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>newErrors.password = passwordValidation.error;</span></span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>newErrors.password = passwordValidation.error || '';</span></span>
 <span class="cstat-no" title="statement not covered" >    }</span>
     
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!nameValidation.isValid) {</span>
-<span class="cstat-no" title="statement not covered" >      newErrors.name = nameValidation.error;</span>
+<span class="cstat-no" title="statement not covered" >      newErrors.name = nameValidation.error || '';</span>
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>}</span>
     
-<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!confirmPasswordValidation.isValid)</span> {</span>
-<span class="cstat-no" title="statement not covered" >      newErrors.confirmPassword = confirmPasswordValidation.error;</span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!confirmPasswordValidation.isValid) {</span></span>
+<span class="cstat-no" title="statement not covered" >      newErrors.confirmPassword = confirmPasswordValidation.error || '';</span>
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (!phoneValidation.isValid) {</span>
-<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >      newErrors.phone = phoneValidation.error;</span></span>
+<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >      newErrors.phone = phoneValidation.error || '';</span></span>
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (Object.keys(newErrors).length &gt; 0) {</span>
@@ -1519,7 +1519,7 @@ const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-30T10:10:31.172Z
+                at 2025-11-30T13:56:33.409Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -38,7 +38,6 @@ describe('Report Calculations', () => {
     basePrice: 600,
     distanceCharge: 50,
     agencyId: 'agency-1',
-    isImmediate: true,
     paymentStatus: 'completed',
     canCancel: false,
   });

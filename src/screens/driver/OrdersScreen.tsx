@@ -82,7 +82,7 @@ const OrdersScreen: React.FC = () => {
       }
       
       // Cache will be updated from the store's bookings via useEffect after fetch completes
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Don't set error if request was aborted
       if (signal.aborted) return;
       

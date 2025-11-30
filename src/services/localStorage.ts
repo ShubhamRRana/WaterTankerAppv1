@@ -271,8 +271,6 @@ export class LocalStorageService {
         licenseNumber: 'DL111222333',
         createdAt: new Date(),
         createdByAdmin: true, // Admin-created driver - should be able to login
-        isApproved: true,
-        isAvailable: true,
         totalEarnings: 0,
         completedOrders: 0,
       },
@@ -306,8 +304,6 @@ export class LocalStorageService {
         licenseNumber: 'DL987654321',
         createdAt: new Date(),
         createdByAdmin: true, // Admin-created driver - should be able to login for multi-role test
-        isApproved: true,
-        isAvailable: true,
         totalEarnings: 0,
         completedOrders: 0,
       }

@@ -4,16 +4,41 @@ import {
   TextInput,
   StyleSheet,
   TextInputProps,
+  ViewStyle,
+  StyleProp,
 } from 'react-native';
 import { UI_CONFIG } from '../../constants/config';
 import Typography from './Typography';
 
+/**
+ * Input component props
+ * Extends React Native's TextInputProps with additional styling and error handling
+ */
 interface InputProps extends TextInputProps {
+  /** Optional label text displayed above the input */
   label?: string;
+  /** Error message to display below the input */
   error?: string;
-  containerStyle?: any;
+  /** Additional styles for the container */
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
+/**
+ * Reusable Input component with label and error display
+ * 
+ * Extends React Native's TextInput with consistent styling, label support, and error handling.
+ * 
+ * @example
+ * ```tsx
+ * <Input
+ *   label="Email"
+ *   value={email}
+ *   onChangeText={setEmail}
+ *   error={emailError}
+ *   keyboardType="email-address"
+ * />
+ * ```
+ */
 const Input: React.FC<InputProps> = ({
   label,
   error,

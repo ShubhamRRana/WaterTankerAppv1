@@ -12,6 +12,7 @@ import { Typography, Card } from '../common';
 import { Booking, BookingStatus } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
+import { formatDateTime } from '../../utils/dateUtils';
 
 export interface BookingDetailsModalProps {
   visible: boolean;
@@ -92,13 +93,7 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
               <View style={styles.detailItem}>
                 <Typography variant="body" style={styles.detailLabel}>Delivered At:</Typography>
                 <Typography variant="body" style={styles.detailValue}>
-                  {new Date(booking.deliveredAt).toLocaleDateString('en-IN', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                  {formatDateTime(booking.deliveredAt)}
                 </Typography>
               </View>
             )}
@@ -130,12 +125,14 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
                   {booking.driverName}
                 </Typography>
               </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Phone:</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {booking.driverPhone}
-                </Typography>
-              </View>
+              {booking.driverPhone && (
+                <View style={styles.detailItem}>
+                  <Typography variant="body" style={styles.detailLabel}>Phone:</Typography>
+                  <Typography variant="body" style={styles.detailValue}>
+                    {booking.driverPhone}
+                  </Typography>
+                </View>
+              )}
             </Card>
           )}
         </ScrollView>

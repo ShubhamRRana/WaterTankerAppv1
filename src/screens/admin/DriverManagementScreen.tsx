@@ -23,7 +23,6 @@ import { UI_CONFIG } from '../../constants/config';
 import { User, DriverUser, isDriverUser } from '../../types';
 import { ValidationUtils } from '../../utils/validation';
 import { SanitizationUtils } from '../../utils/sanitization';
-import { PricingUtils } from '../../utils/pricing';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { AuthService } from '../../services/auth.service';
 
@@ -129,56 +128,6 @@ const DriverManagementScreen: React.FC = () => {
     }
   };
 
-  const handleApproveDriver = async (driverId: string) => {
-    Alert.alert(
-      'Approve Driver',
-      'Are you sure you want to approve this driver?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Approve',
-          onPress: async () => {
-            try {
-              await updateUser(driverId, { isApproved: true });
-              Alert.alert('Success', 'Driver approved successfully');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to approve driver');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleRejectDriver = async (driverId: string) => {
-    Alert.alert(
-      'Reject Driver',
-      'Are you sure you want to reject this driver?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reject',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await updateUser(driverId, { isApproved: false });
-              Alert.alert('Success', 'Driver rejected successfully');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to reject driver');
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const toggleDriverAvailability = async (driverId: string, currentStatus: boolean) => {
-    try {
-      await updateUser(driverId, { isAvailable: !currentStatus });
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update driver availability');
-    }
-  };
 
   const validateAddDriverForm = (isEditMode: boolean = false) => {
     const errors: {[key: string]: string} = {};
@@ -265,7 +214,7 @@ const DriverManagementScreen: React.FC = () => {
         // Use AuthService.register() to properly create driver account with authentication
         const licenseExpiryDate = (() => {
           const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
-          if (!m) return undefined as any;
+          if (!m) return undefined;
           const d = parseInt(m[1], 10);
           const mo = parseInt(m[2], 10) - 1;
           const y = parseInt(m[3], 10);
@@ -279,8 +228,6 @@ const DriverManagementScreen: React.FC = () => {
           'driver',
           {
             phone: addDriverForm.phone ? addDriverForm.phone : undefined,
-            isApproved: true, // Auto-approve when added by admin
-            isAvailable: true,
             totalEarnings: 0,
             completedOrders: 0,
             createdByAdmin: true, // Mark as created by admin
@@ -313,7 +260,7 @@ const DriverManagementScreen: React.FC = () => {
         }
         
         // Update existing driver
-        const updateData: any = {
+        const updateData: Partial<DriverUser> = {
           name: addDriverForm.name.trim(),
           email: SanitizationUtils.sanitizeEmail(addDriverForm.email),
           phone: addDriverForm.phone ? addDriverForm.phone : undefined,
@@ -322,7 +269,7 @@ const DriverManagementScreen: React.FC = () => {
           emergencyContactPhone: addDriverForm.emergencyContactPhone,
           licenseExpiry: (() => {
             const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
-            if (!m) return undefined as any;
+            if (!m) return undefined;
             const d = parseInt(m[1], 10);
             const mo = parseInt(m[2], 10) - 1;
             const y = parseInt(m[3], 10);
@@ -468,17 +415,6 @@ const DriverManagementScreen: React.FC = () => {
     return matchesSearch;
   });
 
-  const getStatusColor = (driver: DriverUser) => {
-    if (driver.isApproved === true) return UI_CONFIG.colors.success;
-    if (driver.isApproved === false) return UI_CONFIG.colors.error;
-    return UI_CONFIG.colors.warning;
-  };
-
-  const getStatusText = (driver: DriverUser) => {
-    if (driver.isApproved === true) return 'Approved';
-    if (driver.isApproved === false) return 'Rejected';
-    return 'Pending';
-  };
 
   const handleLogout = async () => {
     try {
@@ -588,8 +524,6 @@ const DriverManagementScreen: React.FC = () => {
                     setShowDriverModal(true);
                   }}
                   onEdit={handleEditDriver}
-                  onApprove={handleApproveDriver}
-                  onReject={handleRejectDriver}
                 />
               ))}
             </>
@@ -610,8 +544,6 @@ const DriverManagementScreen: React.FC = () => {
         visible={showDriverModal}
         onClose={() => setShowDriverModal(false)}
         driver={selectedDriver}
-        onApprove={handleApproveDriver}
-        onReject={handleRejectDriver}
       />
       <AddDriverModal 
         visible={showAddDriverModal}

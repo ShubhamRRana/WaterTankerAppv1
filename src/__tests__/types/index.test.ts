@@ -123,7 +123,6 @@ describe('Type Guards', () => {
         expect(user.role).toBe('driver');
         // DriverUser specific properties should be accessible
         expect(user.vehicleNumber).toBeUndefined();
-        expect(user.isApproved).toBeUndefined();
       }
     });
   });

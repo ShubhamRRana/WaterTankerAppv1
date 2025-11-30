@@ -24,6 +24,7 @@ import {
   calculateYearlyData,
   calculateMonthlyBreakdown,
 } from '../../utils/reportCalculations';
+import { errorLogger } from '../../utils/errorLogger';
 
 const { width } = Dimensions.get('window');
 
@@ -112,7 +113,8 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
     try {
       await fetchCustomerBookings(user.id);
     } catch (error) {
-          }
+      errorLogger.medium('Failed to load past orders', error, { userId: user.id });
+    }
   };
 
 

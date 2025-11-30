@@ -21,6 +21,7 @@ import { Typography, Card, Button, LoadingSpinner, Input, AdminMenuDrawer } from
 import { Vehicle } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
+import { formatDateOnly } from '../../utils/dateUtils';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 
 type VehicleManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Vehicles'>;
@@ -576,7 +577,7 @@ const VehicleManagementScreen: React.FC = () => {
           <View style={styles.detailRow}>
             <Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.detailText}>
-              Insurance Expiry: {new Date(vehicle.insuranceExpiryDate).toLocaleDateString()}
+              Insurance Expiry: {formatDateOnly(vehicle.insuranceExpiryDate)}
             </Typography>
           </View>
           <View style={styles.detailRow}>
@@ -636,7 +637,7 @@ const VehicleManagementScreen: React.FC = () => {
               <View style={styles.detailItem}>
                 <Typography variant="body" style={styles.detailLabel}>Insurance Expiry Date</Typography>
                 <Typography variant="body" style={styles.detailValue}>
-                  {new Date(selectedVehicle.insuranceExpiryDate).toLocaleDateString()}
+                  {formatDateOnly(selectedVehicle.insuranceExpiryDate)}
                 </Typography>
               </View>
               <View style={styles.detailItem}>
@@ -654,7 +655,7 @@ const VehicleManagementScreen: React.FC = () => {
               <View style={styles.detailItem}>
                 <Typography variant="body" style={styles.detailLabel}>Created At</Typography>
                 <Typography variant="body" style={styles.detailValue}>
-                  {new Date(selectedVehicle.createdAt).toLocaleDateString()}
+                  {formatDateOnly(selectedVehicle.createdAt)}
                 </Typography>
               </View>
             </Card>

@@ -24,6 +24,8 @@ import { Booking, BookingStatus } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
+import { errorLogger } from '../../utils/errorLogger';
+import { formatDateTime } from '../../utils/dateUtils';
 
 type CustomerHomeScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Home'>;
 
@@ -60,7 +62,8 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = () => {
     try {
       await fetchCustomerBookings(user.id);
     } catch (error) {
-          }
+      errorLogger.medium('Failed to load customer bookings', error, { userId: user.id });
+    }
   };
 
   const onRefresh = async () => {
@@ -68,7 +71,8 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = () => {
     try {
       await loadCustomerData();
     } catch (error) {
-          } finally {
+      errorLogger.medium('Failed to refresh customer data', error, { userId: user?.id });
+    } finally {
       setRefreshing(false);
     }
   };
@@ -145,24 +149,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = () => {
     .slice(0, 3);
 
   const formatDate = (date: Date | string) => {
-    try {
-      // Handle both Date objects and date strings
-      const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
-      
-      // Check if the date is valid
-      if (isNaN(dateObj.getTime())) {
-        return 'Unknown date';
-      }
-      
-      return dateObj.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch (error) {
-            return 'Unknown date';
-    }
+    return formatDateTime(date);
   };
 
   const formatPrice = (price: number) => {

@@ -237,9 +237,9 @@ export class SanitizationUtils {
   /**
    * Sanitize an object by sanitizing all string values
    */
-  static sanitizeObject<T extends Record<string, any>>(
+  static sanitizeObject<T extends Record<string, unknown>>(
     obj: T,
-    sanitizers?: { [K in keyof T]?: (value: any) => any }
+    sanitizers?: { [K in keyof T]?: (value: T[K]) => T[K] }
   ): T {
     if (!obj || typeof obj !== 'object') {
       return obj;

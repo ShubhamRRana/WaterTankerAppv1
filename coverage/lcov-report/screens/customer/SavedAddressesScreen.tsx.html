@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/124</span>
+                <span class='fraction'>0/125</span>
             </div>
         
             
@@ -593,7 +593,8 @@
 <a name='L528'></a><a href='#L528'>528</a>
 <a name='L529'></a><a href='#L529'>529</a>
 <a name='L530'></a><a href='#L530'>530</a>
-<a name='L531'></a><a href='#L531'>531</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L531'></a><a href='#L531'>531</a>
+<a name='L532'></a><a href='#L532'>532</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -664,14 +665,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1143,7 +1145,7 @@ import Button from '../../components/common/Button';
 <span class="cstat-no" title="statement not covered" >import { Address, isCustomerUser } from '../../types';</span>
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 <span class="cstat-no" title="statement not covered" >import { LocalStorageService } from '../../services/localStorage';</span>
-<span class="cstat-no" title="statement not covered" >import { UI_CONFIG } from '../../constants/config';</span>
+<span class="cstat-no" title="statement not covered" >import { UI_CONFIG, LOCATION_CONFIG } from '../../constants/config';</span>
 <span class="cstat-no" title="statement not covered" >import { ValidationUtils, SanitizationUtils } from '../../utils';</span>
 &nbsp;
 type SavedAddressesScreenNavigationProp = StackNavigationProp&lt;CustomerStackParamList, 'SavedAddresses'&gt;;
@@ -1193,8 +1195,8 @@ const SavedAddressesScreen: React.FC&lt;SavedAddressesScreenProps&gt; = <span cl
 <span class="cstat-no" title="statement not covered" >    try {</span>
       let updatedAddresses: Address[];
       
-<span class="cstat-no" title="statement not covered" >      if (editingAddress) {<span class="cstat-no" title="statement not covered" ></span></span>
-        // Update existing address
+<span class="cstat-no" title="statement not covered" >      if (editingAddress) {</span>
+<span class="cstat-no" title="statement not covered" >        // Update existing address</span>
         const updatedAddress: Address = <span class="cstat-no" title="statement not covered" >{</span>
           ...editingAddress,
           address: sanitizedAddress,
@@ -1203,13 +1205,14 @@ const SavedAddressesScreen: React.FC&lt;SavedAddressesScreenProps&gt; = <span cl
 <span class="cstat-no" title="statement not covered" >        updatedAddresses = addresses.map(<span class="fstat-no" title="function not covered" >addr </span>=&gt; </span>
 <span class="cstat-no" title="statement not covered" >          addr.id === editingAddress.id ? updatedAddress : addr</span>
         );
-      } else <span class="cstat-no" title="statement not covered" >{</span>
-        // Add new address
+      } else {
+<span class="cstat-no" title="statement not covered" >        // Add new address</span>
+        // TODO: Replace mock coordinates with actual geocoding service
         const addressToSave: Address = <span class="cstat-no" title="statement not covered" >{</span>
 <span class="cstat-no" title="statement not covered" >          id: LocalStorageService.</span>generateId(),
           address: sanitizedAddress,
-          latitude: 28.6139 + (Math.random() - 0.5) * 0.1,
-<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>longitude: 77.2090 + (Math.random() - 0.5) * 0.1,</span>
+          latitude: LOCATION_CONFIG.defaultCenter.latitude + (Math.random() - 0.5) * 0.1,
+<span class="cstat-no" title="statement not covered" >          <span class="missing-if-branch" title="if path not taken" >I</span>longitude: LOCATION_CONFIG.defaultCenter.longitude + (Math.random() - 0.5) * 0.1,</span>
 <span class="cstat-no" title="statement not covered" >          isDefault: addresses.length === 0, // First address becomes default</span>
         };
         
@@ -1660,7 +1663,7 @@ const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-30T10:10:31.172Z
+                at 2025-11-30T13:56:33.409Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

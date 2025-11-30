@@ -22,6 +22,8 @@ import { Booking, BookingStatus } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
 import { UI_CONFIG } from '../../constants/config';
+import { errorLogger } from '../../utils/errorLogger';
+import { formatDateTime } from '../../utils/dateUtils';
 
 type OrderHistoryScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Orders'>;
 
@@ -78,7 +80,9 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
     try {
       await fetchCustomerBookings(user.id);
     } catch (error) {
-          }
+      errorLogger.medium('Failed to load customer bookings', error, { userId: user.id });
+      Alert.alert('Error', 'Failed to load your orders. Please try again.');
+    }
   };
 
   const onRefresh = async () => {
@@ -86,7 +90,9 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
     try {
       await loadBookings();
     } catch (error) {
-          } finally {
+      errorLogger.medium('Failed to refresh customer bookings', error, { userId: user?.id });
+      // Error already handled in loadBookings, no need to show alert again
+    } finally {
       setRefreshing(false);
     }
   };
@@ -173,25 +179,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
   }, []);
 
   const formatDate = useCallback((date: Date | string) => {
-    try {
-      // Handle both Date objects and date strings
-      const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
-      
-      // Check if the date is valid
-      if (isNaN(dateObj.getTime())) {
-        return 'Unknown date';
-      }
-      
-      return dateObj.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch (error) {
-            return 'Unknown date';
-    }
+    return formatDateTime(date);
   }, []);
 
 
@@ -361,7 +349,9 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                 <View style={styles.driverInfo}>
                   <Ionicons name="person" size={16} color={UI_CONFIG.colors.secondary} />
                   <Typography variant="body" style={styles.driverText}>Driver: {booking.driverName}</Typography>
-                  <Typography variant="caption" style={styles.driverPhone}>{booking.driverPhone}</Typography>
+                  {booking.driverPhone && (
+                    <Typography variant="caption" style={styles.driverPhone}>{booking.driverPhone}</Typography>
+                  )}
                 </View>
               )}
 

@@ -1,19 +1,40 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
+  ViewStyle,
+  StyleProp,
 } from 'react-native';
 import { UI_CONFIG } from '../../constants/config';
 
+/**
+ * Card component props
+ */
 interface CardProps {
+  /** Content to display inside the card */
   children: React.ReactNode;
-  style?: any;
+  /** Additional styles to apply to the card */
+  style?: StyleProp<ViewStyle>;
+  /** Optional callback when card is pressed (makes card pressable) */
   onPress?: () => void;
+  /** Padding size for the card content */
   padding?: 'small' | 'medium' | 'large';
 }
 
+/**
+ * Reusable Card component with optional press functionality
+ * 
+ * Provides a consistent card container with shadow, rounded corners, and configurable padding.
+ * Can be made pressable by providing an onPress callback.
+ * 
+ * @example
+ * ```tsx
+ * <Card padding="medium" onPress={handlePress}>
+ *   <Typography>Card Content</Typography>
+ * </Card>
+ * ```
+ */
 const Card: React.FC<CardProps> = ({
   children,
   style,

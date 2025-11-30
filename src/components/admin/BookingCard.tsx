@@ -10,6 +10,8 @@ import { Booking, BookingStatus, isCustomerUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 import { UserService } from '../../services/user.service';
+import { errorLogger } from '../../utils/errorLogger';
+import { formatDateTime } from '../../utils/dateUtils';
 
 export interface BookingCardProps {
   booking: Booking;
@@ -37,7 +39,11 @@ const BookingCard: React.FC<BookingCardProps> = ({
           }
         }
       } catch (error) {
-        // Silently fail - profile address is optional
+        // Profile address is optional, but log for debugging
+        errorLogger.low('Failed to fetch customer profile address', error, { 
+          bookingId: booking.id, 
+          customerId: booking.customerId 
+        });
       }
     };
     fetchCustomerAddress();
@@ -46,23 +52,11 @@ const BookingCard: React.FC<BookingCardProps> = ({
   const statusColor = useMemo(() => getStatusColor(booking.status), [booking.status, getStatusColor]);
   const statusIcon = useMemo(() => getStatusIcon(booking.status), [booking.status, getStatusIcon]);
   const formattedDate = useMemo(() => {
-    return new Date(booking.createdAt).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateTime(booking.createdAt);
   }, [booking.createdAt]);
   const formattedDeliveredDate = useMemo(() => {
     if (!booking.deliveredAt) return null;
-    return new Date(booking.deliveredAt).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateTime(booking.deliveredAt);
   }, [booking.deliveredAt]);
   const bookingIdShort = useMemo(() => booking.id.slice(-8), [booking.id]);
   const statusText = useMemo(() => booking.status.replace('_', ' ').toUpperCase(), [booking.status]);

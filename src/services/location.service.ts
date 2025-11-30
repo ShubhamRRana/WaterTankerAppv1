@@ -5,6 +5,7 @@
 // Uses expo-location for React Native compatibility.
 
 import * as ExpoLocation from 'expo-location';
+import { LOCATION_CONFIG } from '../constants/config';
 
 export interface Location {
   latitude: number;
@@ -170,13 +171,12 @@ export class LocationService {
 
   // Validate if location is within service area
   static isWithinServiceArea(location: Location): boolean {
-    // Define service area boundaries (example: within 50km of city center)
     const serviceCenter: Location = {
-      latitude: 28.6139, // Delhi coordinates as example
-      longitude: 77.2090,
+      latitude: LOCATION_CONFIG.defaultCenter.latitude,
+      longitude: LOCATION_CONFIG.defaultCenter.longitude,
     };
     
     const distance = this.calculateDistance(location, serviceCenter);
-    return distance <= 50; // 50km radius
+    return distance <= LOCATION_CONFIG.serviceRadius;
   }
 }

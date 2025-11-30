@@ -42,7 +42,12 @@ const TankerSelectionModal: React.FC<TankerSelectionModalProps> = ({
   loading,
   selectedAgency,
 }) => {
-  const handleVehicleSelection = (vehicle: any) => {
+  const handleVehicleSelection = (vehicle: {
+    id: string;
+    vehicleCapacity: number;
+    amount: number;
+    vehicleNumber: string;
+  }) => {
     onSelectVehicle({
       id: vehicle.id,
       capacity: vehicle.vehicleCapacity,

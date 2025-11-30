@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import { User, UserRole } from '../types/index';
 import { AuthService } from '../services/auth.service';
 
+/**
+ * Authentication store state interface
+ * 
+ * Manages user authentication state, loading states, and authentication operations.
+ * Uses Zustand for state management.
+ */
 interface AuthState {
   user: User | null;
   isLoading: boolean;
@@ -25,6 +31,22 @@ interface AuthState {
   unsubscribeFromAuthChanges: () => void;
 }
 
+/**
+ * Authentication store using Zustand
+ * 
+ * Provides global authentication state management including:
+ * - User data and authentication status
+ * - Login, logout, and registration operations
+ * - User profile updates
+ * - Real-time auth state subscriptions (placeholder for Supabase)
+ * 
+ * @example
+ * ```tsx
+ * const { user, login, logout, isAuthenticated } = useAuthStore();
+ * 
+ * await login('user@example.com', 'password');
+ * ```
+ */
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,

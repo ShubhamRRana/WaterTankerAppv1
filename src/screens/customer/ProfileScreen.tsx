@@ -21,6 +21,7 @@ import { User } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { UI_CONFIG } from '../../constants/config';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
+import { formatDateOnly } from '../../utils/dateUtils';
 
 type ProfileScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Profile'>;
 
@@ -197,21 +198,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   };
 
   const formatDate = (date: Date | string) => {
-    try {
-      const dateObj = typeof date === 'string' ? new Date(date) : date;
-      
-      if (isNaN(dateObj.getTime())) {
-        return 'Unknown date';
-      }
-      
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }).format(dateObj);
-    } catch (error) {
-            return 'Unknown date';
-    }
+    return formatDateOnly(date, 'en-US');
   };
 
   if (isLoading) {

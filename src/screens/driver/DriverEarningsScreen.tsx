@@ -16,6 +16,8 @@ import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { Booking, DriverDashboardStats } from '../../types';
 import { PricingUtils } from '../../utils/pricing';
+import { errorLogger } from '../../utils/errorLogger';
+import { formatDateOnly, formatTimeOnly } from '../../utils/dateUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -109,7 +111,8 @@ const DriverEarningsScreen: React.FC = () => {
       await fetchDriverBookings(user.id);
       calculateEarningsStats();
     } catch (error) {
-          }
+      errorLogger.medium('Failed to load driver bookings', error, { userId: user.id });
+    }
   }, [user?.id, fetchDriverBookings, calculateEarningsStats]);
 
   useEffect(() => {
@@ -214,18 +217,11 @@ const DriverEarningsScreen: React.FC = () => {
   };
 
   const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    }).format(date);
+    return formatDateOnly(date);
   };
 
   const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat('en-IN', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+    return formatTimeOnly(date);
   };
 
   if (isLoading && !earningsStats) {

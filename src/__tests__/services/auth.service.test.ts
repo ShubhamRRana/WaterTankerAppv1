@@ -42,7 +42,6 @@ describe('AuthService', () => {
     role: 'driver',
     licenseNumber: 'DL123456',
     vehicleNumber: 'ABC123',
-    isApproved: true,
     isAvailable: true,
     createdByAdmin: true,
   };
@@ -221,7 +220,6 @@ describe('AuthService', () => {
           phone: '9876543210',
           vehicleNumber: 'XYZ789',
           licenseNumber: 'DL987654',
-          isApproved: true,
         }
       );
 
@@ -229,7 +227,6 @@ describe('AuthService', () => {
       const driver = result.user as DriverUser;
       expect(driver.vehicleNumber).toBe('XYZ789');
       expect(driver.licenseNumber).toBe('DL987654');
-      expect(driver.isApproved).toBe(true);
     });
 
     it('should include admin-specific fields when registering admin', async () => {

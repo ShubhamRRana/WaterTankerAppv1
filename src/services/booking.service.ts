@@ -1,6 +1,25 @@
 import { LocalStorageService } from './localStorage';
 import { Booking, BookingStatus } from '../types/index';
 
+/**
+ * Booking Service
+ * 
+ * Handles all booking-related operations including creation, updates, status changes,
+ * and retrieval of bookings. Uses LocalStorageService for data persistence.
+ * 
+ * @example
+ * ```typescript
+ * // Create a new booking
+ * const bookingId = await BookingService.createBooking({
+ *   customerId: 'customer-123',
+ *   agencyId: 'agency-456',
+ *   // ... other booking data
+ * });
+ * 
+ * // Update booking status
+ * await BookingService.updateBookingStatus(bookingId, 'accepted');
+ * ```
+ */
 export class BookingService {
   /**
    * Create a new booking in local storage
