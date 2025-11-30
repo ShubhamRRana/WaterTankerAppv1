@@ -957,7 +957,7 @@ const Orders<span class="cstat-no" title="statement not covered" >Screen: React.
   const CACHE_EXPIRY <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >= <span class="cstat-no" title="statement not covered" ></span>5 * 60 * 1000;</span></span>
 <span class="cstat-no" title="statement not covered" ></span>
   const loadOrdersData = <span class="cstat-no" title="statement not covered" >useC<span class="cstat-no" title="statement not covered" >allback(<span class="fstat-no" title="function not covered" >as</span>ync (forceRefresh = <span class="branch-0 cbranch-no" title="branch not covered" >fa</span>lse)</span> =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (!user?.uid) <span class="cstat-no" title="statement not covered" >return;<span class="cstat-no" title="statement not covered" ></span></span></span>
+<span class="cstat-no" title="statement not covered" >    if (!user?.id) <span class="cstat-no" title="statement not covered" >return;<span class="cstat-no" title="statement not covered" ></span></span></span>
     <span class="cstat-no" title="statement not covered" ></span>
     // Cancel any in-flight request<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    if (abortControllerRef.current) {<span class="cstat-no" title="statement not covered" ></span></span>
@@ -985,7 +985,7 @@ const Orders<span class="cstat-no" title="statement not covered" >Screen: React.
 <span class="cstat-no" title="statement not covered" >      if (activeTab === 'available') {</span>
 <span class="cstat-no" title="statement not covered" >        await fetchAvaila<span class="cstat-no" title="statement not covered" >bleBooking</span>s();</span>
       } else {<span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >        await fetchD<span class="cstat-no" title="statement not covered" >riverBookin</span>gs(user.uid);</span>
+<span class="cstat-no" title="statement not covered" >        await fetchD<span class="cstat-no" title="statement not covered" >riverBookin</span>gs(user.id);</span>
       }<span class="cstat-no" title="statement not covered" ></span>
       
       // Cac<span class="cstat-no" title="statement not covered" >he will </span>be updated from the store's bookings via useEffect after fetch completes
@@ -996,11 +996,11 @@ const Orders<span class="cstat-no" title="statement not covered" >Screen: React.
       co<span class="cstat-no" title="statement not covered" >nst errorMessage = <span class="cstat-no" title="statement not covered" >error instanceof Error ? error.message : 'Failed to load orders';</span></span>
 <span class="cstat-no" title="statement not covered" >      setLoc<span class="cstat-no" title="statement not covered" >alError(errorMessage)</span>;</span>
           }<span class="cstat-no" title="statement not covered" ></span>
-  }, [active<span class="cstat-no" title="statement not covered" >Tab, user?.uid, fetchAvailableBookings, fetchDriverBookings, clearError]);</span>
+  }, [active<span class="cstat-no" title="statement not covered" >Tab, user?.id, fetchAvailableBookings, fetchDriverBookings, clearError]);</span>
 <span class="cstat-no" title="statement not covered" ></span>
   // Load data when tab changes (only once, not on focus)
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
-    // Track tab<span class="cstat-no" title="statement not covered" > change time to distinguish from navi</span>gation returns
+    // Track tab<span class="cstat-no" title="statement not covered" > change time to distinguish from nav</span>igation returns
     const previousTab = <span class="cstat-no" title="statement not covered" >previousTabRef.current;</span>
     const isTabChange = <span class="cstat-no" title="statement not covered" >previousTab !== activeTab;</span>
     
@@ -1015,7 +1015,7 @@ const Orders<span class="cstat-no" title="statement not covered" >Screen: React.
 <span class="cstat-no" title="statement not covered" >    loadOrdersData().finally(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >      setIsInitialLoading(f<span class="fstat-no" title="function not covered" >al</span>se);</span></span>
     });
-  }, [activeTab, user?.uid])<span class="cstat-no" title="statement not covered" >; // Only depend on act</span>iveTab and user, not loadOrdersData
+  }, [activeTab, user?.id]);<span class="cstat-no" title="statement not covered" > // Only depend on acti</span>veTab and user, not loadOrdersData
 <span class="cstat-no" title="statement not covered" ></span>
   // Upd<span class="cstat-no" title="statement not covered" >ate cache when bookings change (after fetch completes)</span>
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span></span>
@@ -1058,7 +1058,7 @@ const Orders<span class="cstat-no" title="statement not covered" >Screen: React.
 <span class="cstat-no" title="statement not covered" >        // For other tabs, use normal cache expiry logic</span>
 <span class="cstat-no" title="statement not covered" >        loadOrdersData(true);</span>
       }<span class="cstat-no" title="statement not covered" ></span>
-    }, [acti<span class="cstat-no" title="statement not covered" >veTab, user?.uid, load</span>OrdersData])
+    }, [acti<span class="cstat-no" title="statement not covered" >veTab, user?.id, loadO</span>rdersData])
   );
   <span class="cstat-no" title="statement not covered" ></span>
   // Cleanup on unmount
@@ -1082,7 +1082,7 @@ const Orders<span class="cstat-no" title="statement not covered" >Screen: React.
   };<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" ></span>
   const <span class="cstat-no" title="statement not covered" >handleAcceptOrder = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span></span>ync (orderId: string) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (!user?.uid) <span class="cstat-no" title="statement not covered" >return;</span></span>
+<span class="cstat-no" title="statement not covered" >    if (!user?.id) <span class="cstat-no" title="statement not covered" >return;</span></span>
     <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span>
 <span class="cstat-no" title="statement not covered" >    setP<span class="cstat-no" title="statement not covered" >rocessingOrder(orderId);</span></span>
     <span class="cstat-no" title="statement not covered" ></span>
@@ -1092,7 +1092,7 @@ const Orders<span class="cstat-no" title="statement not covered" >Screen: React.
       co<span class="cstat-no" title="statement not covered" >nst optimisticBooking: Booking = <span class="cstat-no" title="statement not covered" >{</span></span>
         ...currentBooking,<span class="cstat-no" title="statement not covered" ></span>
         status: 'accepted',
-        driverId: user.uid,
+        driverId: user.id,
         driverName: user.name,
         driverPhone: user.phone || '',
         acceptedAt: new Date(),
@@ -1113,7 +1113,7 @@ const Orders<span class="cstat-no" title="statement not covered" >Screen: React.
     
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      await updateBookingStatus(orderId, 'accepted', {</span>
-        driverId: user.uid,
+        driverId: user.id,
         driverName: user.name,
         driverPhone: user.phone || '',
         acce<span class="cstat-no" title="statement not covered" >ptedAt: new Date(),</span>
@@ -1202,7 +1202,7 @@ const Orders<span class="cstat-no" title="statement not covered" >Screen: React.
   };<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span></span>
 &nbsp;
   const filtered<span class="cstat-no" title="statement not covered" >Orders = <span class="cstat-no" title="statement not covered" >useMemo(<span class="fstat-no" title="function not covered" >()</span>: Book<span class="fstat-no" title="function not covered" >in</span>g[] =&gt; {<span class="cstat-no" title="statement not covered" ></span></span></span>
-<span class="cstat-no" title="statement not covered" >    if (!user?.uid) <span class="cstat-no" title="statement not covered" >return [];</span></span>
+<span class="cstat-no" title="statement not covered" >    if (!user?.id) <span class="cstat-no" title="statement not covered" >return [];</span></span>
 &nbsp;
     // Use cache<span class="cstat-no" title="statement not covered" >d data if available and f<span class="fstat-no" title="function not covered" >re</span>sh, other<span class="cstat-no" title="statement not covered" >wise use store data</span></span>
     const cacheKey = <span class="cstat-no" title="statement not covered" >activeTab as 'available' | 'active' | 'completed';</span>
@@ -1219,17 +1219,17 @@ const Orders<span class="cstat-no" title="statement not covered" >Screen: React.
         );
       case 'active':
 <span class="cstat-no" title="statement not covered" >        return dataSource<span class="fstat-no" title="function not covered" >.f</span>ilter(<span class="fstat-no" title="function not covered" >bo</span>oking =&gt; </span>
-<span class="cstat-no" title="statement not covered" >          booking.dr<span class="cstat-no" title="statement not covered" >iverId === user.uid &amp;&amp; </span></span>
+<span class="cstat-no" title="statement not covered" >          booking.dr<span class="cstat-no" title="statement not covered" >iverId === user.id &amp;&amp; </span></span>
           (booking.statu<span class="cstat-no" title="statement not covered" >s === 'accepted'</span> || booking.status === 'in_transit')
         );
       case 'completed':
 <span class="cstat-no" title="statement not covered" >        return dataSourc<span class="cstat-no" title="statement not covered" >e.filter(<span class="fstat-no" title="function not covered" >bo</span>oking =&gt; </span></span>
-<span class="cstat-no" title="statement not covered" >          booking.driverId === user.uid &amp;&amp; booking.status === 'delivered'</span>
+<span class="cstat-no" title="statement not covered" >          booking.driverId === user.id &amp;&amp; booking.status === 'delivered'</span>
         );
       default:
 <span class="cstat-no" title="statement not covered" >        return [];</span>
     }
-  }, [bookings, activeTab, user?.uid]);
+  }, [bookings, activeTab, user?.id]);
 <span class="cstat-no" title="statement not covered" ></span>
   const <span class="cstat-no" title="statement not covered" >handleLogout = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    Alert.alert(</span>
@@ -1333,7 +1333,7 @@ export default OrdersScreen;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-28T22:31:12.417Z
+                at 2025-11-30T10:10:31.172Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

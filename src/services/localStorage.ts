@@ -63,10 +63,37 @@ export class LocalStorageService {
 
   // Booking management methods
   static async saveBooking(booking: Booking): Promise<void> {
-    const bookings = await this.getBookings();
-    const updatedBookings = [...bookings, booking];
-    const serialized = updatedBookings.map(b => serializeBookingDates(b as any));
-    await this.setItem('bookings', serialized);
+    try {
+      // Validate booking has required fields
+      if (!booking.id || !booking.customerId || !booking.customerName) {
+        throw new Error('Booking is missing required fields (id, customerId, or customerName)');
+      }
+
+      if (!booking.createdAt || !booking.updatedAt) {
+        throw new Error('Booking is missing required date fields (createdAt or updatedAt)');
+      }
+
+      // Validate dates are valid Date objects
+      if (!(booking.createdAt instanceof Date) || isNaN(booking.createdAt.getTime())) {
+        throw new Error('Invalid createdAt date');
+      }
+
+      if (!(booking.updatedAt instanceof Date) || isNaN(booking.updatedAt.getTime())) {
+        throw new Error('Invalid updatedAt date');
+      }
+
+      if (booking.scheduledFor && (!(booking.scheduledFor instanceof Date) || isNaN(booking.scheduledFor.getTime()))) {
+        throw new Error('Invalid scheduledFor date');
+      }
+
+      const bookings = await this.getBookings();
+      const updatedBookings = [...bookings, booking];
+      const serialized = updatedBookings.map(b => serializeBookingDates(b as any));
+      await this.setItem('bookings', serialized);
+    } catch (error) {
+      console.error('Error saving booking to local storage:', error);
+      throw error;
+    }
   }
 
   static async updateBooking(bookingId: string, updates: Partial<Booking>): Promise<void> {

@@ -312,17 +312,17 @@ const OrdersScreen: React.FC = () => {
         );
       case 'active':
         return dataSource.filter(booking => 
-          booking.driverId === user.uid && 
+          booking.driverId === user.id && 
           (booking.status === 'accepted' || booking.status === 'in_transit')
         );
       case 'completed':
         return dataSource.filter(booking => 
-          booking.driverId === user.uid && booking.status === 'delivered'
+          booking.driverId === user.id && booking.status === 'delivered'
         );
       default:
         return [];
     }
-  }, [bookings, activeTab, user?.uid]);
+  }, [bookings, activeTab, user?.id]);
 
   const handleLogout = () => {
     Alert.alert(

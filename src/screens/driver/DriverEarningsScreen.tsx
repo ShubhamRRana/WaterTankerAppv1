@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Animated
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, LoadingSpinner } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
@@ -41,50 +42,8 @@ const DriverEarningsScreen: React.FC = () => {
     { label: 'This Month', value: 'monthly' },
   ];
 
-  useEffect(() => {
-    if (user?.uid) {
-      loadDriverData();
-    }
-  }, [user?.uid, selectedPeriod]);
-
-  // Animate glider when selectedPeriod changes
-  useEffect(() => {
-    if (periodOptionWidth > 0) {
-      let periodIndex = 0;
-      if (selectedPeriod === 'daily') periodIndex = 0;
-      else if (selectedPeriod === 'weekly') periodIndex = 1;
-      else if (selectedPeriod === 'monthly') periodIndex = 2;
-      
-      const targetValue = periodIndex * periodOptionWidth;
-      
-      if (isInitialRender.current) {
-        // Initial render, set position immediately without animation
-        periodGliderAnim.setValue(targetValue);
-        isInitialRender.current = false;
-      } else {
-        // Animate to new position
-        Animated.spring(periodGliderAnim, {
-          toValue: targetValue,
-          useNativeDriver: true,
-          tension: 120,
-          friction: 8,
-        }).start();
-      }
-    }
-  }, [selectedPeriod, periodOptionWidth]);
-
-  const loadDriverData = async () => {
-    if (!user?.uid) return;
-    
-    try {
-      await fetchDriverBookings(user.uid);
-      calculateEarningsStats();
-    } catch (error) {
-          }
-  };
-
-  const calculateEarningsStats = () => {
-    if (!user?.uid || !bookings.length) {
+  const calculateEarningsStats = useCallback(() => {
+    if (!user?.id || !bookings.length) {
       setEarningsStats({
         totalEarnings: 0,
         completedOrders: 0,
@@ -141,7 +100,65 @@ const DriverEarningsScreen: React.FC = () => {
       isOnline: true,
       lastActiveAt: new Date(),
     });
-  };
+  }, [bookings, user?.id]);
+
+  const loadDriverData = useCallback(async () => {
+    if (!user?.id) return;
+    
+    try {
+      await fetchDriverBookings(user.id);
+      calculateEarningsStats();
+    } catch (error) {
+          }
+  }, [user?.id, fetchDriverBookings, calculateEarningsStats]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadDriverData();
+    }
+  }, [user?.id, selectedPeriod, loadDriverData]);
+
+  // Recalculate earnings when bookings change
+  useEffect(() => {
+    if (user?.id && bookings.length >= 0) {
+      calculateEarningsStats();
+    }
+  }, [calculateEarningsStats, user?.id]);
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user?.id) {
+        loadDriverData();
+      }
+    }, [user?.id, loadDriverData])
+  );
+
+  // Animate glider when selectedPeriod changes
+  useEffect(() => {
+    if (periodOptionWidth > 0) {
+      let periodIndex = 0;
+      if (selectedPeriod === 'daily') periodIndex = 0;
+      else if (selectedPeriod === 'weekly') periodIndex = 1;
+      else if (selectedPeriod === 'monthly') periodIndex = 2;
+      
+      const targetValue = periodIndex * periodOptionWidth;
+      
+      if (isInitialRender.current) {
+        // Initial render, set position immediately without animation
+        periodGliderAnim.setValue(targetValue);
+        isInitialRender.current = false;
+      } else {
+        // Animate to new position
+        Animated.spring(periodGliderAnim, {
+          toValue: targetValue,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }).start();
+      }
+    }
+  }, [selectedPeriod, periodOptionWidth]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -164,7 +181,7 @@ const DriverEarningsScreen: React.FC = () => {
   };
 
   const getCompletedOrdersForPeriod = () => {
-    if (!user?.uid || !bookings.length) return [];
+    if (!user?.id || !bookings.length) return [];
     
     const driverBookings = bookings.filter(booking => booking.driverId === user.id);
     const completedBookings = driverBookings.filter(booking => booking.status === 'delivered');

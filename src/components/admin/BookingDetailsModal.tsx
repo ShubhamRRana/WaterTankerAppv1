@@ -115,13 +115,8 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
               Delivery Address
             </Typography>
             <Typography variant="body" style={styles.addressText}>
-              {booking.deliveryAddress.street}
+              {booking.deliveryAddress.address}
             </Typography>
-            {booking.deliveryAddress.landmark && (
-              <Typography variant="caption" style={styles.landmarkText}>
-                Landmark: {booking.deliveryAddress.landmark}
-              </Typography>
-            )}
           </Card>
 
           {booking.driverName && (

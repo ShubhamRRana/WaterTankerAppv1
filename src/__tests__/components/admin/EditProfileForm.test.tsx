@@ -318,7 +318,7 @@ describe('EditProfileForm', () => {
         <EditProfileForm {...defaultProps} />
       );
       
-      const phoneInput = getByPlaceholderText('Enter phone number (optional)');
+      const phoneInput = getByPlaceholderText('Enter phone number');
       
       fireEvent(phoneInput, 'submitEditing');
       

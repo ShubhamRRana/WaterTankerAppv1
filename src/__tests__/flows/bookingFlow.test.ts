@@ -231,7 +231,7 @@ describe('Booking Flow Integration', () => {
       const driverBookings = await BookingService.getBookingsByDriver(mockDriver.id);
       expect(driverBookings.length).toBe(2);
       driverBookings.forEach(booking => {
-        expect(booking.driverId).toBe(mockDriver.uid);
+        expect(booking.driverId).toBe(mockDriver.id);
         expect(booking.status).toBe('accepted');
       });
     });

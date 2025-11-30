@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/506</span>
+                <span class='fraction'>0/504</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/376</span>
+                <span class='fraction'>0/375</span>
             </div>
         
             
@@ -1057,7 +1057,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1067,7 +1066,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1388,6 +1386,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1457,6 +1456,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1515,9 +1515,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1727,7 +1727,7 @@ const DriverManagementScreen: React.FC = <span class="cstat-no" title="statement
 <span class="cstat-no" title="statement not covered" >    return users</span>
       .filter(<span class="fstat-no" title="function not covered" >(u</span>ser): user is DriverUser =&gt; <span class="cstat-no" title="statement not covered" >user.role === 'driver')</span>
       .map(<span class="fstat-no" title="function not covered" >dr</span>iver =&gt; {<span class="cstat-no" title="statement not covered" ></span>
-        const stats = <span class="cstat-no" title="statement not covered" >calculateDriverStats(d<span class="cstat-no" title="statement not covered" >river.uid);</span></span>
+        const stats = <span class="cstat-no" title="statement not covered" >calculateDriverStats(d<span class="cstat-no" title="statement not covered" >river.id);</span></span>
 <span class="cstat-no" title="statement not covered" >        return {</span>
           ...driver,<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span>
           totalEarnings: stats.<span class="cstat-no" title="statement not covered" >totalEarnings,<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span></span>
@@ -1740,10 +1740,10 @@ const DriverManagementScreen: React.FC = <span class="cstat-no" title="statement
 <span class="cstat-no" title="statement not covered" >    load<span class="cstat-no" title="statement not covered" >Drivers();</span></span>
   }, []);<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span>
 <span class="fstat-no" title="function not covered" ></span>
-  // Update selectedDriver<span class="cstat-no" title="statement not covered" > with enriched data when drivers/</span>bookings change
+  // Update selectedDriver<span class="cstat-no" title="statement not covered" > with enriched data when drivers</span>/bookings change
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span></span>
 <span class="cstat-no" title="statement not covered" >    if (selectedDriver) {</span>
-      const updatedDriver = <span class="cstat-no" title="statement not covered" >drivers.find(<span class="fstat-no" title="function not covered" >d </span>=&gt; <span class="cstat-no" title="statement not covered" >d.uid === selectedDriver.uid)</span>;</span>
+      const updatedDriver = <span class="cstat-no" title="statement not covered" >drivers.find(<span class="fstat-no" title="function not covered" >d </span>=&gt; <span class="cstat-no" title="statement not covered" >d.id === selectedDriver.id)</span>;</span>
 <span class="cstat-no" title="statement not covered" >      if (updatedDriver &amp;&amp; (</span>
         updatedDriver.totalEarnings !== selectedDriver.totalEarnings ||
         updatedDriver.completedOrders !== selectedDriver.completedOrders
@@ -1844,12 +1844,10 @@ const DriverManagementScreen: React.FC = <span class="cstat-no" title="statement
 <span class="cstat-no" title="statement not covered" >      errors.email = emailValidation.error || 'Invalid email';</span>
     }
     <span class="cstat-no" title="statement not covered" ></span>
-    // Validate phone (optional)<span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >    if (addD<span class="cstat-no" title="statement not covered" >riverForm.phone) {</span></span>
-      const phon<span class="cstat-no" title="statement not covered" >eValidation = <span class="cstat-no" title="statement not covered" >ValidationUtils.validatePhone(addDriverForm</span>.phone);</span>
-<span class="cstat-no" title="statement not covered" >      if (!phoneValidation.isValid) {</span>
-<span class="cstat-no" title="statement not covered" >        errors.phone = phoneValidation.error || 'Invalid phone';</span>
-      }
+    // V<span class="cstat-no" title="statement not covered" >alidate phone (required)</span>
+    const ph<span class="cstat-no" title="statement not covered" >oneValidation = <span class="cstat-no" title="statement not covered" >ValidationUtils.validatePhone(addDriverFo</span>rm.phone);</span>
+<span class="cstat-no" title="statement not covered" >    if (!phoneValidation.isValid) {</span>
+<span class="cstat-no" title="statement not covered" >      errors.phone = phoneValidation.error || 'Invalid phone';</span>
     }<span class="cstat-no" title="statement not covered" ></span>
     <span class="cstat-no" title="statement not covered" ></span>
     // Valid<span class="cstat-no" title="statement not covered" >ate password (required for add, optional for edit)</span>
@@ -1955,7 +1953,7 @@ const DriverManagementScreen: React.FC = <span class="cstat-no" title="statement
       } else {
         // Check if email was changed and if it already exists for another user
 <span class="cstat-no" title="statement not covered" >        if (addDriverForm.email.toLowerCase() !== editingDriver.email?.toLowerCase()) {</span>
-          const existingUser = <span class="cstat-no" title="statement not covered" >users<span class="fstat-no" title="function not covered" >.f</span>ind(<span class="fstat-no" title="function not covered" >us</span>er =&gt; <span class="cstat-no" title="statement not covered" >user.email?.toLowerCase() === addDriverForm.email.toLowerCase() &amp;&amp; user.uid !== editingDriver.uid)</span>;</span>
+          const existingUser = <span class="cstat-no" title="statement not covered" >users<span class="fstat-no" title="function not covered" >.f</span>ind(<span class="fstat-no" title="function not covered" >us</span>er =&gt; <span class="cstat-no" title="statement not covered" >user.email?.toLowerCase() === addDriverForm.email.toLowerCase() &amp;&amp; user.id !== editingDriver.id)</span>;</span>
 <span class="cstat-no" title="statement not covered" >          if (existingUser) {<span class="cstat-no" title="statement not covered" ></span></span>
 <span class="cstat-no" title="statement not covered" >            Alert.alert(<span class="cstat-no" title="statement not covered" >'Error', 'A user with this email address already exists');</span></span>
 <span class="cstat-no" title="statement not covered" >            setIsSubmitting(<span class="cstat-no" title="statement not covered" >false);</span></span>
@@ -1969,7 +1967,7 @@ const DriverManagementScreen: React.FC = <span class="cstat-no" title="statement
           email:<span class="cstat-no" title="statement not covered" > SanitizationUtils.sanitizeEmail(addDriverForm.email),</span>
           phone: add<span class="cstat-no" title="statement not covered" >DriverForm.phone ? addDriverForm.phone : undef</span>ined,
           licenseNumber: addDriverForm.licenseNumber.trim(),
-          emerge<span class="cstat-no" title="statement not covered" >ncyContactName: addDriverForm.emergencyContactNam</span>e.trim(),
+          emerge<span class="cstat-no" title="statement not covered" >ncyContactName: addDriverForm.emergencyContactNa</span>me.trim(),
           emerge<span class="cstat-no" title="statement not covered" >ncyContactPhone: addDriverForm.emergencyContactPhone,</span>
           licenseExpiry: (<span class="fstat-no" title="function not covered" >()</span> =&gt; {
             const m = <span class="cstat-no" title="statement not covered" >addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);</span>
@@ -1986,7 +1984,7 @@ const DriverManagementScreen: React.FC = <span class="cstat-no" title="statement
 <span class="cstat-no" title="statement not covered" >          updateData.password = addDriverForm.password; </span>// In real app, this should be hashed
         }<span class="cstat-no" title="statement not covered" ></span>
         <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >        awai<span class="cstat-no" title="statement not covered" >t updateUser(editingDriver.uid</span>, updateData);</span>
+<span class="cstat-no" title="statement not covered" >        awai<span class="cstat-no" title="statement not covered" >t updateUser(editingDriver.id,</span> updateData);</span>
         
 <span class="cstat-no" title="statement not covered" >        Alert.alert('Success', 'Driver updated successfully');</span>
       }<span class="cstat-no" title="statement not covered" ></span>
@@ -2072,14 +2070,14 @@ const DriverManagementScreen: React.FC = <span class="cstat-no" title="statement
           style: 'destructive',
           onPress: <span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {
 <span class="cstat-no" title="statement not covered" >            try {</span>
-              const driverId = <span class="cstat-no" title="statement not covered" >editingDriver.uid;</span>
+              const driverId = <span class="cstat-no" title="statement not covered" >editingDriver.id;</span>
               const driverEma<span class="cstat-no" title="statement not covered" >il = <span class="cstat-no" title="statement not covered" >editingDriver.email;<span class="fstat-no" title="function not covered" ></span></span></span>
         <span class="cstat-no" title="statement not covered" >      <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span></span>
               // Delete the driver
 <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >              await deleteUser(driverId);</span></span>
             <span class="cstat-no" title="statement not covered" >  <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span></span>
               // Check if the deleted driver is currently logged in
-<span class="cstat-no" title="statement not covered" >              if (currentUser &amp;&amp; (currentUser.uid === driverId || currentUser.email?.toLowerCase() === driverEmail?.toLowerCase())) {</span>
+<span class="cstat-no" title="statement not covered" >              if (currentUser &amp;&amp; (currentUser.id === driverId || currentUser.email?.toLowerCase() === driverEmail?.toLowerCase())) {</span>
                 // Logout th<span class="cstat-no" title="statement not covered" >e deleted drive<span class="fstat-no" title="function not covered" >r</span></span>
 <span class="cstat-no" title="statement not covered" >                await logout()<span class="cstat-no" title="statement not covered" >;</span></span>
 <span class="cstat-no" title="statement not covered" >                Alert.alert(</span>
@@ -2228,20 +2226,22 @@ const DriverManagementScreen: React.FC = <span class="cstat-no" title="statement
               &lt;/Typography&gt;
             &lt;/Card&gt;
           ) : (
-            filteredDrivers.map(<span class="fstat-no" title="function not covered" >(d</span>river) =&gt; (
-<span class="cstat-no" title="statement not covered" >              &lt;DriverCard </span>
-                key={driver.uid} 
-                driver={driver}
-                onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; {
-<span class="cstat-no" title="statement not covered" >                  if (showDriverModal) <span class="cstat-no" title="statement not covered" >return;</span></span>
-<span class="cstat-no" title="statement not covered" >                  setSelectedDriver(driver);</span>
-<span class="cstat-no" title="statement not covered" >                  setShowDriverModal(true);</span>
-                }}
-                onEdit={handleEditDriver}
-                onApprove={handleApproveDriver}
-                onReject={handleRejectDriver}
-              /&gt;
-            ))
+            &lt;&gt;
+              {filteredDrivers.map(<span class="fstat-no" title="function not covered" >(d</span>river, index) =&gt; (
+<span class="cstat-no" title="statement not covered" >                &lt;DriverCard </span>
+                  key={driver.id || `driver-${index}`} 
+                  driver={driver}
+                  onPress={<span class="fstat-no" title="function not covered" >()</span> =&gt; {
+<span class="cstat-no" title="statement not covered" >                    if (showDriverModal) <span class="cstat-no" title="statement not covered" >return;</span></span>
+<span class="cstat-no" title="statement not covered" >                    setSelectedDriver(driver);</span>
+<span class="cstat-no" title="statement not covered" >                    setShowDriverModal(true);</span>
+                  }}
+                  onEdit={handleEditDriver}
+                  onApprove={handleApproveDriver}
+                  onReject={handleRejectDriver}
+                /&gt;
+              ))}
+            &lt;/&gt;
           )}
         &lt;/View&gt;
       &lt;/ScrollView&gt;
@@ -2307,9 +2307,9 @@ const styles = <span class="cstat-no" title="statement not covered" >StyleSheet.
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
     backgroundColor: UI_CONFIG.colors.surface,
-    borderBottomWidth: 1,
+<span class="cstat-no" title="statement not covered" >    borderBottomWidth: 1,</span>
     borderBottomColor: UI_CONFIG.colors.border,
-<span class="cstat-no" title="statement not covered" >  },</span>
+  },
   headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2446,7 +2446,7 @@ export default DriverManagementScreen;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-28T22:31:12.417Z
+                at 2025-11-30T10:10:31.172Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

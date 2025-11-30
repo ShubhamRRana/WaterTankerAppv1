@@ -1,11 +1,12 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useMemo, useCallback, useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, Button } from '../common';
-import { Booking, BookingStatus } from '../../types';
+import { Booking, BookingStatus, isCustomerUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 import { OrderTab } from './OrdersFilter';
+import { UserService } from '../../services/user.service';
 
 interface OrdersListProps {
   orders: Booking[];
@@ -63,13 +64,48 @@ const OrdersList: React.FC<OrdersListProps> = ({
     });
   }, []);
 
-  const renderOrderCard = useCallback(({ item: order }: { item: Booking }) => {
-    const isProcessing = processingOrder === order.id;
-    const statusColor = getStatusColor(order.status);
-    const statusText = getStatusText(order.status);
-    const formattedDate = order.isImmediate ? 'Immediate' : (order.scheduledFor ? formatDate(order.scheduledFor) : '');
-    const formattedDeliveredDate = order.deliveredAt ? formatDate(order.deliveredAt) : '';
-    
+  const OrderCardWithProfileAddress = memo(({ 
+    order, 
+    isProcessing, 
+    statusColor, 
+    statusText, 
+    formattedDate, 
+    formattedDeliveredDate,
+    activeTab,
+    onAcceptOrder,
+    onStartDelivery,
+    onCollectPayment
+  }: { 
+    order: Booking; 
+    isProcessing: boolean; 
+    statusColor: string; 
+    statusText: string; 
+    formattedDate: string; 
+    formattedDeliveredDate: string;
+    activeTab: OrderTab;
+    onAcceptOrder: (orderId: string) => void;
+    onStartDelivery: (orderId: string) => void;
+    onCollectPayment: (orderId: string) => void;
+  }) => {
+    const [customerProfileAddress, setCustomerProfileAddress] = useState<string | null>(null);
+
+    useEffect(() => {
+      const fetchCustomerAddress = async () => {
+        try {
+          const customer = await UserService.getUserById(order.customerId);
+          if (customer && isCustomerUser(customer) && customer.savedAddresses && customer.savedAddresses.length > 0) {
+            const defaultAddress = customer.savedAddresses.find(addr => addr.isDefault) || customer.savedAddresses[0];
+            if (defaultAddress && defaultAddress.address !== order.deliveryAddress.address) {
+              setCustomerProfileAddress(defaultAddress.address);
+            }
+          }
+        } catch (error) {
+          // Silently fail - profile address is optional
+        }
+      };
+      fetchCustomerAddress();
+    }, [order.customerId, order.deliveryAddress.address]);
+
     return (
       <Card style={styles.orderCard}>
         <View style={styles.orderHeader}>
@@ -112,9 +148,18 @@ const OrdersList: React.FC<OrdersListProps> = ({
         >
           <Ionicons name="location" size={14} color={UI_CONFIG.colors.primary} />
           <Typography variant="caption" style={styles.orderAddress}>
-            {order.deliveryAddress.street}, {order.deliveryAddress.city}
+            {order.deliveryAddress.address}
           </Typography>
         </TouchableOpacity>
+
+        {customerProfileAddress && (
+          <View style={styles.profileAddressContainer}>
+            <Ionicons name="home" size={14} color={UI_CONFIG.colors.secondary} />
+            <Typography variant="caption" style={styles.profileAddress}>
+              Profile: {customerProfileAddress}
+            </Typography>
+          </View>
+        )}
 
         <Typography variant="caption" style={styles.orderTime}>
           {formattedDate ? `Scheduled: ${formattedDate}` : 'Immediate'}
@@ -160,6 +205,29 @@ const OrdersList: React.FC<OrdersListProps> = ({
           />
         )}
       </Card>
+    );
+  });
+
+  const renderOrderCard = useCallback(({ item: order }: { item: Booking }) => {
+    const isProcessing = processingOrder === order.id;
+    const statusColor = getStatusColor(order.status);
+    const statusText = getStatusText(order.status);
+    const formattedDate = order.isImmediate ? 'Immediate' : (order.scheduledFor ? formatDate(order.scheduledFor) : '');
+    const formattedDeliveredDate = order.deliveredAt ? formatDate(order.deliveredAt) : '';
+    
+    return (
+      <OrderCardWithProfileAddress 
+        order={order}
+        isProcessing={isProcessing}
+        statusColor={statusColor}
+        statusText={statusText}
+        formattedDate={formattedDate}
+        formattedDeliveredDate={formattedDeliveredDate}
+        activeTab={activeTab}
+        onAcceptOrder={onAcceptOrder}
+        onStartDelivery={onStartDelivery}
+        onCollectPayment={onCollectPayment}
+      />
     );
   }, [activeTab, processingOrder, getStatusColor, getStatusText, formatDate, onAcceptOrder, onStartDelivery, onCollectPayment]);
 
@@ -310,6 +378,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: UI_CONFIG.colors.primary,
     marginLeft: 6,
+  },
+  profileAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: UI_CONFIG.colors.secondary,
+  },
+  profileAddress: {
+    fontSize: 12,
+    color: UI_CONFIG.colors.secondary,
+    marginLeft: 6,
+    fontStyle: 'italic',
   },
   orderTime: {
     fontSize: 12,

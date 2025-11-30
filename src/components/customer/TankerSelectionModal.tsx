@@ -69,30 +69,32 @@ const TankerSelectionModal: React.FC<TankerSelectionModalProps> = ({
               <Typography variant="body" style={styles.emptyStateText}>Loading vehicles...</Typography>
             </View>
           ) : vehicles.length > 0 ? (
-            vehicles.map((vehicle) => (
-              <Card
-                key={vehicle.id}
-                style={[
-                  styles.tankerCard,
-                  selectedVehicleId === vehicle.id && styles.selectedTankerCard,
-                ]}
-                onPress={() => handleVehicleSelection(vehicle)}
-              >
-                <View style={styles.tankerInfo}>
-                  <Typography variant="body" style={styles.tankerName}>
-                    {vehicle.vehicleCapacity}L Tanker - {vehicle.vehicleNumber}
-                  </Typography>
-                  <Typography variant="caption" style={styles.tankerPrice}>
-                    {PricingUtils.formatPrice(vehicle.amount)} base price
-                  </Typography>
-                </View>
-                <Ionicons
-                  name={selectedVehicleId === vehicle.id ? "radio-button-on" : "radio-button-off"}
-                  size={24}
-                  color={selectedVehicleId === vehicle.id ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary}
-                />
-              </Card>
-            ))
+            <>
+              {vehicles.map((vehicle, index) => (
+                <Card
+                  key={vehicle.id || `vehicle-${index}`}
+                  style={[
+                    styles.tankerCard,
+                    selectedVehicleId === vehicle.id && styles.selectedTankerCard,
+                  ]}
+                  onPress={() => handleVehicleSelection(vehicle)}
+                >
+                  <View style={styles.tankerInfo}>
+                    <Typography variant="body" style={styles.tankerName}>
+                      {vehicle.vehicleCapacity}L Tanker - {vehicle.vehicleNumber}
+                    </Typography>
+                    <Typography variant="caption" style={styles.tankerPrice}>
+                      {PricingUtils.formatPrice(vehicle.amount)} base price
+                    </Typography>
+                  </View>
+                  <Ionicons
+                    name={selectedVehicleId === vehicle.id ? "radio-button-on" : "radio-button-off"}
+                    size={24}
+                    color={selectedVehicleId === vehicle.id ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary}
+                  />
+                </Card>
+              ))}
+            </>
           ) : (
             <View style={styles.emptyState}>
               <Ionicons name="car-outline" size={64} color={UI_CONFIG.colors.textSecondary} />

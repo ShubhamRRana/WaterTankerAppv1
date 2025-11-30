@@ -334,13 +334,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
             <Ionicons name="location" size={20} color={UI_CONFIG.colors.success} />
             <Typography variant="body" style={styles.addressTitle}>Delivery Location</Typography>
           </View>
-          <Typography variant="body" style={styles.addressText}>{booking.deliveryAddress.street}</Typography>
-          {/* <Typography variant="body" style={styles.addressText}>
-            {booking.deliveryAddress.city}, {booking.deliveryAddress.state} - {booking.deliveryAddress.pincode}
-          </Typography> */}
-          {booking.deliveryAddress.landmark && (
-            <Typography variant="caption" style={styles.landmarkText}>Near {booking.deliveryAddress.landmark}</Typography>
-          )}
+          <Typography variant="body" style={styles.addressText}>{booking.deliveryAddress.address}</Typography>
         </Card>
       </View>
 

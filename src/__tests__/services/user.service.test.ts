@@ -165,7 +165,7 @@ describe('UserService', () => {
       const user = await UserService.getUserById('user-1');
       
       expect(user).toBeTruthy();
-      expect(user?.uid).toBe('user-1');
+      expect(user?.id).toBe('user-1');
       expect(user?.email).toBe('customer@test.com');
     });
 
@@ -183,16 +183,16 @@ describe('UserService', () => {
   });
 
   describe('createUser', () => {
-    it('should create a new user with generated uid', async () => {
+    it('should create a new user with generated id', async () => {
       const user = await UserService.createUser(mockCustomerUser);
       
-      expect(user.uid).toBeTruthy();
-      expect(typeof user.uid).toBe('string');
+      expect(user.id).toBeTruthy();
+      expect(typeof user.id).toBe('string');
       expect(user.email).toBe(mockCustomerUser.email);
       expect(user.role).toBe(mockCustomerUser.role);
       expect(user.createdAt).toBeInstanceOf(Date);
       
-      const savedUser = await LocalStorageService.getUserById(user.uid);
+      const savedUser = await LocalStorageService.getUserById(user.id);
       expect(savedUser).toBeTruthy();
     });
 
@@ -216,7 +216,7 @@ describe('UserService', () => {
 
     beforeEach(async () => {
       const user = await UserService.createUser(mockCustomerUser);
-      userId = user.uid;
+      userId = user.id;
     });
 
     it('should update user profile', async () => {
@@ -228,12 +228,12 @@ describe('UserService', () => {
       expect(updatedUser?.phone).toBe('9999999999');
     });
 
-    it('should not allow updating uid', async () => {
-      const updates = { id: 'new-uid' } as Partial<User>;
+    it('should not allow updating id', async () => {
+      const updates = { id: 'new-id' } as Partial<User>;
       await UserService.updateUser(userId, updates);
       
       const user = await LocalStorageService.getUserById(userId);
-      expect(user?.uid).toBe(userId);
+      expect(user?.id).toBe(userId);
     });
 
     it('should not allow updating role', async () => {
@@ -260,10 +260,10 @@ describe('UserService', () => {
 
     beforeEach(async () => {
       const user = await UserService.createUser(mockCustomerUser);
-      userId = user.uid;
+      userId = user.id;
     });
 
-    it('should delete user by uid', async () => {
+    it('should delete user by id', async () => {
       await UserService.deleteUser(userId);
       
       const user = await LocalStorageService.getUserById(userId);

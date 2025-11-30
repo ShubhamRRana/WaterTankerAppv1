@@ -77,7 +77,7 @@ const AllBookingsScreen: React.FC = () => {
       filtered = filtered.filter(booking => 
         booking.customerName.toLowerCase().includes(query) ||
         booking.customerPhone.includes(query) ||
-        booking.deliveryAddress.city.toLowerCase().includes(query) ||
+        booking.deliveryAddress.address.toLowerCase().includes(query) ||
         booking.id.toLowerCase().includes(query)
       );
     }
@@ -94,7 +94,7 @@ const AllBookingsScreen: React.FC = () => {
   const getFilterCounts = () => {
     // First filter by admin's agency
     const adminBookings = currentAdmin 
-      ? bookings.filter(booking => booking.agencyId === currentAdmin.uid)
+      ? bookings.filter(booking => booking.agencyId === currentAdmin.id)
       : [];
     
     const counts = {

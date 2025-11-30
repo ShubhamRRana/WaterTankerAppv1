@@ -60,24 +60,17 @@ describe('SavedAddressModal', () => {
   const mockAddresses: Address[] = [
     {
       id: 'address-1',
-      street: '123 Main Street',
-      city: 'Delhi',
-      state: 'Delhi',
-      pincode: '110001',
+      address: '123 Main Street, Delhi, Delhi, 110001',
       latitude: 28.6139,
       longitude: 77.2090,
       isDefault: true,
     },
     {
       id: 'address-2',
-      street: '456 Park Avenue',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400001',
+      address: '456 Park Avenue, Mumbai, Maharashtra, 400001',
       latitude: 19.0760,
       longitude: 72.8777,
       isDefault: false,
-      landmark: 'Metro Station',
     },
   ];
 
@@ -105,22 +98,15 @@ describe('SavedAddressModal', () => {
     it('should display all addresses', () => {
       const { getByText } = render(<SavedAddressModal {...defaultProps} />);
       
-      expect(getByText('123 Main Street')).toBeTruthy();
-      expect(getByText('456 Park Avenue')).toBeTruthy();
+      expect(getByText('123 Main Street, Delhi, Delhi, 110001')).toBeTruthy();
+      expect(getByText('456 Park Avenue, Mumbai, Maharashtra, 400001')).toBeTruthy();
     });
 
-    it('should display address details (city, state, pincode)', () => {
+    it('should display full address text', () => {
       const { getByText } = render(<SavedAddressModal {...defaultProps} />);
       
-      expect(getByText('Delhi, Delhi, 110001')).toBeTruthy();
-      expect(getByText('Mumbai, Maharashtra, 400001')).toBeTruthy();
-    });
-
-    it('should display landmark when available', () => {
-      const { getByText } = render(<SavedAddressModal {...defaultProps} />);
-      
-      // Component adds "Near " prefix to the landmark
-      expect(getByText('Near Metro Station')).toBeTruthy();
+      expect(getByText('123 Main Street, Delhi, Delhi, 110001')).toBeTruthy();
+      expect(getByText('456 Park Avenue, Mumbai, Maharashtra, 400001')).toBeTruthy();
     });
 
     it('should show default badge for default address', () => {
@@ -143,7 +129,7 @@ describe('SavedAddressModal', () => {
     it('should call onSelectAddress when address is pressed', () => {
       const { getByText } = render(<SavedAddressModal {...defaultProps} />);
       
-      const addressCard = getByText('123 Main Street');
+      const addressCard = getByText('123 Main Street, Delhi, Delhi, 110001');
       fireEvent.press(addressCard);
       
       expect(defaultProps.onSelectAddress).toHaveBeenCalledWith(mockAddresses[0]);
@@ -201,23 +187,21 @@ describe('SavedAddressModal', () => {
   });
 
   describe('Address Display Formatting', () => {
-    it('should handle address without landmark', () => {
-      const { getByText, queryByText } = render(
+    it('should display address text correctly', () => {
+      const { getByText } = render(
         <SavedAddressModal
           {...defaultProps}
           addresses={[mockAddresses[0]]}
         />
       );
       
-      expect(getByText('123 Main Street')).toBeTruthy();
-      expect(queryByText(/Near/)).toBeNull();
+      expect(getByText('123 Main Street, Delhi, Delhi, 110001')).toBeTruthy();
     });
 
     it('should handle address with partial details', () => {
       const partialAddress: Address = {
         id: 'address-3',
-        street: '789 Test Road',
-        city: 'Bangalore',
+        address: '789 Test Road, Bangalore',
         latitude: 12.9716,
         longitude: 77.5946,
       };
@@ -229,15 +213,14 @@ describe('SavedAddressModal', () => {
         />
       );
       
-      expect(getByText('789 Test Road')).toBeTruthy();
-      expect(getByText('Bangalore')).toBeTruthy();
+      expect(getByText('789 Test Road, Bangalore')).toBeTruthy();
     });
 
     it('should format address details correctly', () => {
       const { getByText } = render(<SavedAddressModal {...defaultProps} />);
       
-      // Should combine city, state, pincode with commas
-      expect(getByText('Delhi, Delhi, 110001')).toBeTruthy();
+      // Should display full address string
+      expect(getByText('123 Main Street, Delhi, Delhi, 110001')).toBeTruthy();
     });
   });
 
@@ -258,13 +241,13 @@ describe('SavedAddressModal', () => {
         />
       );
       
-      expect(getByText('123 Main Street')).toBeTruthy();
+      expect(getByText('123 Main Street, Delhi, Delhi, 110001')).toBeTruthy();
     });
 
-    it('should handle address with only street', () => {
+    it('should handle address with minimal details', () => {
       const minimalAddress: Address = {
         id: 'address-4',
-        street: 'Minimal Address',
+        address: 'Minimal Address',
         latitude: 0,
         longitude: 0,
       };

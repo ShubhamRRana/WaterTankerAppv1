@@ -69,7 +69,7 @@ describe('LocalStorageDataAccess', () => {
 
     it('should get user by ID', async () => {
       await dataAccess.users.saveUserToCollection(mockUser);
-      const retrieved = await dataAccess.users.getUserById(mockUser.uid);
+      const retrieved = await dataAccess.users.getUserById(mockUser.id);
       
       expect(retrieved).toEqual(mockUser);
     });
@@ -81,9 +81,9 @@ describe('LocalStorageDataAccess', () => {
 
     it('should update user profile', async () => {
       await dataAccess.users.saveUserToCollection(mockUser);
-      await dataAccess.users.updateUserProfile(mockUser.uid, { name: 'Updated Name' });
+      await dataAccess.users.updateUserProfile(mockUser.id, { name: 'Updated Name' });
       
-      const updated = await dataAccess.users.getUserById(mockUser.uid);
+      const updated = await dataAccess.users.getUserById(mockUser.id);
       expect(updated?.name).toBe('Updated Name');
     });
 
@@ -112,10 +112,7 @@ describe('LocalStorageDataAccess', () => {
       distanceCharge: 100,
       totalPrice: 600,
       deliveryAddress: {
-        street: '123 Test St',
-        city: 'Test City',
-        state: 'Test State',
-        pincode: '123456',
+        address: '123 Test St, Test City, Test State, 123456',
         latitude: 0,
         longitude: 0,
       },

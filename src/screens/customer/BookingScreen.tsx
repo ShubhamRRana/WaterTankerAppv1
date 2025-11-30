@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { useUserStore } from '../../store/userStore';
@@ -35,11 +36,11 @@ const { width } = Dimensions.get('window');
 type BookingScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Booking'>;
 
 interface BookingScreenProps {
-  navigation: BookingScreenNavigationProp;
 }
 
-const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
-  const { user } = useAuthStore();
+const BookingScreen: React.FC<BookingScreenProps> = () => {
+  const navigation = useNavigation<BookingScreenNavigationProp>();
+  const { user, isLoading: authLoading, initializeAuth } = useAuthStore();
   const { createBooking, isLoading } = useBookingStore();
   const { fetchUsersByRole, users: allUsers, isLoading: usersLoading } = useUserStore();
   const { fetchVehiclesByAgency } = useVehicleStore();
@@ -64,12 +65,22 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     message: string;
   } | null>(null);
 
+  // Ensure auth is initialized when component mounts
+  useEffect(() => {
+    if (!user && !authLoading) {
+      initializeAuth();
+    } else if (user && !user.id && !authLoading) {
+      // User exists but missing id - reload auth
+      initializeAuth();
+    }
+  }, [user, authLoading, initializeAuth]);
+
   // Load default address when user data is available
   useEffect(() => {
     if (user && isCustomerUser(user) && user.savedAddresses && user.savedAddresses.length > 0) {
       const defaultAddress = user.savedAddresses.find(addr => addr.isDefault);
       if (defaultAddress && !deliveryAddress) {
-        setDeliveryAddress(defaultAddress.street);
+        setDeliveryAddress(defaultAddress.address);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -162,7 +173,7 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
   };
 
   const handleAddressSelection = (address: Address) => {
-    setDeliveryAddress(address.street);
+    setDeliveryAddress(address.address);
     setShowSavedAddressModal(false);
   };
 
@@ -366,20 +377,84 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
     }
 
     try {
-      // Create a mock Address object from the sanitized address string
-      const mockAddress: Address = {
-        street: sanitizedAddress,
-        city: 'City',
-        state: 'State',
-        pincode: '000000',
+      // Get current user from store (may have been updated)
+      let currentUser = user;
+      
+      // Validate required fields before creating booking
+      if (!currentUser) {
+        Alert.alert('Error', 'You are not logged in. Please log in again.');
+        return;
+      }
+
+      // If user exists but missing id, try to reload auth
+      if (!currentUser.id) {
+        // Try to reload user data
+        await initializeAuth();
+        const { user: reloadedUser } = useAuthStore.getState();
+        
+        if (!reloadedUser || !reloadedUser.id) {
+          Alert.alert(
+            'Session Error', 
+            'Your session appears to be invalid. Please log out and log in again to continue.'
+          );
+          return;
+        }
+        
+        // Use reloaded user
+        currentUser = reloadedUser;
+      }
+
+      // Validate user has required fields
+      if (!currentUser.id) {
+        Alert.alert('Error', 'User ID is missing. Please log out and log in again.');
+        return;
+      }
+
+      if (!currentUser.name) {
+        Alert.alert('Error', 'User name is missing. Please update your profile or log in again.');
+        return;
+      }
+
+      if (!selectedAgency?.id || !selectedAgency?.name) {
+        Alert.alert('Error', 'Agency information is missing. Please select an agency.');
+        return;
+      }
+
+      if (!selectedVehicle?.capacity) {
+        Alert.alert('Error', 'Vehicle information is missing. Please select a vehicle.');
+        return;
+      }
+
+      if (!priceBreakdown?.basePrice || !priceBreakdown?.totalPrice) {
+        Alert.alert('Error', 'Price information is missing. Please try again.');
+        return;
+      }
+
+      // Create Address object from the sanitized address string
+      const bookingAddress: Address = {
+        address: sanitizedAddress,
         latitude: 28.6139 + (Math.random() - 0.5) * 0.1, // Mock coordinates
         longitude: 77.2090 + (Math.random() - 0.5) * 0.1,
       };
 
+      // Create scheduled date if provided, otherwise undefined
+      let scheduledForDate: Date | undefined = undefined;
+      if (deliveryDate && deliveryTime) {
+        try {
+          scheduledForDate = createScheduledDate(deliveryDate, deliveryTime, timePeriod);
+          // Validate the date is valid
+          if (!scheduledForDate || isNaN(scheduledForDate.getTime())) {
+            scheduledForDate = undefined;
+          }
+        } catch (dateError) {
+          scheduledForDate = undefined;
+        }
+      }
+
       const bookingData = {
-        customerId: user.id,
-        customerName: user.name,
-        customerPhone: user.phone || '', // Phone is optional, use empty string as fallback
+        customerId: currentUser.id,
+        customerName: currentUser.name,
+        customerPhone: currentUser.phone || '', // Phone is optional, use empty string as fallback
         agencyId: selectedAgency.id,
         agencyName: selectedAgency.name,
         status: 'pending' as const,
@@ -388,9 +463,9 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
         basePrice: priceBreakdown.basePrice,
         distanceCharge: 0, // No distance-based charges
         totalPrice: priceBreakdown.totalPrice,
-        deliveryAddress: mockAddress,
+        deliveryAddress: bookingAddress,
         distance: 0, // Distance not used for pricing
-        scheduledFor: deliveryDate && deliveryTime ? createScheduledDate(deliveryDate, deliveryTime, timePeriod) : undefined,
+        scheduledFor: scheduledForDate,
         isImmediate: false,
         paymentStatus: 'pending' as const,
         canCancel: true,
@@ -405,7 +480,8 @@ const BookingScreen: React.FC<BookingScreenProps> = ({ navigation }) => {
       });
       setShowSuccessNotification(true);
     } catch (error) {
-      Alert.alert('Error', 'Failed to create booking. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      Alert.alert('Error', `Failed to create booking: ${errorMessage}. Please try again.`);
     }
   };
 

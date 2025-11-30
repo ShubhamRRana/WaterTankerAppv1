@@ -577,20 +577,22 @@ const DriverManagementScreen: React.FC = () => {
               </Typography>
             </Card>
           ) : (
-            filteredDrivers.map((driver) => (
-              <DriverCard 
-                key={driver.id} 
-                driver={driver}
-                onPress={() => {
-                  if (showDriverModal) return;
-                  setSelectedDriver(driver);
-                  setShowDriverModal(true);
-                }}
-                onEdit={handleEditDriver}
-                onApprove={handleApproveDriver}
-                onReject={handleRejectDriver}
-              />
-            ))
+            <>
+              {filteredDrivers.map((driver, index) => (
+                <DriverCard 
+                  key={driver.id || `driver-${index}`} 
+                  driver={driver}
+                  onPress={() => {
+                    if (showDriverModal) return;
+                    setSelectedDriver(driver);
+                    setShowDriverModal(true);
+                  }}
+                  onEdit={handleEditDriver}
+                  onApprove={handleApproveDriver}
+                  onReject={handleRejectDriver}
+                />
+              ))}
+            </>
           )}
         </View>
       </ScrollView>

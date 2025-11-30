@@ -1064,7 +1064,7 @@ const Al<span class="cstat-no" title="statement not covered" >lBookingsScreen: R
     // Filte<span class="cstat-no" title="statement not covered" >r by admin's agency (only </span>show bookings for this admin's agency)
 <span class="cstat-no" title="statement not covered" >    if (currentAdmin) {</span>
 <span class="cstat-no" title="statement not covered" >      filtered = filtered.filter(<span class="fstat-no" title="function not covered" >bo</span>oking =&gt; </span>
-<span class="cstat-no" title="statement not covered" >        book<span class="cstat-no" title="statement not covered" >ing.agencyId === currentAdmin.uid</span></span>
+<span class="cstat-no" title="statement not covered" >        book<span class="cstat-no" title="statement not covered" >ing.agencyId === currentAdmin.id</span></span>
       );
     }
 <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span>
@@ -1074,7 +1074,7 @@ const Al<span class="cstat-no" title="statement not covered" >lBookingsScreen: R
 <span class="cstat-no" title="statement not covered" >      filtered = filtered.filter(<span class="fstat-no" title="function not covered" >bo</span>oking =&gt; </span>
 <span class="cstat-no" title="statement not covered" >        booking.customerName.toLowerCase().includes(<span class="cstat-no" title="statement not covered" >query) ||</span></span>
 <span class="cstat-no" title="statement not covered" >        booking.customerPho<span class="fstat-no" title="function not covered" >ne</span>.includes(query) ||</span>
-<span class="cstat-no" title="statement not covered" >        booking.deliveryAd</span>dress.city.toLowerCase().includes(query) ||
+<span class="cstat-no" title="statement not covered" >        booking.deliveryAd</span>dress.address.toLowerCase().includes(query) ||
         booking.id.toLowerCase().includes(query)
       );<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span>
     }<span class="cstat-no" title="statement not covered" ></span>
@@ -1091,7 +1091,7 @@ const Al<span class="cstat-no" title="statement not covered" >lBookingsScreen: R
   const getFilterCounts = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
     // First filter by admin's agency
     const adminBookings = <span class="cstat-no" title="statement not covered" >currentAdmin </span>
-      ? <span class="cstat-no" title="statement not covered" >bookings.filter(<span class="fstat-no" title="function not covered" >bo</span>oking =&gt; <span class="cstat-no" title="statement not covered" >booking.agencyId === currentAdmin.uid)</span></span>
+      ? <span class="cstat-no" title="statement not covered" >bookings.filter(<span class="fstat-no" title="function not covered" >bo</span>oking =&gt; <span class="cstat-no" title="statement not covered" >booking.agencyId === currentAdmin.id)</span></span>
       : [];<span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" ></span></span></span>
     
     cons<span class="cstat-no" title="statement not covered" >t counts = <span class="cstat-no" title="statement not covered" >{</span></span>
@@ -1100,7 +1100,7 @@ const Al<span class="cstat-no" title="statement not covered" >lBookingsScreen: R
       accepted: adminBooking<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >s.</span>filter(<span class="fstat-no" title="function not covered" >bo</span>oking =&gt; <span class="cstat-no" title="statement not covered" >booking.status === 'accepted')</span>.length,</span>
       in_transit: adminBookings.filter(<span class="fstat-no" title="function not covered" >bo</span>oking =&gt; <span class="cstat-no" title="statement not covered" >booking.status === 'in_transit')</span>.length,
       delivered: adminBookings<span class="cstat-no" title="statement not covered" >.filter(<span class="fstat-no" title="function not covered" >bo</span>oking =&gt; <span class="cstat-no" title="statement not covered" >booking.status === 'delivered')</span>.length,</span>
-      cancelled: adminBookings<span class="fstat-no" title="function not covered" >.f</span>ilter(<span class="fstat-no" title="function not covered" >bo</span>o<span class="cstat-no" title="statement not covered" >king =&gt; <span class="cstat-no" title="statement not covered" >booking.status === 'cancelled'</span>)</span>.length,
+      cancelled: adminBookings<span class="fstat-no" title="function not covered" >.f</span>ilter(<span class="fstat-no" title="function not covered" >bo</span>o<span class="cstat-no" title="statement not covered" >king =&gt; <span class="cstat-no" title="statement not covered" >booking.status === 'cancelled</span>')</span>.length,
     };
 <span class="cstat-no" title="statement not covered" >    return counts;<span class="cstat-no" title="statement not covered" ></span></span>
   };
@@ -1468,7 +1468,7 @@ export default AllBookingsScreen;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-28T22:31:12.417Z
+                at 2025-11-30T10:10:31.172Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

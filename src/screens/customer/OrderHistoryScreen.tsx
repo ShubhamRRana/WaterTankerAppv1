@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
+import { isCustomerUser } from '../../types';
 import Card from '../../components/common/Card';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Typography, CustomerMenuDrawer } from '../../components/common';
@@ -59,8 +60,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(booking => 
         booking.id.toLowerCase().includes(query) ||
-        booking.deliveryAddress.street.toLowerCase().includes(query) ||
-        booking.deliveryAddress.city.toLowerCase().includes(query) ||
+        booking.deliveryAddress.address.toLowerCase().includes(query) ||
         booking.customerName.toLowerCase().includes(query)
       );
     }
@@ -329,9 +329,20 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                 <View style={styles.detailRow}>
                   <Ionicons name="location" size={16} color={UI_CONFIG.colors.success} />
                   <Typography variant="body" style={styles.detailText}>
-                    {booking.deliveryAddress.street}, {booking.deliveryAddress.city}
+                    {booking.deliveryAddress.address}
                   </Typography>
                 </View>
+                {user && isCustomerUser(user) && user.savedAddresses && user.savedAddresses.length > 0 && (() => {
+                  const defaultAddress = user.savedAddresses.find(addr => addr.isDefault) || user.savedAddresses[0];
+                  return defaultAddress && defaultAddress.address !== booking.deliveryAddress.address ? (
+                    <View style={styles.detailRow}>
+                      <Ionicons name="home" size={16} color={UI_CONFIG.colors.primary} />
+                      <Typography variant="body" style={styles.detailText}>
+                        Profile: {defaultAddress.address}
+                      </Typography>
+                    </View>
+                  ) : null;
+                })()}
                 <View style={styles.detailRow}>
                   <Ionicons name="cash" size={16} color={UI_CONFIG.colors.warning} />
                   <Typography variant="body" style={styles.detailText}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>

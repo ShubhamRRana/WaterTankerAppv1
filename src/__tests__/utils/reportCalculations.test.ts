@@ -29,10 +29,7 @@ describe('Report Calculations', () => {
     createdAt: date,
     updatedAt: date,
     deliveryAddress: {
-      street: 'Test Street',
-      city: 'Test City',
-      state: 'Test State',
-      pincode: '123456',
+      address: 'Test Street, Test City, Test State, 123456',
       latitude: 28.6139,
       longitude: 77.2090,
     },

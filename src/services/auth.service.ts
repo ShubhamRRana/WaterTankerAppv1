@@ -201,16 +201,22 @@ export class AuthService {
   /**
    * Login with email and password.
    * 
-   * Supports multi-role users - if user has multiple roles, returns requiresRoleSelection flag.
+   * Supports multi-role users - if user has multiple roles and no preferredRole is provided, returns requiresRoleSelection flag.
+   * If preferredRole is provided, it will login with that specific role only.
    * Includes rate limiting, brute force detection, and security event logging.
    * 
    * @param email - User's email address (will be sanitized automatically)
    * @param password - User's password
+   * @param preferredRole - Optional preferred role to login with (if user has multiple roles)
    * @returns Promise resolving to AuthResult with success status and user data
    * @throws Never throws - returns error in AuthResult.error instead
    * 
    * @example
    * ```typescript
+   * // Login with preferred role
+   * const result = await AuthService.login('user@example.com', 'password123', 'customer');
+   * 
+   * // Login without preferred role
    * const result = await AuthService.login('user@example.com', 'password123');
    * 
    * if (result.success && result.user) {
@@ -223,7 +229,7 @@ export class AuthService {
    * }
    * ```
    */
-  static async login(email: string, password: string): Promise<AuthResult> {
+  static async login(email: string, password: string, preferredRole?: UserRole): Promise<AuthResult> {
     try {
       // Sanitize email input
       const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
@@ -293,6 +299,34 @@ export class AuthService {
         };
       }
 
+      // If preferredRole is provided, use that specific role
+      if (preferredRole) {
+        const roleAccount = matchingAccounts.find(account => account.role === preferredRole);
+        
+        if (!roleAccount) {
+          securityLogger.logAuthAttempt(sanitizedEmail, false, `User not found with role: ${preferredRole}`);
+          rateLimiter.record('login', sanitizedEmail);
+          return {
+            success: false,
+            error: `User not found with selected role: ${preferredRole}`
+          };
+        }
+
+        const appUser = roleAccount as AppUser;
+        
+        // Save user to current session
+        await LocalStorageService.saveUser(appUser);
+
+        // Record successful login
+        rateLimiter.record('login', sanitizedEmail);
+        securityLogger.logAuthAttempt(sanitizedEmail, true, undefined, appUser.id);
+
+        return {
+          success: true,
+          user: appUser
+        };
+      }
+
       if (matchingAccounts.length === 1) {
         // Single account - return user data
         const appUser = matchingAccounts[0] as AppUser;
@@ -309,7 +343,7 @@ export class AuthService {
           user: appUser
         };
       } else {
-        // Multiple valid accounts - require role selection
+        // Multiple valid accounts - require role selection (only if no preferredRole provided)
         // Don't record rate limit yet - wait for role selection
         const availableRoles = matchingAccounts.map(account => account.role) as UserRole[];
         return {
@@ -533,8 +567,45 @@ export class AuthService {
     try {
       // Initialize sample data if needed
       await LocalStorageService.initializeSampleData();
+      // Clean up expired rate limit entries on app startup
+      rateLimiter.cleanup();
     } catch (error) {
       // Error logged via errorLogger if needed
+    }
+  }
+
+  /**
+   * Reset rate limit for login attempts for a specific email or all emails.
+   * 
+   * Useful for unblocking users who have exceeded rate limits during testing or legitimate use.
+   * 
+   * @param email - Optional email address to reset rate limit for. If not provided, resets all login rate limits.
+   * @returns void
+   * 
+   * @example
+   * ```typescript
+   * // Reset rate limit for specific email
+   * AuthService.resetLoginRateLimit('user@example.com');
+   * 
+   * // Reset all login rate limits
+   * AuthService.resetLoginRateLimit();
+   * ```
+   */
+  static resetLoginRateLimit(email?: string): void {
+    if (email) {
+      const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
+      rateLimiter.reset('login', sanitizedEmail);
+    } else {
+      // Reset all login rate limits by getting all active limits and resetting login ones
+      const activeLimits = rateLimiter.getActiveLimits();
+      activeLimits.forEach((entry, key) => {
+        if (key.startsWith('login:')) {
+          const email = key.replace('login:', '');
+          rateLimiter.reset('login', email);
+        } else if (key === 'login') {
+          rateLimiter.reset('login');
+        }
+      });
     }
   }
 }

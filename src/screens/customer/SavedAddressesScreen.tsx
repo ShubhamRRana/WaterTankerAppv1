@@ -72,7 +72,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         // Update existing address
         const updatedAddress: Address = {
           ...editingAddress,
-          street: sanitizedAddress,
+          address: sanitizedAddress,
         };
         
         updatedAddresses = addresses.map(addr => 
@@ -82,11 +82,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         // Add new address
         const addressToSave: Address = {
           id: LocalStorageService.generateId(),
-          street: sanitizedAddress,
-          city: '', // We'll use the full address as street
-          state: '',
-          pincode: '',
-          landmark: '',
+          address: sanitizedAddress,
           latitude: 28.6139 + (Math.random() - 0.5) * 0.1,
           longitude: 77.2090 + (Math.random() - 0.5) * 0.1,
           isDefault: addresses.length === 0, // First address becomes default
@@ -176,7 +172,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
 
   const handleEditAddress = useCallback((address: Address) => {
     setEditingAddress(address);
-    setNewAddressText(address.street);
+    setNewAddressText(address.address);
   }, []);
 
   const handleCancelEdit = useCallback(() => {
@@ -261,7 +257,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
                   <View style={styles.addressInfo}>
                     <View style={styles.addressTitleRow}>
                       <Typography variant="body" style={styles.addressTitle}>
-                        {address.street}
+                        {address.address}
                       </Typography>
                       {address.isDefault && (
                         <View style={styles.defaultBadge}>
@@ -269,16 +265,6 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
                         </View>
                       )}
                     </View>
-                    {(address.city || address.state || address.pincode) && (
-                      <Typography variant="caption" style={styles.addressDetails}>
-                        {[address.city, address.state, address.pincode].filter(Boolean).join(', ')}
-                      </Typography>
-                    )}
-                    {address.landmark && (
-                      <Typography variant="caption" style={styles.landmark}>
-                        Near {address.landmark}
-                      </Typography>
-                    )}
                   </View>
                   <View style={styles.addressActions}>
                     <TouchableOpacity

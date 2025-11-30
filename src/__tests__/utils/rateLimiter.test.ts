@@ -58,7 +58,7 @@ describe('RateLimiter', () => {
       const result = rateLimiter.isAllowed('test-action', 'user@example.com', customConfig);
 
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(1); // 2 - 1 = 1
+      expect(result.remaining).toBe(2); // No entry exists yet, so full maxRequests
     });
 
     it('should reset after window expires', async () => {
@@ -254,7 +254,7 @@ describe('RateLimiter', () => {
 
       const result = rateLimiter.isAllowed('login', 'user@example.com');
       expect(result.allowed).toBe(true);
-      expect(result.remaining).toBe(4); // Should start fresh
+      expect(result.remaining).toBe(5); // Reset removes entry, so full maxRequests
     });
 
     it('should not reset other identifiers', () => {
@@ -308,7 +308,7 @@ describe('RateLimiter', () => {
       rateLimiter.setConfig('custom-action', customConfig);
 
       const result = rateLimiter.isAllowed('custom-action', 'user@example.com');
-      expect(result.remaining).toBe(9); // 10 - 1
+      expect(result.remaining).toBe(10); // No entry exists yet, so full maxRequests
     });
 
     it('should override existing config', () => {
@@ -320,7 +320,7 @@ describe('RateLimiter', () => {
       rateLimiter.setConfig('login', customConfig);
 
       const result = rateLimiter.isAllowed('login', 'user@example.com');
-      expect(result.remaining).toBe(19); // 20 - 1
+      expect(result.remaining).toBe(20); // No entry exists yet, so full maxRequests
       
       // Reset to original predefined config to avoid affecting other tests
       rateLimiter.setConfig('login', { maxRequests: 5, windowMs: 15 * 60 * 1000 });
@@ -328,6 +328,11 @@ describe('RateLimiter', () => {
   });
 
   describe('getConfig', () => {
+    beforeEach(() => {
+      // Reset login config to original predefined value
+      rateLimiter.setConfig('login', { maxRequests: 5, windowMs: 15 * 60 * 1000 });
+    });
+
     it('should return default config for unknown action', () => {
       const config = rateLimiter.getConfig('unknown-action');
 

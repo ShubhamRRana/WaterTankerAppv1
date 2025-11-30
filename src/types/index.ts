@@ -10,11 +10,7 @@ export type UserRole = 'customer' | 'driver' | 'admin';
  */
 export interface Address {
   id?: string;
-  street: string;
-  city: string;
-  state: string;
-  pincode: string;
-  landmark?: string;
+  address: string; // Single address field containing full address
   latitude: number;
   longitude: number;
   isDefault?: boolean;
@@ -191,11 +187,8 @@ export interface AuthStackParamList {
   RoleEntry: undefined;
   Login: { preferredRole?: UserRole } | undefined;
   Register: { preferredRole?: UserRole } | undefined;
-  RoleSelection: { email: string; availableRoles: UserRole[] };
   [key: string]:
     | undefined
-    | { email: string }
-    | { email: string; availableRoles: UserRole[] }
     | { preferredRole?: UserRole };
 }
 
@@ -240,11 +233,7 @@ export interface BookingForm {
 }
 
 export interface AddressForm {
-  street: string;
-  city: string;
-  state: string;
-  pincode: string;
-  landmark?: string;
+  address: string; // Single address field containing full address
   latitude: number;
   longitude: number;
   isDefault?: boolean;
