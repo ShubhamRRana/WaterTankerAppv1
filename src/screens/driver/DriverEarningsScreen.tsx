@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   Dimensions,
   RefreshControl,
-  Animated
+  Animated,
+  InteractionManager
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,6 +27,46 @@ interface EarningsPeriod {
   value: 'daily' | 'weekly' | 'monthly';
 }
 
+// Memoized period button component to prevent unnecessary re-renders
+const PeriodButton = memo<{
+  period: EarningsPeriod;
+  isSelected: boolean;
+  onPress: (period: 'daily' | 'weekly' | 'monthly') => void;
+  onLayout?: (width: number) => void;
+}>(({ period, isSelected, onPress, onLayout }) => {
+  const handlePress = useCallback(() => {
+    onPress(period.value);
+  }, [period.value, onPress]);
+
+  const handleLayout = useCallback((e: any) => {
+    if (onLayout) {
+      const width = e.nativeEvent.layout.width;
+      onLayout(width);
+    }
+  }, [onLayout]);
+
+  return (
+    <TouchableOpacity
+      style={styles.glassRadioOption}
+      onPress={handlePress}
+      activeOpacity={0.7}
+      onLayout={onLayout ? handleLayout : undefined}
+    >
+      <Typography 
+        variant="body" 
+        style={[
+          styles.glassRadioLabel,
+          isSelected && styles.glassRadioLabelActive
+        ]}
+      >
+        {period.label}
+      </Typography>
+    </TouchableOpacity>
+  );
+});
+
+PeriodButton.displayName = 'PeriodButton';
+
 const DriverEarningsScreen: React.FC = () => {
   const { user } = useAuthStore();
   const { bookings, isLoading, fetchDriverBookings } = useBookingStore();
@@ -38,11 +79,23 @@ const DriverEarningsScreen: React.FC = () => {
   const [periodOptionWidth, setPeriodOptionWidth] = useState(0);
   const isInitialRender = useRef(true);
 
-  const periods: EarningsPeriod[] = [
+  const periods: EarningsPeriod[] = useMemo(() => [
     { label: 'Today', value: 'daily' },
     { label: 'This Week', value: 'weekly' },
     { label: 'This Month', value: 'monthly' },
-  ];
+  ], []);
+
+  // Memoize period change handler
+  const handlePeriodChange = useCallback((period: 'daily' | 'weekly' | 'monthly') => {
+    setSelectedPeriod(period);
+  }, []);
+
+  // Memoize onLayout handler
+  const handleLayout = useCallback((width: number) => {
+    if (periodOptionWidth === 0) {
+      setPeriodOptionWidth(width);
+    }
+  }, [periodOptionWidth]);
 
   const calculateEarningsStats = useCallback(() => {
     if (!user?.id || !bookings.length) {
@@ -126,7 +179,7 @@ const DriverEarningsScreen: React.FC = () => {
     if (user?.id && bookings.length >= 0) {
       calculateEarningsStats();
     }
-  }, [calculateEarningsStats, user?.id]);
+  }, [bookings, user?.id, calculateEarningsStats]);
 
   // Refresh data when screen comes into focus
   useFocusEffect(
@@ -152,13 +205,15 @@ const DriverEarningsScreen: React.FC = () => {
         periodGliderAnim.setValue(targetValue);
         isInitialRender.current = false;
       } else {
-        // Animate to new position
-        Animated.spring(periodGliderAnim, {
-          toValue: targetValue,
-          useNativeDriver: true,
-          tension: 120,
-          friction: 8,
-        }).start();
+        // Defer animation to next frame to avoid blocking UI
+        InteractionManager.runAfterInteractions(() => {
+          Animated.spring(periodGliderAnim, {
+            toValue: targetValue,
+            useNativeDriver: true,
+            tension: 150,
+            friction: 7,
+          }).start();
+        });
       }
     }
   }, [selectedPeriod, periodOptionWidth]);
@@ -169,7 +224,7 @@ const DriverEarningsScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const getCurrentPeriodEarnings = () => {
+  const currentEarnings = useMemo(() => {
     if (!earningsStats) return 0;
     switch (selectedPeriod) {
       case 'daily':
@@ -181,9 +236,9 @@ const DriverEarningsScreen: React.FC = () => {
       default:
         return 0;
     }
-  };
+  }, [earningsStats, selectedPeriod]);
 
-  const getCompletedOrdersForPeriod = () => {
+  const completedOrders = useMemo(() => {
     if (!user?.id || !bookings.length) return [];
     
     const driverBookings = bookings.filter(booking => booking.driverId === user.id);
@@ -209,20 +264,21 @@ const DriverEarningsScreen: React.FC = () => {
     
     return completedBookings
       .filter(booking => booking.deliveredAt && new Date(booking.deliveredAt) >= startDate)
-      .sort((a, b) => new Date(b.deliveredAt!).getTime() - new Date(a.deliveredAt!).getTime());
-  };
+      .sort((a, b) => new Date(b.deliveredAt!).getTime() - new Date(a.deliveredAt!).getTime())
+      .slice(0, 10); // Limit to 10 items for performance
+  }, [bookings, user?.id, selectedPeriod]);
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = useCallback((amount: number) => {
     return PricingUtils.formatPrice(amount);
-  };
+  }, []);
 
-  const formatDate = (date: Date) => {
+  const formatDate = useCallback((date: Date) => {
     return formatDateOnly(date);
-  };
+  }, []);
 
-  const formatTime = (date: Date) => {
+  const formatTime = useCallback((date: Date) => {
     return formatTimeOnly(date);
-  };
+  }, []);
 
   if (isLoading && !earningsStats) {
     return (
@@ -234,9 +290,6 @@ const DriverEarningsScreen: React.FC = () => {
       </View>
     );
   }
-
-  const currentEarnings = getCurrentPeriodEarnings();
-  const completedOrders = getCompletedOrdersForPeriod();
 
   return (
     <ScrollView 
@@ -259,28 +312,13 @@ const DriverEarningsScreen: React.FC = () => {
       <View style={styles.periodSelector}>
         <View style={styles.glassRadioGroup}>
           {periods.map((period, index) => (
-            <TouchableOpacity
+            <PeriodButton
               key={period.value}
-              style={styles.glassRadioOption}
-              onPress={() => setSelectedPeriod(period.value)}
-              activeOpacity={0.8}
-              onLayout={(e) => {
-                if (index === 0 && periodOptionWidth === 0) {
-                  const width = e.nativeEvent.layout.width;
-                  setPeriodOptionWidth(width);
-                }
-              }}
-            >
-              <Typography 
-                variant="body" 
-                style={[
-                  styles.glassRadioLabel,
-                  selectedPeriod === period.value && styles.glassRadioLabelActive
-                ]}
-              >
-                {period.label}
-              </Typography>
-            </TouchableOpacity>
+              period={period}
+              isSelected={selectedPeriod === period.value}
+              onPress={handlePeriodChange}
+              onLayout={index === 0 ? handleLayout : undefined}
+            />
           ))}
           {periodOptionWidth > 0 && (
             <Animated.View
@@ -329,7 +367,7 @@ const DriverEarningsScreen: React.FC = () => {
             </Typography>
           </Card>
         ) : (
-          completedOrders.slice(0, 10).map((order) => (
+          completedOrders.map((order) => (
             <Card key={order.id} style={styles.transactionCard}>
               <View style={styles.transactionHeader}>
                 <View style={styles.transactionInfo}>

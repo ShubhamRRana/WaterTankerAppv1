@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -532,10 +532,10 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
             style={styles.textArea}
             placeholder="Any special instructions for delivery..."
             value={specialInstructions}
-            onChangeText={(text) => {
+            onChangeText={useCallback((text: string) => {
               const sanitized = SanitizationUtils.sanitizeText(text, 500);
               setSpecialInstructions(sanitized);
-            }}
+            }, [])}
             multiline
             numberOfLines={3}
           />

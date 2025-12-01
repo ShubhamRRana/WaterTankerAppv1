@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   TouchableOpacity,
   StyleSheet,
@@ -53,14 +53,11 @@ const Button: React.FC<ButtonProps> = ({
   loading = false,
   style,
 }) => {
-  const [isPressed, setIsPressed] = useState(false);
-
   const buttonStyle = [
     styles.button,
     styles[variant],
     styles[size],
     disabled && styles.disabled,
-    isPressed && styles.buttonPressed,
     style,
   ];
 
@@ -76,9 +73,7 @@ const Button: React.FC<ButtonProps> = ({
       style={buttonStyle}
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.9}
-      onPressIn={() => setIsPressed(true)}
-      onPressOut={() => setIsPressed(false)}
+      activeOpacity={0.7}
     >
       {loading ? (
         <ActivityIndicator
@@ -141,15 +136,6 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.disabled,
     borderColor: UI_CONFIG.colors.disabled,
     shadowOpacity: 0.3,
-  },
-  buttonPressed: {
-    shadowOffset: {
-      width: 4,
-      height: 4,
-    },
-    shadowRadius: 8,
-    shadowOpacity: 0.5,
-    elevation: 4,
   },
   // Text styles
   text: {

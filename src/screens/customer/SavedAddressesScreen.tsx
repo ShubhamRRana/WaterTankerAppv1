@@ -181,8 +181,6 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
     setNewAddressText('');
   }, []);
 
-
-
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -222,7 +220,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
               style={styles.addressInput}
               placeholder={editingAddress ? "Edit address..." : "Enter new address..."}
               value={newAddressText}
-              onChangeText={(text) => {
+              onChangeText={(text: string) => {
                 setNewAddressText(text);
               }}
               multiline
