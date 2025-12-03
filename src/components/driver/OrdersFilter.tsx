@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Typography } from '../common';
 import { UI_CONFIG } from '../../constants/config';
@@ -15,12 +15,16 @@ interface OrdersFilterProps {
   onTabChange: (tab: OrderTab) => void;
 }
 
-const OrdersFilter: React.FC<OrdersFilterProps> = ({ activeTab, onTabChange }) => {
-  const tabs: Tab[] = [
+const OrdersFilter: React.FC<OrdersFilterProps> = memo(({ activeTab, onTabChange }) => {
+  const tabs: Tab[] = React.useMemo(() => [
     { key: 'available', label: 'Available' },
     { key: 'active', label: 'Active' },
     { key: 'completed', label: 'Done' },
-  ];
+  ], []);
+
+  const handleTabPress = useCallback((tab: OrderTab) => {
+    onTabChange(tab);
+  }, [onTabChange]);
 
   // Animation values for glass glider
   const tabGliderAnim = useRef(new Animated.Value(0)).current;
@@ -60,7 +64,7 @@ const OrdersFilter: React.FC<OrdersFilterProps> = ({ activeTab, onTabChange }) =
           <TouchableOpacity
             key={tab.key}
             style={styles.glassRadioOption}
-            onPress={() => onTabChange(tab.key)}
+            onPress={() => handleTabPress(tab.key)}
             activeOpacity={0.8}
             onLayout={(e) => {
               if (index === 0 && tabOptionWidth === 0) {
@@ -96,7 +100,9 @@ const OrdersFilter: React.FC<OrdersFilterProps> = ({ activeTab, onTabChange }) =
       </View>
     </View>
   );
-};
+});
+
+OrdersFilter.displayName = 'OrdersFilter';
 
 const styles = StyleSheet.create({
   tabContainer: {

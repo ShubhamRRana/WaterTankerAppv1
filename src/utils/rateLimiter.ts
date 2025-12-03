@@ -42,6 +42,7 @@ class RateLimiter {
 
   /**
    * Check if an action is allowed (within rate limit)
+   * Note: This method does NOT increment the count - use record() to increment
    */
   isAllowed(
     action: string,
@@ -54,17 +55,12 @@ class RateLimiter {
     const now = Date.now();
     const entry = this.limits.get(key);
 
-    // If no entry exists or window has expired, create new entry
+    // If no entry exists or window has expired, action is allowed
     if (!entry || now >= entry.resetTime) {
-      const newEntry: RateLimitEntry = {
-        count: 1,
-        resetTime: now + config.windowMs,
-      };
-      this.limits.set(key, newEntry);
       return {
         allowed: true,
-        remaining: config.maxRequests - 1,
-        resetTime: newEntry.resetTime,
+        remaining: config.maxRequests,
+        resetTime: now + config.windowMs,
       };
     }
 
@@ -77,10 +73,7 @@ class RateLimiter {
       };
     }
 
-    // Increment count
-    entry.count++;
-    this.limits.set(key, entry);
-
+    // Within limit - return remaining attempts (without incrementing)
     return {
       allowed: true,
       remaining: config.maxRequests - entry.count,

@@ -21,7 +21,7 @@ afterEach(() => {
 
 describe('Booking Flow Integration', () => {
   const mockCustomer = {
-    uid: 'customer-1',
+    id: 'customer-1',
     email: 'customer@test.com',
     password: 'hashed-password',
     name: 'Test Customer',
@@ -31,7 +31,7 @@ describe('Booking Flow Integration', () => {
   };
 
   const mockDriver = {
-    uid: 'driver-1',
+    id: 'driver-1',
     email: 'driver@test.com',
     password: 'hashed-password',
     name: 'Test Driver',
@@ -43,7 +43,7 @@ describe('Booking Flow Integration', () => {
   };
 
   const mockBookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
-    customerId: mockCustomer.uid,
+    customerId: mockCustomer.id,
     customerName: mockCustomer.name,
     customerPhone: mockCustomer.phone,
     status: 'pending',
@@ -60,7 +60,6 @@ describe('Booking Flow Integration', () => {
       longitude: 0,
     },
     distance: 10,
-    isImmediate: true,
     paymentStatus: 'pending',
     canCancel: true,
   };
@@ -77,14 +76,14 @@ describe('Booking Flow Integration', () => {
 
       // Step 2: Driver accepts booking
       await BookingService.updateBookingStatus(bookingId, 'accepted', {
-        driverId: mockDriver.uid,
+        driverId: mockDriver.id,
         driverName: mockDriver.name,
         driverPhone: mockDriver.phone,
       });
 
       booking = await BookingService.getBookingById(bookingId);
       expect(booking?.status).toBe('accepted');
-      expect(booking?.driverId).toBe(mockDriver.uid);
+      expect(booking?.driverId).toBe(mockDriver.id);
       expect(booking?.acceptedAt).toBeInstanceOf(Date);
       expect(booking?.canCancel).toBe(true); // Can still cancel after acceptance
 
@@ -135,7 +134,7 @@ describe('Booking Flow Integration', () => {
 
       // Driver accepts and delivers
       await BookingService.updateBookingStatus(bookingId, 'accepted', {
-        driverId: mockDriver.uid,
+        driverId: mockDriver.id,
       });
       await BookingService.updateBookingStatus(bookingId, 'delivered');
 
@@ -206,7 +205,7 @@ describe('Booking Flow Integration', () => {
         totalPrice: 1200,
       });
 
-      const customerBookings = await BookingService.getBookingsByCustomer(mockCustomer.uid);
+      const customerBookings = await BookingService.getBookingsByCustomer(mockCustomer.id);
       expect(customerBookings.length).toBe(2);
       expect(customerBookings.some(b => b.id === booking1Id)).toBe(true);
       expect(customerBookings.some(b => b.id === booking2Id)).toBe(true);
@@ -222,16 +221,16 @@ describe('Booking Flow Integration', () => {
 
       // Driver accepts both
       await BookingService.updateBookingStatus(booking1Id, 'accepted', {
-        driverId: mockDriver.uid,
+        driverId: mockDriver.id,
       });
       await BookingService.updateBookingStatus(booking2Id, 'accepted', {
-        driverId: mockDriver.uid,
+        driverId: mockDriver.id,
       });
 
-      const driverBookings = await BookingService.getBookingsByDriver(mockDriver.uid);
+      const driverBookings = await BookingService.getBookingsByDriver(mockDriver.id);
       expect(driverBookings.length).toBe(2);
       driverBookings.forEach(booking => {
-        expect(booking.driverId).toBe(mockDriver.uid);
+        expect(booking.driverId).toBe(mockDriver.id);
         expect(booking.status).toBe('accepted');
       });
     });

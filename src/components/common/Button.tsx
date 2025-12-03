@@ -1,23 +1,49 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  View,
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  ViewStyle,
+  StyleProp,
 } from 'react-native';
 import { UI_CONFIG } from '../../constants/config';
 import Typography from './Typography';
 
+/**
+ * Button component props
+ */
 interface ButtonProps {
+  /** Button text to display */
   title: string;
+  /** Callback function called when button is pressed */
   onPress: () => void;
+  /** Visual style variant of the button */
   variant?: 'primary' | 'secondary' | 'outline';
+  /** Size of the button */
   size?: 'small' | 'medium' | 'large';
+  /** Whether the button is disabled */
   disabled?: boolean;
+  /** Whether the button is in loading state (shows spinner) */
   loading?: boolean;
-  style?: any;
+  /** Additional styles to apply to the button */
+  style?: StyleProp<ViewStyle>;
 }
 
+/**
+ * Reusable Button component with multiple variants and sizes
+ * 
+ * Supports primary, secondary, and outline variants with loading and disabled states.
+ * 
+ * @example
+ * ```tsx
+ * <Button 
+ *   title="Submit" 
+ *   onPress={handleSubmit} 
+ *   variant="primary" 
+ *   loading={isSubmitting}
+ * />
+ * ```
+ */
 const Button: React.FC<ButtonProps> = ({
   title,
   onPress,
@@ -27,14 +53,11 @@ const Button: React.FC<ButtonProps> = ({
   loading = false,
   style,
 }) => {
-  const [isPressed, setIsPressed] = useState(false);
-
   const buttonStyle = [
     styles.button,
     styles[variant],
     styles[size],
     disabled && styles.disabled,
-    isPressed && styles.buttonPressed,
     style,
   ];
 
@@ -50,9 +73,7 @@ const Button: React.FC<ButtonProps> = ({
       style={buttonStyle}
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.9}
-      onPressIn={() => setIsPressed(true)}
-      onPressOut={() => setIsPressed(false)}
+      activeOpacity={0.7}
     >
       {loading ? (
         <ActivityIndicator
@@ -115,15 +136,6 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.disabled,
     borderColor: UI_CONFIG.colors.disabled,
     shadowOpacity: 0.3,
-  },
-  buttonPressed: {
-    shadowOffset: {
-      width: 4,
-      height: 4,
-    },
-    shadowRadius: 8,
-    shadowOpacity: 0.5,
-    elevation: 4,
   },
   // Text styles
   text: {

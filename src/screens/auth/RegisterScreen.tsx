@@ -169,17 +169,10 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     const limited = sanitized.slice(0, 10);
     setPhone(limited);
     
-    if (limited) {
-      const validation = ValidationUtils.validatePhone(limited);
-      if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, phone: validation.error }));
-      } else {
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.phone;
-          return newErrors;
-        });
-      }
+    // Always validate phone as required
+    const validation = ValidationUtils.validatePhone(limited);
+    if (!validation.isValid) {
+      setErrors(prev => ({ ...prev, phone: validation.error }));
     } else {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -202,26 +195,26 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     const confirmPasswordValidation = ValidationUtils.validateConfirmPassword(password, confirmPassword);
     const phoneValidation = ValidationUtils.validatePhone(sanitizedPhone);
     
-    const newErrors: any = {};
+    const newErrors: Record<string, string> = {};
     
     if (!emailValidation.isValid) {
-      newErrors.email = emailValidation.error;
+      newErrors.email = emailValidation.error || '';
     }
     
     if (!passwordValidation.isValid) {
-      newErrors.password = passwordValidation.error;
+      newErrors.password = passwordValidation.error || '';
     }
     
     if (!nameValidation.isValid) {
-      newErrors.name = nameValidation.error;
+      newErrors.name = nameValidation.error || '';
     }
     
     if (!confirmPasswordValidation.isValid) {
-      newErrors.confirmPassword = confirmPasswordValidation.error;
+      newErrors.confirmPassword = confirmPasswordValidation.error || '';
     }
 
     if (!phoneValidation.isValid) {
-      newErrors.phone = phoneValidation.error;
+      newErrors.phone = phoneValidation.error || '';
     }
 
     if (Object.keys(newErrors).length > 0) {

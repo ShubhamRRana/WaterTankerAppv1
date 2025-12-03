@@ -10,11 +10,7 @@ export type UserRole = 'customer' | 'driver' | 'admin';
  */
 export interface Address {
   id?: string;
-  street: string;
-  city: string;
-  state: string;
-  pincode: string;
-  landmark?: string;
+  address: string; // Single address field containing full address
   latitude: number;
   longitude: number;
   isDefault?: boolean;
@@ -25,12 +21,11 @@ export interface Address {
  * Email is the primary identifier for authentication
  */
 interface BaseUser {
-  uid: string;
+  id: string;
   email: string; // Required: primary identifier for authentication
   password: string; // hashed
   name: string;
   phone?: string; // Optional: kept for contact purposes
-  profileImage?: string;
   createdAt: Date;
 }
 
@@ -52,8 +47,6 @@ export interface DriverUser extends BaseUser {
   licenseExpiry?: Date;
   driverLicenseImage?: string;
   vehicleRegistrationImage?: string;
-  isApproved?: boolean;
-  isAvailable?: boolean;
   totalEarnings?: number;
   completedOrders?: number;
   createdByAdmin?: boolean; // Track if driver was created by admin
@@ -102,8 +95,7 @@ export interface Booking {
   totalPrice: number;
   deliveryAddress: Address;
   distance: number; // in km
-  scheduledFor?: Date; // null for immediate, date/time for scheduled
-  isImmediate: boolean;
+  scheduledFor?: Date; // scheduled delivery date/time
   paymentStatus: 'pending' | 'completed' | 'failed' | 'refunded';
   paymentId?: string;
   cancellationReason?: string;
@@ -132,7 +124,7 @@ export interface Pricing {
   pricePerKm: number;
   minimumCharge: number;
   updatedAt: Date;
-  updatedBy: string; // admin uid
+  updatedBy: string; // admin id
 }
 
 /**
@@ -149,7 +141,7 @@ export interface DriverApplication {
   vehicleRegistrationImage: string;
   status: 'pending' | 'approved' | 'rejected';
   appliedAt: Date;
-  reviewedBy?: string; // admin uid
+  reviewedBy?: string; // admin id
   reviewedAt?: Date;
   rejectionReason?: string;
 }
@@ -159,7 +151,7 @@ export interface DriverApplication {
  */
 export interface Vehicle {
   id: string;
-  agencyId: string; // Admin user uid (agency)
+  agencyId: string; // Admin user id (agency)
   vehicleNumber: string;
   insuranceCompanyName: string;
   insuranceExpiryDate: Date;
@@ -183,6 +175,21 @@ export interface Notification {
   createdAt: Date;
 }
 
+/**
+ * Bank account information for admin
+ */
+export interface BankAccount {
+  id: string;
+  accountHolderName: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  branchName: string;
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Navigation types
 /**
  * Authentication stack navigation parameters
@@ -191,11 +198,8 @@ export interface AuthStackParamList {
   RoleEntry: undefined;
   Login: { preferredRole?: UserRole } | undefined;
   Register: { preferredRole?: UserRole } | undefined;
-  RoleSelection: { email: string; availableRoles: UserRole[] };
   [key: string]:
     | undefined
-    | { email: string }
-    | { email: string; availableRoles: UserRole[] }
     | { preferredRole?: UserRole };
 }
 
@@ -228,23 +232,18 @@ export interface RegisterForm {
   confirmPassword: string;
   name: string;
   role: UserRole;
-  phone?: string; // Optional: for contact purposes
+  phone: string; // Required: for contact purposes
 }
 
 export interface BookingForm {
   tankerSize: number;
   deliveryAddress: Address;
   scheduledFor?: Date;
-  isImmediate: boolean;
   specialInstructions?: string;
 }
 
 export interface AddressForm {
-  street: string;
-  city: string;
-  state: string;
-  pincode: string;
-  landmark?: string;
+  address: string; // Single address field containing full address
   latitude: number;
   longitude: number;
   isDefault?: boolean;
@@ -270,7 +269,7 @@ export interface PaginatedResponse<T> {
 export interface AppError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 // Location types

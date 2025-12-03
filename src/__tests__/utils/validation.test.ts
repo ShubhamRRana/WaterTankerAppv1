@@ -241,50 +241,38 @@ describe('ValidationUtils', () => {
   describe('validateAddress', () => {
     it('should validate complete address', () => {
       const address = {
-        street: '123 Main St',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        pincode: '400001',
+        address: '123 Main St, Mumbai, Maharashtra, 400001',
       };
       const result = ValidationUtils.validateAddress(address);
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should reject address with missing street', () => {
+    it('should reject address with missing address field', () => {
       const address = {
-        street: '',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        pincode: '400001',
+        address: '',
       };
       const result = ValidationUtils.validateAddress(address);
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Street address is required');
+      expect(result.errors).toContain('Address is required');
     });
 
-    it('should reject address with invalid pincode', () => {
+    it('should reject address with only whitespace', () => {
       const address = {
-        street: '123 Main St',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        pincode: '12345',
+        address: '   ',
       };
       const result = ValidationUtils.validateAddress(address);
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Pincode must be 6 digits');
+      expect(result.errors).toContain('Address is required');
     });
 
-    it('should collect all validation errors', () => {
+    it('should validate address with valid content', () => {
       const address = {
-        street: '',
-        city: '',
-        state: '',
-        pincode: '123',
+        address: '123 Main St, Mumbai, Maharashtra, 400001',
       };
       const result = ValidationUtils.validateAddress(address);
-      expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(1);
+      expect(result.isValid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
   });
 

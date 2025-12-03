@@ -13,12 +13,12 @@ import { User, UserRole } from '../types/index';
 export class UserService {
   /**
    * Helper function to convert auth_id to users table id
-   * In local storage, uid is the primary identifier, so this just returns the uid
+   * In local storage, id is the primary identifier, so this just returns the id
    */
   static async getUsersTableIdByAuthId(authId: string): Promise<string | null> {
     try {
       const user = await LocalStorageService.getUserById(authId);
-      return user ? user.uid : null;
+      return user ? user.id : null;
     } catch (error) {
       return null;
     }
@@ -49,11 +49,11 @@ export class UserService {
   }
 
   /**
-   * Get a single user by uid (primary key for fetching users)
+   * Get a single user by id (primary key for fetching users)
    */
-  static async getUserById(uid: string): Promise<User | null> {
+  static async getUserById(id: string): Promise<User | null> {
     try {
-      const user = await LocalStorageService.getUserById(uid);
+      const user = await LocalStorageService.getUserById(id);
       return user as User | null;
     } catch (error) {
       throw error;
@@ -64,12 +64,12 @@ export class UserService {
    * Create a new user (typically used by admin to create drivers)
    * Note: This creates the user profile only. Auth account should be created via AuthService.register()
    */
-  static async createUser(userData: Omit<User, 'uid' | 'createdAt'>): Promise<User> {
+  static async createUser(userData: Omit<User, 'id' | 'createdAt'>): Promise<User> {
     try {
-      const uid = LocalStorageService.generateId();
+      const id = LocalStorageService.generateId();
       const newUser: User = {
         ...userData,
-        uid,
+        id,
         createdAt: new Date(),
       };
 
@@ -81,33 +81,33 @@ export class UserService {
   }
 
   /**
-   * Update user profile by uid
+   * Update user profile by id
    */
-  static async updateUser(uid: string, updates: Partial<User>): Promise<void> {
+  static async updateUser(id: string, updates: Partial<User>): Promise<void> {
     try {
-      const currentUser = await LocalStorageService.getUserById(uid);
+      const currentUser = await LocalStorageService.getUserById(id);
       
       if (!currentUser) {
         throw new Error('User not found');
       }
 
-      // Merge updates (excluding uid and role)
-      const { uid: userId, role, ...allowedUpdates } = updates;
+      // Merge updates (excluding id and role)
+      const { id: userId, role, ...allowedUpdates } = updates;
       const updatedUser = { ...currentUser, ...allowedUpdates };
 
-      await LocalStorageService.updateUserProfile(uid, updatedUser);
+      await LocalStorageService.updateUserProfile(id, updatedUser);
     } catch (error) {
       throw error;
     }
   }
 
   /**
-   * Delete a user by uid (admin only)
+   * Delete a user by id (admin only)
    */
-  static async deleteUser(uid: string): Promise<void> {
+  static async deleteUser(id: string): Promise<void> {
     try {
       const users = await LocalStorageService.getUsers();
-      const updatedUsers = users.filter(u => u.uid !== uid);
+      const updatedUsers = users.filter(u => u.id !== id);
       await LocalStorageService.setItem('users_collection', updatedUsers);
     } catch (error) {
       throw error;
@@ -115,12 +115,12 @@ export class UserService {
   }
 
   /**
-   * Subscribe to real-time user updates by uid
+   * Subscribe to real-time user updates by id
    * Note: Real-time subscriptions are not available with local storage
    * This is a placeholder that returns a no-op unsubscribe function
    */
   static subscribeToUserUpdates(
-    uid: string,
+    id: string,
     callback: (user: User | null) => void
   ): () => void {
     // Local storage doesn't support real-time updates

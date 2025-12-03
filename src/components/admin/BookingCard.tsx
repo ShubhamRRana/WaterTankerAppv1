@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,9 +6,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card } from '../common';
-import { Booking, BookingStatus } from '../../types';
+import { Booking, BookingStatus, isCustomerUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
+import { UserService } from '../../services/user.service';
+import { errorLogger } from '../../utils/errorLogger';
+import { formatDateTime } from '../../utils/dateUtils';
 
 export interface BookingCardProps {
   booking: Booking;
@@ -23,26 +26,37 @@ const BookingCard: React.FC<BookingCardProps> = ({
   getStatusColor,
   getStatusIcon,
 }) => {
+  const [customerProfileAddress, setCustomerProfileAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCustomerAddress = async () => {
+      try {
+        const customer = await UserService.getUserById(booking.customerId);
+        if (customer && isCustomerUser(customer) && customer.savedAddresses && customer.savedAddresses.length > 0) {
+          const defaultAddress = customer.savedAddresses.find(addr => addr.isDefault) || customer.savedAddresses[0];
+          if (defaultAddress && defaultAddress.address !== booking.deliveryAddress.address) {
+            setCustomerProfileAddress(defaultAddress.address);
+          }
+        }
+      } catch (error) {
+        // Profile address is optional, but log for debugging
+        errorLogger.low('Failed to fetch customer profile address', error, { 
+          bookingId: booking.id, 
+          customerId: booking.customerId 
+        });
+      }
+    };
+    fetchCustomerAddress();
+  }, [booking.customerId, booking.deliveryAddress.address]);
+
   const statusColor = useMemo(() => getStatusColor(booking.status), [booking.status, getStatusColor]);
   const statusIcon = useMemo(() => getStatusIcon(booking.status), [booking.status, getStatusIcon]);
   const formattedDate = useMemo(() => {
-    return new Date(booking.createdAt).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateTime(booking.createdAt);
   }, [booking.createdAt]);
   const formattedDeliveredDate = useMemo(() => {
     if (!booking.deliveredAt) return null;
-    return new Date(booking.deliveredAt).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return formatDateTime(booking.deliveredAt);
   }, [booking.deliveredAt]);
   const bookingIdShort = useMemo(() => booking.id.slice(-8), [booking.id]);
   const statusText = useMemo(() => booking.status.replace('_', ' ').toUpperCase(), [booking.status]);
@@ -85,9 +99,18 @@ const BookingCard: React.FC<BookingCardProps> = ({
         <View style={styles.detailRow}>
           <Ionicons name="location-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
           <Typography variant="body" style={styles.detailText}>
-            {booking.deliveryAddress.street}
+            {booking.deliveryAddress.address}
           </Typography>
         </View>
+        
+        {customerProfileAddress && (
+          <View style={styles.detailRow}>
+            <Ionicons name="home-outline" size={16} color={UI_CONFIG.colors.primary} />
+            <Typography variant="body" style={styles.detailText}>
+              Profile: {customerProfileAddress}
+            </Typography>
+          </View>
+        )}
         
         <View style={styles.detailRow}>
           <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />

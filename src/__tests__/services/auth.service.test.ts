@@ -26,7 +26,7 @@ afterEach(() => {
 });
 
 describe('AuthService', () => {
-  const mockCustomerUser: Omit<User, 'uid' | 'createdAt'> = {
+  const mockCustomerUser: Omit<User, 'id' | 'createdAt'> = {
     email: 'customer@test.com',
     password: 'password123',
     name: 'Test Customer',
@@ -34,7 +34,7 @@ describe('AuthService', () => {
     role: 'customer',
   };
 
-  const mockDriverUser: Omit<DriverUser, 'uid' | 'createdAt'> = {
+  const mockDriverUser: Omit<DriverUser, 'id' | 'createdAt'> = {
     email: 'driver@test.com',
     password: 'password123',
     name: 'Test Driver',
@@ -42,15 +42,15 @@ describe('AuthService', () => {
     role: 'driver',
     licenseNumber: 'DL123456',
     vehicleNumber: 'ABC123',
-    isApproved: true,
     isAvailable: true,
     createdByAdmin: true,
   };
 
-  const mockAdminUser: Omit<AdminUser, 'uid' | 'createdAt'> = {
+  const mockAdminUser: Omit<AdminUser, 'id' | 'createdAt'> = {
     email: 'admin@test.com',
     password: 'password123',
     name: 'Test Admin',
+    phone: '1234567890',
     role: 'admin',
     businessName: 'Test Business',
   };
@@ -61,7 +61,8 @@ describe('AuthService', () => {
         'newcustomer@test.com',
         'password123',
         'New Customer',
-        'customer'
+        'customer',
+        { phone: '1234567890' }
       );
 
       expect(result.success).toBe(true);
@@ -77,7 +78,7 @@ describe('AuthService', () => {
         'password123',
         'New Driver',
         'driver',
-        { createdByAdmin: true }
+        { createdByAdmin: true, phone: '9876543210' }
       );
 
       expect(result.success).toBe(true);
@@ -142,7 +143,7 @@ describe('AuthService', () => {
       // Create existing user
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'existing-user',
+        id: 'existing-user',
         createdAt: new Date(),
       } as User);
 
@@ -161,7 +162,7 @@ describe('AuthService', () => {
       // Create existing customer
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
 
@@ -171,7 +172,7 @@ describe('AuthService', () => {
         'password123',
         'Test User',
         'driver',
-        { createdByAdmin: true }
+        { createdByAdmin: true, phone: '9876543210' }
       );
 
       expect(result.success).toBe(true);
@@ -186,7 +187,8 @@ describe('AuthService', () => {
         '  TEST@EXAMPLE.COM  ',
         'password123',
         '  Test User  ',
-        'customer'
+        'customer',
+        { phone: '1234567890' }
       );
 
       expect(sanitizeEmailSpy).toHaveBeenCalled();
@@ -215,9 +217,9 @@ describe('AuthService', () => {
         'driver',
         {
           createdByAdmin: true,
+          phone: '9876543210',
           vehicleNumber: 'XYZ789',
           licenseNumber: 'DL987654',
-          isApproved: true,
         }
       );
 
@@ -225,7 +227,6 @@ describe('AuthService', () => {
       const driver = result.user as DriverUser;
       expect(driver.vehicleNumber).toBe('XYZ789');
       expect(driver.licenseNumber).toBe('DL987654');
-      expect(driver.isApproved).toBe(true);
     });
 
     it('should include admin-specific fields when registering admin', async () => {
@@ -235,6 +236,7 @@ describe('AuthService', () => {
         'Admin Name',
         'admin',
         {
+          phone: '1234567890',
           businessName: 'My Business',
         }
       );
@@ -249,7 +251,7 @@ describe('AuthService', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
     });
@@ -307,12 +309,12 @@ describe('AuthService', () => {
       // Create multiple accounts with same email
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
-        uid: 'driver-1',
+        id: 'driver-1',
         email: 'customer@test.com',
         password: 'password123',
         createdAt: new Date(),
@@ -331,7 +333,7 @@ describe('AuthService', () => {
       // Create driver not created by admin
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
-        uid: 'driver-1',
+        id: 'driver-1',
         createdByAdmin: false,
         createdAt: new Date(),
       } as DriverUser);
@@ -364,12 +366,12 @@ describe('AuthService', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
-        uid: 'driver-1',
+        id: 'driver-1',
         email: 'customer@test.com',
         password: 'password123',
         createdAt: new Date(),
@@ -394,7 +396,7 @@ describe('AuthService', () => {
     it('should reject login for non-admin-created driver', async () => {
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
-        uid: 'driver-2',
+        id: 'driver-2',
         email: 'driver2@test.com',
         createdByAdmin: false,
         createdAt: new Date(),
@@ -420,7 +422,7 @@ describe('AuthService', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUser({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
     });
@@ -451,7 +453,7 @@ describe('AuthService', () => {
     beforeEach(async () => {
       const userData = {
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User;
       await LocalStorageService.saveUser(userData);
@@ -465,11 +467,11 @@ describe('AuthService', () => {
       expect(user?.email).toBe('customer@test.com');
     });
 
-    it('should return user by uid when provided', async () => {
+    it('should return user by id when provided', async () => {
       const user = await AuthService.getCurrentUserData('customer-1');
 
       expect(user).toBeDefined();
-      expect(user?.uid).toBe('customer-1');
+      expect(user?.id).toBe('customer-1');
     });
 
     it('should return null when no user in session', async () => {
@@ -480,7 +482,7 @@ describe('AuthService', () => {
       expect(user).toBeNull();
     });
 
-    it('should return null when user not found by uid', async () => {
+    it('should return null when user not found by id', async () => {
       const user = await AuthService.getCurrentUserData('non-existent');
 
       expect(user).toBeNull();
@@ -501,7 +503,7 @@ describe('AuthService', () => {
     beforeEach(async () => {
       const user = await LocalStorageService.saveUserToCollection({
         ...mockCustomerUser,
-        uid: 'customer-1',
+        id: 'customer-1',
         createdAt: new Date(),
       } as User);
       userId = 'customer-1';
@@ -521,7 +523,7 @@ describe('AuthService', () => {
     it('should update current session when updating logged-in user', async () => {
       await LocalStorageService.saveUser({
         ...mockCustomerUser,
-        uid: userId,
+        id: userId,
         createdAt: new Date(),
       } as User);
 
@@ -533,13 +535,13 @@ describe('AuthService', () => {
       expect(sessionUser?.name).toBe('Updated Name');
     });
 
-    it('should not allow updating uid', async () => {
+    it('should not allow updating id', async () => {
       await AuthService.updateUserProfile(userId, {
-        uid: 'new-uid',
+        id: 'new-id',
       } as Partial<User>);
 
       const user = await LocalStorageService.getUserById(userId);
-      expect(user?.uid).toBe(userId);
+      expect(user?.id).toBe(userId);
     });
 
     it('should not allow updating role', async () => {

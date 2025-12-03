@@ -64,12 +64,6 @@ jest.mock('../../screens/auth/RegisterScreen', () => {
   return () => <View testID="RegisterScreen"><Text>RegisterScreen</Text></View>;
 });
 
-jest.mock('../../screens/auth/RoleSelectionScreen', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return () => <View testID="RoleSelectionScreen"><Text>RoleSelectionScreen</Text></View>;
-});
-
 jest.mock('../../screens/auth/RoleEntryScreen', () => {
   const React = require('react');
   const { View, Text } = require('react-native');

@@ -177,31 +177,14 @@ export class ValidationUtils {
     return { isValid: true };
   }
 
-  // Address validation
+  // Address validation (simplified - single address field)
   static validateAddress(address: {
-    street: string;
-    city: string;
-    state: string;
-    pincode: string;
+    address: string;
   }): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
     
-    if (!address.street?.trim()) {
-      errors.push('Street address is required');
-    }
-    
-    if (!address.city?.trim()) {
-      errors.push('City is required');
-    }
-    
-    if (!address.state?.trim()) {
-      errors.push('State is required');
-    }
-    
-    if (!address.pincode?.trim()) {
-      errors.push('Pincode is required');
-    } else if (!/^\d{6}$/.test(address.pincode)) {
-      errors.push('Pincode must be 6 digits');
+    if (!address.address?.trim()) {
+      errors.push('Address is required');
     }
     
     return {

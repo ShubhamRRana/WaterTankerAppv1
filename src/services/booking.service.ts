@@ -1,10 +1,29 @@
 import { LocalStorageService } from './localStorage';
 import { Booking, BookingStatus } from '../types/index';
 
+/**
+ * Booking Service
+ * 
+ * Handles all booking-related operations including creation, updates, status changes,
+ * and retrieval of bookings. Uses LocalStorageService for data persistence.
+ * 
+ * @example
+ * ```typescript
+ * // Create a new booking
+ * const bookingId = await BookingService.createBooking({
+ *   customerId: 'customer-123',
+ *   agencyId: 'agency-456',
+ *   // ... other booking data
+ * });
+ * 
+ * // Update booking status
+ * await BookingService.updateBookingStatus(bookingId, 'accepted');
+ * ```
+ */
 export class BookingService {
   /**
    * Create a new booking in local storage
-   * Note: bookingData.customerId, agencyId, driverId should be uid values
+   * Note: bookingData.customerId, agencyId, driverId should be id values
    */
   static async createBooking(bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
@@ -55,11 +74,11 @@ export class BookingService {
   }
 
   /**
-   * Get all bookings for a customer by uid
+   * Get all bookings for a customer by id
    */
-  static async getBookingsByCustomer(customerUid: string): Promise<Booking[]> {
+  static async getBookingsByCustomer(customerId: string): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getBookingsByCustomer(customerUid);
+      const bookings = await LocalStorageService.getBookingsByCustomer(customerId);
       return bookings as Booking[];
     } catch (error) {
       throw error;
@@ -79,11 +98,11 @@ export class BookingService {
   }
 
   /**
-   * Get all bookings for a driver by uid
+   * Get all bookings for a driver by id
    */
-  static async getBookingsByDriver(driverUid: string): Promise<Booking[]> {
+  static async getBookingsByDriver(driverId: string): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getBookingsByDriver(driverUid);
+      const bookings = await LocalStorageService.getBookingsByDriver(driverId);
       return bookings as Booking[];
     } catch (error) {
       throw error;

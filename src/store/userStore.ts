@@ -12,7 +12,7 @@ interface UserState {
   // Actions
   fetchAllUsers: () => Promise<void>;
   fetchUsersByRole: (role: UserRole) => Promise<void>;
-  addUser: (userData: Omit<User, 'uid' | 'createdAt'>) => Promise<void>;
+  addUser: (userData: Omit<User, 'id' | 'createdAt'>) => Promise<void>;
   updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
   deleteUser: (userId: string) => Promise<void>;
   setSelectedUser: (user: User | null) => void;
@@ -77,7 +77,7 @@ export const useUserStore = create<UserState>((set, get) => ({
       // Update local state
       const { users } = get();
       const updatedUsers = users.map(user =>
-        user.uid === userId ? { ...user, ...updates } : user
+        user.id === userId ? { ...user, ...updates } : user
       );
       set({ users: updatedUsers, isLoading: false });
     } catch (error) {
@@ -94,10 +94,10 @@ export const useUserStore = create<UserState>((set, get) => ({
       
       // Update local state
       const { users } = get();
-      const updatedUsers = users.filter(user => user.uid !== userId);
+      const updatedUsers = users.filter(user => user.id !== userId);
       set({ 
         users: updatedUsers, 
-        selectedUser: get().selectedUser?.uid === userId ? null : get().selectedUser,
+        selectedUser: get().selectedUser?.id === userId ? null : get().selectedUser,
         isLoading: false 
       });
     } catch (error) {

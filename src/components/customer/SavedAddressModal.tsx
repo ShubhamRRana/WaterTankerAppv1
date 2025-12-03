@@ -57,23 +57,13 @@ const SavedAddressModal: React.FC<SavedAddressModalProps> = ({
               >
                 <View style={styles.addressInfo}>
                   <View style={styles.addressTitleRow}>
-                    <Typography variant="body" style={styles.addressTitle}>{address.street}</Typography>
+                    <Typography variant="body" style={styles.addressTitle}>{address.address}</Typography>
                     {address.isDefault && (
                       <View style={styles.defaultBadge}>
                         <Typography variant="caption" style={styles.defaultText}>DEFAULT</Typography>
                       </View>
                     )}
                   </View>
-                  {(address.city || address.state || address.pincode) && (
-                    <Typography variant="caption" style={styles.addressDetails}>
-                      {[address.city, address.state, address.pincode].filter(Boolean).join(', ')}
-                    </Typography>
-                  )}
-                  {address.landmark && (
-                    <Typography variant="caption" style={styles.landmark}>
-                      Near {address.landmark}
-                    </Typography>
-                  )}
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={UI_CONFIG.colors.textSecondary} />
               </Card>

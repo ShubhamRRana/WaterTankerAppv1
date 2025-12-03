@@ -18,7 +18,7 @@ import { Typography } from '../../components/common';
 import { Address, isCustomerUser } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { LocalStorageService } from '../../services/localStorage';
-import { UI_CONFIG } from '../../constants/config';
+import { UI_CONFIG, LOCATION_CONFIG } from '../../constants/config';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 
 type SavedAddressesScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'SavedAddresses'>;
@@ -72,7 +72,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         // Update existing address
         const updatedAddress: Address = {
           ...editingAddress,
-          street: sanitizedAddress,
+          address: sanitizedAddress,
         };
         
         updatedAddresses = addresses.map(addr => 
@@ -80,15 +80,12 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         );
       } else {
         // Add new address
+        // TODO: Replace mock coordinates with actual geocoding service
         const addressToSave: Address = {
           id: LocalStorageService.generateId(),
-          street: sanitizedAddress,
-          city: '', // We'll use the full address as street
-          state: '',
-          pincode: '',
-          landmark: '',
-          latitude: 28.6139 + (Math.random() - 0.5) * 0.1,
-          longitude: 77.2090 + (Math.random() - 0.5) * 0.1,
+          address: sanitizedAddress,
+          latitude: LOCATION_CONFIG.defaultCenter.latitude + (Math.random() - 0.5) * 0.1,
+          longitude: LOCATION_CONFIG.defaultCenter.longitude + (Math.random() - 0.5) * 0.1,
           isDefault: addresses.length === 0, // First address becomes default
         };
         
@@ -176,15 +173,13 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
 
   const handleEditAddress = useCallback((address: Address) => {
     setEditingAddress(address);
-    setNewAddressText(address.street);
+    setNewAddressText(address.address);
   }, []);
 
   const handleCancelEdit = useCallback(() => {
     setEditingAddress(null);
     setNewAddressText('');
   }, []);
-
-
 
   if (isLoading) {
     return (
@@ -225,7 +220,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
               style={styles.addressInput}
               placeholder={editingAddress ? "Edit address..." : "Enter new address..."}
               value={newAddressText}
-              onChangeText={(text) => {
+              onChangeText={(text: string) => {
                 setNewAddressText(text);
               }}
               multiline
@@ -261,7 +256,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
                   <View style={styles.addressInfo}>
                     <View style={styles.addressTitleRow}>
                       <Typography variant="body" style={styles.addressTitle}>
-                        {address.street}
+                        {address.address}
                       </Typography>
                       {address.isDefault && (
                         <View style={styles.defaultBadge}>
@@ -269,16 +264,6 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
                         </View>
                       )}
                     </View>
-                    {(address.city || address.state || address.pincode) && (
-                      <Typography variant="caption" style={styles.addressDetails}>
-                        {[address.city, address.state, address.pincode].filter(Boolean).join(', ')}
-                      </Typography>
-                    )}
-                    {address.landmark && (
-                      <Typography variant="caption" style={styles.landmark}>
-                        Near {address.landmark}
-                      </Typography>
-                    )}
                   </View>
                   <View style={styles.addressActions}>
                     <TouchableOpacity

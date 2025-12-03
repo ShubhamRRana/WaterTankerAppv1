@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, Booking, Vehicle } from '../types/index';
+import { User, Booking, Vehicle, BankAccount } from '../types/index';
 import {
   serializeUserDates,
   deserializeUserDates,
@@ -63,10 +63,37 @@ export class LocalStorageService {
 
   // Booking management methods
   static async saveBooking(booking: Booking): Promise<void> {
-    const bookings = await this.getBookings();
-    const updatedBookings = [...bookings, booking];
-    const serialized = updatedBookings.map(b => serializeBookingDates(b as any));
-    await this.setItem('bookings', serialized);
+    try {
+      // Validate booking has required fields
+      if (!booking.id || !booking.customerId || !booking.customerName) {
+        throw new Error('Booking is missing required fields (id, customerId, or customerName)');
+      }
+
+      if (!booking.createdAt || !booking.updatedAt) {
+        throw new Error('Booking is missing required date fields (createdAt or updatedAt)');
+      }
+
+      // Validate dates are valid Date objects
+      if (!(booking.createdAt instanceof Date) || isNaN(booking.createdAt.getTime())) {
+        throw new Error('Invalid createdAt date');
+      }
+
+      if (!(booking.updatedAt instanceof Date) || isNaN(booking.updatedAt.getTime())) {
+        throw new Error('Invalid updatedAt date');
+      }
+
+      if (booking.scheduledFor && (!(booking.scheduledFor instanceof Date) || isNaN(booking.scheduledFor.getTime()))) {
+        throw new Error('Invalid scheduledFor date');
+      }
+
+      const bookings = await this.getBookings();
+      const updatedBookings = [...bookings, booking];
+      const serialized = updatedBookings.map(b => serializeBookingDates(b as any));
+      await this.setItem('bookings', serialized);
+    } catch (error) {
+      console.error('Error saving booking to local storage:', error);
+      throw error;
+    }
   }
 
   static async updateBooking(bookingId: string, updates: Partial<Booking>): Promise<void> {
@@ -110,7 +137,7 @@ export class LocalStorageService {
   // User collection management
   static async saveUserToCollection(user: User): Promise<void> {
     const users = await this.getUsers();
-    const existingUserIndex = users.findIndex(u => u.uid === user.uid);
+    const existingUserIndex = users.findIndex(u => u.id === user.id);
     
     if (existingUserIndex >= 0) {
       users[existingUserIndex] = user;
@@ -128,14 +155,14 @@ export class LocalStorageService {
     return users.map(user => deserializeUserDates(user) as unknown as User);
   }
 
-  static async getUserById(uid: string): Promise<User | null> {
+  static async getUserById(id: string): Promise<User | null> {
     const users = await this.getUsers();
-    return users.find(user => user.uid === uid) || null;
+    return users.find(user => user.id === id) || null;
   }
 
-  static async updateUserProfile(uid: string, updates: Partial<User>): Promise<void> {
+  static async updateUserProfile(id: string, updates: Partial<User>): Promise<void> {
     const users = await this.getUsers();
-    const userIndex = users.findIndex(user => user.uid === uid);
+    const userIndex = users.findIndex(user => user.id === id);
     
     if (userIndex >= 0) {
       users[userIndex] = { ...users[userIndex], ...updates } as User;
@@ -198,6 +225,97 @@ export class LocalStorageService {
     await this.setItem('vehicles_collection', serialized);
   }
 
+  // Bank account management methods
+  static async saveBankAccount(bankAccount: BankAccount): Promise<void> {
+    const bankAccounts = await this.getBankAccounts();
+    const existingAccountIndex = bankAccounts.findIndex(ba => ba.id === bankAccount.id);
+    
+    if (existingAccountIndex >= 0) {
+      bankAccounts[existingAccountIndex] = { ...bankAccount, updatedAt: new Date() };
+    } else {
+      const accountToAdd = {
+        ...bankAccount,
+        createdAt: bankAccount.createdAt || new Date(),
+        updatedAt: bankAccount.updatedAt || new Date(),
+      };
+      bankAccounts.push(accountToAdd);
+    }
+    
+    // If this account is set as default, unset all other accounts
+    if (bankAccount.isDefault) {
+      bankAccounts.forEach(account => {
+        if (account.id !== bankAccount.id) {
+          account.isDefault = false;
+        }
+      });
+    }
+    
+    const serialized = bankAccounts.map(ba => ({
+      ...ba,
+      createdAt: ba.createdAt.toISOString(),
+      updatedAt: ba.updatedAt.toISOString(),
+    }));
+    await this.setItem('bank_accounts_collection', serialized);
+  }
+
+  static async getBankAccounts(): Promise<BankAccount[]> {
+    const bankAccounts = await this.getItem<any[]>('bank_accounts_collection');
+    if (!bankAccounts) return [];
+    return bankAccounts.map(account => ({
+      ...account,
+      createdAt: new Date(account.createdAt),
+      updatedAt: new Date(account.updatedAt),
+    })) as BankAccount[];
+  }
+
+  static async getBankAccountById(accountId: string): Promise<BankAccount | null> {
+    const bankAccounts = await this.getBankAccounts();
+    return bankAccounts.find(account => account.id === accountId) || null;
+  }
+
+  static async getDefaultBankAccount(): Promise<BankAccount | null> {
+    const bankAccounts = await this.getBankAccounts();
+    return bankAccounts.find(account => account.isDefault) || null;
+  }
+
+  static async updateBankAccount(accountId: string, updates: Partial<BankAccount>): Promise<void> {
+    const bankAccounts = await this.getBankAccounts();
+    const accountIndex = bankAccounts.findIndex(account => account.id === accountId);
+    
+    if (accountIndex >= 0) {
+      bankAccounts[accountIndex] = { ...bankAccounts[accountIndex], ...updates, updatedAt: new Date() } as BankAccount;
+      
+      // If setting as default, unset all other accounts
+      if (updates.isDefault === true) {
+        bankAccounts.forEach(account => {
+          if (account.id !== accountId) {
+            account.isDefault = false;
+          }
+        });
+      }
+      
+      const serialized = bankAccounts.map(ba => ({
+        ...ba,
+        createdAt: ba.createdAt.toISOString(),
+        updatedAt: ba.updatedAt.toISOString(),
+      }));
+      await this.setItem('bank_accounts_collection', serialized);
+    } else {
+      throw new Error('Bank account not found');
+    }
+  }
+
+  static async deleteBankAccount(accountId: string): Promise<void> {
+    const bankAccounts = await this.getBankAccounts();
+    const updatedAccounts = bankAccounts.filter(account => account.id !== accountId);
+    const serialized = updatedAccounts.map(account => ({
+      ...account,
+      createdAt: account.createdAt.toISOString(),
+      updatedAt: account.updatedAt.toISOString(),
+    }));
+    await this.setItem('bank_accounts_collection', serialized);
+  }
+
   // Generate unique IDs
   static generateId(): string {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -213,7 +331,7 @@ export class LocalStorageService {
     // Phone numbers are kept for contact purposes only
     const sampleUsers = [
       {
-        uid: 'admin_001',
+        id: 'admin_001',
         role: 'admin',
         email: 'admin@watertanker.app',
         password: 'admin123', // In production, this should be hashed
@@ -222,7 +340,7 @@ export class LocalStorageService {
         createdAt: new Date(),
       },
       {
-        uid: 'driver_001',
+        id: 'driver_001',
         role: 'driver',
         email: 'driver@watertanker.app',
         password: 'driver123', // In production, this should be hashed
@@ -234,7 +352,7 @@ export class LocalStorageService {
         createdByAdmin: false, // Regular driver - should not be able to login
       },
       {
-        uid: 'driver_admin_001',
+        id: 'driver_admin_001',
         role: 'driver',
         email: 'admin.driver@watertanker.app',
         password: 'driver123', // In production, this should be hashed
@@ -244,13 +362,11 @@ export class LocalStorageService {
         licenseNumber: 'DL111222333',
         createdAt: new Date(),
         createdByAdmin: true, // Admin-created driver - should be able to login
-        isApproved: true,
-        isAvailable: true,
         totalEarnings: 0,
         completedOrders: 0,
       },
       {
-        uid: 'customer_001',
+        id: 'customer_001',
         role: 'customer',
         email: 'customer@watertanker.app',
         password: 'customer123', // In production, this should be hashed
@@ -260,7 +376,7 @@ export class LocalStorageService {
       },
       // Multi-role user example - same email with different roles
       {
-        uid: 'multi_customer_001',
+        id: 'multi_customer_001',
         role: 'customer',
         email: 'multirole@watertanker.app',
         password: 'multi123', // In production, this should be hashed
@@ -269,7 +385,7 @@ export class LocalStorageService {
         createdAt: new Date(),
       },
       {
-        uid: 'multi_driver_001',
+        id: 'multi_driver_001',
         role: 'driver',
         email: 'multirole@watertanker.app',
         password: 'multi123', // In production, this should be hashed
@@ -279,8 +395,6 @@ export class LocalStorageService {
         licenseNumber: 'DL987654321',
         createdAt: new Date(),
         createdByAdmin: true, // Admin-created driver - should be able to login for multi-role test
-        isApproved: true,
-        isAvailable: true,
         totalEarnings: 0,
         completedOrders: 0,
       }

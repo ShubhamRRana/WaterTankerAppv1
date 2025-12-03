@@ -11,9 +11,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { useUserStore } from '../../store/userStore';
+import { isCustomerUser } from '../../types';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -22,14 +24,16 @@ import { Booking, BookingStatus } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
+import { errorLogger } from '../../utils/errorLogger';
+import { formatDateTime } from '../../utils/dateUtils';
 
 type CustomerHomeScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Home'>;
 
 interface CustomerHomeScreenProps {
-  navigation: CustomerHomeScreenNavigationProp;
 }
 
-const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) => {
+const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = () => {
+  const navigation = useNavigation<CustomerHomeScreenNavigationProp>();
   const { user, logout } = useAuthStore();
   const { 
     bookings, 
@@ -47,18 +51,19 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
   const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
-    if (user?.uid) {
+    if (user?.id) {
       loadCustomerData();
     }
-  }, [user?.uid]);
+  }, [user?.id]);
 
   const loadCustomerData = async () => {
-    if (!user?.uid) return;
+    if (!user?.id) return;
     
     try {
-      await fetchCustomerBookings(user.uid);
+      await fetchCustomerBookings(user.id);
     } catch (error) {
-          }
+      errorLogger.medium('Failed to load customer bookings', error, { userId: user.id });
+    }
   };
 
   const onRefresh = async () => {
@@ -66,7 +71,8 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
     try {
       await loadCustomerData();
     } catch (error) {
-          } finally {
+      errorLogger.medium('Failed to refresh customer data', error, { userId: user?.id });
+    } finally {
       setRefreshing(false);
     }
   };
@@ -84,7 +90,23 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
       // Already on Home, just close menu
       return;
     }
-    navigation.navigate(route);
+    try {
+      navigation.navigate(route);
+    } catch (error) {
+      Alert.alert('Navigation Error', 'Unable to navigate. Please try again.');
+    }
+  };
+
+  const handleBookTanker = () => {
+    try {
+      if (navigation && navigation.navigate) {
+        navigation.navigate('Booking');
+      } else {
+        Alert.alert('Error', 'Navigation is not available. Please try again.');
+      }
+    } catch (error) {
+      Alert.alert('Navigation Error', 'Unable to navigate to booking screen. Please try again.');
+    }
   };
 
   const getStatusColor = (status: BookingStatus) => {
@@ -127,24 +149,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
     .slice(0, 3);
 
   const formatDate = (date: Date | string) => {
-    try {
-      // Handle both Date objects and date strings
-      const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
-      
-      // Check if the date is valid
-      if (isNaN(dateObj.getTime())) {
-        return 'Unknown date';
-      }
-      
-      return dateObj.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch (error) {
-            return 'Unknown date';
-    }
+    return formatDateTime(date);
   };
 
   const formatPrice = (price: number) => {
@@ -191,7 +196,7 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
       <View style={styles.section}>
         <Typography variant="h3" style={styles.sectionTitle}>Quick Actions</Typography>
         <View style={styles.quickActions}>
-          <Card style={styles.actionCard} onPress={() => navigation.navigate('Booking')}>
+          <Card style={styles.actionCard} onPress={handleBookTanker}>
             <View style={styles.actionContent}>
               <Ionicons name="add-circle" size={32} color={UI_CONFIG.colors.primary} />
               <Typography variant="body" style={styles.actionText}>Book Tanker</Typography>
@@ -221,9 +226,23 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = ({ navigation }) =
                 </Typography>
                 <Typography variant="body" style={styles.orderPrice}>{formatPrice(booking.totalPrice)}</Typography>
               </View>
-              <Typography variant="caption" style={styles.deliveryAddress}>
-                {booking.deliveryAddress.street}, {booking.deliveryAddress.city}
-              </Typography>
+              <View style={styles.addressRow}>
+                <Ionicons name="location" size={16} color={UI_CONFIG.colors.success} />
+                <Typography variant="caption" style={styles.deliveryAddress}>
+                  {booking.deliveryAddress.address}
+                </Typography>
+              </View>
+              {user && isCustomerUser(user) && user.savedAddresses && user.savedAddresses.length > 0 && (() => {
+                const defaultAddress = user.savedAddresses.find(addr => addr.isDefault) || user.savedAddresses[0];
+                return defaultAddress && defaultAddress.address !== booking.deliveryAddress.address ? (
+                  <View style={styles.profileAddressRow}>
+                    <Ionicons name="home" size={16} color={UI_CONFIG.colors.primary} />
+                    <Typography variant="caption" style={styles.profileAddress}>
+                      Profile: {defaultAddress.address}
+                    </Typography>
+                  </View>
+                ) : null;
+              })()}
               <View style={styles.orderFooter}>
                 <Typography variant="caption" style={styles.deliveredDate}>
                   {booking.status === 'delivered' && booking.deliveredAt 
@@ -400,10 +419,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: UI_CONFIG.colors.primary,
   },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
   deliveryAddress: {
     fontSize: 14,
     color: UI_CONFIG.colors.textSecondary,
-    marginTop: 8,
+    marginLeft: 8,
+    flex: 1,
+  },
+  profileAddressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+  },
+  profileAddress: {
+    fontSize: 12,
+    color: UI_CONFIG.colors.primary,
+    marginLeft: 8,
+    flex: 1,
+    fontStyle: 'italic',
   },
   deliveredDate: {
     fontSize: 12,

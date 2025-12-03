@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -55,19 +55,14 @@ const AllBookingsScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
-
-  useEffect(() => {
-    filterBookings();
-  }, [bookings, searchQuery, statusFilter, currentAdmin]);
-
-  const filterBookings = () => {
+  // Memoize filtered bookings to avoid recalculating on every render
+  const filteredBookings = useMemo(() => {
     let filtered = [...bookings];
 
     // Filter by admin's agency (only show bookings for this admin's agency)
     if (currentAdmin) {
       filtered = filtered.filter(booking => 
-        booking.agencyId === currentAdmin.uid
+        booking.agencyId === currentAdmin.id
       );
     }
 
@@ -77,7 +72,7 @@ const AllBookingsScreen: React.FC = () => {
       filtered = filtered.filter(booking => 
         booking.customerName.toLowerCase().includes(query) ||
         booking.customerPhone.includes(query) ||
-        booking.deliveryAddress.city.toLowerCase().includes(query) ||
+        booking.deliveryAddress.address.toLowerCase().includes(query) ||
         booking.id.toLowerCase().includes(query)
       );
     }
@@ -87,17 +82,17 @@ const AllBookingsScreen: React.FC = () => {
       filtered = filtered.filter(booking => booking.status === statusFilter);
     }
 
-    setFilteredBookings(filtered);
-  };
+    return filtered;
+  }, [bookings, searchQuery, statusFilter, currentAdmin]);
 
-  // Calculate counts for each filter (only for this admin's bookings)
-  const getFilterCounts = () => {
+  // Memoize filter counts to avoid recalculating on every render
+  const filterCounts = useMemo(() => {
     // First filter by admin's agency
     const adminBookings = currentAdmin 
-      ? bookings.filter(booking => booking.agencyId === currentAdmin.uid)
+      ? bookings.filter(booking => booking.agencyId === currentAdmin.id)
       : [];
     
-    const counts = {
+    return {
       all: adminBookings.length,
       pending: adminBookings.filter(booking => booking.status === 'pending').length,
       accepted: adminBookings.filter(booking => booking.status === 'accepted').length,
@@ -105,21 +100,18 @@ const AllBookingsScreen: React.FC = () => {
       delivered: adminBookings.filter(booking => booking.status === 'delivered').length,
       cancelled: adminBookings.filter(booking => booking.status === 'cancelled').length,
     };
-    return counts;
-  };
+  }, [bookings, currentAdmin]);
 
-  const filterCounts = getFilterCounts();
-
-  const filterButtons = [
+  const filterButtons = useMemo(() => [
     { key: 'all', label: 'All', icon: 'list-outline', count: filterCounts.all },
     { key: 'pending', label: 'Pending', icon: 'time-outline', count: filterCounts.pending },
     { key: 'accepted', label: 'Accepted', icon: 'checkmark-circle-outline', count: filterCounts.accepted },
     { key: 'in_transit', label: 'In Transit', icon: 'car-outline', count: filterCounts.in_transit },
     { key: 'delivered', label: 'Delivered', icon: 'checkmark-done-outline', count: filterCounts.delivered },
     { key: 'cancelled', label: 'Cancelled', icon: 'close-circle-outline', count: filterCounts.cancelled },
-  ];
+  ], [filterCounts]);
 
-  const getStatusColor = (status: BookingStatus) => {
+  const getStatusColor = useCallback((status: BookingStatus) => {
     switch (status) {
       case 'pending': return UI_CONFIG.colors.warning;
       case 'accepted': return UI_CONFIG.colors.primary;
@@ -128,9 +120,9 @@ const AllBookingsScreen: React.FC = () => {
       case 'cancelled': return UI_CONFIG.colors.error;
       default: return UI_CONFIG.colors.textSecondary;
     }
-  };
+  }, []);
 
-  const getStatusIcon = (status: BookingStatus) => {
+  const getStatusIcon = useCallback((status: BookingStatus) => {
     switch (status) {
       case 'pending': return 'time-outline';
       case 'accepted': return 'checkmark-circle-outline';
@@ -139,7 +131,7 @@ const AllBookingsScreen: React.FC = () => {
       case 'cancelled': return 'close-circle-outline';
       default: return 'help-circle-outline';
     }
-  };
+  }, []);
 
   const handleStatusUpdate = async (bookingId: string, newStatus: BookingStatus) => {
     try {
@@ -168,10 +160,36 @@ const AllBookingsScreen: React.FC = () => {
     navigation.navigate(route);
   };
 
-  const openBookingDetails = (booking: Booking) => {
+  const openBookingDetails = useCallback((booking: Booking) => {
     setSelectedBooking(booking);
     setShowBookingModal(true);
-  };
+  }, []);
+
+  const keyExtractor = useCallback((item: Booking) => item.id, []);
+
+  const renderItem = useCallback(({ item }: { item: Booking }) => (
+    <BookingCard 
+      booking={item}
+      onPress={openBookingDetails}
+      getStatusColor={getStatusColor}
+      getStatusIcon={getStatusIcon}
+    />
+  ), [openBookingDetails, getStatusColor, getStatusIcon]);
+
+  const listEmptyComponent = useMemo(() => (
+    <View style={styles.emptyState}>
+      <Ionicons name="receipt-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
+      <Typography variant="h3" style={styles.emptyTitle}>
+        {searchQuery || statusFilter !== 'all' ? 'No matching bookings' : 'No bookings yet'}
+      </Typography>
+      <Typography variant="body" style={styles.emptyText}>
+        {searchQuery || statusFilter !== 'all' 
+          ? 'Try adjusting your search or filter' 
+          : 'Bookings will appear here once customers start placing orders'
+        }
+      </Typography>
+    </View>
+  ), [searchQuery, statusFilter]);
 
 
   const StatusFilterButton: React.FC<{ filter: { key: string; label: string; icon: string; count: number } }> = ({ filter }) => (
@@ -277,33 +295,18 @@ const AllBookingsScreen: React.FC = () => {
       {/* Bookings List */}
       <FlatList
         data={filteredBookings}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <BookingCard 
-            booking={item}
-            onPress={openBookingDetails}
-            getStatusColor={getStatusColor}
-            getStatusIcon={getStatusIcon}
-          />
-        )}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
         contentContainerStyle={styles.bookingsList}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Ionicons name="receipt-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="h3" style={styles.emptyTitle}>
-              {searchQuery || statusFilter !== 'all' ? 'No matching bookings' : 'No bookings yet'}
-            </Typography>
-            <Typography variant="body" style={styles.emptyText}>
-              {searchQuery || statusFilter !== 'all' 
-                ? 'Try adjusting your search or filter' 
-                : 'Bookings will appear here once customers start placing orders'
-              }
-            </Typography>
-          </View>
-        }
+        ListEmptyComponent={listEmptyComponent}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        initialNumToRender={10}
+        windowSize={10}
       />
 
       <BookingDetailsModal 

@@ -2,6 +2,12 @@ import { create } from 'zustand';
 import { User, UserRole } from '../types/index';
 import { AuthService } from '../services/auth.service';
 
+/**
+ * Authentication store state interface
+ * 
+ * Manages user authentication state, loading states, and authentication operations.
+ * Uses Zustand for state management.
+ */
 interface AuthState {
   user: User | null;
   isLoading: boolean;
@@ -14,7 +20,7 @@ interface AuthState {
     password: string,
     name: string,
     role: UserRole,
-    phone?: string
+    phone: string
   ) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
@@ -25,6 +31,22 @@ interface AuthState {
   unsubscribeFromAuthChanges: () => void;
 }
 
+/**
+ * Authentication store using Zustand
+ * 
+ * Provides global authentication state management including:
+ * - User data and authentication status
+ * - Login, logout, and registration operations
+ * - User profile updates
+ * - Real-time auth state subscriptions (placeholder for Supabase)
+ * 
+ * @example
+ * ```tsx
+ * const { user, login, logout, isAuthenticated } = useAuthStore();
+ * 
+ * await login('user@example.com', 'password');
+ * ```
+ */
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
@@ -104,11 +126,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     password: string,
     name: string,
     role: UserRole,
-    phone?: string
+    phone: string
   ) => {
     set({ isLoading: true });
     try {
-      const result = await AuthService.register(email, password, name, role, phone ? { phone } : undefined);
+      const result = await AuthService.register(email, password, name, role, { phone });
       if (result.success && result.user) {
         set({
           user: result.user,
@@ -146,7 +168,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     set({ isLoading: true });
     try {
-      await AuthService.updateUserProfile(user.uid, updates);
+      await AuthService.updateUserProfile(user.id, updates);
       const updatedUser = { ...user, ...updates };
       set({
         user: updatedUser,

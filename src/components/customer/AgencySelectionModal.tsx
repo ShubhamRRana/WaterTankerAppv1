@@ -47,25 +47,27 @@ const AgencySelectionModal: React.FC<AgencySelectionModalProps> = ({
               <Typography variant="body" style={styles.emptyStateText}>Loading agencies...</Typography>
             </View>
           ) : agencies.length > 0 ? (
-            agencies.map((agency) => (
-              <Card
-                key={agency.id}
-                style={[
-                  styles.tankerCard,
-                  selectedAgencyId === agency.id && styles.selectedTankerCard,
-                ]}
-                onPress={() => onSelectAgency(agency)}
-              >
-                <View style={styles.tankerInfo}>
-                  <Typography variant="body" style={styles.tankerName}>{agency.name}</Typography>
-                </View>
-                <Ionicons
-                  name={selectedAgencyId === agency.id ? 'radio-button-on' : 'radio-button-off'}
-                  size={24}
-                  color={selectedAgencyId === agency.id ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary}
-                />
-              </Card>
-            ))
+            <>
+              {agencies.map((agency, index) => (
+                <Card
+                  key={agency.id || `agency-${index}`}
+                  style={[
+                    styles.tankerCard,
+                    selectedAgencyId === agency.id && styles.selectedTankerCard,
+                  ]}
+                  onPress={() => onSelectAgency(agency)}
+                >
+                  <View style={styles.tankerInfo}>
+                    <Typography variant="body" style={styles.tankerName}>{agency.name}</Typography>
+                  </View>
+                  <Ionicons
+                    name={selectedAgencyId === agency.id ? 'radio-button-on' : 'radio-button-off'}
+                    size={24}
+                    color={selectedAgencyId === agency.id ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary}
+                  />
+                </Card>
+              ))}
+            </>
           ) : (
             <View style={styles.emptyState}>
               <Ionicons name="business-outline" size={64} color={UI_CONFIG.colors.textSecondary} />

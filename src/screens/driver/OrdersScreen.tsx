@@ -21,7 +21,7 @@ type OrdersScreenNavigationProp = CompositeNavigationProp<
 
 const OrdersScreen: React.FC = () => {
   const navigation = useNavigation<OrdersScreenNavigationProp>();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const { bookings, isLoading, error, fetchAvailableBookings, fetchDriverBookings, updateBookingStatus, clearError } = useBookingStore();
   
   const [activeTab, setActiveTab] = useState<OrderTab>('available');
@@ -31,6 +31,7 @@ const OrdersScreen: React.FC = () => {
   const [localError, setLocalError] = useState<string | null>(null);
   const previousTabRef = useRef<OrderTab>('available');
   const tabChangeTimeRef = useRef<number>(0);
+  const isInitialMountRef = useRef<boolean>(true);
   
   // Cache for storing fetched data per tab to avoid unnecessary refetches
   const dataCache = useRef<{
@@ -50,7 +51,7 @@ const OrdersScreen: React.FC = () => {
   const CACHE_EXPIRY = 5 * 60 * 1000;
 
   const loadOrdersData = useCallback(async (forceRefresh = false) => {
-    if (!user?.uid) return;
+    if (!user?.id) return;
     
     // Cancel any in-flight request
     if (abortControllerRef.current) {
@@ -78,48 +79,55 @@ const OrdersScreen: React.FC = () => {
       if (activeTab === 'available') {
         await fetchAvailableBookings();
       } else {
-        await fetchDriverBookings(user.uid);
+        await fetchDriverBookings(user.id);
       }
       
       // Cache will be updated from the store's bookings via useEffect after fetch completes
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Don't set error if request was aborted
       if (signal.aborted) return;
       
       const errorMessage = error instanceof Error ? error.message : 'Failed to load orders';
       setLocalError(errorMessage);
-          }
-  }, [activeTab, user?.uid, fetchAvailableBookings, fetchDriverBookings, clearError]);
+    }
+  }, [activeTab, user?.id, fetchAvailableBookings, fetchDriverBookings, clearError]);
 
-  // Load data when tab changes (only once, not on focus)
+  // Load data when tab changes or on initial mount
   useEffect(() => {
     // Track tab change time to distinguish from navigation returns
     const previousTab = previousTabRef.current;
     const isTabChange = previousTab !== activeTab;
+    const isInitialMount = isInitialMountRef.current;
     
-    if (isTabChange) {
+    if (isInitialMount || isTabChange) {
+      if (isInitialMount) {
+        isInitialMountRef.current = false;
+      }
+      
       tabChangeTimeRef.current = Date.now();
+      previousTabRef.current = activeTab;
+      
+      setIsInitialLoading(true);
+      loadOrdersData().finally(() => {
+        setIsInitialLoading(false);
+      });
     }
-    
-    // Update previous tab after checking
-    previousTabRef.current = activeTab;
-    
-    setIsInitialLoading(true);
-    loadOrdersData().finally(() => {
-      setIsInitialLoading(false);
-    });
-  }, [activeTab, user?.uid]); // Only depend on activeTab and user, not loadOrdersData
+  }, [activeTab, user?.id, loadOrdersData]); // Added loadOrdersData to dependencies
 
-  // Update cache when bookings change (after fetch completes)
+  // Update cache when bookings change (after fetch completes) - debounced to avoid excessive updates
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && bookings.length >= 0) {
       const cacheKey = activeTab as 'available' | 'active' | 'completed';
       // Only update cache if we have bookings or if it's a valid empty state
       // This ensures cache is updated even when there are no orders
-      dataCache.current[cacheKey] = {
-        data: [...bookings],
-        timestamp: Date.now(),
-      };
+      const timeoutId = setTimeout(() => {
+        dataCache.current[cacheKey] = {
+          data: [...bookings],
+          timestamp: Date.now(),
+        };
+      }, 50); // Small debounce to batch rapid updates
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [bookings, activeTab, isLoading]);
 
@@ -151,7 +159,7 @@ const OrdersScreen: React.FC = () => {
         // For other tabs, use normal cache expiry logic
         loadOrdersData(true);
       }
-    }, [activeTab, user?.uid, loadOrdersData])
+    }, [activeTab, user?.id]) // Removed loadOrdersData from dependencies
   );
   
   // Cleanup on unmount
@@ -175,7 +183,7 @@ const OrdersScreen: React.FC = () => {
   };
 
   const handleAcceptOrder = async (orderId: string) => {
-    if (!user?.uid) return;
+    if (!user?.id) return;
     
     setProcessingOrder(orderId);
     
@@ -185,7 +193,7 @@ const OrdersScreen: React.FC = () => {
       const optimisticBooking: Booking = {
         ...currentBooking,
         status: 'accepted',
-        driverId: user.uid,
+        driverId: user.id,
         driverName: user.name,
         driverPhone: user.phone || '',
         acceptedAt: new Date(),
@@ -206,7 +214,7 @@ const OrdersScreen: React.FC = () => {
     
     try {
       await updateBookingStatus(orderId, 'accepted', {
-        driverId: user.uid,
+        driverId: user.id,
         driverName: user.name,
         driverPhone: user.phone || '',
         acceptedAt: new Date(),
@@ -295,7 +303,7 @@ const OrdersScreen: React.FC = () => {
   };
 
   const filteredOrders = useMemo((): Booking[] => {
-    if (!user?.uid) return [];
+    if (!user?.id) return [];
 
     // Use cached data if available and fresh, otherwise use store data
     const cacheKey = activeTab as 'available' | 'active' | 'completed';
@@ -305,6 +313,9 @@ const OrdersScreen: React.FC = () => {
       ? cached.data 
       : bookings;
 
+    // Pre-compute filter conditions to avoid repeated checks
+    const userId = user.id;
+    
     switch (activeTab) {
       case 'available':
         return dataSource.filter(booking => 
@@ -312,41 +323,18 @@ const OrdersScreen: React.FC = () => {
         );
       case 'active':
         return dataSource.filter(booking => 
-          booking.driverId === user.uid && 
+          booking.driverId === userId && 
           (booking.status === 'accepted' || booking.status === 'in_transit')
         );
       case 'completed':
         return dataSource.filter(booking => 
-          booking.driverId === user.uid && booking.status === 'delivered'
+          booking.driverId === userId && booking.status === 'delivered'
         );
       default:
         return [];
     }
-  }, [bookings, activeTab, user?.uid]);
+  }, [bookings, activeTab, user?.id]);
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-            } catch (error) {
-                            Alert.alert('Error', 'Failed to logout. Please try again.');
-            }
-          },
-        },
-      ]
-    );
-  };
 
   // Show loading only on initial load, not during refresh
   if (isInitialLoading && !refreshing) {
@@ -368,7 +356,6 @@ const OrdersScreen: React.FC = () => {
       <View style={styles.container}>
         <OrdersHeader 
           userName={user?.name} 
-          onLogout={handleLogout} 
         />
         
         <OrdersFilter 

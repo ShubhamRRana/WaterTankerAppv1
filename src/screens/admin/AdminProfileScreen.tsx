@@ -252,14 +252,12 @@ const AdminProfileScreen: React.FC = () => {
       }
     }
 
-    // Validate phone (optional)
-    if (debouncedPhone.trim()) {
-      const phoneValidation = ValidationUtils.validatePhone(debouncedPhone.trim());
-      if (!phoneValidation.isValid) {
-        errors.phone = phoneValidation.error;
-      } else {
-        delete errors.phone;
-      }
+    // Validate phone (required)
+    const phoneValidation = ValidationUtils.validatePhone(debouncedPhone.trim());
+    if (!phoneValidation.isValid) {
+      errors.phone = phoneValidation.error;
+    } else {
+      delete errors.phone;
     }
 
     // Validate password if provided
@@ -329,12 +327,10 @@ const AdminProfileScreen: React.FC = () => {
       errors.email = emailValidation.error;
     }
 
-    // Validate phone (optional)
-    if (state.editForm.phone.trim()) {
-      const phoneValidation = ValidationUtils.validatePhone(state.editForm.phone.trim());
-      if (!phoneValidation.isValid) {
-        errors.phone = phoneValidation.error;
-      }
+    // Validate phone (required)
+    const phoneValidation = ValidationUtils.validatePhone(state.editForm.phone.trim());
+    if (!phoneValidation.isValid) {
+      errors.phone = phoneValidation.error;
     }
 
     // Validate password if provided
@@ -373,13 +369,13 @@ const AdminProfileScreen: React.FC = () => {
     try {
       // Sanitize inputs
       const sanitizedEmail = SanitizationUtils.sanitizeEmail(state.editForm.email.trim());
-      const sanitizedPhone = state.editForm.phone.trim() ? SanitizationUtils.sanitizePhone(state.editForm.phone.trim()) : '';
+      const sanitizedPhone = SanitizationUtils.sanitizePhone(state.editForm.phone.trim());
       
       const updates: Partial<User> = {
         businessName: state.editForm.businessName.trim(),
         name: state.editForm.name.trim(),
         email: sanitizedEmail,
-        ...(sanitizedPhone && { phone: sanitizedPhone }),
+        phone: sanitizedPhone,
       } as Partial<User>;
       
       // Only update password if provided
@@ -532,13 +528,10 @@ const AdminProfileScreen: React.FC = () => {
   const handleRetryImage = () => {
     dispatch({ type: 'SET_IMAGE_ERROR', payload: false });
     dispatch({ type: 'SET_IMAGE_LOADING', payload: true });
-    // Trigger image reload by updating user state
-    if (user?.profileImage) {
-      // Force re-render by updating a dummy state
-      setTimeout(() => {
-        dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
-      }, 100);
-    }
+    // Force re-render by updating a dummy state
+    setTimeout(() => {
+      dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
+    }, 100);
   };
 
   if (isLoading) {

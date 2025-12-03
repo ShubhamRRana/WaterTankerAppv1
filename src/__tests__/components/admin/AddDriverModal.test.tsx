@@ -109,7 +109,7 @@ describe('AddDriverModal', () => {
       
       expect(getByPlaceholderText("Enter driver's full name")).toBeTruthy();
       expect(getByPlaceholderText('Enter email address')).toBeTruthy();
-      expect(getByPlaceholderText('Enter 10-digit phone number (optional)')).toBeTruthy();
+      expect(getByPlaceholderText('Enter 10-digit phone number')).toBeTruthy();
       expect(getByPlaceholderText('Enter password (min 6 characters)')).toBeTruthy();
       expect(getByPlaceholderText('Confirm your password')).toBeTruthy();
       expect(getByPlaceholderText('Enter emergency contact name')).toBeTruthy();
@@ -351,7 +351,7 @@ describe('AddDriverModal', () => {
       const emailInput = getByPlaceholderText('Enter email address');
       expect(emailInput.props.keyboardType).toBe('email-address');
       
-      const phoneInput = getByPlaceholderText('Enter 10-digit phone number (optional)');
+      const phoneInput = getByPlaceholderText('Enter 10-digit phone number');
       expect(phoneInput.props.keyboardType).toBe('phone-pad');
     });
 
@@ -371,7 +371,7 @@ describe('AddDriverModal', () => {
     it('should set maxLength for phone fields', () => {
       const { getByPlaceholderText } = render(<AddDriverModal {...defaultProps} />);
       
-      const phoneInput = getByPlaceholderText('Enter 10-digit phone number (optional)');
+      const phoneInput = getByPlaceholderText('Enter 10-digit phone number');
       expect(phoneInput.props.maxLength).toBe(10);
       
       const emergencyPhoneInput = getByPlaceholderText('Enter 10-digit emergency contact number');

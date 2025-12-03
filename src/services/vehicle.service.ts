@@ -21,7 +21,7 @@ export class VehicleService {
 
   /**
    * Get vehicles by agency ID
-   * Note: agencyId should be uid value
+   * Note: agencyId should be id value
    */
   static async getVehiclesByAgency(agencyId: string): Promise<Vehicle[]> {
     try {
@@ -46,7 +46,7 @@ export class VehicleService {
 
   /**
    * Create a new vehicle
-   * Note: vehicleData.agencyId should be uid value
+   * Note: vehicleData.agencyId should be id value
    */
   static async createVehicle(vehicleData: Omit<Vehicle, 'id' | 'createdAt' | 'updatedAt'>): Promise<Vehicle> {
     try {

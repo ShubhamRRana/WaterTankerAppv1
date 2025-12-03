@@ -12,3 +12,5 @@ export { sessionManager } from './sessionManager';
 export type { SessionInfo, SessionConfig } from './sessionManager';
 export { securityAuditor } from './securityAudit';
 export type { SecurityCheck, SecurityAuditResult } from './securityAudit';
+export * from './dateUtils';
+export * from './dateSerialization';

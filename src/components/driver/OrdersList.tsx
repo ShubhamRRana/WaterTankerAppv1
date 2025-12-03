@@ -1,11 +1,14 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import React, { memo, useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, Button } from '../common';
-import { Booking, BookingStatus } from '../../types';
+import { Booking, BookingStatus, isCustomerUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 import { OrderTab } from './OrdersFilter';
+import { UserService } from '../../services/user.service';
+import { errorLogger } from '../../utils/errorLogger';
+import { formatDateTime } from '../../utils/dateUtils';
 
 interface OrdersListProps {
   orders: Booking[];
@@ -32,6 +35,10 @@ const OrdersList: React.FC<OrdersListProps> = ({
   onCollectPayment,
   onDismissError,
 }) => {
+  // Cache for customer addresses to avoid repeated API calls
+  const addressCacheRef = useRef<Map<string, string | null>>(new Map());
+  const loadingAddressesRef = useRef<Set<string>>(new Set());
+
   const getStatusColor = useCallback((status: BookingStatus): string => {
     switch (status) {
       case 'pending': return UI_CONFIG.colors.warning;
@@ -55,21 +62,103 @@ const OrdersList: React.FC<OrdersListProps> = ({
   }, []);
 
   const formatDate = useCallback((date: Date): string => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return formatDateTime(date);
   }, []);
 
-  const renderOrderCard = useCallback(({ item: order }: { item: Booking }) => {
-    const isProcessing = processingOrder === order.id;
-    const statusColor = getStatusColor(order.status);
-    const statusText = getStatusText(order.status);
-    const formattedDate = order.isImmediate ? 'Immediate' : (order.scheduledFor ? formatDate(order.scheduledFor) : '');
-    const formattedDeliveredDate = order.deliveredAt ? formatDate(order.deliveredAt) : '';
-    
+  const OrderCardWithProfileAddress = memo(({ 
+    order, 
+    isProcessing, 
+    statusColor, 
+    statusText, 
+    formattedDate, 
+    formattedDeliveredDate,
+    activeTab,
+    onAcceptOrder,
+    onStartDelivery,
+    onCollectPayment,
+    addressCache,
+    loadingAddresses,
+    onAddressFetched
+  }: { 
+    order: Booking; 
+    isProcessing: boolean; 
+    statusColor: string; 
+    statusText: string; 
+    formattedDate: string; 
+    formattedDeliveredDate: string;
+    activeTab: OrderTab;
+    onAcceptOrder: (orderId: string) => void;
+    onStartDelivery: (orderId: string) => void;
+    onCollectPayment: (orderId: string) => void;
+    addressCache: Map<string, string | null>;
+    loadingAddresses: Set<string>;
+    onAddressFetched: (customerId: string, address: string | null) => void;
+  }) => {
+    const [customerProfileAddress, setCustomerProfileAddress] = useState<string | null>(() => {
+      // Initialize from cache if available
+      return addressCache.get(order.customerId) ?? null;
+    });
+
+    useEffect(() => {
+      const customerId = order.customerId;
+      const deliveryAddress = order.deliveryAddress.address;
+      
+      // Skip if already cached or currently loading
+      if (addressCache.has(customerId) || loadingAddresses.has(customerId)) {
+        const cached = addressCache.get(customerId);
+        if (cached !== customerProfileAddress) {
+          setCustomerProfileAddress(cached ?? null);
+        }
+        return;
+      }
+
+      // Mark as loading
+      loadingAddresses.add(customerId);
+      let isMounted = true;
+
+      const fetchCustomerAddress = async () => {
+        try {
+          const customer = await UserService.getUserById(customerId);
+          let address: string | null = null;
+          
+          if (customer && isCustomerUser(customer) && customer.savedAddresses && customer.savedAddresses.length > 0) {
+            const defaultAddress = customer.savedAddresses.find(addr => addr.isDefault) || customer.savedAddresses[0];
+            if (defaultAddress && defaultAddress.address !== deliveryAddress) {
+              address = defaultAddress.address;
+            }
+          }
+          
+          // Cache the result (even if null)
+          addressCache.set(customerId, address);
+          
+          if (isMounted) {
+            onAddressFetched(customerId, address);
+            setCustomerProfileAddress(address);
+          }
+        } catch (error) {
+          // Profile address is optional, but log for debugging
+          errorLogger.low('Failed to fetch customer profile address', error, { 
+            orderId: order.id, 
+            customerId 
+          });
+          // Cache null to avoid retrying
+          addressCache.set(customerId, null);
+          if (isMounted) {
+            onAddressFetched(customerId, null);
+          }
+        } finally {
+          loadingAddresses.delete(customerId);
+        }
+      };
+      
+      // Defer non-critical work to avoid blocking UI - increased delay for better batching
+      const timeoutId = setTimeout(fetchCustomerAddress, 300);
+      return () => {
+        clearTimeout(timeoutId);
+        isMounted = false;
+      };
+    }, [order.customerId, order.deliveryAddress.address, order.id]);
+
     return (
       <Card style={styles.orderCard}>
         <View style={styles.orderHeader}>
@@ -112,9 +201,18 @@ const OrdersList: React.FC<OrdersListProps> = ({
         >
           <Ionicons name="location" size={14} color={UI_CONFIG.colors.primary} />
           <Typography variant="caption" style={styles.orderAddress}>
-            {order.deliveryAddress.street}, {order.deliveryAddress.city}
+            {order.deliveryAddress.address}
           </Typography>
         </TouchableOpacity>
+
+        {customerProfileAddress && (
+          <View style={styles.profileAddressContainer}>
+            <Ionicons name="home" size={14} color={UI_CONFIG.colors.secondary} />
+            <Typography variant="caption" style={styles.profileAddress}>
+              Profile: {customerProfileAddress}
+            </Typography>
+          </View>
+        )}
 
         <Typography variant="caption" style={styles.orderTime}>
           {formattedDate ? `Scheduled: ${formattedDate}` : 'Immediate'}
@@ -161,9 +259,50 @@ const OrdersList: React.FC<OrdersListProps> = ({
         )}
       </Card>
     );
-  }, [activeTab, processingOrder, getStatusColor, getStatusText, formatDate, onAcceptOrder, onStartDelivery, onCollectPayment]);
+  });
+
+  const handleAddressFetched = useCallback((customerId: string, address: string | null) => {
+    // Cache is already updated in the component, this is just for callback consistency
+    // No need to force re-render as the component manages its own state
+  }, []);
+
+  const renderOrderCard = useCallback(({ item: order }: { item: Booking }) => {
+    const isProcessing = processingOrder === order.id;
+    const statusColor = getStatusColor(order.status);
+    const statusText = getStatusText(order.status);
+    const formattedDate = order.scheduledFor ? formatDate(order.scheduledFor) : '';
+    const formattedDeliveredDate = order.deliveredAt ? formatDate(order.deliveredAt) : '';
+    
+    return (
+      <OrderCardWithProfileAddress 
+        order={order}
+        isProcessing={isProcessing}
+        statusColor={statusColor}
+        statusText={statusText}
+        formattedDate={formattedDate}
+        formattedDeliveredDate={formattedDeliveredDate}
+        activeTab={activeTab}
+        onAcceptOrder={onAcceptOrder}
+        onStartDelivery={onStartDelivery}
+        onCollectPayment={onCollectPayment}
+        addressCache={addressCacheRef.current}
+        loadingAddresses={loadingAddressesRef.current}
+        onAddressFetched={handleAddressFetched}
+      />
+    );
+  }, [activeTab, processingOrder, getStatusColor, getStatusText, formatDate, onAcceptOrder, onStartDelivery, onCollectPayment, handleAddressFetched]);
 
   const keyExtractor = useCallback((item: Booking) => item.id, []);
+
+  // Memoize the FlatList props to prevent unnecessary re-renders
+  const flatListProps = useMemo(() => ({
+    removeClippedSubviews: true,
+    maxToRenderPerBatch: 10,
+    updateCellsBatchingPeriod: 50,
+    initialNumToRender: 10,
+    windowSize: 10,
+    getItemLayout: undefined as ((data: Booking[] | null | undefined, index: number) => { length: number; offset: number; index: number }) | undefined,
+  }), []);
 
   const renderErrorState = useCallback(() => (
     <Card style={styles.errorCard}>
@@ -233,11 +372,11 @@ const OrdersList: React.FC<OrdersListProps> = ({
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
       ListEmptyComponent={ListEmptyComponent}
-      removeClippedSubviews={true}
-      maxToRenderPerBatch={10}
-      updateCellsBatchingPeriod={50}
-      initialNumToRender={10}
-      windowSize={10}
+      removeClippedSubviews={flatListProps.removeClippedSubviews}
+      maxToRenderPerBatch={flatListProps.maxToRenderPerBatch}
+      updateCellsBatchingPeriod={flatListProps.updateCellsBatchingPeriod}
+      initialNumToRender={flatListProps.initialNumToRender}
+      windowSize={flatListProps.windowSize}
     />
   );
 };
@@ -310,6 +449,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: UI_CONFIG.colors.primary,
     marginLeft: 6,
+  },
+  profileAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: UI_CONFIG.colors.secondary,
+  },
+  profileAddress: {
+    fontSize: 12,
+    color: UI_CONFIG.colors.secondary,
+    marginLeft: 6,
+    fontStyle: 'italic',
   },
   orderTime: {
     fontSize: 12,

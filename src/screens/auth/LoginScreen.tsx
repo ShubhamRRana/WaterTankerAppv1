@@ -109,7 +109,23 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     try {
       const preferredRole = route?.params?.preferredRole;
       
-      // Always verify password first using login
+      // If preferredRole is provided, use loginWithRole directly
+      if (preferredRole) {
+        const loginResult = await AuthService.login(sanitizedEmail, password, preferredRole);
+        
+        if (!loginResult.success) {
+          Alert.alert('Login Failed', loginResult.error || ERROR_MESSAGES.auth.invalidCredentials);
+          return;
+        }
+        
+        if (loginResult.user) {
+          // Use the store's loginWithRole method to set the user state
+          await loginWithRole(sanitizedEmail, preferredRole);
+        }
+        return;
+      }
+      
+      // No preferredRole - use standard login
       const loginResult = await AuthService.login(sanitizedEmail, password);
       
       if (!loginResult.success) {
@@ -117,32 +133,16 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
         return;
       }
       
-      // If login requires role selection
+      // If login requires role selection but no preferredRole was provided, show error
       if (loginResult.requiresRoleSelection && loginResult.availableRoles) {
-        // If preferredRole is provided and available, use it
-        if (preferredRole && loginResult.availableRoles.includes(preferredRole)) {
-          await loginWithRole(sanitizedEmail, preferredRole);
-          // Navigation will be handled by the auth store
-        } else {
-          // Navigate to role selection screen
-          navigation.navigate('RoleSelection', {
-            email: sanitizedEmail,
-            availableRoles: loginResult.availableRoles,
-          });
-        }
+        Alert.alert('Login Failed', 'Please select a role from the role selection screen first.');
+        navigation.navigate('RoleEntry');
         return;
       }
       
       // Single account login successful
       if (loginResult.user) {
-        // If preferredRole is provided, verify it matches the logged-in user's role
-        if (preferredRole && loginResult.user.role !== preferredRole) {
-          Alert.alert('Login Failed', ERROR_MESSAGES.auth.roleMismatch);
-          return;
-        }
-        
         // Use the store's login method to set the user state
-        // This will handle navigation automatically
         await login(sanitizedEmail, password);
       }
     } catch (error) {
@@ -456,3 +456,4 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
+

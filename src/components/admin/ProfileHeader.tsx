@@ -38,37 +38,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     <Card style={styles.profileCard}>
       <View style={styles.profileHeader}>
         <View style={styles.avatarContainer}>
-          {user.profileImage && !imageError ? (
-            <>
-              {imageLoading && (
-                <View style={styles.imageLoadingOverlay}>
-                  <LoadingSpinner size="small" />
-                </View>
-              )}
-              <Image 
-                source={{ uri: user.profileImage }} 
-                style={styles.avatar}
-                accessibilityLabel="Profile image"
-                accessibilityRole="image"
-              />
-            </>
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Typography variant="h3" style={styles.avatarText}>
-                {getBusinessInitials(user.businessName || user.name || 'A')}
-              </Typography>
-            </View>
-          )}
-          {imageError && user.profileImage && (
-            <TouchableOpacity
-              style={styles.retryButton}
-              onPress={onRetryImage}
-              accessibilityLabel="Retry loading profile image"
-              accessibilityRole="button"
-            >
-              <Ionicons name="refresh" size={16} color={UI_CONFIG.colors.primary} />
-            </TouchableOpacity>
-          )}
+          <View style={styles.avatarPlaceholder}>
+            <Typography variant="h3" style={styles.avatarText}>
+              {getBusinessInitials(user.businessName || user.name || 'A')}
+            </Typography>
+          </View>
         </View>
         <View style={styles.profileInfo}>
           <Typography variant="h3" style={styles.userName}>{user.businessName || user.name}</Typography>

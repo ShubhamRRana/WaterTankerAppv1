@@ -30,9 +30,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">92.85% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>12/12</span>
+                <span class='fraction'>13/14</span>
             </div>
         
             
@@ -245,7 +245,14 @@
 <a name='L180'></a><a href='#L180'>180</a>
 <a name='L181'></a><a href='#L181'>181</a>
 <a name='L182'></a><a href='#L182'>182</a>
-<a name='L183'></a><a href='#L183'>183</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a>
+<a name='L190'></a><a href='#L190'>190</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -290,6 +297,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -317,6 +329,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -324,6 +337,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -471,7 +485,12 @@ const TankerSelectionModal: React.FC&lt;TankerSelectionModalProps&gt; = ({
   loading,
   selectedAgency,
 }) =&gt; {
-  const handleVehicleSelection = (vehicle: any) =&gt; {
+  const handleVehicleSelection = (vehicle: {
+    id: string;
+    vehicleCapacity: number;
+    amount: number;
+    vehicleNumber: string;
+  }) =&gt; {
     onSelectVehicle({
       id: vehicle.id,
       capacity: vehicle.vehicleCapacity,
@@ -498,30 +517,32 @@ const TankerSelectionModal: React.FC&lt;TankerSelectionModalProps&gt; = ({
               &lt;Typography variant="body" style={styles.emptyStateText}&gt;Loading vehicles...&lt;/Typography&gt;
             &lt;/View&gt;
           ) : vehicles.length &gt; 0 ? (
-            vehicles.map((vehicle) =&gt; (
-              &lt;Card
-                key={vehicle.id}
-                style={[
-                  styles.tankerCard,
-                  selectedVehicleId === vehicle.id &amp;&amp; styles.selectedTankerCard,
-                ]}
-                onPress={() =&gt; handleVehicleSelection(vehicle)}
-              &gt;
-                &lt;View style={styles.tankerInfo}&gt;
-                  &lt;Typography variant="body" style={styles.tankerName}&gt;
-                    {vehicle.vehicleCapacity}L Tanker - {vehicle.vehicleNumber}
-                  &lt;/Typography&gt;
-                  &lt;Typography variant="caption" style={styles.tankerPrice}&gt;
-                    {PricingUtils.formatPrice(vehicle.amount)} base price
-                  &lt;/Typography&gt;
-                &lt;/View&gt;
-                &lt;Ionicons
-                  name={selectedVehicleId === vehicle.id ? "radio-button-on" : "radio-button-off"}
-                  size={24}
-                  color={selectedVehicleId === vehicle.id ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary}
-                /&gt;
-              &lt;/Card&gt;
-            ))
+            &lt;&gt;
+              {vehicles.map((vehicle, index) =&gt; (
+                &lt;Card
+                  key={vehicle.id || <span class="branch-1 cbranch-no" title="branch not covered" >`vehicle-${index}`}</span>
+                  style={[
+                    styles.tankerCard,
+                    selectedVehicleId === vehicle.id &amp;&amp; styles.selectedTankerCard,
+                  ]}
+                  onPress={() =&gt; handleVehicleSelection(vehicle)}
+                &gt;
+                  &lt;View style={styles.tankerInfo}&gt;
+                    &lt;Typography variant="body" style={styles.tankerName}&gt;
+                      {vehicle.vehicleCapacity}L Tanker - {vehicle.vehicleNumber}
+                    &lt;/Typography&gt;
+                    &lt;Typography variant="caption" style={styles.tankerPrice}&gt;
+                      {PricingUtils.formatPrice(vehicle.amount)} base price
+                    &lt;/Typography&gt;
+                  &lt;/View&gt;
+                  &lt;Ionicons
+                    name={selectedVehicleId === vehicle.id ? "radio-button-on" : "radio-button-off"}
+                    size={24}
+                    color={selectedVehicleId === vehicle.id ? UI_CONFIG.colors.primary : UI_CONFIG.colors.textSecondary}
+                  /&gt;
+                &lt;/Card&gt;
+              ))}
+            &lt;/&gt;
           ) : (
             &lt;View style={styles.emptyState}&gt;
               &lt;Ionicons name="car-outline" size={64} color={UI_CONFIG.colors.textSecondary} /&gt;
@@ -616,7 +637,7 @@ export default TankerSelectionModal;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-28T22:31:12.417Z
+                at 2025-12-01T17:32:54.183Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

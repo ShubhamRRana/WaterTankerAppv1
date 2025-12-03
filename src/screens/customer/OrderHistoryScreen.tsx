@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
+import { isCustomerUser } from '../../types';
 import Card from '../../components/common/Card';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Typography, CustomerMenuDrawer } from '../../components/common';
@@ -21,6 +22,8 @@ import { Booking, BookingStatus } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils } from '../../utils/pricing';
 import { UI_CONFIG } from '../../constants/config';
+import { errorLogger } from '../../utils/errorLogger';
+import { formatDateTime } from '../../utils/dateUtils';
 
 type OrderHistoryScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Orders'>;
 
@@ -46,10 +49,10 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
   };
 
   useEffect(() => {
-    if (user?.uid) {
+    if (user?.id) {
       loadBookings();
     }
-  }, [user?.uid]);
+  }, [user?.id]);
 
   const filteredBookings = useMemo(() => {
     let filtered = [...bookings];
@@ -59,8 +62,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(booking => 
         booking.id.toLowerCase().includes(query) ||
-        booking.deliveryAddress.street.toLowerCase().includes(query) ||
-        booking.deliveryAddress.city.toLowerCase().includes(query) ||
+        booking.deliveryAddress.address.toLowerCase().includes(query) ||
         booking.customerName.toLowerCase().includes(query)
       );
     }
@@ -74,11 +76,13 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
   }, [bookings, searchQuery, selectedFilter]);
 
   const loadBookings = async () => {
-    if (!user?.uid) return;
+    if (!user?.id) return;
     try {
-      await fetchCustomerBookings(user.uid);
+      await fetchCustomerBookings(user.id);
     } catch (error) {
-          }
+      errorLogger.medium('Failed to load customer bookings', error, { userId: user.id });
+      Alert.alert('Error', 'Failed to load your orders. Please try again.');
+    }
   };
 
   const onRefresh = async () => {
@@ -86,7 +90,9 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
     try {
       await loadBookings();
     } catch (error) {
-          } finally {
+      errorLogger.medium('Failed to refresh customer bookings', error, { userId: user?.id });
+      // Error already handled in loadBookings, no need to show alert again
+    } finally {
       setRefreshing(false);
     }
   };
@@ -173,25 +179,7 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
   }, []);
 
   const formatDate = useCallback((date: Date | string) => {
-    try {
-      // Handle both Date objects and date strings
-      const dateObj = typeof date === 'string' ? new Date(date) : new Date(date);
-      
-      // Check if the date is valid
-      if (isNaN(dateObj.getTime())) {
-        return 'Unknown date';
-      }
-      
-      return dateObj.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch (error) {
-            return 'Unknown date';
-    }
+    return formatDateTime(date);
   }, []);
 
 
@@ -329,9 +317,20 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                 <View style={styles.detailRow}>
                   <Ionicons name="location" size={16} color={UI_CONFIG.colors.success} />
                   <Typography variant="body" style={styles.detailText}>
-                    {booking.deliveryAddress.street}, {booking.deliveryAddress.city}
+                    {booking.deliveryAddress.address}
                   </Typography>
                 </View>
+                {user && isCustomerUser(user) && user.savedAddresses && user.savedAddresses.length > 0 && (() => {
+                  const defaultAddress = user.savedAddresses.find(addr => addr.isDefault) || user.savedAddresses[0];
+                  return defaultAddress && defaultAddress.address !== booking.deliveryAddress.address ? (
+                    <View style={styles.detailRow}>
+                      <Ionicons name="home" size={16} color={UI_CONFIG.colors.primary} />
+                      <Typography variant="body" style={styles.detailText}>
+                        Profile: {defaultAddress.address}
+                      </Typography>
+                    </View>
+                  ) : null;
+                })()}
                 <View style={styles.detailRow}>
                   <Ionicons name="cash" size={16} color={UI_CONFIG.colors.warning} />
                   <Typography variant="body" style={styles.detailText}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
@@ -350,7 +349,9 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                 <View style={styles.driverInfo}>
                   <Ionicons name="person" size={16} color={UI_CONFIG.colors.secondary} />
                   <Typography variant="body" style={styles.driverText}>Driver: {booking.driverName}</Typography>
-                  <Typography variant="caption" style={styles.driverPhone}>{booking.driverPhone}</Typography>
+                  {booking.driverPhone && (
+                    <Typography variant="caption" style={styles.driverPhone}>{booking.driverPhone}</Typography>
+                  )}
                 </View>
               )}
 

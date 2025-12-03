@@ -487,39 +487,7 @@
 <a name='L422'></a><a href='#L422'>422</a>
 <a name='L423'></a><a href='#L423'>423</a>
 <a name='L424'></a><a href='#L424'>424</a>
-<a name='L425'></a><a href='#L425'>425</a>
-<a name='L426'></a><a href='#L426'>426</a>
-<a name='L427'></a><a href='#L427'>427</a>
-<a name='L428'></a><a href='#L428'>428</a>
-<a name='L429'></a><a href='#L429'>429</a>
-<a name='L430'></a><a href='#L430'>430</a>
-<a name='L431'></a><a href='#L431'>431</a>
-<a name='L432'></a><a href='#L432'>432</a>
-<a name='L433'></a><a href='#L433'>433</a>
-<a name='L434'></a><a href='#L434'>434</a>
-<a name='L435'></a><a href='#L435'>435</a>
-<a name='L436'></a><a href='#L436'>436</a>
-<a name='L437'></a><a href='#L437'>437</a>
-<a name='L438'></a><a href='#L438'>438</a>
-<a name='L439'></a><a href='#L439'>439</a>
-<a name='L440'></a><a href='#L440'>440</a>
-<a name='L441'></a><a href='#L441'>441</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L425'></a><a href='#L425'>425</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -955,11 +923,7 @@ export type UserRole = 'customer' | 'driver' | 'admin';
  */
 export interface Address {
   id?: string;
-  street: string;
-  city: string;
-  state: string;
-  pincode: string;
-  landmark?: string;
+  address: string; // Single address field containing full address
   latitude: number;
   longitude: number;
   isDefault?: boolean;
@@ -970,12 +934,11 @@ export interface Address {
  * Email is the primary identifier for authentication
  */
 interface BaseUser {
-  uid: string;
+  id: string;
   email: string; // Required: primary identifier for authentication
   password: string; // hashed
   name: string;
   phone?: string; // Optional: kept for contact purposes
-  profileImage?: string;
   createdAt: Date;
 }
 &nbsp;
@@ -997,8 +960,6 @@ export interface DriverUser extends BaseUser {
   licenseExpiry?: Date;
   driverLicenseImage?: string;
   vehicleRegistrationImage?: string;
-  isApproved?: boolean;
-  isAvailable?: boolean;
   totalEarnings?: number;
   completedOrders?: number;
   createdByAdmin?: boolean; // Track if driver was created by admin
@@ -1047,8 +1008,7 @@ export interface Booking {
   totalPrice: number;
   deliveryAddress: Address;
   distance: number; // in km
-  scheduledFor?: Date; // null for immediate, date/time for scheduled
-  isImmediate: boolean;
+  scheduledFor?: Date; // scheduled delivery date/time
   paymentStatus: 'pending' | 'completed' | 'failed' | 'refunded';
   paymentId?: string;
   cancellationReason?: string;
@@ -1077,7 +1037,7 @@ export interface Pricing {
   pricePerKm: number;
   minimumCharge: number;
   updatedAt: Date;
-  updatedBy: string; // admin uid
+  updatedBy: string; // admin id
 }
 &nbsp;
 /**
@@ -1094,7 +1054,7 @@ export interface DriverApplication {
   vehicleRegistrationImage: string;
   status: 'pending' | 'approved' | 'rejected';
   appliedAt: Date;
-  reviewedBy?: string; // admin uid
+  reviewedBy?: string; // admin id
   reviewedAt?: Date;
   rejectionReason?: string;
 }
@@ -1104,7 +1064,7 @@ export interface DriverApplication {
  */
 export interface Vehicle {
   id: string;
-  agencyId: string; // Admin user uid (agency)
+  agencyId: string; // Admin user id (agency)
   vehicleNumber: string;
   insuranceCompanyName: string;
   insuranceExpiryDate: Date;
@@ -1136,11 +1096,8 @@ export interface AuthStackParamList {
   RoleEntry: undefined;
   Login: { preferredRole?: UserRole } | undefined;
   Register: { preferredRole?: UserRole } | undefined;
-  RoleSelection: { email: string; availableRoles: UserRole[] };
   [key: string]:
     | undefined
-    | { email: string }
-    | { email: string; availableRoles: UserRole[] }
     | { preferredRole?: UserRole };
 }
 &nbsp;
@@ -1173,23 +1130,18 @@ export interface RegisterForm {
   confirmPassword: string;
   name: string;
   role: UserRole;
-  phone?: string; // Optional: for contact purposes
+  phone: string; // Required: for contact purposes
 }
 &nbsp;
 export interface BookingForm {
   tankerSize: number;
   deliveryAddress: Address;
   scheduledFor?: Date;
-  isImmediate: boolean;
   specialInstructions?: string;
 }
 &nbsp;
 export interface AddressForm {
-  street: string;
-  city: string;
-  state: string;
-  pincode: string;
-  landmark?: string;
+  address: string; // Single address field containing full address
   latitude: number;
   longitude: number;
   isDefault?: boolean;
@@ -1215,7 +1167,7 @@ export interface PaginatedResponse&lt;T&gt; {
 export interface AppError {
   code: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 &nbsp;
 // Location types
@@ -1390,7 +1342,7 @@ export type UsersByRole&lt;T extends UserRole&gt; = UserByRole&lt;T&gt;[];</pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-28T22:31:12.417Z
+                at 2025-12-01T17:32:54.183Z
             </div>
         <script src="../prettify.js"></script>
         <script>
