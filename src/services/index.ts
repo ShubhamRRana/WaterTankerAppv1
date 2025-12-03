@@ -10,3 +10,4 @@ export { NotificationService } from './notification.service';
 export type { PushNotificationToken } from './notification.service';
 export { UserService } from './user.service';
 export { VehicleService } from './vehicle.service';
+export { BankAccountService } from './bankAccount.service';

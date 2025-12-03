@@ -175,6 +175,21 @@ export interface Notification {
   createdAt: Date;
 }
 
+/**
+ * Bank account information for admin
+ */
+export interface BankAccount {
+  id: string;
+  accountHolderName: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  branchName: string;
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Navigation types
 /**
  * Authentication stack navigation parameters

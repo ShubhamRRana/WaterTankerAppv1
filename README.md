@@ -64,7 +64,8 @@ src/
 │       ├── DriverManagementScreen.tsx
 │       ├── VehicleManagementScreen.tsx
 │       ├── ReportsScreen.tsx
-│       └── AdminProfileScreen.tsx
+│       ├── AdminProfileScreen.tsx
+│       └── AddBankAccountScreen.tsx
 ├── navigation/
 │   ├── AuthNavigator.tsx
 │   ├── CustomerNavigator.tsx
@@ -80,6 +81,7 @@ src/
 │   ├── notification.service.ts
 │   ├── user.service.ts
 │   ├── vehicle.service.ts
+│   ├── bankAccount.service.ts
 │   └── index.ts
 ├── store/
 │   ├── authStore.ts
@@ -156,6 +158,7 @@ src/
 - **All Bookings Management**: View, filter, and manage all platform bookings
 - **Driver Management**: Create, approve, suspend drivers with comprehensive profile management
 - **Vehicle Management**: Add, edit, delete vehicles with insurance and capacity tracking
+- **Bank Account Management**: Add, edit, delete multiple bank accounts with default account selection
 - **Reports & Analytics**: View comprehensive platform statistics and analytics
 - **Profile Management**: Admin profile editing with photo upload
 
@@ -209,6 +212,7 @@ The app uses AsyncStorage (local storage) with the following data structures:
 - `users` - User accounts (customers, drivers, admins)
 - `bookings` - Water tanker bookings
 - `vehicles` - Vehicle/agency fleet management
+- `bank_accounts` - Admin bank account information
 - `tankerSizes` - Available tanker sizes and pricing
 - `pricing` - Distance-based pricing configuration
 - `driverApplications` - Driver registration requests
@@ -228,6 +232,7 @@ This MVP includes:
 - ✅ Admin tab-based navigation with comprehensive management tools
 - ✅ Driver management (create, approve, suspend, edit)
 - ✅ Vehicle/agency fleet management
+- ✅ Bank account management (add, edit, delete multiple accounts with default selection)
 - ✅ Driver earnings tracking
 - ✅ Driver payment collection workflow (Collect Payment screen)
 - ✅ Distance-based pricing using Haversine formula
@@ -273,10 +278,10 @@ This formatting is applied consistently across:
   - Admin: Bottom tab navigation (Bookings, Drivers, Vehicles, Reports, Profile)
 - **Customer Screens**: Home, Booking, Order Tracking, Order History, Past Orders, Profile, Saved Addresses
 - **Driver Screens**: Orders, Collect Payment, Earnings
-- **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Reports, Admin Profile
+- **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Bank Account Management, Reports, Admin Profile
 - **TypeScript Support**: All components properly typed with comprehensive type definitions
 - **State Management**: Zustand stores for authentication, bookings, users, and vehicles
-- **Services**: Local storage, auth, booking, payment, location, location tracking, notification, user, and vehicle services
+- **Services**: Local storage, auth, booking, payment, location, location tracking, notification, user, vehicle, and bank account services
 - **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner, CustomerMenuDrawer, AdminMenuDrawer, MenuDrawer, SuccessNotification, ErrorBoundary, CustomerIcon, DriverIcon, AdminIcon)
 - **Utils**: Distance calculation, pricing, validation, sanitization, rate limiting, error handling, error logging, security logging, security audit, session management, subscription management, report calculations, date utilities, and date serialization
 - **Data Access Layer**: Abstracted data access interface (`lib/`) for seamless migration to backend services

@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, Booking, Vehicle } from '../types/index';
+import { User, Booking, Vehicle, BankAccount } from '../types/index';
 import {
   serializeUserDates,
   deserializeUserDates,
@@ -223,6 +223,97 @@ export class LocalStorageService {
     const updatedVehicles = vehicles.filter(vehicle => vehicle.id !== vehicleId);
     const serialized = updatedVehicles.map(vehicle => serializeVehicleDates(vehicle as any));
     await this.setItem('vehicles_collection', serialized);
+  }
+
+  // Bank account management methods
+  static async saveBankAccount(bankAccount: BankAccount): Promise<void> {
+    const bankAccounts = await this.getBankAccounts();
+    const existingAccountIndex = bankAccounts.findIndex(ba => ba.id === bankAccount.id);
+    
+    if (existingAccountIndex >= 0) {
+      bankAccounts[existingAccountIndex] = { ...bankAccount, updatedAt: new Date() };
+    } else {
+      const accountToAdd = {
+        ...bankAccount,
+        createdAt: bankAccount.createdAt || new Date(),
+        updatedAt: bankAccount.updatedAt || new Date(),
+      };
+      bankAccounts.push(accountToAdd);
+    }
+    
+    // If this account is set as default, unset all other accounts
+    if (bankAccount.isDefault) {
+      bankAccounts.forEach(account => {
+        if (account.id !== bankAccount.id) {
+          account.isDefault = false;
+        }
+      });
+    }
+    
+    const serialized = bankAccounts.map(ba => ({
+      ...ba,
+      createdAt: ba.createdAt.toISOString(),
+      updatedAt: ba.updatedAt.toISOString(),
+    }));
+    await this.setItem('bank_accounts_collection', serialized);
+  }
+
+  static async getBankAccounts(): Promise<BankAccount[]> {
+    const bankAccounts = await this.getItem<any[]>('bank_accounts_collection');
+    if (!bankAccounts) return [];
+    return bankAccounts.map(account => ({
+      ...account,
+      createdAt: new Date(account.createdAt),
+      updatedAt: new Date(account.updatedAt),
+    })) as BankAccount[];
+  }
+
+  static async getBankAccountById(accountId: string): Promise<BankAccount | null> {
+    const bankAccounts = await this.getBankAccounts();
+    return bankAccounts.find(account => account.id === accountId) || null;
+  }
+
+  static async getDefaultBankAccount(): Promise<BankAccount | null> {
+    const bankAccounts = await this.getBankAccounts();
+    return bankAccounts.find(account => account.isDefault) || null;
+  }
+
+  static async updateBankAccount(accountId: string, updates: Partial<BankAccount>): Promise<void> {
+    const bankAccounts = await this.getBankAccounts();
+    const accountIndex = bankAccounts.findIndex(account => account.id === accountId);
+    
+    if (accountIndex >= 0) {
+      bankAccounts[accountIndex] = { ...bankAccounts[accountIndex], ...updates, updatedAt: new Date() } as BankAccount;
+      
+      // If setting as default, unset all other accounts
+      if (updates.isDefault === true) {
+        bankAccounts.forEach(account => {
+          if (account.id !== accountId) {
+            account.isDefault = false;
+          }
+        });
+      }
+      
+      const serialized = bankAccounts.map(ba => ({
+        ...ba,
+        createdAt: ba.createdAt.toISOString(),
+        updatedAt: ba.updatedAt.toISOString(),
+      }));
+      await this.setItem('bank_accounts_collection', serialized);
+    } else {
+      throw new Error('Bank account not found');
+    }
+  }
+
+  static async deleteBankAccount(accountId: string): Promise<void> {
+    const bankAccounts = await this.getBankAccounts();
+    const updatedAccounts = bankAccounts.filter(account => account.id !== accountId);
+    const serialized = updatedAccounts.map(account => ({
+      ...account,
+      createdAt: account.createdAt.toISOString(),
+      updatedAt: account.updatedAt.toISOString(),
+    }));
+    await this.setItem('bank_accounts_collection', serialized);
   }
 
   // Generate unique IDs

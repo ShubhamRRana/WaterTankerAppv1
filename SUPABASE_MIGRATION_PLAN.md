@@ -338,6 +338,37 @@ npm install @supabase/supabase-js
 
 ---
 
+### Table 12: `bank_accounts`
+
+**Purpose**: Store bank account information for admin users.
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | `uuid` | PRIMARY KEY, DEFAULT `gen_random_uuid()` | Unique bank account identifier |
+| `admin_id` | `uuid` | NOT NULL, FOREIGN KEY → `users(id)` ON DELETE CASCADE | Reference to admin user |
+| `account_holder_name` | `text` | NOT NULL | Account holder name |
+| `bank_name` | `text` | NOT NULL | Bank name |
+| `account_number` | `text` | NOT NULL | Bank account number |
+| `ifsc_code` | `text` | NOT NULL | IFSC code (e.g., HDFC0001234) |
+| `branch_name` | `text` | NOT NULL | Branch name |
+| `is_default` | `boolean` | NOT NULL, DEFAULT `false` | Whether this is the default account |
+| `created_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Creation timestamp |
+| `updated_at` | `timestamptz` | NOT NULL, DEFAULT `now()` | Last update timestamp |
+
+**Indexes**:
+- `idx_bank_accounts_admin_id` on `admin_id` (for admin account lookups)
+- `idx_bank_accounts_default` on `(admin_id, is_default)` WHERE `is_default = true` (for default account lookup)
+
+**Constraints**:
+- Only one default account per admin (enforced via application logic or trigger)
+
+**Notes**:
+- Foreign key on `admin_id` has `ON DELETE CASCADE` (if admin deleted, bank accounts deleted)
+- Only admins can manage bank accounts
+- Application logic ensures only one account is marked as default per admin
+
+---
+
 ## Migration Steps
 
 ### Phase 1: Supabase Project Setup
@@ -435,7 +466,7 @@ npm install @supabase/supabase-js
 
 1. **Enable Realtime**
    - Go to Database → Replication
-   - Enable replication for: `bookings`, `notifications`, `users`, `user_roles`, `customers`, `drivers`, `admins`
+   - Enable replication for: `bookings`, `notifications`, `users`, `user_roles`, `customers`, `drivers`, `admins`, `bank_accounts`
 
 2. **Update SubscriptionManager**
    - File: `src/utils/subscriptionManager.ts`
@@ -726,6 +757,26 @@ CREATE INDEX idx_notifications_user_unread ON notifications(user_id, is_read, cr
 CREATE INDEX idx_notifications_related_booking ON notifications(related_booking_id);
 
 -- ============================================================================
+-- Table: bank_accounts
+-- ============================================================================
+CREATE TABLE bank_accounts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  admin_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  account_holder_name TEXT NOT NULL,
+  bank_name TEXT NOT NULL,
+  account_number TEXT NOT NULL,
+  ifsc_code TEXT NOT NULL,
+  branch_name TEXT NOT NULL,
+  is_default BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Indexes for bank_accounts
+CREATE INDEX idx_bank_accounts_admin_id ON bank_accounts(admin_id);
+CREATE INDEX idx_bank_accounts_default ON bank_accounts(admin_id, is_default) WHERE is_default = true;
+
+-- ============================================================================
 -- Function: update_updated_at_column
 -- ============================================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -779,6 +830,11 @@ CREATE TRIGGER update_pricing_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_bank_accounts_updated_at
+  BEFORE UPDATE ON bank_accounts
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================================================
 -- Initial Data: Default Tanker Sizes
 -- ============================================================================
@@ -810,6 +866,7 @@ ALTER TABLE tanker_sizes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pricing ENABLE ROW LEVEL SECURITY;
 ALTER TABLE driver_applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bank_accounts ENABLE ROW LEVEL SECURITY;
 
 -- Users policies
 CREATE POLICY "Users can view their own profile"
@@ -1030,6 +1087,51 @@ CREATE POLICY "System can create notifications"
 CREATE POLICY "Users can update their own notifications"
   ON notifications FOR UPDATE
   USING (user_id::text = auth.uid()::text);
+
+-- Bank accounts policies
+CREATE POLICY "Admins can view their own bank accounts"
+  ON bank_accounts FOR SELECT
+  USING (
+    admin_id::text = auth.uid()::text
+    OR EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Admins can create their own bank accounts"
+  ON bank_accounts FOR INSERT
+  WITH CHECK (
+    admin_id::text = auth.uid()::text
+    AND EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Admins can update their own bank accounts"
+  ON bank_accounts FOR UPDATE
+  USING (
+    admin_id::text = auth.uid()::text
+    AND EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'admin'
+    )
+  );
+
+CREATE POLICY "Admins can delete their own bank accounts"
+  ON bank_accounts FOR DELETE
+  USING (
+    admin_id::text = auth.uid()::text
+    AND EXISTS (
+      SELECT 1 FROM user_roles
+      WHERE user_id::text = auth.uid()::text
+      AND role = 'admin'
+    )
+  );
 ```
 
 ---
@@ -1149,6 +1251,11 @@ VALUES (user_id, 'My Business');
 ### Notifications Table
 - Users can view and update their own notifications
 - System can create notifications for any user
+
+### Bank Accounts Table
+- Admins can view, create, update, and delete their own bank accounts
+- Only admins can manage bank accounts
+- Each admin can have multiple bank accounts, but only one can be marked as default
 
 ---
 
@@ -1324,6 +1431,7 @@ New (Supabase):
 - [ ] Driver can accept booking
 - [ ] Admin can manage users
 - [ ] Admin can manage vehicles
+- [ ] Admin can manage bank accounts
 - [ ] Notifications working
 - [ ] Payment collection working
 
