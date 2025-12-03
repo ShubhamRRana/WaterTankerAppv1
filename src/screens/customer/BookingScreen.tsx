@@ -266,6 +266,12 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
     return scheduledDate;
   };
 
+  // Memoized handler for special instructions input
+  const handleSpecialInstructionsChange = useCallback((text: string) => {
+    const sanitized = SanitizationUtils.sanitizeText(text, 500);
+    setSpecialInstructions(sanitized);
+  }, []);
+
 
   const handleBooking = async () => {
     if (!selectedVehicle || !selectedAgency || !user) {
@@ -532,10 +538,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
             style={styles.textArea}
             placeholder="Any special instructions for delivery..."
             value={specialInstructions}
-            onChangeText={useCallback((text: string) => {
-              const sanitized = SanitizationUtils.sanitizeText(text, 500);
-              setSpecialInstructions(sanitized);
-            }, [])}
+            onChangeText={handleSpecialInstructionsChange}
             multiline
             numberOfLines={3}
           />

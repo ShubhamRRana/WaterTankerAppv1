@@ -7,7 +7,8 @@ import {
   Dimensions,
   RefreshControl,
   Animated,
-  InteractionManager
+  InteractionManager,
+  Alert
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -68,7 +69,7 @@ const PeriodButton = memo<{
 PeriodButton.displayName = 'PeriodButton';
 
 const DriverEarningsScreen: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { bookings, isLoading, fetchDriverBookings } = useBookingStore();
   const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
   const [refreshing, setRefreshing] = useState(false);
@@ -162,32 +163,41 @@ const DriverEarningsScreen: React.FC = () => {
     
     try {
       await fetchDriverBookings(user.id);
-      calculateEarningsStats();
+      // calculateEarningsStats will be called by the useEffect that watches bookings
     } catch (error) {
       errorLogger.medium('Failed to load driver bookings', error, { userId: user.id });
     }
-  }, [user?.id, fetchDriverBookings, calculateEarningsStats]);
+  }, [user?.id, fetchDriverBookings]);
 
+  // Load data only when user changes or on initial mount
   useEffect(() => {
     if (user?.id) {
       loadDriverData();
     }
-  }, [user?.id, selectedPeriod, loadDriverData]);
+  }, [user?.id]); // Removed selectedPeriod and loadDriverData from dependencies
 
-  // Recalculate earnings when bookings change
+  // Recalculate earnings when bookings change (debounced to avoid excessive recalculations)
   useEffect(() => {
     if (user?.id && bookings.length >= 0) {
-      calculateEarningsStats();
+      // Use InteractionManager to defer calculation until interactions are complete
+      const timeoutId = setTimeout(() => {
+        calculateEarningsStats();
+      }, 100);
+      return () => clearTimeout(timeoutId);
     }
-  }, [bookings, user?.id, calculateEarningsStats]);
+  }, [bookings, user?.id]); // Removed calculateEarningsStats from dependencies
 
-  // Refresh data when screen comes into focus
+  // Refresh data when screen comes into focus (only if data is stale)
   useFocusEffect(
     React.useCallback(() => {
       if (user?.id) {
-        loadDriverData();
+        // Only refresh if we don't have earnings stats
+        if (!earningsStats) {
+          loadDriverData();
+        }
       }
-    }, [user?.id, loadDriverData])
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id]) // Intentionally limited dependencies to prevent excessive refreshes
   );
 
   // Animate glider when selectedPeriod changes
@@ -238,35 +248,43 @@ const DriverEarningsScreen: React.FC = () => {
     }
   }, [earningsStats, selectedPeriod]);
 
+  // Memoize date calculations to avoid recreating dates on every render
+  const periodStartDate = useMemo(() => {
+    const now = new Date();
+    switch (selectedPeriod) {
+      case 'daily':
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      case 'weekly':
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - now.getDay());
+        return weekStart;
+      case 'monthly':
+        return new Date(now.getFullYear(), now.getMonth(), 1);
+      default:
+        return new Date(0);
+    }
+  }, [selectedPeriod]);
+
   const completedOrders = useMemo(() => {
     if (!user?.id || !bookings.length) return [];
     
     const driverBookings = bookings.filter(booking => booking.driverId === user.id);
     const completedBookings = driverBookings.filter(booking => booking.status === 'delivered');
     
-    const now = new Date();
-    let startDate: Date;
-    
-    switch (selectedPeriod) {
-      case 'daily':
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        break;
-      case 'weekly':
-        startDate = new Date(now);
-        startDate.setDate(now.getDate() - now.getDay());
-        break;
-      case 'monthly':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      default:
-        startDate = new Date(0);
-    }
-    
     return completedBookings
-      .filter(booking => booking.deliveredAt && new Date(booking.deliveredAt) >= startDate)
-      .sort((a, b) => new Date(b.deliveredAt!).getTime() - new Date(a.deliveredAt!).getTime())
+      .filter(booking => {
+        if (!booking.deliveredAt) return false;
+        const deliveredDate = new Date(booking.deliveredAt);
+        return deliveredDate >= periodStartDate;
+      })
+      .sort((a, b) => {
+        // Cache date parsing to avoid repeated parsing
+        const dateA = a.deliveredAt ? new Date(a.deliveredAt).getTime() : 0;
+        const dateB = b.deliveredAt ? new Date(b.deliveredAt).getTime() : 0;
+        return dateB - dateA;
+      })
       .slice(0, 10); // Limit to 10 items for performance
-  }, [bookings, user?.id, selectedPeriod]);
+  }, [bookings, user?.id, periodStartDate]);
 
   const formatCurrency = useCallback((amount: number) => {
     return PricingUtils.formatPrice(amount);
@@ -279,6 +297,30 @@ const DriverEarningsScreen: React.FC = () => {
   const formatTime = useCallback((date: Date) => {
     return formatTimeOnly(date);
   }, []);
+
+  const handleLogout = useCallback(() => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (error) {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  }, [logout]);
 
   if (isLoading && !earningsStats) {
     return (
@@ -300,12 +342,21 @@ const DriverEarningsScreen: React.FC = () => {
     >
       {/* Header */}
       <View style={styles.header}>
-        <Typography variant="h1" style={styles.headerTitle}>
-          Earnings
-        </Typography>
-        <Typography variant="body" style={styles.headerSubtitle}>
-          Track your delivery earnings
-        </Typography>
+        <View style={styles.headerLeft}>
+          <Typography variant="h1" style={styles.headerTitle}>
+            Earnings
+          </Typography>
+          <Typography variant="body" style={styles.headerSubtitle}>
+            Track your delivery earnings
+          </Typography>
+        </View>
+        <TouchableOpacity 
+          style={styles.logoutButton} 
+          onPress={handleLogout}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="log-out-outline" size={24} color={UI_CONFIG.colors.error} />
+        </TouchableOpacity>
       </View>
 
       {/* Period Selector */}
@@ -427,11 +478,17 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textSecondary,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     padding: 24,
     paddingTop: 60,
     paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: UI_CONFIG.colors.border,
+  },
+  headerLeft: {
+    flex: 1,
   },
   headerTitle: {
     color: UI_CONFIG.colors.text,
@@ -439,6 +496,19 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     color: UI_CONFIG.colors.textSecondary,
+  },
+  logoutButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: UI_CONFIG.colors.surface,
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   periodSelector: {
     paddingHorizontal: UI_CONFIG.spacing.lg,

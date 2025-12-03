@@ -1,15 +1,13 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { memo } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { Typography } from '../common';
 import { UI_CONFIG } from '../../constants/config';
 
 interface OrdersHeaderProps {
   userName?: string;
-  onLogout: () => void;
 }
 
-const OrdersHeader: React.FC<OrdersHeaderProps> = ({ userName, onLogout }) => {
+const OrdersHeader: React.FC<OrdersHeaderProps> = memo(({ userName }) => {
   return (
     <View style={styles.header}>
       <View style={styles.headerLeft}>
@@ -20,16 +18,11 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = ({ userName, onLogout }) => {
           Manage your orders and deliveries
         </Typography>
       </View>
-      <TouchableOpacity 
-        style={styles.logoutButton} 
-        onPress={onLogout}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="log-out-outline" size={24} color={UI_CONFIG.colors.error} />
-      </TouchableOpacity>
     </View>
   );
-};
+});
+
+OrdersHeader.displayName = 'OrdersHeader';
 
 const styles = StyleSheet.create({
   header: {
@@ -54,19 +47,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: UI_CONFIG.colors.textSecondary,
-  },
-  logoutButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: UI_CONFIG.colors.surface,
-    shadowColor: UI_CONFIG.colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
 });
 

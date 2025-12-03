@@ -151,8 +151,8 @@ const OrdersList: React.FC<OrdersListProps> = ({
         }
       };
       
-      // Defer non-critical work to avoid blocking UI
-      const timeoutId = setTimeout(fetchCustomerAddress, 100);
+      // Defer non-critical work to avoid blocking UI - increased delay for better batching
+      const timeoutId = setTimeout(fetchCustomerAddress, 300);
       return () => {
         clearTimeout(timeoutId);
         isMounted = false;
