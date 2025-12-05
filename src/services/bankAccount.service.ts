@@ -7,14 +7,15 @@ import { BankAccount } from '../types/index';
  * BankAccountService - Handles bank account management operations for admin users
  * 
  * Uses LocalStorageService for data persistence.
+ * All operations are scoped to the specific admin user.
  */
 export class BankAccountService {
   /**
-   * Get all bank accounts
+   * Get all bank accounts for a specific admin user
    */
-  static async getAllBankAccounts(): Promise<BankAccount[]> {
+  static async getAllBankAccounts(adminId: string): Promise<BankAccount[]> {
     try {
-      const accounts = await LocalStorageService.getBankAccounts();
+      const accounts = await LocalStorageService.getBankAccounts(adminId);
       return accounts;
     } catch (error) {
       throw error;
@@ -22,11 +23,11 @@ export class BankAccountService {
   }
 
   /**
-   * Get a single bank account by id
+   * Get a single bank account by id (only if it belongs to the admin)
    */
-  static async getBankAccountById(id: string): Promise<BankAccount | null> {
+  static async getBankAccountById(id: string, adminId: string): Promise<BankAccount | null> {
     try {
-      const account = await LocalStorageService.getBankAccountById(id);
+      const account = await LocalStorageService.getBankAccountById(id, adminId);
       return account;
     } catch (error) {
       throw error;
@@ -34,11 +35,11 @@ export class BankAccountService {
   }
 
   /**
-   * Get the default bank account
+   * Get the default bank account for a specific admin user
    */
-  static async getDefaultBankAccount(): Promise<BankAccount | null> {
+  static async getDefaultBankAccount(adminId: string): Promise<BankAccount | null> {
     try {
-      const account = await LocalStorageService.getDefaultBankAccount();
+      const account = await LocalStorageService.getDefaultBankAccount(adminId);
       return account;
     } catch (error) {
       throw error;
@@ -46,19 +47,20 @@ export class BankAccountService {
   }
 
   /**
-   * Create a new bank account
+   * Create a new bank account for a specific admin user
    */
-  static async createBankAccount(accountData: Omit<BankAccount, 'id' | 'createdAt' | 'updatedAt'>): Promise<BankAccount> {
+  static async createBankAccount(accountData: Omit<BankAccount, 'id' | 'createdAt' | 'updatedAt'>, adminId: string): Promise<BankAccount> {
     try {
       const id = LocalStorageService.generateId();
       const newAccount: BankAccount = {
         ...accountData,
+        adminId,
         id,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      await LocalStorageService.saveBankAccount(newAccount);
+      await LocalStorageService.saveBankAccount(newAccount, adminId);
       return newAccount;
     } catch (error) {
       throw error;
@@ -66,34 +68,34 @@ export class BankAccountService {
   }
 
   /**
-   * Update bank account by id
+   * Update bank account by id (only if it belongs to the admin)
    */
-  static async updateBankAccount(id: string, updates: Partial<BankAccount>): Promise<void> {
+  static async updateBankAccount(id: string, updates: Partial<BankAccount>, adminId: string): Promise<void> {
     try {
-      await LocalStorageService.updateBankAccount(id, updates);
+      await LocalStorageService.updateBankAccount(id, updates, adminId);
     } catch (error) {
       throw error;
     }
   }
 
   /**
-   * Delete bank account by id
+   * Delete bank account by id (only if it belongs to the admin)
    */
-  static async deleteBankAccount(id: string): Promise<void> {
+  static async deleteBankAccount(id: string, adminId: string): Promise<void> {
     try {
-      await LocalStorageService.deleteBankAccount(id);
+      await LocalStorageService.deleteBankAccount(id, adminId);
     } catch (error) {
       throw error;
     }
   }
 
   /**
-   * Set a bank account as default
-   * This will automatically unset all other accounts as default
+   * Set a bank account as default for a specific admin
+   * This will automatically unset all other accounts for that admin as default
    */
-  static async setDefaultBankAccount(id: string): Promise<void> {
+  static async setDefaultBankAccount(id: string, adminId: string): Promise<void> {
     try {
-      await LocalStorageService.updateBankAccount(id, { isDefault: true });
+      await LocalStorageService.updateBankAccount(id, { isDefault: true }, adminId);
     } catch (error) {
       throw error;
     }

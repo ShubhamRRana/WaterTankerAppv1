@@ -38,6 +38,78 @@ const OrdersList: React.FC<OrdersListProps> = ({
   // Cache for customer addresses to avoid repeated API calls
   const addressCacheRef = useRef<Map<string, string | null>>(new Map());
   const loadingAddressesRef = useRef<Set<string>>(new Set());
+  const [customerAddresses, setCustomerAddresses] = useState<Map<string, string | null>>(new Map());
+
+  // Batch fetch all customer addresses when orders change - eliminates N+1 queries
+  useEffect(() => {
+    const fetchAllCustomerAddresses = async () => {
+      // Get unique customer IDs from orders
+      const uniqueCustomerIds = Array.from(new Set(orders.map(order => order.customerId)));
+      
+      // Filter out already cached customers
+      const uncachedCustomerIds = uniqueCustomerIds.filter(id => !addressCacheRef.current.has(id));
+      
+      if (uncachedCustomerIds.length === 0) {
+        // All customers are cached, just update state from cache
+        const cachedMap = new Map<string, string | null>();
+        uniqueCustomerIds.forEach(id => {
+          cachedMap.set(id, addressCacheRef.current.get(id) ?? null);
+        });
+        setCustomerAddresses(cachedMap);
+        return;
+      }
+      
+      // Mark as loading
+      uncachedCustomerIds.forEach(id => loadingAddressesRef.current.add(id));
+      
+      try {
+        // Batch fetch all customers in one call
+        const customerMap = await UserService.getUsersByIds(uncachedCustomerIds);
+        
+        // Process each customer and extract profile address
+        const newAddressMap = new Map<string, string | null>();
+        
+        uniqueCustomerIds.forEach(customerId => {
+          if (addressCacheRef.current.has(customerId)) {
+            // Use cached value
+            newAddressMap.set(customerId, addressCacheRef.current.get(customerId) ?? null);
+          } else {
+            const customer = customerMap.get(customerId);
+            let address: string | null = null;
+            
+            if (customer && isCustomerUser(customer) && customer.savedAddresses && customer.savedAddresses.length > 0) {
+              const order = orders.find(o => o.customerId === customerId);
+              const deliveryAddress = order?.deliveryAddress.address;
+              
+              const defaultAddress = customer.savedAddresses.find(addr => addr.isDefault) || customer.savedAddresses[0];
+              if (defaultAddress && defaultAddress.address !== deliveryAddress) {
+                address = defaultAddress.address;
+              }
+            }
+            
+            // Cache the result (even if null)
+            addressCacheRef.current.set(customerId, address);
+            newAddressMap.set(customerId, address);
+          }
+        });
+        
+        setCustomerAddresses(newAddressMap);
+      } catch (error) {
+        errorLogger.low('Failed to batch fetch customer addresses', error);
+        // Cache null for failed lookups to avoid retrying
+        uncachedCustomerIds.forEach(id => {
+          addressCacheRef.current.set(id, null);
+        });
+      } finally {
+        // Clear loading flags
+        uncachedCustomerIds.forEach(id => loadingAddressesRef.current.delete(id));
+      }
+    };
+    
+    // Debounce to avoid excessive calls when orders change rapidly
+    const timeoutId = setTimeout(fetchAllCustomerAddresses, 100);
+    return () => clearTimeout(timeoutId);
+  }, [orders]);
 
   const getStatusColor = useCallback((status: BookingStatus): string => {
     switch (status) {
@@ -65,21 +137,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
     return formatDateTime(date);
   }, []);
 
-  const OrderCardWithProfileAddress = memo(({ 
-    order, 
-    isProcessing, 
-    statusColor, 
-    statusText, 
-    formattedDate, 
-    formattedDeliveredDate,
-    activeTab,
-    onAcceptOrder,
-    onStartDelivery,
-    onCollectPayment,
-    addressCache,
-    loadingAddresses,
-    onAddressFetched
-  }: { 
+  interface OrderCardProps {
     order: Booking; 
     isProcessing: boolean; 
     statusColor: string; 
@@ -90,74 +148,27 @@ const OrdersList: React.FC<OrdersListProps> = ({
     onAcceptOrder: (orderId: string) => void;
     onStartDelivery: (orderId: string) => void;
     onCollectPayment: (orderId: string) => void;
-    addressCache: Map<string, string | null>;
-    loadingAddresses: Set<string>;
-    onAddressFetched: (customerId: string, address: string | null) => void;
+    customerId: string;
+    initialAddress: string | null;
+  }
+
+  const OrderCardWithProfileAddress = memo<OrderCardProps>(({ 
+    order, 
+    isProcessing, 
+    statusColor, 
+    statusText, 
+    formattedDate, 
+    formattedDeliveredDate,
+    activeTab,
+    onAcceptOrder,
+    onStartDelivery,
+    onCollectPayment,
+    customerId,
+    initialAddress
   }) => {
-    const [customerProfileAddress, setCustomerProfileAddress] = useState<string | null>(() => {
-      // Initialize from cache if available
-      return addressCache.get(order.customerId) ?? null;
-    });
-
-    useEffect(() => {
-      const customerId = order.customerId;
-      const deliveryAddress = order.deliveryAddress.address;
-      
-      // Skip if already cached or currently loading
-      if (addressCache.has(customerId) || loadingAddresses.has(customerId)) {
-        const cached = addressCache.get(customerId);
-        if (cached !== customerProfileAddress) {
-          setCustomerProfileAddress(cached ?? null);
-        }
-        return;
-      }
-
-      // Mark as loading
-      loadingAddresses.add(customerId);
-      let isMounted = true;
-
-      const fetchCustomerAddress = async () => {
-        try {
-          const customer = await UserService.getUserById(customerId);
-          let address: string | null = null;
-          
-          if (customer && isCustomerUser(customer) && customer.savedAddresses && customer.savedAddresses.length > 0) {
-            const defaultAddress = customer.savedAddresses.find(addr => addr.isDefault) || customer.savedAddresses[0];
-            if (defaultAddress && defaultAddress.address !== deliveryAddress) {
-              address = defaultAddress.address;
-            }
-          }
-          
-          // Cache the result (even if null)
-          addressCache.set(customerId, address);
-          
-          if (isMounted) {
-            onAddressFetched(customerId, address);
-            setCustomerProfileAddress(address);
-          }
-        } catch (error) {
-          // Profile address is optional, but log for debugging
-          errorLogger.low('Failed to fetch customer profile address', error, { 
-            orderId: order.id, 
-            customerId 
-          });
-          // Cache null to avoid retrying
-          addressCache.set(customerId, null);
-          if (isMounted) {
-            onAddressFetched(customerId, null);
-          }
-        } finally {
-          loadingAddresses.delete(customerId);
-        }
-      };
-      
-      // Defer non-critical work to avoid blocking UI - increased delay for better batching
-      const timeoutId = setTimeout(fetchCustomerAddress, 300);
-      return () => {
-        clearTimeout(timeoutId);
-        isMounted = false;
-      };
-    }, [order.customerId, order.deliveryAddress.address, order.id]);
+    // Get address from the batch-fetched map (passed via initialAddress prop)
+    // This eliminates individual API calls per order card
+    const customerProfileAddress = initialAddress;
 
     return (
       <Card style={styles.orderCard}>
@@ -259,12 +270,20 @@ const OrdersList: React.FC<OrdersListProps> = ({
         )}
       </Card>
     );
+  }, (prevProps, nextProps) => {
+    // Custom comparison function for memo
+    return (
+      prevProps.order.id === nextProps.order.id &&
+      prevProps.isProcessing === nextProps.isProcessing &&
+      prevProps.statusColor === nextProps.statusColor &&
+      prevProps.statusText === nextProps.statusText &&
+      prevProps.formattedDate === nextProps.formattedDate &&
+      prevProps.formattedDeliveredDate === nextProps.formattedDeliveredDate &&
+      prevProps.activeTab === nextProps.activeTab &&
+      prevProps.customerId === nextProps.customerId &&
+      prevProps.initialAddress === nextProps.initialAddress
+    );
   });
-
-  const handleAddressFetched = useCallback((customerId: string, address: string | null) => {
-    // Cache is already updated in the component, this is just for callback consistency
-    // No need to force re-render as the component manages its own state
-  }, []);
 
   const renderOrderCard = useCallback(({ item: order }: { item: Booking }) => {
     const isProcessing = processingOrder === order.id;
@@ -272,6 +291,8 @@ const OrdersList: React.FC<OrdersListProps> = ({
     const statusText = getStatusText(order.status);
     const formattedDate = order.scheduledFor ? formatDate(order.scheduledFor) : '';
     const formattedDeliveredDate = order.deliveredAt ? formatDate(order.deliveredAt) : '';
+    // Get address from batch-fetched map
+    const initialAddress = customerAddresses.get(order.customerId) ?? null;
     
     return (
       <OrderCardWithProfileAddress 
@@ -285,12 +306,11 @@ const OrdersList: React.FC<OrdersListProps> = ({
         onAcceptOrder={onAcceptOrder}
         onStartDelivery={onStartDelivery}
         onCollectPayment={onCollectPayment}
-        addressCache={addressCacheRef.current}
-        loadingAddresses={loadingAddressesRef.current}
-        onAddressFetched={handleAddressFetched}
+        customerId={order.customerId}
+        initialAddress={initialAddress}
       />
     );
-  }, [activeTab, processingOrder, getStatusColor, getStatusText, formatDate, onAcceptOrder, onStartDelivery, onCollectPayment, handleAddressFetched]);
+  }, [activeTab, processingOrder, getStatusColor, getStatusText, formatDate, onAcceptOrder, onStartDelivery, onCollectPayment, customerAddresses]);
 
   const keyExtractor = useCallback((item: Booking) => item.id, []);
 

@@ -6,7 +6,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
-import { Typography, LoadingSpinner } from '../../components/common';
+import { Typography } from '../../components/common';
 import { Booking } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { DriverStackParamList, DriverTabParamList } from '../../navigation/DriverNavigator';
@@ -21,17 +21,15 @@ type OrdersScreenNavigationProp = CompositeNavigationProp<
 
 const OrdersScreen: React.FC = () => {
   const navigation = useNavigation<OrdersScreenNavigationProp>();
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { bookings, isLoading, error, fetchAvailableBookings, fetchDriverBookings, updateBookingStatus, clearError } = useBookingStore();
   
   const [activeTab, setActiveTab] = useState<OrderTab>('available');
   const [refreshing, setRefreshing] = useState(false);
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [localError, setLocalError] = useState<string | null>(null);
   const previousTabRef = useRef<OrderTab>('available');
   const tabChangeTimeRef = useRef<number>(0);
-  const isInitialMountRef = useRef<boolean>(true);
   
   // Cache for storing fetched data per tab to avoid unnecessary refetches
   const dataCache = useRef<{
@@ -77,9 +75,19 @@ const OrdersScreen: React.FC = () => {
       clearError();
       
       if (activeTab === 'available') {
-        await fetchAvailableBookings();
+        await fetchAvailableBookings({ limit: 50 });
+      } else if (activeTab === 'active') {
+        // Only fetch active bookings (accepted or in_transit)
+        await fetchDriverBookings(user.id, { 
+          status: ['accepted', 'in_transit'],
+          limit: 50 
+        });
       } else {
-        await fetchDriverBookings(user.id);
+        // Only fetch completed bookings
+        await fetchDriverBookings(user.id, { 
+          status: ['delivered'],
+          limit: 100 
+        });
       }
       
       // Cache will be updated from the store's bookings via useEffect after fetch completes
@@ -89,45 +97,37 @@ const OrdersScreen: React.FC = () => {
       
       const errorMessage = error instanceof Error ? error.message : 'Failed to load orders';
       setLocalError(errorMessage);
-    }
+          }
   }, [activeTab, user?.id, fetchAvailableBookings, fetchDriverBookings, clearError]);
 
-  // Load data when tab changes or on initial mount
+  // Load data when tab changes (only once, not on focus)
   useEffect(() => {
     // Track tab change time to distinguish from navigation returns
     const previousTab = previousTabRef.current;
     const isTabChange = previousTab !== activeTab;
-    const isInitialMount = isInitialMountRef.current;
     
-    if (isInitialMount || isTabChange) {
-      if (isInitialMount) {
-        isInitialMountRef.current = false;
-      }
-      
+    if (isTabChange) {
       tabChangeTimeRef.current = Date.now();
-      previousTabRef.current = activeTab;
-      
-      setIsInitialLoading(true);
-      loadOrdersData().finally(() => {
-        setIsInitialLoading(false);
-      });
     }
-  }, [activeTab, user?.id, loadOrdersData]); // Added loadOrdersData to dependencies
+    
+    // Update previous tab after checking
+    previousTabRef.current = activeTab;
+    
+    if (isTabChange) {
+      loadOrdersData();
+    }
+  }, [activeTab, user?.id, loadOrdersData]); // Include loadOrdersData but it's memoized
 
-  // Update cache when bookings change (after fetch completes) - debounced to avoid excessive updates
+  // Update cache when bookings change (after fetch completes)
   useEffect(() => {
-    if (!isLoading && bookings.length >= 0) {
+    if (!isLoading) {
       const cacheKey = activeTab as 'available' | 'active' | 'completed';
       // Only update cache if we have bookings or if it's a valid empty state
       // This ensures cache is updated even when there are no orders
-      const timeoutId = setTimeout(() => {
-        dataCache.current[cacheKey] = {
-          data: [...bookings],
-          timestamp: Date.now(),
-        };
-      }, 50); // Small debounce to batch rapid updates
-      
-      return () => clearTimeout(timeoutId);
+      dataCache.current[cacheKey] = {
+        data: [...bookings],
+        timestamp: Date.now(),
+      };
     }
   }, [bookings, activeTab, isLoading]);
 
@@ -159,7 +159,7 @@ const OrdersScreen: React.FC = () => {
         // For other tabs, use normal cache expiry logic
         loadOrdersData(true);
       }
-    }, [activeTab, user?.id]) // Removed loadOrdersData from dependencies
+    }, [activeTab, user?.id, loadOrdersData])
   );
   
   // Cleanup on unmount
@@ -182,7 +182,7 @@ const OrdersScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const handleAcceptOrder = async (orderId: string) => {
+  const handleAcceptOrder = useCallback(async (orderId: string) => {
     if (!user?.id) return;
     
     setProcessingOrder(orderId);
@@ -245,9 +245,9 @@ const OrdersScreen: React.FC = () => {
     } finally {
       setProcessingOrder(null);
     }
-  };
+  }, [user, bookings, activeTab, updateBookingStatus, loadOrdersData]);
 
-  const handleStartDelivery = async (orderId: string) => {
+  const handleStartDelivery = useCallback(async (orderId: string) => {
     setProcessingOrder(orderId);
     
     // Optimistic update
@@ -292,20 +292,21 @@ const OrdersScreen: React.FC = () => {
     } finally {
       setProcessingOrder(null);
     }
-  };
+  }, [bookings, activeTab, updateBookingStatus, loadOrdersData]);
 
-  const handleCollectPayment = (orderId: string) => {
+  const handleCollectPayment = useCallback((orderId: string) => {
     try {
       navigation.navigate('CollectPayment', { orderId });
     } catch (error) {
             Alert.alert('Error', 'Failed to open payment screen. Please try again.');
     }
-  };
+  }, [navigation]);
 
   const filteredOrders = useMemo((): Booking[] => {
     if (!user?.id) return [];
 
     // Use cached data if available and fresh, otherwise use store data
+    // Since we're now filtering server-side, the bookings should already be filtered
     const cacheKey = activeTab as 'available' | 'active' | 'completed';
     const cached = dataCache.current[cacheKey];
     const now = Date.now();
@@ -313,9 +314,8 @@ const OrdersScreen: React.FC = () => {
       ? cached.data 
       : bookings;
 
-    // Pre-compute filter conditions to avoid repeated checks
-    const userId = user.id;
-    
+    // Data is already filtered server-side, but we keep minimal client-side filtering as safety
+    // This ensures data integrity if cache is stale
     switch (activeTab) {
       case 'available':
         return dataSource.filter(booking => 
@@ -323,30 +323,41 @@ const OrdersScreen: React.FC = () => {
         );
       case 'active':
         return dataSource.filter(booking => 
-          booking.driverId === userId && 
+          booking.driverId === user.id && 
           (booking.status === 'accepted' || booking.status === 'in_transit')
         );
       case 'completed':
         return dataSource.filter(booking => 
-          booking.driverId === userId && booking.status === 'delivered'
+          booking.driverId === user.id && booking.status === 'delivered'
         );
       default:
         return [];
     }
   }, [bookings, activeTab, user?.id]);
 
-
-  // Show loading only on initial load, not during refresh
-  if (isInitialLoading && !refreshing) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loadingContainer}>
-          <LoadingSpinner />
-          <Typography variant="body" style={styles.loadingText}>Loading orders...</Typography>
-        </View>
-      </SafeAreaView>
+  const handleLogout = useCallback(() => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (error) {
+                            Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
     );
-  }
+  }, [logout]);
 
   // Determine error message (prioritize local error, then store error)
   const displayError = localError || error;
@@ -356,6 +367,7 @@ const OrdersScreen: React.FC = () => {
       <View style={styles.container}>
         <OrdersHeader 
           userName={user?.name} 
+          onLogout={handleLogout} 
         />
         
         <OrdersFilter 
@@ -391,16 +403,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: UI_CONFIG.colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: UI_CONFIG.colors.background,
-  },
-  loadingText: {
-    marginTop: 16,
-    color: UI_CONFIG.colors.textSecondary,
   },
 });
 

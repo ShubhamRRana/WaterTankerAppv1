@@ -1,13 +1,15 @@
 import React, { memo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '../common';
 import { UI_CONFIG } from '../../constants/config';
 
 interface OrdersHeaderProps {
   userName?: string;
+  onLogout: () => void;
 }
 
-const OrdersHeader: React.FC<OrdersHeaderProps> = memo(({ userName }) => {
+const OrdersHeader: React.FC<OrdersHeaderProps> = memo(({ userName, onLogout }) => {
   return (
     <View style={styles.header}>
       <View style={styles.headerLeft}>
@@ -18,6 +20,13 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = memo(({ userName }) => {
           Manage your orders and deliveries
         </Typography>
       </View>
+      <TouchableOpacity 
+        style={styles.logoutButton} 
+        onPress={onLogout}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="log-out-outline" size={24} color={UI_CONFIG.colors.error} />
+      </TouchableOpacity>
     </View>
   );
 });
@@ -47,6 +56,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: UI_CONFIG.colors.textSecondary,
+  },
+  logoutButton: {
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

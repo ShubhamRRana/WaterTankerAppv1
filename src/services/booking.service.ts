@@ -75,10 +75,14 @@ export class BookingService {
 
   /**
    * Get all bookings for a customer by id
+   * @param options - Optional pagination and sorting options
    */
-  static async getBookingsByCustomer(customerId: string): Promise<Booking[]> {
+  static async getBookingsByCustomer(
+    customerId: string, 
+    options?: { limit?: number; offset?: number; sortBy?: 'createdAt' | 'updatedAt'; sortOrder?: 'asc' | 'desc' }
+  ): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getBookingsByCustomer(customerId);
+      const bookings = await LocalStorageService.getBookingsByCustomer(customerId, options);
       return bookings as Booking[];
     } catch (error) {
       throw error;
@@ -87,10 +91,13 @@ export class BookingService {
 
   /**
    * Get all available bookings (pending status, no driver assigned)
+   * @param options - Optional pagination and sorting options
    */
-  static async getAvailableBookings(): Promise<Booking[]> {
+  static async getAvailableBookings(
+    options?: { limit?: number; offset?: number; sortBy?: 'createdAt'; sortOrder?: 'asc' | 'desc' }
+  ): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getAvailableBookings();
+      const bookings = await LocalStorageService.getAvailableBookings(options);
       return bookings as Booking[];
     } catch (error) {
       throw error;
@@ -98,11 +105,42 @@ export class BookingService {
   }
 
   /**
-   * Get all bookings for a driver by id
+   * Get bookings for a driver by id with optional filtering
+   * @param driverId - The driver's ID
+   * @param options - Optional filtering, pagination and sorting options
    */
-  static async getBookingsByDriver(driverId: string): Promise<Booking[]> {
+  static async getBookingsByDriver(
+    driverId: string, 
+    options?: { 
+      status?: BookingStatus[]; 
+      limit?: number; 
+      offset?: number; 
+      sortBy?: 'createdAt' | 'updatedAt' | 'deliveredAt'; 
+      sortOrder?: 'asc' | 'desc' 
+    }
+  ): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getBookingsByDriver(driverId);
+      const bookings = await LocalStorageService.getBookingsByDriver(driverId, options);
+      return bookings as Booking[];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Get bookings for earnings calculation with date filtering
+   * Optimized to only fetch completed bookings within date range
+   */
+  static async getBookingsForEarnings(
+    driverId: string,
+    options?: { 
+      startDate?: Date; 
+      endDate?: Date; 
+      status?: BookingStatus[];
+    }
+  ): Promise<Booking[]> {
+    try {
+      const bookings = await LocalStorageService.getBookingsForEarnings(driverId, options);
       return bookings as Booking[];
     } catch (error) {
       throw error;

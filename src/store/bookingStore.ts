@@ -19,9 +19,10 @@ interface BookingState {
   createBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
   updateBookingStatus: (bookingId: string, status: BookingStatus, additionalData?: Partial<Booking>) => Promise<void>;
   fetchCustomerBookings: (customerId: string) => Promise<void>;
-  fetchAvailableBookings: () => Promise<void>;
-  fetchDriverBookings: (driverId: string) => Promise<void>;
+  fetchAvailableBookings: (options?: { limit?: number; offset?: number }) => Promise<void>;
+  fetchDriverBookings: (driverId: string, options?: { status?: BookingStatus[]; limit?: number; offset?: number }) => Promise<void>;
   fetchAllBookings: () => Promise<void>;
+  fetchDriverBookingsForEarnings: (driverId: string, options?: { startDate?: Date; endDate?: Date }) => Promise<Booking[]>;
   getBookingById: (bookingId: string) => Promise<Booking | null>;
   cancelBooking: (bookingId: string, reason: string) => Promise<void>;
   setCurrentBooking: (booking: Booking | null) => void;
@@ -105,10 +106,17 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     }
   },
 
-  fetchAvailableBookings: async () => {
+  fetchAvailableBookings: async (options) => {
     set({ isLoading: true, error: null });
     try {
-      const bookings = await BookingService.getAvailableBookings();
+      // Limit to 50 bookings by default for performance
+      const limit = options?.limit || 50;
+      const bookings = await BookingService.getAvailableBookings({ 
+        limit, 
+        offset: options?.offset || 0,
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      });
       set({ bookings, isLoading: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch available bookings';
@@ -117,13 +125,38 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     }
   },
 
-  fetchDriverBookings: async (driverId) => {
+  fetchDriverBookings: async (driverId, options) => {
     set({ isLoading: true, error: null });
     try {
-      const bookings = await BookingService.getBookingsByDriver(driverId);
+      // Limit to 100 bookings by default for performance, with status filtering
+      const limit = options?.limit || 100;
+      const bookings = await BookingService.getBookingsByDriver(driverId, {
+        status: options?.status,
+        limit,
+        offset: options?.offset || 0,
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      });
       set({ bookings, isLoading: false });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch driver bookings';
+      set({ isLoading: false, error: errorMessage });
+      throw error;
+    }
+  },
+
+  fetchDriverBookingsForEarnings: async (driverId, options) => {
+    set({ isLoading: true, error: null });
+    try {
+      const bookings = await BookingService.getBookingsForEarnings(driverId, {
+        startDate: options?.startDate,
+        endDate: options?.endDate,
+        status: ['delivered']
+      });
+      set({ isLoading: false });
+      return bookings;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch earnings bookings';
       set({ isLoading: false, error: errorMessage });
       throw error;
     }

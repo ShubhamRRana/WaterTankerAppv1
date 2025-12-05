@@ -180,6 +180,7 @@ export interface Notification {
  */
 export interface BankAccount {
   id: string;
+  adminId: string; // ID of the admin user who owns this bank account
   accountHolderName: string;
   bankName: string;
   accountNumber: string;
