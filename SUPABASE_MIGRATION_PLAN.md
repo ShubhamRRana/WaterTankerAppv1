@@ -1384,6 +1384,112 @@ New (Supabase):
 
 ---
 
+## Implementation Details Addendum (Gaps Filled)
+
+### Required Data Access Interfaces
+All methods below must be implemented in `SupabaseDataAccess` to keep parity with the current `IDataAccessLayer`:
+- `IUserDataAccess`: getCurrentUser, saveUser, removeUser, getUserById, getUsers, saveUserToCollection, updateUserProfile, subscribeToUserUpdates, subscribeToAllUsersUpdates
+- `IBookingDataAccess`: saveBooking, updateBooking, getBookings, getBookingById, getBookingsByCustomer, getBookingsByDriver, getAvailableBookings, subscribeToBookingUpdates
+- `IVehicleDataAccess`: saveVehicle, updateVehicle, getVehicles, getVehicleById, deleteVehicle, getVehiclesByAgency, subscribeToVehicleUpdates, subscribeToAgencyVehiclesUpdates
+- `IDataAccessLayer`: users, bookings, vehicles, generateId, initialize
+
+### TypeScript ↔ Database Mapping (multi-role)
+- `User` discriminated union (`CustomerUser | DriverUser | AdminUser`) maps to:
+  - `users` (base fields: id, email, name, phone, created_at, updated_at)
+  - `user_roles` (one row per role)
+  - Role tables: `customers`, `drivers`, `admins` for role-specific fields
+- `role` in app state is derived from `user_roles`, not stored on `users`
+- Mapping example (read): fetch `users` + `user_roles` + role table for chosen role, then assemble the union type
+- Mapping example (write): insert/update base row in `users`, insert roles in `user_roles`, insert/update role table as needed
+
+### Supabase Client Setup (Expo)
+Create `src/lib/supabaseClient.ts`:
+```typescript
+import { createClient } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
+
+const supabaseUrl = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl!, supabaseAnonKey!, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
+```
+
+### Environment Variables
+Add to `.env` (and surface via app.config.js if needed):
+- `EXPO_PUBLIC_SUPABASE_URL=...`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY=...`
+- Optional (server-side scripts only): `SUPABASE_SERVICE_ROLE_KEY=...`
+
+### Real-time Subscription Patterns
+- Bookings: subscribe to `bookings` table for `INSERT` and `UPDATE`; filter by `customer_id`, `driver_id`, or `agency_id` for scoped updates.
+- Roles: subscribe to `user_roles` for `INSERT`/`DELETE` where `user_id = auth.uid()` to detect role changes.
+- Notifications: subscribe to `notifications` for `INSERT` where `user_id = auth.uid()`.
+- Channel naming: `realtime:bookings:<user_id>`, `realtime:user_roles:<user_id>`, `realtime:notifications:<user_id>`.
+
+### Date Serialization
+- Outgoing (TS → DB): convert `Date` to ISO string (UTC) for all TIMESTAMPTZ columns.
+- Incoming (DB → TS): parse to `Date` objects in the data access layer before returning to the app.
+- Ensure consistent timezone handling (store UTC, display local in UI).
+
+### Storage Buckets (RLS examples)
+Policies to add per bucket:
+- `profile-images` (public read): allow `SELECT` for all; `INSERT/UPDATE/DELETE` only when `auth.uid() = owner_id` or admin.
+- `driver-documents` (private): allow `SELECT/INSERT/UPDATE/DELETE` when `auth.uid() = owner_id` or admin.
+- `vehicle-documents` (private): allow `SELECT/INSERT/UPDATE/DELETE` when `auth.uid() = owner_id` or admin.
+
+### Error Handling Pattern
+- Map Supabase errors to existing error types (e.g., `DataAccessError`).
+- Handle network errors and RLS policy violations explicitly.
+- Include context: operation name, table, userId/role where applicable.
+
+### Additional Multi-Role Query Examples
+- Get user with roles and role data for a selected role:
+```sql
+SELECT u.*, ur.role, c.*, d.*, a.*
+FROM users u
+LEFT JOIN user_roles ur ON ur.user_id = u.id
+LEFT JOIN customers c ON c.user_id = u.id AND ur.role = 'customer'
+LEFT JOIN drivers d ON d.user_id = u.id AND ur.role = 'driver'
+LEFT JOIN admins a ON a.user_id = u.id AND ur.role = 'admin'
+WHERE u.id = $1 AND ur.role = $2;
+```
+- Check role existence quickly:
+```sql
+SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1;
+```
+
+### Data Migration Script Structure (suggested)
+- File: `scripts/migrate-to-supabase.ts`
+- Key steps:
+  1) Read AsyncStorage export
+  2) Group users by email; build base `users` + `user_roles` + role tables
+  3) Build ID map: old uid → new uuid
+  4) Remap foreign keys in bookings, vehicles, notifications, etc.
+  5) Serialize dates to ISO; normalize addresses to JSON
+  6) Insert in order (users → user_roles → role tables → bookings → vehicles → config → notifications)
+  7) Verify counts and FK integrity; log progress
+
+### Supabase Auth Flow (role-aware)
+- `signInWithPassword(email, password, preferredRole?)`
+  - If `preferredRole` provided, validate role exists in `user_roles` and return session + role context.
+  - If multiple roles and none provided, return list of roles; UI should prompt before proceeding.
+- Link Auth user to `users` row via `id = auth.user.id`.
+- Sessions: use Supabase client session; remove local AsyncStorage session.
+
+### Testing Strategy Additions
+- Unit: mock Supabase client; test DAL methods for happy-path/error-path.
+- Integration: run against a test Supabase project or local Supabase; verify RLS policies with auth context.
+- Realtime: simulate inserts/updates and assert subscription callbacks fire.
+- Auth: test multi-role login selection and RLS-guarded queries.
+
+---
+
 ## Testing Checklist
 
 ### Pre-Migration
