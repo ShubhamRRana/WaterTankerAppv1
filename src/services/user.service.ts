@@ -61,6 +61,19 @@ export class UserService {
   }
 
   /**
+   * Batch fetch users by IDs - eliminates N+1 query problem
+   * Returns a Map of userId -> User for O(1) lookup
+   */
+  static async getUsersByIds(userIds: string[]): Promise<Map<string, User>> {
+    try {
+      const userMap = await LocalStorageService.getUsersByIds(userIds);
+      return userMap;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Create a new user (typically used by admin to create drivers)
    * Note: This creates the user profile only. Auth account should be created via AuthService.register()
    */

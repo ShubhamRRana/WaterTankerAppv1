@@ -351,8 +351,13 @@ const AddBankAccountScreen: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadBankAccounts = useCallback(async () => {
+    if (!user?.id) {
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     try {
-      const accounts = await BankAccountService.getAllBankAccounts();
+      const accounts = await BankAccountService.getAllBankAccounts(user.id);
       setBankAccounts(accounts);
     } catch (error) {
       console.error('Error loading bank accounts:', error);
@@ -361,7 +366,7 @@ const AddBankAccountScreen: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     loadBankAccounts();
@@ -444,7 +449,7 @@ const AddBankAccountScreen: React.FC = () => {
   };
 
   const handleAddAccount = async () => {
-    if (!validateForm()) {
+    if (!validateForm() || !user?.id) {
       return;
     }
 
@@ -460,10 +465,10 @@ const AddBankAccountScreen: React.FC = () => {
       };
 
       if (editingAccount) {
-        await BankAccountService.updateBankAccount(editingAccount.id, accountData);
+        await BankAccountService.updateBankAccount(editingAccount.id, accountData, user.id);
         Alert.alert('Success', 'Bank account updated successfully');
       } else {
-        await BankAccountService.createBankAccount(accountData);
+        await BankAccountService.createBankAccount(accountData, user.id);
         Alert.alert('Success', 'Bank account added successfully');
       }
 
@@ -493,7 +498,7 @@ const AddBankAccountScreen: React.FC = () => {
   };
 
   const handleDeleteAccount = async () => {
-    if (!editingAccount) return;
+    if (!editingAccount || !user?.id) return;
 
     Alert.alert(
       'Delete Bank Account',
@@ -505,7 +510,7 @@ const AddBankAccountScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await BankAccountService.deleteBankAccount(editingAccount.id);
+              await BankAccountService.deleteBankAccount(editingAccount.id, user.id);
               Alert.alert('Success', 'Bank account deleted successfully');
               resetForm();
               setShowAddModal(false);
@@ -521,8 +526,9 @@ const AddBankAccountScreen: React.FC = () => {
   };
 
   const handleSetDefault = async (accountId: string) => {
+    if (!user?.id) return;
     try {
-      await BankAccountService.setDefaultBankAccount(accountId);
+      await BankAccountService.setDefaultBankAccount(accountId, user.id);
       loadBankAccounts();
     } catch (error) {
       console.error('Error setting default account:', error);

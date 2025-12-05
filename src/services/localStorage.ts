@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, Booking, Vehicle, BankAccount } from '../types/index';
+import { User, Booking, Vehicle, BankAccount, BookingStatus } from '../types/index';
 import {
   serializeUserDates,
   deserializeUserDates,
@@ -119,19 +119,161 @@ export class LocalStorageService {
     return bookings.find(booking => booking.id === bookingId) || null;
   }
 
-  static async getBookingsByCustomer(customerId: string): Promise<Booking[]> {
+  static async getBookingsByCustomer(
+    customerId: string, 
+    options?: { limit?: number; offset?: number; sortBy?: 'createdAt' | 'updatedAt'; sortOrder?: 'asc' | 'desc' }
+  ): Promise<Booking[]> {
     const bookings = await this.getBookings();
-    return bookings.filter(booking => booking.customerId === customerId);
+    let filtered = bookings.filter(booking => booking.customerId === customerId);
+    
+    // Sort bookings
+    const sortBy = options?.sortBy || 'createdAt';
+    const sortOrder = options?.sortOrder || 'desc';
+    filtered.sort((a, b) => {
+      const aVal = a[sortBy]?.getTime() || 0;
+      const bVal = b[sortBy]?.getTime() || 0;
+      return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+    });
+    
+    // Apply pagination
+    const offset = options?.offset || 0;
+    const limit = options?.limit;
+    if (limit) {
+      filtered = filtered.slice(offset, offset + limit);
+    } else if (offset > 0) {
+      filtered = filtered.slice(offset);
+    }
+    
+    return filtered;
   }
 
-  static async getBookingsByDriver(driverId: string): Promise<Booking[]> {
+  static async getBookingsByDriver(
+    driverId: string, 
+    options?: { 
+      status?: BookingStatus[]; 
+      limit?: number; 
+      offset?: number; 
+      sortBy?: 'createdAt' | 'updatedAt' | 'deliveredAt'; 
+      sortOrder?: 'asc' | 'desc' 
+    }
+  ): Promise<Booking[]> {
     const bookings = await this.getBookings();
-    return bookings.filter(booking => booking.driverId === driverId);
+    let filtered = bookings.filter(booking => booking.driverId === driverId);
+    
+    // Filter by status if provided
+    if (options?.status && options.status.length > 0) {
+      filtered = filtered.filter(booking => options.status!.includes(booking.status));
+    }
+    
+    // Sort bookings
+    const sortBy = options?.sortBy || 'createdAt';
+    const sortOrder = options?.sortOrder || 'desc';
+    filtered.sort((a, b) => {
+      let aVal = 0;
+      let bVal = 0;
+      
+      if (sortBy === 'deliveredAt') {
+        aVal = a.deliveredAt?.getTime() || 0;
+        bVal = b.deliveredAt?.getTime() || 0;
+      } else {
+        aVal = a[sortBy]?.getTime() || 0;
+        bVal = b[sortBy]?.getTime() || 0;
+      }
+      
+      return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+    });
+    
+    // Apply pagination
+    const offset = options?.offset || 0;
+    const limit = options?.limit;
+    if (limit) {
+      filtered = filtered.slice(offset, offset + limit);
+    } else if (offset > 0) {
+      filtered = filtered.slice(offset);
+    }
+    
+    return filtered;
   }
 
-  static async getAvailableBookings(): Promise<Booking[]> {
+  static async getAvailableBookings(
+    options?: { limit?: number; offset?: number; sortBy?: 'createdAt'; sortOrder?: 'asc' | 'desc' }
+  ): Promise<Booking[]> {
     const bookings = await this.getBookings();
-    return bookings.filter(booking => booking.status === 'pending');
+    let filtered = bookings.filter(booking => booking.status === 'pending' && !booking.driverId);
+    
+    // Sort bookings
+    const sortBy = options?.sortBy || 'createdAt';
+    const sortOrder = options?.sortOrder || 'desc';
+    filtered.sort((a, b) => {
+      const aVal = a[sortBy]?.getTime() || 0;
+      const bVal = b[sortBy]?.getTime() || 0;
+      return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+    });
+    
+    // Apply pagination
+    const offset = options?.offset || 0;
+    const limit = options?.limit;
+    if (limit) {
+      filtered = filtered.slice(offset, offset + limit);
+    } else if (offset > 0) {
+      filtered = filtered.slice(offset);
+    }
+    
+    return filtered;
+  }
+
+  /**
+   * Get bookings for earnings calculation with date filtering
+   * Optimized to only fetch completed bookings within date range
+   */
+  static async getBookingsForEarnings(
+    driverId: string,
+    options?: { 
+      startDate?: Date; 
+      endDate?: Date; 
+      status?: BookingStatus[];
+    }
+  ): Promise<Booking[]> {
+    const bookings = await this.getBookings();
+    let filtered = bookings.filter(booking => 
+      booking.driverId === driverId && 
+      booking.status === 'delivered'
+    );
+    
+    // Filter by date range if provided
+    if (options?.startDate) {
+      filtered = filtered.filter(booking => 
+        booking.deliveredAt && booking.deliveredAt >= options.startDate!
+      );
+    }
+    
+    if (options?.endDate) {
+      filtered = filtered.filter(booking => 
+        booking.deliveredAt && booking.deliveredAt <= options.endDate!
+      );
+    }
+    
+    return filtered;
+  }
+
+  /**
+   * Batch fetch users by IDs - eliminates N+1 query problem
+   */
+  static async getUsersByIds(userIds: string[]): Promise<Map<string, User>> {
+    const users = await this.getUsers();
+    const userMap = new Map<string, User>();
+    
+    // Create a Set for O(1) lookup
+    const userIdSet = new Set(userIds);
+    
+    // Filter and map users
+    users.forEach(user => {
+      if (userIdSet.has(user.id)) {
+        userMap.set(user.id, user);
+      }
+    });
+    
+    return userMap;
   }
 
   // User collection management
@@ -226,25 +368,38 @@ export class LocalStorageService {
   }
 
   // Bank account management methods
-  static async saveBankAccount(bankAccount: BankAccount): Promise<void> {
-    const bankAccounts = await this.getBankAccounts();
-    const existingAccountIndex = bankAccounts.findIndex(ba => ba.id === bankAccount.id);
+  static async saveBankAccount(bankAccount: BankAccount, adminId: string): Promise<void> {
+    // Get all bank accounts (from all admins)
+    const allBankAccounts = await this.getItem<any[]>('bank_accounts_collection') || [];
+    const bankAccounts = allBankAccounts.map(account => ({
+      ...account,
+      createdAt: new Date(account.createdAt),
+      updatedAt: new Date(account.updatedAt),
+    })) as BankAccount[];
+    
+    // Ensure the account belongs to this admin
+    if (bankAccount.adminId !== adminId) {
+      throw new Error('Bank account does not belong to this admin');
+    }
+    
+    const existingAccountIndex = bankAccounts.findIndex(ba => ba.id === bankAccount.id && ba.adminId === adminId);
     
     if (existingAccountIndex >= 0) {
       bankAccounts[existingAccountIndex] = { ...bankAccount, updatedAt: new Date() };
     } else {
       const accountToAdd = {
         ...bankAccount,
+        adminId,
         createdAt: bankAccount.createdAt || new Date(),
         updatedAt: bankAccount.updatedAt || new Date(),
       };
       bankAccounts.push(accountToAdd);
     }
     
-    // If this account is set as default, unset all other accounts
+    // If this account is set as default, unset all other accounts for this admin only
     if (bankAccount.isDefault) {
       bankAccounts.forEach(account => {
-        if (account.id !== bankAccount.id) {
+        if (account.id !== bankAccount.id && account.adminId === adminId) {
           account.isDefault = false;
         }
       });
@@ -258,37 +413,60 @@ export class LocalStorageService {
     await this.setItem('bank_accounts_collection', serialized);
   }
 
-  static async getBankAccounts(): Promise<BankAccount[]> {
-    const bankAccounts = await this.getItem<any[]>('bank_accounts_collection');
-    if (!bankAccounts) return [];
-    return bankAccounts.map(account => ({
+  static async getBankAccounts(adminId: string): Promise<BankAccount[]> {
+    const allBankAccounts = await this.getItem<any[]>('bank_accounts_collection');
+    if (!allBankAccounts) return [];
+    
+    // Filter by adminId and return only accounts belonging to this admin
+    return allBankAccounts
+      .filter(account => account.adminId === adminId)
+      .map(account => ({
+        ...account,
+        createdAt: new Date(account.createdAt),
+        updatedAt: new Date(account.updatedAt),
+      })) as BankAccount[];
+  }
+
+  static async getBankAccountById(accountId: string, adminId: string): Promise<BankAccount | null> {
+    const allBankAccounts = await this.getItem<any[]>('bank_accounts_collection');
+    if (!allBankAccounts) return null;
+    
+    const account = allBankAccounts.find(
+      acc => acc.id === accountId && acc.adminId === adminId
+    );
+    
+    if (!account) return null;
+    
+    return {
+      ...account,
+      createdAt: new Date(account.createdAt),
+      updatedAt: new Date(account.updatedAt),
+    } as BankAccount;
+  }
+
+  static async getDefaultBankAccount(adminId: string): Promise<BankAccount | null> {
+    const bankAccounts = await this.getBankAccounts(adminId);
+    return bankAccounts.find(account => account.isDefault) || null;
+  }
+
+  static async updateBankAccount(accountId: string, updates: Partial<BankAccount>, adminId: string): Promise<void> {
+    // Get all bank accounts (from all admins)
+    const allBankAccounts = await this.getItem<any[]>('bank_accounts_collection') || [];
+    const bankAccounts = allBankAccounts.map(account => ({
       ...account,
       createdAt: new Date(account.createdAt),
       updatedAt: new Date(account.updatedAt),
     })) as BankAccount[];
-  }
-
-  static async getBankAccountById(accountId: string): Promise<BankAccount | null> {
-    const bankAccounts = await this.getBankAccounts();
-    return bankAccounts.find(account => account.id === accountId) || null;
-  }
-
-  static async getDefaultBankAccount(): Promise<BankAccount | null> {
-    const bankAccounts = await this.getBankAccounts();
-    return bankAccounts.find(account => account.isDefault) || null;
-  }
-
-  static async updateBankAccount(accountId: string, updates: Partial<BankAccount>): Promise<void> {
-    const bankAccounts = await this.getBankAccounts();
-    const accountIndex = bankAccounts.findIndex(account => account.id === accountId);
+    
+    const accountIndex = bankAccounts.findIndex(account => account.id === accountId && account.adminId === adminId);
     
     if (accountIndex >= 0) {
       bankAccounts[accountIndex] = { ...bankAccounts[accountIndex], ...updates, updatedAt: new Date() } as BankAccount;
       
-      // If setting as default, unset all other accounts
+      // If setting as default, unset all other accounts for this admin only
       if (updates.isDefault === true) {
         bankAccounts.forEach(account => {
-          if (account.id !== accountId) {
+          if (account.id !== accountId && account.adminId === adminId) {
             account.isDefault = false;
           }
         });
@@ -301,13 +479,24 @@ export class LocalStorageService {
       }));
       await this.setItem('bank_accounts_collection', serialized);
     } else {
-      throw new Error('Bank account not found');
+      throw new Error('Bank account not found or does not belong to this admin');
     }
   }
 
-  static async deleteBankAccount(accountId: string): Promise<void> {
-    const bankAccounts = await this.getBankAccounts();
-    const updatedAccounts = bankAccounts.filter(account => account.id !== accountId);
+  static async deleteBankAccount(accountId: string, adminId: string): Promise<void> {
+    // Get all bank accounts (from all admins)
+    const allBankAccounts = await this.getItem<any[]>('bank_accounts_collection') || [];
+    const bankAccounts = allBankAccounts.map(account => ({
+      ...account,
+      createdAt: new Date(account.createdAt),
+      updatedAt: new Date(account.updatedAt),
+    })) as BankAccount[];
+    
+    // Only delete if it belongs to this admin
+    const updatedAccounts = bankAccounts.filter(
+      account => !(account.id === accountId && account.adminId === adminId)
+    );
+    
     const serialized = updatedAccounts.map(account => ({
       ...account,
       createdAt: account.createdAt.toISOString(),

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo } from 'react';
 import {
   TouchableOpacity,
   StyleSheet,
@@ -53,20 +53,25 @@ const Button: React.FC<ButtonProps> = ({
   loading = false,
   style,
 }) => {
-  const buttonStyle = [
+  const buttonStyle = useMemo(() => [
     styles.button,
     styles[variant],
     styles[size],
     disabled && styles.disabled,
     style,
-  ];
+  ], [variant, size, disabled, style]);
 
-  const textStyle = [
+  const textStyle = useMemo(() => [
     styles.text,
     styles[`${variant}Text`],
     styles[`${size}Text`],
     disabled && styles.disabledText,
-  ];
+  ], [variant, size, disabled]);
+
+  const indicatorColor = useMemo(() => 
+    variant === 'primary' || variant === 'secondary' ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.primary,
+    [variant]
+  );
 
   return (
     <TouchableOpacity
@@ -77,7 +82,7 @@ const Button: React.FC<ButtonProps> = ({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' || variant === 'secondary' ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.primary}
+          color={indicatorColor}
           size="small"
         />
       ) : (
@@ -165,4 +170,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Button;
+export default memo(Button);

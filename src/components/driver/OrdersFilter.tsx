@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated, InteractionManager } from 'react-native';
 import { Typography } from '../common';
 import { UI_CONFIG } from '../../constants/config';
 
@@ -46,13 +46,15 @@ const OrdersFilter: React.FC<OrdersFilterProps> = memo(({ activeTab, onTabChange
         tabGliderAnim.setValue(targetValue);
         isInitialRender.current = false;
       } else {
-        // Animate to new position
-        Animated.spring(tabGliderAnim, {
-          toValue: targetValue,
-          useNativeDriver: true,
-          tension: 120,
-          friction: 8,
-        }).start();
+        // Defer animation to next frame to avoid blocking UI
+        InteractionManager.runAfterInteractions(() => {
+          Animated.spring(tabGliderAnim, {
+            toValue: targetValue,
+            useNativeDriver: true,
+            tension: 120,
+            friction: 8,
+          }).start();
+        });
       }
     }
   }, [activeTab, tabOptionWidth]);
