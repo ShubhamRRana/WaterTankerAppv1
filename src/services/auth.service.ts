@@ -1,10 +1,12 @@
-import { LocalStorageService } from './localStorage';
+import { supabase } from '../lib/supabaseClient';
 import { User as AppUser, UserRole, DriverUser, AdminUser } from '../types/index';
 import { ERROR_MESSAGES } from '../constants/config';
 import { securityLogger, SecurityEventType, SecuritySeverity } from '../utils/securityLogger';
 import { rateLimiter } from '../utils/rateLimiter';
 import { SanitizationUtils } from '../utils/sanitization';
 import { ValidationUtils } from '../utils/validation';
+import { SupabaseDataAccess } from '../lib/supabaseDataAccess';
+import { deserializeDate } from '../utils/dateSerialization';
 
 /**
  * Result of authentication operations
@@ -23,11 +25,142 @@ export interface AuthResult {
 }
 
 /**
+ * Helper: Fetch user from Supabase with specific role
+ */
+async function fetchUserWithRole(userId: string, role?: UserRole): Promise<AppUser | null> {
+  try {
+    const dataAccess = new SupabaseDataAccess();
+    
+    // Fetch user
+    const { data: userRow, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (userError || !userRow) {
+      return null;
+    }
+
+    // Fetch roles
+    const { data: roles, error: rolesError } = await supabase
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (rolesError || !roles || roles.length === 0) {
+      return null;
+    }
+
+    // If role is specified, check if user has that role
+    if (role) {
+      const hasRole = roles.some(r => r.role === role);
+      if (!hasRole) {
+        return null;
+      }
+    }
+
+    // Fetch role-specific data
+    let customerData = null;
+    let driverData = null;
+    let adminData = null;
+
+    const selectedRole = role || roles[0].role;
+
+    if (selectedRole === 'customer') {
+      const { data } = await supabase
+        .from('customers')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      customerData = data;
+    } else if (selectedRole === 'driver') {
+      const { data } = await supabase
+        .from('drivers')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      driverData = data;
+    } else if (selectedRole === 'admin') {
+      const { data } = await supabase
+        .from('admins')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      adminData = data;
+    }
+
+    // Map to User type
+    const baseUser = {
+      id: userRow.id,
+      email: userRow.email,
+      password: '', // No longer needed with Supabase Auth
+      name: userRow.name,
+      phone: userRow.phone || undefined,
+      createdAt: deserializeDate(userRow.created_at) || new Date(),
+    };
+
+    if (selectedRole === 'customer' && customerData) {
+      return {
+        ...baseUser,
+        role: 'customer',
+        savedAddresses: (customerData.saved_addresses as any) || [],
+      } as AppUser;
+    } else if (selectedRole === 'driver' && driverData) {
+      return {
+        ...baseUser,
+        role: 'driver',
+        vehicleNumber: driverData.vehicle_number,
+        licenseNumber: driverData.license_number,
+        licenseExpiry: deserializeDate(driverData.license_expiry) || undefined,
+        driverLicenseImage: driverData.driver_license_image_url,
+        vehicleRegistrationImage: driverData.vehicle_registration_image_url,
+        totalEarnings: Number(driverData.total_earnings),
+        completedOrders: driverData.completed_orders,
+        createdByAdmin: driverData.created_by_admin,
+        emergencyContactName: driverData.emergency_contact_name || undefined,
+        emergencyContactPhone: driverData.emergency_contact_phone || undefined,
+      } as AppUser;
+    } else if (selectedRole === 'admin') {
+      return {
+        ...baseUser,
+        role: 'admin',
+        businessName: adminData?.business_name || undefined,
+      } as AppUser;
+    }
+
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Helper: Get available roles for a user
+ */
+async function getUserRoles(userId: string): Promise<UserRole[]> {
+  try {
+    const { data: roles, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId);
+
+    if (error || !roles) {
+      return [];
+    }
+
+    return roles.map(r => r.role as UserRole);
+  } catch (error) {
+    return [];
+  }
+}
+
+/**
  * Authentication Service
  * 
  * Handles user authentication, registration, and session management.
  * Includes security features like rate limiting, input sanitization, and brute force protection.
- * Uses LocalStorageService for data persistence.
+ * Uses Supabase Auth for authentication and Supabase database for user data persistence.
  * 
  * @example
  * ```typescript
@@ -116,26 +249,6 @@ export class AuthService {
         };
       }
 
-      // Check if user already exists with same email AND role
-      const existingUsers = await LocalStorageService.getUsers();
-      const existingUser = existingUsers.find(
-        u => u.email?.toLowerCase() === sanitizedEmail.toLowerCase() && u.role === role
-      );
-
-      if (existingUser) {
-        securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, 'User already exists');
-        return {
-          success: false,
-          error: `User already exists with this email address as ${role}`
-        };
-      }
-
-      // Record rate limit
-      rateLimiter.record('register', sanitizedEmail);
-
-      // Generate a unique id for the user
-      const id = LocalStorageService.generateId();
-
       // Validate phone is provided (required)
       if (!sanitizedPhone || !sanitizedPhone.trim()) {
         return {
@@ -144,35 +257,224 @@ export class AuthService {
         };
       }
 
-      // Create user object
-      const newUser: AppUser = {
-        id,
-        email: sanitizedEmail, // Email is now required
-        password, // Store password in local storage (in production, this should be hashed)
-        name: sanitizedName,
-        role,
-        createdAt: new Date(),
-        phone: sanitizedPhone, // Phone is now required
-        ...(role === 'customer' && { savedAddresses: [] }),
-        ...(role === 'driver' && {
-          vehicleNumber: (additionalData as Partial<DriverUser>)?.vehicleNumber,
-          licenseNumber: (additionalData as Partial<DriverUser>)?.licenseNumber,
-          licenseExpiry: (additionalData as Partial<DriverUser>)?.licenseExpiry,
-          driverLicenseImage: (additionalData as Partial<DriverUser>)?.driverLicenseImage,
-          vehicleRegistrationImage: (additionalData as Partial<DriverUser>)?.vehicleRegistrationImage,
-          totalEarnings: (additionalData as Partial<DriverUser>)?.totalEarnings ?? 0,
-          completedOrders: (additionalData as Partial<DriverUser>)?.completedOrders ?? 0,
-          createdByAdmin: (additionalData as Partial<DriverUser>)?.createdByAdmin ?? false,
-          emergencyContactName: (additionalData as Partial<DriverUser>)?.emergencyContactName,
-          emergencyContactPhone: (additionalData as Partial<DriverUser>)?.emergencyContactPhone,
-        }),
-        ...(role === 'admin' && {
-          businessName: (additionalData as Partial<AdminUser>)?.businessName,
-        }),
-      };
+      // Record rate limit
+      rateLimiter.record('register', sanitizedEmail);
 
-      // Save user to collection
-      await LocalStorageService.saveUserToCollection(newUser);
+      // Check if user already exists in users table
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', sanitizedEmail.toLowerCase())
+        .single();
+
+      let userId: string;
+
+      if (existingUser) {
+        // User already exists - check if they already have this role
+        const { data: existingRole } = await supabase
+          .from('user_roles')
+          .select('*')
+          .eq('user_id', existingUser.id)
+          .eq('role', role)
+          .single();
+
+        if (existingRole) {
+          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, 'User already exists');
+          return {
+            success: false,
+            error: `User already exists with this email address as ${role}`
+          };
+        }
+
+        // User exists but doesn't have this role - add the role
+        userId = existingUser.id;
+
+        // Create user role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role: role,
+          });
+
+        if (roleError) {
+          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, roleError.message);
+          return {
+            success: false,
+            error: roleError.message || 'Failed to assign user role'
+          };
+        }
+
+        // Update user phone if needed
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            phone: sanitizedPhone,
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, updateError.message);
+          return {
+            success: false,
+            error: updateError.message || 'Failed to update user profile'
+          };
+        }
+      } else {
+        // New user - create in Supabase Auth first
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: sanitizedEmail,
+          password: password,
+          options: {
+            data: {
+              name: sanitizedName,
+              role: role,
+            }
+          }
+        });
+
+        if (authError || !authData.user) {
+          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, authError?.message || 'Registration failed');
+          return {
+            success: false,
+            error: authError?.message || 'Registration failed'
+          };
+        }
+
+        userId = authData.user.id;
+
+        // Create user record in users table
+        const { error: userError } = await supabase
+          .from('users')
+          .insert({
+            id: userId,
+            email: sanitizedEmail,
+            password_hash: '', // No longer needed with Supabase Auth
+            name: sanitizedName,
+            phone: sanitizedPhone,
+          });
+
+        if (userError) {
+          // Note: Cannot delete auth user from client - would need service role key
+          // Auth user will remain but user profile creation failed
+          // This should be handled by admin cleanup or the user can try registering again
+          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, userError.message);
+          return {
+            success: false,
+            error: userError.message || 'Failed to create user profile'
+          };
+        }
+
+        // Create user role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role: role,
+          });
+
+        if (roleError) {
+          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, roleError.message);
+          return {
+            success: false,
+            error: roleError.message || 'Failed to assign user role'
+          };
+        }
+      }
+
+      // Create role-specific data (only if it doesn't exist)
+      if (role === 'customer') {
+        const { data: existingCustomer } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (!existingCustomer) {
+          const { error: customerError } = await supabase
+            .from('customers')
+            .insert({
+              user_id: userId,
+              saved_addresses: [],
+            });
+
+          if (customerError) {
+            securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, customerError.message);
+            return {
+              success: false,
+              error: customerError.message || 'Failed to create customer profile'
+            };
+          }
+        }
+      } else if (role === 'driver') {
+        const driverData = additionalData as Partial<DriverUser>;
+        const { data: existingDriver } = await supabase
+          .from('drivers')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (!existingDriver) {
+          const { error: driverError } = await supabase
+            .from('drivers')
+            .insert({
+              user_id: userId,
+              vehicle_number: driverData?.vehicleNumber || '',
+              license_number: driverData?.licenseNumber || '',
+              license_expiry: driverData?.licenseExpiry?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+              driver_license_image_url: driverData?.driverLicenseImage || '',
+              vehicle_registration_image_url: driverData?.vehicleRegistrationImage || '',
+              total_earnings: driverData?.totalEarnings ?? 0,
+              completed_orders: driverData?.completedOrders ?? 0,
+              created_by_admin: driverData?.createdByAdmin ?? false,
+              emergency_contact_name: driverData?.emergencyContactName || null,
+              emergency_contact_phone: driverData?.emergencyContactPhone || null,
+            });
+
+          if (driverError) {
+            securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, driverError.message);
+            return {
+              success: false,
+              error: driverError.message || 'Failed to create driver profile'
+            };
+          }
+        }
+      } else if (role === 'admin') {
+        const adminData = additionalData as Partial<AdminUser>;
+        const { data: existingAdmin } = await supabase
+          .from('admins')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+
+        if (!existingAdmin) {
+          const { error: adminError } = await supabase
+            .from('admins')
+            .insert({
+              user_id: userId,
+              business_name: adminData?.businessName || null,
+            });
+
+          if (adminError) {
+            securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, adminError.message);
+            return {
+              success: false,
+              error: adminError.message || 'Failed to create admin profile'
+            };
+          }
+        }
+      }
+
+      // Fetch the created user
+      const newUser = await fetchUserWithRole(userId, role);
+
+      if (!newUser) {
+        securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, 'Failed to fetch created user');
+        return {
+          success: false,
+          error: 'Registration successful but failed to fetch user data'
+        };
+      }
 
       // Log successful registration
       securityLogger.logRegistrationAttempt(sanitizedEmail, role, true, undefined, newUser.id);
@@ -254,65 +556,87 @@ export class AuthService {
       // Log login attempt
       securityLogger.logAuthAttempt(sanitizedEmail, false);
 
-      // Find all users with this email address (case-insensitive)
-      const allUsers = await LocalStorageService.getUsers();
-      const userAccounts = allUsers.filter(u => u.email?.toLowerCase() === sanitizedEmail.toLowerCase());
+      // Authenticate with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: sanitizedEmail,
+        password: password,
+      });
 
-      if (!userAccounts || userAccounts.length === 0) {
-        securityLogger.logAuthAttempt(sanitizedEmail, false, 'User not found');
+      if (authError || !authData.user) {
+        securityLogger.logAuthAttempt(sanitizedEmail, false, authError?.message || 'Authentication failed');
         rateLimiter.record('login', sanitizedEmail);
         return {
           success: false,
-          error: 'User not found'
+          error: authError?.message || 'Invalid email or password'
+        };
+      }
+
+      const userId = authData.user.id;
+
+      // Get user roles
+      const availableRoles = await getUserRoles(userId);
+
+      if (availableRoles.length === 0) {
+        securityLogger.logAuthAttempt(sanitizedEmail, false, 'User has no roles assigned');
+        rateLimiter.record('login', sanitizedEmail);
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          error: 'User has no roles assigned. Please contact administrator.'
         };
       }
 
       // Filter out drivers not created by admin
-      const validAccounts = userAccounts.filter(account => {
-        if (account.role === 'driver' && !account.createdByAdmin) {
-          return false;
-        }
-        return true;
-      });
+      const validRoles: UserRole[] = [];
+      for (const role of availableRoles) {
+        if (role === 'driver') {
+          const { data: driverData } = await supabase
+            .from('drivers')
+            .select('created_by_admin')
+            .eq('user_id', userId)
+            .single();
 
-      if (validAccounts.length === 0) {
+          if (driverData?.created_by_admin) {
+            validRoles.push(role);
+          }
+        } else {
+          validRoles.push(role);
+        }
+      }
+
+      if (validRoles.length === 0) {
         securityLogger.logAuthAttempt(sanitizedEmail, false, ERROR_MESSAGES.auth.adminCreatedDriverOnly);
         rateLimiter.record('login', sanitizedEmail);
+        await supabase.auth.signOut();
         return {
           success: false,
           error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
         };
       }
 
-      // Verify password (simple comparison - in production, use hashed passwords)
-      const matchingAccounts = validAccounts.filter(account => account.password === password);
-
-      if (matchingAccounts.length === 0) {
-        securityLogger.logAuthAttempt(sanitizedEmail, false, 'Invalid password');
-        rateLimiter.record('login', sanitizedEmail);
-        return {
-          success: false,
-          error: 'Invalid password'
-        };
-      }
-
       // If preferredRole is provided, use that specific role
       if (preferredRole) {
-        const roleAccount = matchingAccounts.find(account => account.role === preferredRole);
-        
-        if (!roleAccount) {
+        if (!validRoles.includes(preferredRole)) {
           securityLogger.logAuthAttempt(sanitizedEmail, false, `User not found with role: ${preferredRole}`);
           rateLimiter.record('login', sanitizedEmail);
+          await supabase.auth.signOut();
           return {
             success: false,
             error: `User not found with selected role: ${preferredRole}`
           };
         }
 
-        const appUser = roleAccount as AppUser;
-        
-        // Save user to current session
-        await LocalStorageService.saveUser(appUser);
+        const appUser = await fetchUserWithRole(userId, preferredRole);
+
+        if (!appUser) {
+          securityLogger.logAuthAttempt(sanitizedEmail, false, 'Failed to fetch user data');
+          rateLimiter.record('login', sanitizedEmail);
+          await supabase.auth.signOut();
+          return {
+            success: false,
+            error: 'Failed to fetch user data'
+          };
+        }
 
         // Record successful login
         rateLimiter.record('login', sanitizedEmail);
@@ -324,12 +648,19 @@ export class AuthService {
         };
       }
 
-      if (matchingAccounts.length === 1) {
-        // Single account - return user data
-        const appUser = matchingAccounts[0] as AppUser;
+      // If single role, return user with that role
+      if (validRoles.length === 1) {
+        const appUser = await fetchUserWithRole(userId, validRoles[0]);
 
-        // Save user to current session
-        await LocalStorageService.saveUser(appUser);
+        if (!appUser) {
+          securityLogger.logAuthAttempt(sanitizedEmail, false, 'Failed to fetch user data');
+          rateLimiter.record('login', sanitizedEmail);
+          await supabase.auth.signOut();
+          return {
+            success: false,
+            error: 'Failed to fetch user data'
+          };
+        }
 
         // Record successful login
         rateLimiter.record('login', sanitizedEmail);
@@ -340,13 +671,13 @@ export class AuthService {
           user: appUser
         };
       } else {
-        // Multiple valid accounts - require role selection (only if no preferredRole provided)
+        // Multiple valid roles - require role selection
         // Don't record rate limit yet - wait for role selection
-        const availableRoles = matchingAccounts.map(account => account.role) as UserRole[];
+        // Keep session active for role selection
         return {
           success: true,
           requiresRoleSelection: true,
-          availableRoles,
+          availableRoles: validRoles,
           user: undefined
         };
       }
@@ -393,12 +724,21 @@ export class AuthService {
       // Sanitize email input
       const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
       
-      const allUsers = await LocalStorageService.getUsers();
-      const dbUser = allUsers.find(
-        u => u.email?.toLowerCase() === sanitizedEmail.toLowerCase() && u.role === role
-      );
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session || !session.user) {
+        return {
+          success: false,
+          error: 'No active session. Please login again.'
+        };
+      }
 
-      if (!dbUser) {
+      const userId = session.user.id;
+
+      // Verify user has this role
+      const availableRoles = await getUserRoles(userId);
+      if (!availableRoles.includes(role)) {
         return {
           success: false,
           error: 'User not found with selected role'
@@ -406,17 +746,29 @@ export class AuthService {
       }
 
       // Check if it's a driver that wasn't created by admin
-      if (dbUser.role === 'driver' && !dbUser.createdByAdmin) {
-        return {
-          success: false,
-          error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
-        };
+      if (role === 'driver') {
+        const { data: driverData } = await supabase
+          .from('drivers')
+          .select('created_by_admin')
+          .eq('user_id', userId)
+          .single();
+
+        if (!driverData?.created_by_admin) {
+          return {
+            success: false,
+            error: ERROR_MESSAGES.auth.adminCreatedDriverOnly
+          };
+        }
       }
 
-      const appUser = dbUser as AppUser;
-      
-      // Save user to current session
-      await LocalStorageService.saveUser(appUser);
+      const appUser = await fetchUserWithRole(userId, role);
+
+      if (!appUser) {
+        return {
+          success: false,
+          error: 'Failed to fetch user data'
+        };
+      }
       
       return {
         success: true,
@@ -445,11 +797,11 @@ export class AuthService {
    */
   static async logout(): Promise<void> {
     try {
-      const currentUser = await LocalStorageService.getCurrentUser();
-      const userId = currentUser?.id || 'unknown';
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id || 'unknown';
       
-      // Remove current user from storage
-      await LocalStorageService.removeUser();
+      // Sign out from Supabase Auth
+      await supabase.auth.signOut();
       
       // Log logout event
       securityLogger.log(
@@ -485,13 +837,16 @@ export class AuthService {
   static async getCurrentUserData(id?: string): Promise<AppUser | null> {
     try {
       if (id) {
-        // Fetch by id
-        const user = await LocalStorageService.getUserById(id);
-        return user as AppUser | null;
+        // Fetch by id (no role specified, will use first role)
+        return await fetchUserWithRole(id);
       } else {
         // Get from current session
-        const user = await LocalStorageService.getCurrentUser();
-        return user as AppUser | null;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) {
+          return null;
+        }
+        // Fetch user with first available role
+        return await fetchUserWithRole(session.user.id);
       }
     } catch (error) {
       // Error logged via errorLogger if needed
@@ -519,8 +874,10 @@ export class AuthService {
    */
   static async updateUserProfile(id: string, updates: Partial<AppUser>): Promise<void> {
     try {
+      const dataAccess = new SupabaseDataAccess();
+      
       // Get current user
-      const currentUser = await LocalStorageService.getUserById(id);
+      const currentUser = await dataAccess.users.getUserById(id);
       
       if (!currentUser) {
         throw new Error('User not found');
@@ -530,14 +887,8 @@ export class AuthService {
       const { role, id: userId, ...allowedUpdates } = updates;
       const updatedUser = { ...currentUser, ...allowedUpdates };
 
-      // Update in collection
-      await LocalStorageService.updateUserProfile(id, updatedUser);
-      
-      // Also update current user if it's the same user
-      const currentSessionUser = await LocalStorageService.getCurrentUser();
-      if (currentSessionUser?.id === id) {
-        await LocalStorageService.saveUser(updatedUser);
-      }
+      // Update in database
+      await dataAccess.users.updateUserProfile(id, updatedUser);
     } catch (error) {
       throw error;
     }
@@ -562,10 +913,10 @@ export class AuthService {
    */
   static async initializeApp(): Promise<void> {
     try {
-      // Initialize sample data if needed
-      await LocalStorageService.initializeSampleData();
       // Clean up expired rate limit entries on app startup
       rateLimiter.cleanup();
+      // Supabase doesn't need initialization like LocalStorage
+      // Database schema is already set up
     } catch (error) {
       // Error logged via errorLogger if needed
     }

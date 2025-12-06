@@ -14,7 +14,7 @@ import { User, Booking, Vehicle } from '../types/index';
  * Generic subscription callback type
  */
 export type SubscriptionCallback<T> = (data: T | null) => void;
-export type CollectionSubscriptionCallback<T> = (data: T[]) => void;
+export type CollectionSubscriptionCallback<T> = (data: T | null, eventType: 'INSERT' | 'UPDATE' | 'DELETE') => void;
 
 /**
  * Unsubscribe function returned by subscription methods

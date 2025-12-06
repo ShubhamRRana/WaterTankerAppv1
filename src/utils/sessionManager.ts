@@ -5,6 +5,7 @@
  * Complements Supabase Auth session management with additional security features.
  */
 
+import { supabase } from '../lib/supabaseClient';
 import { securityLogger, SecurityEventType } from './securityLogger';
 
 export interface SessionInfo {
@@ -35,19 +36,27 @@ class SessionManager {
    * Initialize session manager
    */
   async initialize(): Promise<void> {
-    // Note: Implement session initialization based on your authentication system
-    // This is a placeholder - restore session from your storage mechanism
-    // Example:
-    // const session = await getSessionFromStorage();
-    // if (session) {
-    //   this.currentSession = {
-    //     userId: session.userId,
-    //     userRole: session.userRole,
-    //     createdAt: session.createdAt,
-    //     lastActivity: new Date(),
-    //   };
-    //   this.startActivityMonitoring();
-    // }
+    // Restore session from Supabase Auth
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      // Fetch user role from database
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .limit(1)
+        .single();
+
+      if (roles) {
+        this.currentSession = {
+          userId: session.user.id,
+          userRole: roles.role,
+          createdAt: new Date(session.user.created_at || Date.now()),
+          lastActivity: new Date(),
+        };
+        this.startActivityMonitoring();
+      }
+    }
   }
 
   /**
@@ -67,13 +76,12 @@ class SessionManager {
       return false;
     }
 
-    // Note: Implement session validation based on your authentication system
-    // This is a placeholder - check session validity from your auth system
-    // const isValid = await validateSession(this.currentSession.userId);
-    // if (!isValid) {
-    //   this.clearSession();
-    //   return false;
-    // }
+    // Check Supabase Auth session validity
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session || !session.user) {
+      await this.clearSession();
+      return false;
+    }
 
     // Check idle time
     const idleTime = Date.now() - this.currentSession.lastActivity.getTime();
@@ -218,8 +226,8 @@ class SessionManager {
         { reason }
       );
 
-      // Note: Sign out from your authentication system
-      // await signOutFromAuthSystem();
+      // Sign out from Supabase Auth
+      await supabase.auth.signOut();
       await this.clearSession();
     }
   }

@@ -1,12 +1,11 @@
 /**
  * Subscription Manager
  * 
- * Manages real-time subscriptions for database changes.
- * 
- * Note: This is a placeholder implementation since Supabase has been removed.
- * Real-time subscriptions are not available with local storage.
- * This provides a compatible interface that returns a no-op unsubscribe function.
+ * Manages real-time subscriptions for database changes using Supabase Realtime.
  */
+
+import { supabase } from '../lib/supabaseClient';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export interface SubscriptionConfig {
   channelName: string;
@@ -24,27 +23,99 @@ export interface RealtimePayload<T = any> {
 
 /**
  * Subscription Manager for real-time database subscriptions
+ * Uses Supabase Realtime channels for database change notifications
  */
 export class SubscriptionManager {
+  private static channels: Map<string, RealtimeChannel> = new Map();
+
   /**
    * Subscribe to real-time database changes
    * 
    * @param config - Subscription configuration
    * @param callback - Callback function to handle payload updates
    * @returns Unsubscribe function
-   * 
-   * Note: This is a placeholder implementation. Real-time subscriptions
-   * are not available with local storage. Returns a no-op unsubscribe function.
    */
   static subscribe<T = any>(
     config: SubscriptionConfig,
     callback: (payload: RealtimePayload<T>) => void | Promise<void>
   ): () => void {
-    // Placeholder implementation - real-time subscriptions not available
-    // with local storage. Return a no-op unsubscribe function for compatibility.
+    // Get or create channel for this subscription
+    let channel = this.channels.get(config.channelName);
+    
+    if (!channel) {
+      channel = supabase
+        .channel(config.channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: config.event === '*' ? '*' : config.event.toLowerCase() as any,
+            schema: 'public',
+            table: config.table,
+            filter: config.filter,
+          },
+          (payload) => {
+            const realtimePayload: RealtimePayload<T> = {
+              eventType: payload.eventType.toUpperCase() as 'INSERT' | 'UPDATE' | 'DELETE',
+              new: payload.new as T,
+              old: payload.old as T,
+            };
+            
+            try {
+              callback(realtimePayload);
+            } catch (error) {
+              if (config.onError) {
+                config.onError(error instanceof Error ? error : new Error(String(error)));
+              } else {
+                console.error('Subscription callback error:', error);
+              }
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`Subscribed to ${config.channelName}`);
+          } else if (status === 'CHANNEL_ERROR') {
+            const error = new Error(`Failed to subscribe to ${config.channelName}`);
+            if (config.onError) {
+              config.onError(error);
+            } else {
+              console.error('Subscription error:', error);
+            }
+          }
+        });
+      
+      this.channels.set(config.channelName, channel);
+    }
+
+    // Return unsubscribe function
     return () => {
-      // No-op unsubscribe function
+      const channel = this.channels.get(config.channelName);
+      if (channel) {
+        supabase.removeChannel(channel);
+        this.channels.delete(config.channelName);
+      }
     };
+  }
+
+  /**
+   * Unsubscribe from a specific channel
+   */
+  static unsubscribe(channelName: string): void {
+    const channel = this.channels.get(channelName);
+    if (channel) {
+      supabase.removeChannel(channel);
+      this.channels.delete(channelName);
+    }
+  }
+
+  /**
+   * Unsubscribe from all channels
+   */
+  static unsubscribeAll(): void {
+    for (const [channelName, channel] of this.channels.entries()) {
+      supabase.removeChannel(channel);
+    }
+    this.channels.clear();
   }
 }
 

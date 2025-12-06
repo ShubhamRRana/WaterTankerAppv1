@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { User, UserRole } from '../types/index';
 import { AuthService } from '../services/auth.service';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * Authentication store state interface
@@ -57,12 +58,23 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true });
     try {
       await AuthService.initializeApp();
-      const userData = await AuthService.getCurrentUserData();
-      set({
-        user: userData,
-        isAuthenticated: !!userData,
-        isLoading: false,
-      });
+      
+      // Check for existing Supabase session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const userData = await AuthService.getCurrentUserData(session.user.id);
+        set({
+          user: userData,
+          isAuthenticated: !!userData,
+          isLoading: false,
+        });
+      } else {
+        set({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+      }
       
       // Subscribe to auth changes after initialization
       get().subscribeToAuthChanges();
@@ -198,10 +210,35 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       unsubscribeAuth();
     }
 
-    // Note: Implement auth state change subscription based on your authentication system
-    // This is a placeholder - subscribe to your auth system's state changes here
+    // Subscribe to Supabase Auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // Fetch user data with first available role
+        const userData = await AuthService.getCurrentUserData(session.user.id);
+        if (userData) {
+          set({
+            user: userData,
+            isAuthenticated: true,
+          });
+        }
+      } else if (event === 'SIGNED_OUT') {
+        set({
+          user: null,
+          isAuthenticated: false,
+        });
+      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+        // Token refreshed, user still authenticated
+        const userData = await AuthService.getCurrentUserData(session.user.id);
+        if (userData) {
+          set({
+            user: userData,
+            isAuthenticated: true,
+          });
+        }
+      }
+    });
     
-    set({ unsubscribeAuth: () => {} });
+    set({ unsubscribeAuth: () => subscription.unsubscribe() });
   },
 
   unsubscribeFromAuthChanges: () => {

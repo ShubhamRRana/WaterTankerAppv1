@@ -1,0 +1,1216 @@
+/**
+ * Supabase Data Access Layer Implementation
+ * 
+ * Implements IDataAccessLayer using Supabase client.
+ * Handles multi-role users, date serialization, and real-time subscriptions.
+ */
+
+import { supabase } from './supabaseClient';
+import {
+  IDataAccessLayer,
+  IUserDataAccess,
+  IBookingDataAccess,
+  IVehicleDataAccess,
+  SubscriptionCallback,
+  CollectionSubscriptionCallback,
+  Unsubscribe,
+} from './dataAccess.interface';
+import { SubscriptionManager } from '../utils/subscriptionManager';
+import {
+  User,
+  CustomerUser,
+  DriverUser,
+  AdminUser,
+  Booking,
+  Vehicle,
+  Address,
+  isCustomerUser,
+  isDriverUser,
+  isAdminUser,
+} from '../types/index';
+import {
+  DataAccessError,
+  NotFoundError,
+} from '../utils/errors';
+import {
+  deserializeUserDates,
+  deserializeBookingDates,
+  deserializeVehicleDates,
+  serializeDate,
+  deserializeDate,
+} from '../utils/dateSerialization';
+
+/**
+ * Database row types (snake_case as stored in Supabase)
+ */
+interface UserRow {
+  id: string;
+  email: string;
+  password_hash: string;
+  name: string;
+  phone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface UserRoleRow {
+  user_id: string;
+  role: 'customer' | 'driver' | 'admin';
+  created_at: string;
+}
+
+interface CustomerRow {
+  user_id: string;
+  saved_addresses: unknown; // JSONB
+  created_at: string;
+  updated_at: string;
+}
+
+interface DriverRow {
+  user_id: string;
+  vehicle_number: string;
+  license_number: string;
+  license_expiry: string;
+  driver_license_image_url: string;
+  vehicle_registration_image_url: string;
+  total_earnings: number;
+  completed_orders: number;
+  created_by_admin: boolean;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface AdminRow {
+  user_id: string;
+  business_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BookingRow {
+  id: string;
+  customer_id: string;
+  customer_name: string;
+  customer_phone: string;
+  agency_id: string | null;
+  agency_name: string | null;
+  driver_id: string | null;
+  driver_name: string | null;
+  driver_phone: string | null;
+  status: string;
+  tanker_size: number;
+  quantity: number | null;
+  base_price: number;
+  distance_charge: number;
+  total_price: number;
+  delivery_address: unknown; // JSONB
+  distance: number;
+  scheduled_for: string | null;
+  payment_status: string;
+  payment_id: string | null;
+  cancellation_reason: string | null;
+  can_cancel: boolean;
+  created_at: string;
+  updated_at: string;
+  accepted_at: string | null;
+  delivered_at: string | null;
+}
+
+interface VehicleRow {
+  id: string;
+  agency_id: string;
+  vehicle_number: string;
+  insurance_company_name: string;
+  insurance_expiry_date: string;
+  vehicle_capacity: number;
+  amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Helper: Get current user ID from Supabase Auth session
+ */
+async function getCurrentUserId(): Promise<string | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.user?.id || null;
+}
+
+/**
+ * Helper: Map database user row + role data to User union type
+ */
+function mapUserFromDb(
+  userRow: UserRow,
+  roles: UserRoleRow[],
+  customerData?: CustomerRow | null,
+  driverData?: DriverRow | null,
+  adminData?: AdminRow | null,
+  selectedRole?: 'customer' | 'driver' | 'admin'
+): User | null {
+  if (roles.length === 0) {
+    return null;
+  }
+
+  // If selectedRole is provided, use that role; otherwise use the first role
+  const role = selectedRole || roles[0].role;
+
+  const baseUser = {
+    id: userRow.id,
+    email: userRow.email,
+    password: userRow.password_hash, // Temporary, will be removed after auth migration
+    name: userRow.name,
+    phone: userRow.phone || undefined,
+    createdAt: deserializeDate(userRow.created_at) || new Date(),
+  };
+
+  switch (role) {
+    case 'customer': {
+      if (!customerData) {
+        return null;
+      }
+      const customer: CustomerUser = {
+        ...baseUser,
+        role: 'customer',
+        savedAddresses: (customerData.saved_addresses as Address[]) || [],
+      };
+      return customer;
+    }
+
+    case 'driver': {
+      if (!driverData) {
+        return null;
+      }
+      const driver: DriverUser = {
+        ...baseUser,
+        role: 'driver',
+        vehicleNumber: driverData.vehicle_number,
+        licenseNumber: driverData.license_number,
+        licenseExpiry: deserializeDate(driverData.license_expiry) || undefined,
+        driverLicenseImage: driverData.driver_license_image_url,
+        vehicleRegistrationImage: driverData.vehicle_registration_image_url,
+        totalEarnings: Number(driverData.total_earnings),
+        completedOrders: driverData.completed_orders,
+        createdByAdmin: driverData.created_by_admin,
+        emergencyContactName: driverData.emergency_contact_name || undefined,
+        emergencyContactPhone: driverData.emergency_contact_phone || undefined,
+      };
+      return driver;
+    }
+
+    case 'admin': {
+      const admin: AdminUser = {
+        ...baseUser,
+        role: 'admin',
+        businessName: adminData?.business_name || undefined,
+      };
+      return admin;
+    }
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * Helper: Map User to database rows (users + user_roles + role table)
+ */
+async function mapUserToDb(user: User): Promise<{
+  userRow: Partial<UserRow>;
+  roleRows: UserRoleRow[];
+  customerRow?: Partial<CustomerRow>;
+  driverRow?: Partial<DriverRow>;
+  adminRow?: Partial<AdminRow>;
+}> {
+  const userRow: Partial<UserRow> = {
+    id: user.id,
+    email: user.email,
+    password_hash: user.password, // Temporary
+    name: user.name,
+    phone: user.phone || null,
+    created_at: serializeDate(user.createdAt) || new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+
+  const roleRows: UserRoleRow[] = [{
+    user_id: user.id,
+    role: user.role,
+    created_at: new Date().toISOString(),
+  }];
+
+  let customerRow: Partial<CustomerRow> | undefined;
+  let driverRow: Partial<DriverRow> | undefined;
+  let adminRow: Partial<AdminRow> | undefined;
+
+  if (isCustomerUser(user)) {
+    customerRow = {
+      user_id: user.id,
+      saved_addresses: user.savedAddresses || [],
+      created_at: serializeDate(user.createdAt) || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  } else if (isDriverUser(user)) {
+    driverRow = {
+      user_id: user.id,
+      vehicle_number: user.vehicleNumber || '',
+      license_number: user.licenseNumber || '',
+      license_expiry: serializeDate(user.licenseExpiry) || '',
+      driver_license_image_url: user.driverLicenseImage || '',
+      vehicle_registration_image_url: user.vehicleRegistrationImage || '',
+      total_earnings: user.totalEarnings || 0,
+      completed_orders: user.completedOrders || 0,
+      created_by_admin: user.createdByAdmin || false,
+      emergency_contact_name: user.emergencyContactName || null,
+      emergency_contact_phone: user.emergencyContactPhone || null,
+      created_at: serializeDate(user.createdAt) || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  } else if (isAdminUser(user)) {
+    adminRow = {
+      user_id: user.id,
+      business_name: user.businessName || null,
+      created_at: serializeDate(user.createdAt) || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
+  return { userRow, roleRows, customerRow, driverRow, adminRow };
+}
+
+/**
+ * Helper: Map BookingRow to Booking
+ */
+function mapBookingFromDb(row: BookingRow): Booking {
+  const deserialized = deserializeBookingDates({
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    scheduledFor: row.scheduled_for,
+    acceptedAt: row.accepted_at,
+    deliveredAt: row.delivered_at,
+  });
+
+  const deliveryAddress = row.delivery_address as Address;
+
+  return {
+    id: row.id,
+    customerId: row.customer_id,
+    customerName: row.customer_name,
+    customerPhone: row.customer_phone,
+    agencyId: row.agency_id || undefined,
+    agencyName: row.agency_name || undefined,
+    driverId: row.driver_id || undefined,
+    driverName: row.driver_name || undefined,
+    driverPhone: row.driver_phone || undefined,
+    status: row.status as Booking['status'],
+    tankerSize: row.tanker_size,
+    quantity: row.quantity || 1,
+    basePrice: Number(row.base_price),
+    distanceCharge: Number(row.distance_charge),
+    totalPrice: Number(row.total_price),
+    deliveryAddress,
+    distance: Number(row.distance),
+    scheduledFor: deserialized.scheduledFor,
+    paymentStatus: row.payment_status as Booking['paymentStatus'],
+    paymentId: row.payment_id || undefined,
+    cancellationReason: row.cancellation_reason || undefined,
+    canCancel: row.can_cancel,
+    createdAt: deserialized.createdAt,
+    updatedAt: deserialized.updatedAt,
+    acceptedAt: deserialized.acceptedAt,
+    deliveredAt: deserialized.deliveredAt,
+  };
+}
+
+/**
+ * Helper: Map Booking to BookingRow
+ */
+function mapBookingToDb(booking: Booking): Partial<BookingRow> {
+  return {
+    id: booking.id,
+    customer_id: booking.customerId,
+    customer_name: booking.customerName,
+    customer_phone: booking.customerPhone,
+    agency_id: booking.agencyId || null,
+    agency_name: booking.agencyName || null,
+    driver_id: booking.driverId || null,
+    driver_name: booking.driverName || null,
+    driver_phone: booking.driverPhone || null,
+    status: booking.status,
+    tanker_size: booking.tankerSize,
+    quantity: booking.quantity || 1,
+    base_price: booking.basePrice,
+    distance_charge: booking.distanceCharge,
+    total_price: booking.totalPrice,
+    delivery_address: booking.deliveryAddress,
+    distance: booking.distance,
+    scheduled_for: serializeDate(booking.scheduledFor),
+    payment_status: booking.paymentStatus,
+    payment_id: booking.paymentId || null,
+    cancellation_reason: booking.cancellationReason || null,
+    can_cancel: booking.canCancel,
+    created_at: serializeDate(booking.createdAt) || new Date().toISOString(),
+    updated_at: serializeDate(booking.updatedAt) || new Date().toISOString(),
+    accepted_at: serializeDate(booking.acceptedAt),
+    delivered_at: serializeDate(booking.deliveredAt),
+  };
+}
+
+/**
+ * Helper: Map VehicleRow to Vehicle
+ */
+function mapVehicleFromDb(row: VehicleRow): Vehicle {
+  const deserialized = deserializeVehicleDates({
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    insuranceExpiryDate: row.insurance_expiry_date,
+  });
+
+  return {
+    id: row.id,
+    agencyId: row.agency_id,
+    vehicleNumber: row.vehicle_number,
+    insuranceCompanyName: row.insurance_company_name,
+    insuranceExpiryDate: deserialized.insuranceExpiryDate,
+    vehicleCapacity: row.vehicle_capacity,
+    amount: Number(row.amount),
+    createdAt: deserialized.createdAt,
+    updatedAt: deserialized.updatedAt,
+  };
+}
+
+/**
+ * Helper: Map Vehicle to VehicleRow
+ */
+function mapVehicleToDb(vehicle: Vehicle): Partial<VehicleRow> {
+  return {
+    id: vehicle.id,
+    agency_id: vehicle.agencyId,
+    vehicle_number: vehicle.vehicleNumber,
+    insurance_company_name: vehicle.insuranceCompanyName,
+    insurance_expiry_date: serializeDate(vehicle.insuranceExpiryDate) || new Date().toISOString(),
+    vehicle_capacity: vehicle.vehicleCapacity,
+    amount: vehicle.amount,
+    created_at: serializeDate(vehicle.createdAt) || new Date().toISOString(),
+    updated_at: serializeDate(vehicle.updatedAt) || new Date().toISOString(),
+  };
+}
+
+/**
+ * Supabase User Data Access Implementation
+ */
+class SupabaseUserDataAccess implements IUserDataAccess {
+  async getCurrentUser(): Promise<User | null> {
+    try {
+      const userId = await getCurrentUserId();
+      if (!userId) {
+        return null;
+      }
+      return await this.getUserById(userId);
+    } catch (error) {
+      throw new DataAccessError('Failed to get current user', 'getCurrentUser', { error });
+    }
+  }
+
+  async saveUser(user: User): Promise<void> {
+    try {
+      const { userRow, roleRows, customerRow, driverRow, adminRow } = await mapUserToDb(user);
+
+      // Insert or update user
+      const { error: userError } = await supabase
+        .from('users')
+        .upsert(userRow, { onConflict: 'id' });
+
+      if (userError) {
+        throw userError;
+      }
+
+      // Insert or update role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .upsert(roleRows[0], { onConflict: 'user_id,role' });
+
+      if (roleError) {
+        throw roleError;
+      }
+
+      // Insert or update role-specific data
+      if (customerRow) {
+        const { error } = await supabase
+          .from('customers')
+          .upsert(customerRow, { onConflict: 'user_id' });
+        if (error) throw error;
+      } else if (driverRow) {
+        const { error } = await supabase
+          .from('drivers')
+          .upsert(driverRow, { onConflict: 'user_id' });
+        if (error) throw error;
+      } else if (adminRow) {
+        const { error } = await supabase
+          .from('admins')
+          .upsert(adminRow, { onConflict: 'user_id' });
+        if (error) throw error;
+      }
+    } catch (error) {
+      throw new DataAccessError('Failed to save user', 'saveUser', { error });
+    }
+  }
+
+  async removeUser(): Promise<void> {
+    try {
+      const userId = await getCurrentUserId();
+      if (!userId) {
+        return;
+      }
+
+      // Delete user (cascades to user_roles and role tables)
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', userId);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      throw new DataAccessError('Failed to remove user', 'removeUser', { error });
+    }
+  }
+
+  async getUserById(id: string): Promise<User | null> {
+    try {
+      // Fetch user
+      const { data: userRow, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (userError || !userRow) {
+        return null;
+      }
+
+      // Fetch roles
+      const { data: roles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', id);
+
+      if (rolesError || !roles || roles.length === 0) {
+        return null;
+      }
+
+      // Fetch role-specific data
+      let customerData: CustomerRow | null = null;
+      let driverData: DriverRow | null = null;
+      let adminData: AdminRow | null = null;
+
+      for (const role of roles) {
+        if (role.role === 'customer') {
+          const { data } = await supabase
+            .from('customers')
+            .select('*')
+            .eq('user_id', id)
+            .single();
+          customerData = data;
+        } else if (role.role === 'driver') {
+          const { data } = await supabase
+            .from('drivers')
+            .select('*')
+            .eq('user_id', id)
+            .single();
+          driverData = data;
+        } else if (role.role === 'admin') {
+          const { data } = await supabase
+            .from('admins')
+            .select('*')
+            .eq('user_id', id)
+            .single();
+          adminData = data;
+        }
+      }
+
+      // Map to User type (use first role if multiple)
+      return mapUserFromDb(userRow as UserRow, roles as UserRoleRow[], customerData, driverData, adminData);
+    } catch (error) {
+      throw new DataAccessError('Failed to get user by id', 'getUserById', { error, id });
+    }
+  }
+
+  async getUsers(): Promise<User[]> {
+    try {
+      // Fetch all users
+      const { data: userRows, error: userError } = await supabase
+        .from('users')
+        .select('*');
+
+      if (userError) {
+        throw userError;
+      }
+
+      if (!userRows || userRows.length === 0) {
+        return [];
+      }
+
+      // Fetch all roles
+      const { data: allRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('*');
+
+      if (rolesError) {
+        throw rolesError;
+      }
+
+      // Fetch all role-specific data
+      const { data: customers } = await supabase.from('customers').select('*');
+      const { data: drivers } = await supabase.from('drivers').select('*');
+      const { data: admins } = await supabase.from('admins').select('*');
+
+      // Group roles by user_id
+      const rolesByUserId = new Map<string, UserRoleRow[]>();
+      (allRoles || []).forEach((role) => {
+        const existing = rolesByUserId.get(role.user_id) || [];
+        existing.push(role as UserRoleRow);
+        rolesByUserId.set(role.user_id, existing);
+      });
+
+      // Map customers, drivers, admins by user_id
+      const customersByUserId = new Map<string, CustomerRow>();
+      (customers || []).forEach((c) => {
+        customersByUserId.set(c.user_id, c as CustomerRow);
+      });
+
+      const driversByUserId = new Map<string, DriverRow>();
+      (drivers || []).forEach((d) => {
+        driversByUserId.set(d.user_id, d as DriverRow);
+      });
+
+      const adminsByUserId = new Map<string, AdminRow>();
+      (admins || []).forEach((a) => {
+        adminsByUserId.set(a.user_id, a as AdminRow);
+      });
+
+      // Map to User array (one User per role)
+      const users: User[] = [];
+      for (const userRow of userRows) {
+        const roles = rolesByUserId.get(userRow.id) || [];
+        for (const role of roles) {
+          const user = mapUserFromDb(
+            userRow as UserRow,
+            [role],
+            customersByUserId.get(userRow.id),
+            driversByUserId.get(userRow.id),
+            adminsByUserId.get(userRow.id),
+            role.role
+          );
+          if (user) {
+            users.push(user);
+          }
+        }
+      }
+
+      return users;
+    } catch (error) {
+      throw new DataAccessError('Failed to get users', 'getUsers', { error });
+    }
+  }
+
+  async saveUserToCollection(user: User): Promise<void> {
+    // In Supabase, saveUser already handles this
+    await this.saveUser(user);
+  }
+
+  async updateUserProfile(id: string, updates: Partial<User>): Promise<void> {
+    try {
+      // Get existing user
+      const existingUser = await this.getUserById(id);
+      if (!existingUser) {
+        throw new NotFoundError('User', id);
+      }
+
+      // Merge updates
+      const updatedUser = { ...existingUser, ...updates } as User;
+
+      // Save updated user
+      await this.saveUser(updatedUser);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to update user profile', 'updateUserProfile', { error, id });
+    }
+  }
+
+  subscribeToUserUpdates(id: string, callback: SubscriptionCallback<User>): Unsubscribe {
+    const channelName = `user:${id}`;
+    
+    // Subscribe to users table updates
+    const unsubscribeUsers = SubscriptionManager.subscribe(
+      {
+        channelName: `${channelName}:users`,
+        table: 'users',
+        filter: `id=eq.${id}`,
+        event: '*',
+      },
+      async (payload) => {
+        if (payload.eventType === 'DELETE') {
+          callback(null);
+          return;
+        }
+        
+        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+          // Fetch full user data with roles
+          try {
+            const user = await this.getUserById(id);
+            if (user) {
+              callback(user);
+            }
+          } catch (error) {
+            console.error('Error fetching user in subscription:', error);
+          }
+        }
+      }
+    );
+
+    // Subscribe to user_roles table updates for role changes
+    const unsubscribeRoles = SubscriptionManager.subscribe(
+      {
+        channelName: `${channelName}:roles`,
+        table: 'user_roles',
+        filter: `user_id=eq.${id}`,
+        event: '*',
+      },
+      async (payload) => {
+        // When roles change, fetch updated user
+        try {
+          const user = await this.getUserById(id);
+          if (user) {
+            callback(user);
+          }
+        } catch (error) {
+          console.error('Error fetching user in role subscription:', error);
+        }
+      }
+    );
+
+    // Subscribe to role-specific table updates
+    const unsubscribeCustomers = SubscriptionManager.subscribe(
+      {
+        channelName: `${channelName}:customers`,
+        table: 'customers',
+        filter: `user_id=eq.${id}`,
+        event: '*',
+      },
+      async (payload) => {
+        try {
+          const user = await this.getUserById(id);
+          if (user) {
+            callback(user);
+          }
+        } catch (error) {
+          console.error('Error fetching user in customer subscription:', error);
+        }
+      }
+    );
+
+    const unsubscribeDrivers = SubscriptionManager.subscribe(
+      {
+        channelName: `${channelName}:drivers`,
+        table: 'drivers',
+        filter: `user_id=eq.${id}`,
+        event: '*',
+      },
+      async (payload) => {
+        try {
+          const user = await this.getUserById(id);
+          if (user) {
+            callback(user);
+          }
+        } catch (error) {
+          console.error('Error fetching user in driver subscription:', error);
+        }
+      }
+    );
+
+    const unsubscribeAdmins = SubscriptionManager.subscribe(
+      {
+        channelName: `${channelName}:admins`,
+        table: 'admins',
+        filter: `user_id=eq.${id}`,
+        event: '*',
+      },
+      async (payload) => {
+        try {
+          const user = await this.getUserById(id);
+          if (user) {
+            callback(user);
+          }
+        } catch (error) {
+          console.error('Error fetching user in admin subscription:', error);
+        }
+      }
+    );
+
+    // Return combined unsubscribe function
+    return () => {
+      unsubscribeUsers();
+      unsubscribeRoles();
+      unsubscribeCustomers();
+      unsubscribeDrivers();
+      unsubscribeAdmins();
+    };
+  }
+
+  subscribeToAllUsersUpdates(callback: CollectionSubscriptionCallback<User>): Unsubscribe {
+    const channelName = 'all_users';
+    
+    // Subscribe to all users table changes
+    const unsubscribeUsers = SubscriptionManager.subscribe(
+      {
+        channelName: `${channelName}:users`,
+        table: 'users',
+        event: '*',
+      },
+      async (payload) => {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+          try {
+            const userId = payload.new?.id || payload.old?.id;
+            if (userId) {
+              const user = await this.getUserById(userId);
+              if (user) {
+                callback(user, payload.eventType === 'INSERT' ? 'INSERT' : 'UPDATE');
+              }
+            }
+          } catch (error) {
+            console.error('Error in all users subscription:', error);
+          }
+        } else if (payload.eventType === 'DELETE') {
+          const userId = payload.old?.id;
+          if (userId) {
+            callback(null as any, 'DELETE');
+          }
+        }
+      }
+    );
+
+    // Subscribe to user_roles changes
+    const unsubscribeRoles = SubscriptionManager.subscribe(
+      {
+        channelName: `${channelName}:roles`,
+        table: 'user_roles',
+        event: '*',
+      },
+      async (payload) => {
+        if (payload.new?.user_id) {
+          try {
+            const user = await this.getUserById(payload.new.user_id);
+            if (user) {
+              callback(user, 'UPDATE');
+            }
+          } catch (error) {
+            console.error('Error in user roles subscription:', error);
+          }
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeUsers();
+      unsubscribeRoles();
+    };
+  }
+}
+
+/**
+ * Supabase Booking Data Access Implementation
+ */
+class SupabaseBookingDataAccess implements IBookingDataAccess {
+  async saveBooking(booking: Booking): Promise<void> {
+    try {
+      const bookingRow = mapBookingToDb(booking);
+      const { error } = await supabase
+        .from('bookings')
+        .insert(bookingRow);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      throw new DataAccessError('Failed to save booking', 'saveBooking', { error });
+    }
+  }
+
+  async updateBooking(bookingId: string, updates: Partial<Booking>): Promise<void> {
+    try {
+      // Get existing booking
+      const existing = await this.getBookingById(bookingId);
+      if (!existing) {
+        throw new NotFoundError('Booking', bookingId);
+      }
+
+      // Merge updates
+      const updated = { ...existing, ...updates } as Booking;
+      const bookingRow = mapBookingToDb(updated);
+
+      // Update in database
+      const { error } = await supabase
+        .from('bookings')
+        .update(bookingRow)
+        .eq('id', bookingId);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to update booking', 'updateBooking', { error, bookingId });
+    }
+  }
+
+  async getBookings(): Promise<Booking[]> {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return (data || []).map((row) => mapBookingFromDb(row as BookingRow));
+    } catch (error) {
+      throw new DataAccessError('Failed to get bookings', 'getBookings', { error });
+    }
+  }
+
+  async getBookingById(bookingId: string): Promise<Booking | null> {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', bookingId)
+        .single();
+
+      if (error || !data) {
+        return null;
+      }
+
+      return mapBookingFromDb(data as BookingRow);
+    } catch (error) {
+      throw new DataAccessError('Failed to get booking by id', 'getBookingById', { error, bookingId });
+    }
+  }
+
+  async getBookingsByCustomer(customerId: string): Promise<Booking[]> {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('customer_id', customerId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return (data || []).map((row) => mapBookingFromDb(row as BookingRow));
+    } catch (error) {
+      throw new DataAccessError('Failed to get bookings by customer', 'getBookingsByCustomer', { error, customerId });
+    }
+  }
+
+  async getBookingsByDriver(driverId: string): Promise<Booking[]> {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('driver_id', driverId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return (data || []).map((row) => mapBookingFromDb(row as BookingRow));
+    } catch (error) {
+      throw new DataAccessError('Failed to get bookings by driver', 'getBookingsByDriver', { error, driverId });
+    }
+  }
+
+  async getAvailableBookings(): Promise<Booking[]> {
+    try {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return (data || []).map((row) => mapBookingFromDb(row as BookingRow));
+    } catch (error) {
+      throw new DataAccessError('Failed to get available bookings', 'getAvailableBookings', { error });
+    }
+  }
+
+  subscribeToBookingUpdates(bookingId: string, callback: SubscriptionCallback<Booking>): Unsubscribe {
+    const channelName = `booking:${bookingId}`;
+    
+    return SubscriptionManager.subscribe(
+      {
+        channelName,
+        table: 'bookings',
+        filter: `id=eq.${bookingId}`,
+        event: '*',
+      },
+      async (payload) => {
+        if (payload.eventType === 'DELETE') {
+          callback(null);
+          return;
+        }
+        
+        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+          if (payload.new) {
+            try {
+              const booking = mapBookingFromDb(payload.new as BookingRow);
+              callback(booking);
+            } catch (error) {
+              console.error('Error mapping booking in subscription:', error);
+            }
+          }
+        }
+      }
+    );
+  }
+}
+
+/**
+ * Supabase Vehicle Data Access Implementation
+ */
+class SupabaseVehicleDataAccess implements IVehicleDataAccess {
+  async saveVehicle(vehicle: Vehicle): Promise<void> {
+    try {
+      const vehicleRow = mapVehicleToDb(vehicle);
+      const { error } = await supabase
+        .from('vehicles')
+        .insert(vehicleRow);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      throw new DataAccessError('Failed to save vehicle', 'saveVehicle', { error });
+    }
+  }
+
+  async updateVehicle(vehicleId: string, updates: Partial<Vehicle>): Promise<void> {
+    try {
+      // Get existing vehicle
+      const existing = await this.getVehicleById(vehicleId);
+      if (!existing) {
+        throw new NotFoundError('Vehicle', vehicleId);
+      }
+
+      // Merge updates
+      const updated = { ...existing, ...updates } as Vehicle;
+      const vehicleRow = mapVehicleToDb(updated);
+
+      // Update in database
+      const { error } = await supabase
+        .from('vehicles')
+        .update(vehicleRow)
+        .eq('id', vehicleId);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to update vehicle', 'updateVehicle', { error, vehicleId });
+    }
+  }
+
+  async getVehicles(): Promise<Vehicle[]> {
+    try {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return (data || []).map((row) => mapVehicleFromDb(row as VehicleRow));
+    } catch (error) {
+      throw new DataAccessError('Failed to get vehicles', 'getVehicles', { error });
+    }
+  }
+
+  async getVehicleById(vehicleId: string): Promise<Vehicle | null> {
+    try {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('id', vehicleId)
+        .single();
+
+      if (error || !data) {
+        return null;
+      }
+
+      return mapVehicleFromDb(data as VehicleRow);
+    } catch (error) {
+      throw new DataAccessError('Failed to get vehicle by id', 'getVehicleById', { error, vehicleId });
+    }
+  }
+
+  async deleteVehicle(vehicleId: string): Promise<void> {
+    try {
+      // Check if vehicle exists
+      const existing = await this.getVehicleById(vehicleId);
+      if (!existing) {
+        throw new NotFoundError('Vehicle', vehicleId);
+      }
+
+      const { error } = await supabase
+        .from('vehicles')
+        .delete()
+        .eq('id', vehicleId);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to delete vehicle', 'deleteVehicle', { error, vehicleId });
+    }
+  }
+
+  async getVehiclesByAgency(agencyId: string): Promise<Vehicle[]> {
+    try {
+      const { data, error } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('agency_id', agencyId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return (data || []).map((row) => mapVehicleFromDb(row as VehicleRow));
+    } catch (error) {
+      throw new DataAccessError('Failed to get vehicles by agency', 'getVehiclesByAgency', { error, agencyId });
+    }
+  }
+
+  subscribeToVehicleUpdates(vehicleId: string, callback: SubscriptionCallback<Vehicle>): Unsubscribe {
+    const channelName = `vehicle:${vehicleId}`;
+    
+    return SubscriptionManager.subscribe(
+      {
+        channelName,
+        table: 'vehicles',
+        filter: `id=eq.${vehicleId}`,
+        event: '*',
+      },
+      async (payload) => {
+        if (payload.eventType === 'DELETE') {
+          callback(null);
+          return;
+        }
+        
+        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+          if (payload.new) {
+            try {
+              const vehicle = mapVehicleFromDb(payload.new as VehicleRow);
+              callback(vehicle);
+            } catch (error) {
+              console.error('Error mapping vehicle in subscription:', error);
+            }
+          }
+        }
+      }
+    );
+  }
+
+  subscribeToAgencyVehiclesUpdates(agencyId: string, callback: CollectionSubscriptionCallback<Vehicle>): Unsubscribe {
+    const channelName = `agency_vehicles:${agencyId}`;
+    
+    return SubscriptionManager.subscribe(
+      {
+        channelName,
+        table: 'vehicles',
+        filter: `agency_id=eq.${agencyId}`,
+        event: '*',
+      },
+      async (payload) => {
+        if (payload.eventType === 'DELETE') {
+          if (payload.old) {
+            try {
+              const vehicle = mapVehicleFromDb(payload.old as VehicleRow);
+              callback(vehicle, 'DELETE');
+            } catch (error) {
+              console.error('Error mapping vehicle in subscription:', error);
+            }
+          }
+          return;
+        }
+        
+        if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
+          if (payload.new) {
+            try {
+              const vehicle = mapVehicleFromDb(payload.new as VehicleRow);
+              callback(vehicle, payload.eventType === 'INSERT' ? 'INSERT' : 'UPDATE');
+            } catch (error) {
+              console.error('Error mapping vehicle in subscription:', error);
+            }
+          }
+        }
+      }
+    );
+  }
+}
+
+/**
+ * Complete Supabase Data Access Layer
+ */
+export class SupabaseDataAccess implements IDataAccessLayer {
+  users: IUserDataAccess;
+  bookings: IBookingDataAccess;
+  vehicles: IVehicleDataAccess;
+
+  constructor() {
+    this.users = new SupabaseUserDataAccess();
+    this.bookings = new SupabaseBookingDataAccess();
+    this.vehicles = new SupabaseVehicleDataAccess();
+  }
+
+  generateId(): string {
+    // Use UUID v4 (Supabase uses UUIDs)
+    // For compatibility, we can use a simple UUID generator
+    // In production, you might want to use a library like 'uuid'
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  async initialize(): Promise<void> {
+    // Supabase doesn't need initialization like LocalStorage
+    // Database schema is already set up
+    // This method is kept for interface compatibility
+    return Promise.resolve();
+  }
+}

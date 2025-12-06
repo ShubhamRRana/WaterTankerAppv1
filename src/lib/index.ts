@@ -7,6 +7,8 @@
 
 export { IDataAccessLayer, IUserDataAccess, IBookingDataAccess, IVehicleDataAccess } from './dataAccess.interface';
 export { LocalStorageDataAccess, dataAccess } from './localStorageDataAccess';
+export { SupabaseDataAccess } from './supabaseDataAccess';
+export { supabase } from './supabaseClient';
 export { SubscriptionManager, subscriptionManager, createManagedSubscription } from './subscriptionManager';
 export type { SubscriptionCallback, CollectionSubscriptionCallback, Unsubscribe } from './dataAccess.interface';
 

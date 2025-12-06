@@ -212,6 +212,10 @@ jest.mock('@react-native-async-storage/async-storage', () => {
   };
 });
 
+// Note: Supabase client is mocked on a per-test basis
+// Test files that need Supabase mocks should use jest.mock() in their test files
+// A manual mock is available at src/lib/__mocks__/supabaseClient.ts for reference
+
 // Suppress console errors in tests (optional - remove if you want to see them)
 global.console = {
   ...console,

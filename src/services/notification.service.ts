@@ -6,15 +6,8 @@
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-import { SubscriptionManager } from '../utils/subscriptionManager';
+import { SubscriptionManager, RealtimePayload } from '../utils/subscriptionManager';
 import { Notification } from '../types';
-
-// Type for Realtime payload
-interface RealtimePayload<T = any> {
-  eventType: 'INSERT' | 'UPDATE' | 'DELETE';
-  new?: T;
-  old?: T;
-}
 
 // Check if device (for simulator/emulator detection)
 const isDevice = Platform.OS !== 'web' && !__DEV__;
