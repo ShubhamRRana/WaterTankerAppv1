@@ -1,6 +1,6 @@
 // src/services/user.service.ts
 
-import { LocalStorageService } from './localStorage';
+import { dataAccess } from '../lib';
 import { User, UserRole } from '../types/index';
 
 /**
@@ -8,16 +8,16 @@ import { User, UserRole } from '../types/index';
  * 
  * Note: Authentication operations are handled by AuthService.
  * This service is for admin operations like fetching all users, managing user profiles, etc.
- * Uses LocalStorageService for data persistence.
+ * Uses the data access layer (Supabase) for data persistence.
  */
 export class UserService {
   /**
    * Helper function to convert auth_id to users table id
-   * In local storage, id is the primary identifier, so this just returns the id
+   * In Supabase, the auth user ID is the same as the users table id
    */
   static async getUsersTableIdByAuthId(authId: string): Promise<string | null> {
     try {
-      const user = await LocalStorageService.getUserById(authId);
+      const user = await dataAccess.users.getUserById(authId);
       return user ? user.id : null;
     } catch (error) {
       return null;
@@ -25,12 +25,12 @@ export class UserService {
   }
 
   /**
-   * Get all users from local storage
+   * Get all users from the data access layer
    */
   static async getAllUsers(): Promise<User[]> {
     try {
-      const users = await LocalStorageService.getUsers();
-      return users as User[];
+      const users = await dataAccess.users.getUsers();
+      return users;
     } catch (error) {
       throw error;
     }
@@ -41,8 +41,8 @@ export class UserService {
    */
   static async getUsersByRole(role: UserRole): Promise<User[]> {
     try {
-      const allUsers = await LocalStorageService.getUsers();
-      return allUsers.filter(u => u.role === role) as User[];
+      const allUsers = await dataAccess.users.getUsers();
+      return allUsers.filter(u => u.role === role);
     } catch (error) {
       throw error;
     }
@@ -53,8 +53,8 @@ export class UserService {
    */
   static async getUserById(id: string): Promise<User | null> {
     try {
-      const user = await LocalStorageService.getUserById(id);
-      return user as User | null;
+      const user = await dataAccess.users.getUserById(id);
+      return user;
     } catch (error) {
       throw error;
     }
@@ -66,7 +66,14 @@ export class UserService {
    */
   static async getUsersByIds(userIds: string[]): Promise<Map<string, User>> {
     try {
-      const userMap = await LocalStorageService.getUsersByIds(userIds);
+      const allUsers = await dataAccess.users.getUsers();
+      const userMap = new Map<string, User>();
+      userIds.forEach(id => {
+        const user = allUsers.find(u => u.id === id);
+        if (user) {
+          userMap.set(id, user);
+        }
+      });
       return userMap;
     } catch (error) {
       throw error;
@@ -79,14 +86,14 @@ export class UserService {
    */
   static async createUser(userData: Omit<User, 'id' | 'createdAt'>): Promise<User> {
     try {
-      const id = LocalStorageService.generateId();
+      const id = dataAccess.generateId();
       const newUser: User = {
         ...userData,
         id,
         createdAt: new Date(),
       };
 
-      await LocalStorageService.saveUserToCollection(newUser);
+      await dataAccess.users.saveUserToCollection(newUser);
       return newUser;
     } catch (error) {
       throw error;
@@ -98,7 +105,7 @@ export class UserService {
    */
   static async updateUser(id: string, updates: Partial<User>): Promise<void> {
     try {
-      const currentUser = await LocalStorageService.getUserById(id);
+      const currentUser = await dataAccess.users.getUserById(id);
       
       if (!currentUser) {
         throw new Error('User not found');
@@ -108,7 +115,7 @@ export class UserService {
       const { id: userId, role, ...allowedUpdates } = updates;
       const updatedUser = { ...currentUser, ...allowedUpdates };
 
-      await LocalStorageService.updateUserProfile(id, updatedUser);
+      await dataAccess.users.updateUserProfile(id, updatedUser);
     } catch (error) {
       throw error;
     }
@@ -116,12 +123,14 @@ export class UserService {
 
   /**
    * Delete a user by id (admin only)
+   * Note: This is a placeholder - actual deletion should be handled through AuthService
    */
   static async deleteUser(id: string): Promise<void> {
     try {
-      const users = await LocalStorageService.getUsers();
-      const updatedUsers = users.filter(u => u.id !== id);
-      await LocalStorageService.setItem('users_collection', updatedUsers);
+      // In Supabase, user deletion should be handled through AuthService
+      // This method is kept for compatibility but may need to be implemented
+      // based on your deletion requirements (soft delete vs hard delete)
+      throw new Error('User deletion should be handled through AuthService');
     } catch (error) {
       throw error;
     }
@@ -129,28 +138,64 @@ export class UserService {
 
   /**
    * Subscribe to real-time user updates by id
-   * Note: Real-time subscriptions are not available with local storage
-   * This is a placeholder that returns a no-op unsubscribe function
    */
   static subscribeToUserUpdates(
     id: string,
     callback: (user: User | null) => void
   ): () => void {
-    // Local storage doesn't support real-time updates
-    // This is a placeholder for compatibility
-    return () => {};
+    return dataAccess.users.subscribeToUserUpdates(id, callback);
   }
 
   /**
    * Subscribe to real-time updates for all users (admin only)
-   * Note: Real-time subscriptions are not available with local storage
-   * This is a placeholder that returns a no-op unsubscribe function
+   * Maintains a local array of all users and provides it to the callback
    */
   static subscribeToAllUsersUpdates(
     callback: (users: User[]) => void
   ): () => void {
-    // Local storage doesn't support real-time updates
-    // This is a placeholder for compatibility
-    return () => {};
+    // Maintain local state of all users
+    let allUsers: User[] = [];
+    let isInitialized = false;
+
+    // Initialize by fetching all users
+    dataAccess.users.getUsers().then(users => {
+      allUsers = users;
+      isInitialized = true;
+      callback([...allUsers]);
+    }).catch(error => {
+      console.error('Error fetching initial users for subscription:', error);
+      isInitialized = true;
+      callback([]);
+    });
+
+    // Subscribe to individual user changes and update the array
+    const unsubscribe = dataAccess.users.subscribeToAllUsersUpdates(
+      (user: User | null, eventType: 'INSERT' | 'UPDATE' | 'DELETE') => {
+        if (!isInitialized) return;
+
+        if (eventType === 'INSERT' || eventType === 'UPDATE') {
+          if (user) {
+            const index = allUsers.findIndex(u => u.id === user.id);
+            if (index >= 0) {
+              allUsers[index] = user;
+            } else {
+              allUsers.push(user);
+            }
+            callback([...allUsers]);
+          }
+        } else if (eventType === 'DELETE') {
+          // For DELETE, we need to refetch all users since we don't get the user ID
+          // Alternatively, we could track the deleted user ID, but refetching is safer
+          dataAccess.users.getUsers().then(users => {
+            allUsers = users;
+            callback([...allUsers]);
+          }).catch(error => {
+            console.error('Error refetching users after delete:', error);
+          });
+        }
+      }
+    );
+
+    return unsubscribe;
   }
 }

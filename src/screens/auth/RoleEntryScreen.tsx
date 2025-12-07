@@ -22,7 +22,7 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
     { key: 'driver', title: 'Driver', subtitle: 'Accept jobs and deliver' },
   ];
 
-  const continueToLogin = () => {
+  const handleContinue = () => {
     if (!selectedRole) return;
     navigation.navigate('Login', { preferredRole: selectedRole });
   };
@@ -142,15 +142,17 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
             ))}
           </View>
 
-          <TouchableOpacity
-            style={[styles.button, !selectedRole && styles.buttonDisabled, isButtonPressed && styles.buttonPressed]}
-            onPress={continueToLogin}
-            disabled={!selectedRole}
-            onPressIn={() => setIsButtonPressed(true)}
-            onPressOut={() => setIsButtonPressed(false)}
-          >
-            <Typography variant="body" style={styles.buttonText}>Continue</Typography>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, !selectedRole && styles.buttonDisabled, isButtonPressed && styles.buttonPressed]}
+              onPress={handleContinue}
+              disabled={!selectedRole}
+              onPressIn={() => setIsButtonPressed(true)}
+              onPressOut={() => setIsButtonPressed(false)}
+            >
+              <Typography variant="body" style={styles.buttonText}>Continue</Typography>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -282,6 +284,27 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: UI_CONFIG.colors.textLight,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    gap: 12,
+  },
+  buttonSecondary: {
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+    paddingHorizontal: 27,
+    paddingVertical: 11,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: UI_CONFIG.colors.primary,
+  },
+  buttonSecondaryDisabled: {
+    borderColor: UI_CONFIG.colors.disabled,
+    opacity: 0.5,
+  },
+  buttonSecondaryText: {
+    color: UI_CONFIG.colors.primary,
     fontSize: 18,
     fontWeight: '600',
   },

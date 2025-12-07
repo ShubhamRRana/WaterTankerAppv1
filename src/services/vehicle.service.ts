@@ -1,19 +1,18 @@
 // src/services/vehicle.service.ts
 
-import { LocalStorageService } from './localStorage';
+import { dataAccess } from '../lib';
 import { Vehicle } from '../types/index';
 
 /**
- * VehicleService - Handles vehicle CRUD operations with local storage
+ * VehicleService - Handles vehicle CRUD operations using the data access layer
  */
 export class VehicleService {
   /**
-   * Get all vehicles from local storage
+   * Get all vehicles
    */
   static async getAllVehicles(): Promise<Vehicle[]> {
     try {
-      const vehicles = await LocalStorageService.getVehicles();
-      return vehicles as Vehicle[];
+      return await dataAccess.vehicles.getVehicles();
     } catch (error) {
       throw error;
     }
@@ -25,8 +24,7 @@ export class VehicleService {
    */
   static async getVehiclesByAgency(agencyId: string): Promise<Vehicle[]> {
     try {
-      const allVehicles = await LocalStorageService.getVehicles();
-      return allVehicles.filter(v => v.agencyId === agencyId) as Vehicle[];
+      return await dataAccess.vehicles.getVehiclesByAgency(agencyId);
     } catch (error) {
       throw error;
     }
@@ -37,8 +35,7 @@ export class VehicleService {
    */
   static async getVehicleById(vehicleId: string): Promise<Vehicle | null> {
     try {
-      const vehicle = await LocalStorageService.getVehicleById(vehicleId);
-      return vehicle as Vehicle | null;
+      return await dataAccess.vehicles.getVehicleById(vehicleId);
     } catch (error) {
       throw error;
     }
@@ -50,7 +47,7 @@ export class VehicleService {
    */
   static async createVehicle(vehicleData: Omit<Vehicle, 'id' | 'createdAt' | 'updatedAt'>): Promise<Vehicle> {
     try {
-      const id = LocalStorageService.generateId();
+      const id = dataAccess.generateId();
       const newVehicle: Vehicle = {
         ...vehicleData,
         id,
@@ -58,7 +55,7 @@ export class VehicleService {
         updatedAt: new Date(),
       };
 
-      await LocalStorageService.saveVehicle(newVehicle);
+      await dataAccess.vehicles.saveVehicle(newVehicle);
       return newVehicle;
     } catch (error) {
       throw error;
@@ -70,7 +67,7 @@ export class VehicleService {
    */
   static async updateVehicle(vehicleId: string, updates: Partial<Vehicle>): Promise<void> {
     try {
-      await LocalStorageService.updateVehicle(vehicleId, updates);
+      await dataAccess.vehicles.updateVehicle(vehicleId, updates);
     } catch (error) {
       throw error;
     }
@@ -81,7 +78,7 @@ export class VehicleService {
    */
   static async deleteVehicle(vehicleId: string): Promise<void> {
     try {
-      await LocalStorageService.deleteVehicle(vehicleId);
+      await dataAccess.vehicles.deleteVehicle(vehicleId);
     } catch (error) {
       throw error;
     }
@@ -89,41 +86,41 @@ export class VehicleService {
 
   /**
    * Subscribe to real-time vehicle updates for a specific vehicle
-   * Note: Real-time subscriptions are not available with local storage
-   * This is a placeholder that returns a no-op unsubscribe function
    */
   static subscribeToVehicleUpdates(
     vehicleId: string,
     callback: (vehicle: Vehicle | null) => void
   ): () => void {
-    // Local storage doesn't support real-time updates
-    // This is a placeholder for compatibility
-    return () => {};
+    return dataAccess.vehicles.subscribeToVehicleUpdates(vehicleId, callback);
   }
 
   /**
    * Subscribe to real-time updates for all vehicles in an agency
-   * Note: Real-time subscriptions are not available with local storage
-   * This is a placeholder that returns a no-op unsubscribe function
    */
   static subscribeToAgencyVehiclesUpdates(
     agencyId: string,
     callback: (vehicles: Vehicle[]) => void
   ): () => void {
-    // Local storage doesn't support real-time updates
-    // This is a placeholder for compatibility
-    return () => {};
+    // The data access layer expects a CollectionSubscriptionCallback
+    // We need to adapt it to the simpler callback signature
+    // When any vehicle changes, fetch all vehicles for the agency and pass them to the callback
+    const adaptedCallback = async (vehicle: Vehicle | null, eventType: 'INSERT' | 'UPDATE' | 'DELETE') => {
+      // Fetch all vehicles for the agency whenever there's a change
+      const vehicles = await this.getVehiclesByAgency(agencyId);
+      callback(vehicles);
+    };
+    return dataAccess.vehicles.subscribeToAgencyVehiclesUpdates(agencyId, adaptedCallback);
   }
 
   /**
    * Subscribe to real-time updates for all vehicles (admin only)
-   * Note: Real-time subscriptions are not available with local storage
+   * Note: This method is not directly supported by the data access layer
    * This is a placeholder that returns a no-op unsubscribe function
    */
   static subscribeToAllVehiclesUpdates(
     callback: (vehicles: Vehicle[]) => void
   ): () => void {
-    // Local storage doesn't support real-time updates
+    // Not directly supported by the data access layer
     // This is a placeholder for compatibility
     return () => {};
   }

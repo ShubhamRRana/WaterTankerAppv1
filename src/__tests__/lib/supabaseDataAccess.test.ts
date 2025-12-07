@@ -271,9 +271,11 @@ describe('SupabaseDataAccess', () => {
               if (table === 'users') {
                 return Promise.resolve({ data: mockUserRow, error: null });
               }
+              if (table === 'customers') {
+                return Promise.resolve({ data: mockCustomerRow, error: null });
+              }
               return Promise.resolve({ data: null, error: null });
             }),
-            single: jest.fn().mockResolvedValue({ data: mockCustomerRow, error: null }),
           };
           return builder;
         });

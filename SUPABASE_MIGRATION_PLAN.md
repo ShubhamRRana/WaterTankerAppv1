@@ -423,7 +423,7 @@ npm install @supabase/supabase-js
 3. **Set Up Row Level Security (RLS)** ✅
    - Enable RLS on all tables
    - Create policies for each table (see RLS Policies section)
-   - **Status**: Completed - RLS enabled and policies created for all tables
+   - **Status**: Completed - RLS enabled on all 12 tables via migration `enable_rls_on_all_tables` and policies created for all tables
 
 4. **Create Indexes** ✅
    - Indexes are included in the schema script
@@ -969,6 +969,24 @@ CREATE POLICY "Users can update their own profile"
   ON users FOR UPDATE
   USING (auth.uid()::text = id::text);
 
+-- Function to verify user can insert their own profile during registration
+CREATE OR REPLACE FUNCTION public.can_insert_user_profile(user_id text)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- Check that the user_id matches the authenticated user's ID
+  -- AND that the user exists in auth.users
+  RETURN (auth.uid()::text = user_id) 
+    AND EXISTS (SELECT 1 FROM auth.users WHERE auth.users.id::text = user_id);
+END;
+$$;
+
+CREATE POLICY "Users can insert their own profile"
+  ON users FOR INSERT
+  WITH CHECK (can_insert_user_profile(id::text));
+
 CREATE POLICY "Admins can view all users"
   ON users FOR SELECT
   USING (
@@ -983,6 +1001,10 @@ CREATE POLICY "Admins can view all users"
 CREATE POLICY "Users can view their own roles"
   ON user_roles FOR SELECT
   USING (user_id::text = auth.uid()::text);
+
+CREATE POLICY "Users can insert their own roles"
+  ON user_roles FOR INSERT
+  WITH CHECK (user_id::text = auth.uid()::text);
 
 CREATE POLICY "Admins can view all user roles"
   ON user_roles FOR SELECT
@@ -1300,11 +1322,13 @@ VALUES (user_id, 'My Business');
 ## Row Level Security (RLS) Policies Summary
 
 ### Users Table
-- Users can view and update their own profile
+- Users can view, insert, and update their own profile
+- Users can insert their own profile during registration (verified via `can_insert_user_profile` function)
 - Admins can view all users
 
 ### User Roles Table
-- Users can view their own roles
+- Users can view and insert their own roles
+- Users can insert their own roles during registration
 - Admins can view all user roles
 
 ### Customers Table
@@ -1609,7 +1633,7 @@ SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1;
 - [x] Users can sign in
 - [x] Session management working
 - [x] Multi-role support working (users can have multiple roles in database)
-- [ ] RoleEntryScreen allows users to select role before login (UI implementation pending)
+- [x] RoleEntryScreen allows users to select role before login (UI implementation completed)
 - [x] Login uses selected role directly (no role selection screen after login)
 - [x] Users with multiple roles login with selected role only (even if credentials are same)
 
@@ -1672,10 +1696,13 @@ SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1;
 
 ## Post-Migration Tasks
 
-1. **Remove Local Storage Code** (after verification)
-   - Delete `LocalStorageDataAccess` class
-   - Remove AsyncStorage dependencies (if not used elsewhere)
-   - Clean up unused code
+1. **Remove Local Storage Code** ✅ COMPLETED
+   - Delete `LocalStorageDataAccess` class ✅
+   - Remove AsyncStorage dependencies (if not used elsewhere) ✅
+     - Note: AsyncStorage is still used by `LocalStorageService` which is still needed by service layer
+     - AsyncStorage is also used in test files and migration scripts (kept for compatibility)
+   - Clean up unused code ✅
+   - **Status**: Completed - `LocalStorageDataAccess` class and test file deleted, export removed from `src/lib/index.ts`
 
 2. **Optimize Queries**
    - Review query performance
@@ -1713,6 +1740,7 @@ SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1;
 - **Multi-Role Support**: Users can have multiple roles (e.g., customer + admin) stored in the database via the `user_roles` junction table and separate role-specific tables (`customers`, `drivers`, `admins`). However, the login flow requires users to select a role from RoleEntryScreen before login, and only that selected role is used for the session.
 - **Single-Role Login**: Even if a user has multiple roles with the same credentials, they must select a role from RoleEntryScreen first. The login process uses only the selected role - there is no role selection screen after login.
 - **Data Consolidation**: During migration, users with the same email but different roles will be consolidated into one `users` row with multiple `user_roles` entries.
+- **RLS Registration Fix**: Fixed account creation issue where users couldn't register when RLS was enabled. The problem was that the `can_insert_user_profile` function only checked if the user exists in `auth.users` but didn't verify that `auth.uid() = user_id`. Updated the function to include this check, ensuring users can only insert their own profile during registration. The `user_roles` INSERT policy was already correct.
 - All timestamps use `TIMESTAMPTZ` for timezone support
 - JSONB columns used for flexible nested data (addresses)
 - Foreign keys ensure data integrity

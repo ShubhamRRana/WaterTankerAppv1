@@ -145,12 +145,30 @@ async function getUserRoles(userId: string): Promise<UserRole[]> {
       .select('role')
       .eq('user_id', userId);
 
-    if (error || !roles) {
+    if (error) {
+      // Log the error for debugging
+      console.error('Error fetching user roles:', error);
+      securityLogger.logAuthAttempt('unknown', false, `Failed to fetch roles: ${error.message}`);
+      return [];
+    }
+
+    if (!roles || roles.length === 0) {
+      // Check if user exists in users table
+      const { data: userExists } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .single();
+      
+      if (!userExists) {
+        console.error(`User ${userId} does not exist in users table`);
+      }
       return [];
     }
 
     return roles.map(r => r.role as UserRole);
   } catch (error) {
+    console.error('Exception in getUserRoles:', error);
     return [];
   }
 }
@@ -408,36 +426,33 @@ export class AuthService {
         }
       } else if (role === 'driver') {
         const driverData = additionalData as Partial<DriverUser>;
-        const { data: existingDriver } = await supabase
+        // Use UPSERT to handle case where trigger may have already created the record
+        // This ensures all fields (especially created_by_admin) are set correctly
+        const { error: driverError } = await supabase
           .from('drivers')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
+          .upsert({
+            user_id: userId,
+            vehicle_number: driverData?.vehicleNumber || '',
+            license_number: driverData?.licenseNumber || '',
+            license_expiry: driverData?.licenseExpiry?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+            driver_license_image_url: driverData?.driverLicenseImage || '',
+            vehicle_registration_image_url: driverData?.vehicleRegistrationImage || '',
+            total_earnings: driverData?.totalEarnings ?? 0,
+            completed_orders: driverData?.completedOrders ?? 0,
+            created_by_admin: driverData?.createdByAdmin ?? false,
+            emergency_contact_name: driverData?.emergencyContactName || null,
+            emergency_contact_phone: driverData?.emergencyContactPhone || null,
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'user_id'
+          });
 
-        if (!existingDriver) {
-          const { error: driverError } = await supabase
-            .from('drivers')
-            .insert({
-              user_id: userId,
-              vehicle_number: driverData?.vehicleNumber || '',
-              license_number: driverData?.licenseNumber || '',
-              license_expiry: driverData?.licenseExpiry?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
-              driver_license_image_url: driverData?.driverLicenseImage || '',
-              vehicle_registration_image_url: driverData?.vehicleRegistrationImage || '',
-              total_earnings: driverData?.totalEarnings ?? 0,
-              completed_orders: driverData?.completedOrders ?? 0,
-              created_by_admin: driverData?.createdByAdmin ?? false,
-              emergency_contact_name: driverData?.emergencyContactName || null,
-              emergency_contact_phone: driverData?.emergencyContactPhone || null,
-            });
-
-          if (driverError) {
-            securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, driverError.message);
-            return {
-              success: false,
-              error: driverError.message || 'Failed to create driver profile'
-            };
-          }
+        if (driverError) {
+          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, driverError.message);
+          return {
+            success: false,
+            error: driverError.message || 'Failed to create/update driver profile'
+          };
         }
       } else if (role === 'admin') {
         const adminData = additionalData as Partial<AdminUser>;
