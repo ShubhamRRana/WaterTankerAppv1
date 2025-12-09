@@ -1,6 +1,6 @@
 # Water Tanker Booking App
 
-A React Native mobile application for booking water tankers, built with Expo and local storage.
+A React Native + Expo mobile application for booking water tankers, backed by Supabase (PostgreSQL + Realtime) with role-aware auth.
 
 ## Project Structure
 
@@ -119,7 +119,7 @@ src/
 ## Tech Stack
 
 - **Frontend**: React Native with Expo (TypeScript)
-- **Backend**: Local Storage (AsyncStorage)
+- **Backend**: Supabase (PostgreSQL, Auth, Realtime)
 - **State Management**: Zustand
 - **Navigation**: React Navigation v6
 - **Maps**: React Native Maps
@@ -128,7 +128,7 @@ src/
 - **Icons**: Expo Vector Icons (Ionicons)
 - **Number Formatting**: Indian numbering system (lakhs/crores) for amounts and quantities
 - **Testing**: Jest with React Native Testing Library
-- **Data Access Layer**: Abstracted data access interface for future backend migration
+- **Data Access Layer**: Abstracted data access layer with Supabase implementation
 
 ## Key Features
 
@@ -164,25 +164,43 @@ src/
 
 ## Getting Started
 
-1. Install dependencies:
+1. Copy `.env.example` (or create `.env`) and set:
+   ```
+   EXPO_PUBLIC_SUPABASE_URL=your-project-url
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key   # scripts only, keep secret
+   EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_api_key # optional
+   ```
+   - The app reads `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` for runtime auth/data access.
+   - `SUPABASE_SERVICE_ROLE_KEY` is only used by CLI/scripts (never ship to clients).
+
+2. Install dependencies:
    ```bash
    npm install
    ```
 
-2. Start the development server:
+3. Start the development server:
    ```bash
    npm start
    ```
 
-3. Run tests:
+4. Run tests:
    ```bash
    npm test
    ```
 
-4. Run tests with coverage:
+5. Run tests with coverage:
    ```bash
    npm run test:coverage
    ```
+
+## Supabase Setup (summary)
+
+- Create a Supabase project and enable the Email provider.
+- Apply the schema, RLS policies, triggers, and indexes from `SUPABASE_MIGRATION_PLAN.md` (Phase 2).
+- Realtime: ensure the publication includes `bookings`, `notifications`, `users`, `user_roles`, `customers`, `drivers`, `admins`, and `bank_accounts`.
+- Authentication: uses Supabase Auth; login is role-aware via `RoleEntryScreen` selection.
+- Data access layer: `src/lib/supabaseDataAccess.ts` implements all CRUD + realtime subscriptions.
 
 ## Auth Flow (Multi-Role)
 
@@ -194,29 +212,19 @@ src/
 
 ## Environment Variables
 
-For MVP, the app uses local storage (AsyncStorage) and doesn't require external API keys. However, for production enhancements, you may need:
+Required for Supabase:
+- `EXPO_PUBLIC_SUPABASE_URL` — Supabase project URL
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY` — public anon key for client auth/data
 
-```
-EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_api_key  # Optional: For enhanced map features
-```
-
-**Note**: The app currently works without API keys as it uses:
-- Local storage (AsyncStorage) for data persistence
-- React Native Maps for map display (works without API key in development)
-- Haversine formula for distance calculations (no API calls needed)
+Optional:
+- `SUPABASE_SERVICE_ROLE_KEY` — service role key for scripts/tests (do **not** bundle)
+- `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` — only if you want Google Maps tiles in production
 
 ## Data Storage
 
-The app uses AsyncStorage (local storage) with the following data structures:
+Primary persistence: Supabase tables with multi-role support (`users`, `user_roles`, `customers`, `drivers`, `admins`, `bookings`, `vehicles`, `tanker_sizes`, `pricing`, `driver_applications`, `notifications`, `bank_accounts`). Realtime is enabled for core tables to keep clients in sync.
 
-- `users` - User accounts (customers, drivers, admins)
-- `bookings` - Water tanker bookings
-- `vehicles` - Vehicle/agency fleet management
-- `bank_accounts` - Admin bank account information
-- `tankerSizes` - Available tanker sizes and pricing
-- `pricing` - Distance-based pricing configuration
-- `driverApplications` - Driver registration requests
-- `notifications` - In-app notifications
+Local storage: AsyncStorage remains only for client-side utilities (e.g., session/local caches); it no longer stores system-of-record data.
 
 ## MVP Scope
 
@@ -290,7 +298,7 @@ This formatting is applied consistently across:
 - **Configuration**: Comprehensive app configuration with constants, error messages, and centralized UI_CONFIG color system
 
 ### 🔧 **Current Implementation Details:**
-- **Local Storage**: All data persisted using AsyncStorage with abstracted data access layer
+- **Supabase**: All system-of-record data persisted in Supabase with RLS and realtime subscriptions; scripts exist for migration from AsyncStorage.
 - **Maps**: React Native Maps integration for location selection
 - **Image Picker**: Expo Image Picker for profile photo uploads
 - **Document Picker**: Support for driver license and vehicle registration documents
@@ -338,6 +346,14 @@ Additional utility scripts in `scripts/`:
 - `test-admin-role.ts` - Admin role testing utilities
 - `test-general-auth.ts` - General authentication testing
 - `reset-rate-limits.ts` - Reset rate limiting for testing
+
+## Runbook: Common Supabase Issues
+
+- **Sign-up fails with RLS**: Ensure Email provider is enabled and `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set; registration policies rely on auth context.
+- **No realtime updates**: Confirm database publication includes all realtime tables and the client is online; rejoin channels via `subscriptionManager` if the app resumes from background.
+- **Policy denied errors**: The authenticated user must have matching rows in `user_roles`; check role selection on `RoleEntryScreen`.
+- **Service role misuse**: Never ship `SUPABASE_SERVICE_ROLE_KEY` to clients; use only for scripts/tests.
+- **Migrations drift**: Re-run the SQL in `SUPABASE_MIGRATION_PLAN.md` Phase 2 and verify indexes/triggers exist before debugging queries.
 
 ## Additional Documentation
 

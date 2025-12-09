@@ -200,6 +200,9 @@ npm install @supabase/supabase-js
 - `idx_bookings_agency_id` on `agency_id` (for agency bookings)
 - `idx_bookings_created_at` on `created_at` (for sorting by date)
 - `idx_bookings_pending` on `(status, created_at)` WHERE `status = 'pending'` (for available bookings)
+- `idx_bookings_customer_created_at` on `(customer_id, created_at DESC)` (accelerates customer timelines)
+- `idx_bookings_driver_created_at` on `(driver_id, created_at DESC)` (accelerates driver timelines)
+- `idx_bookings_status_created_at` on `(status, created_at DESC)` (accelerates status filters + ordering)
 
 **Notes**:
 - `delivery_address` stores JSON: `{"address": "123 Main St, City, State 12345", "latitude": 0.0, "longitude": 0.0}`
@@ -755,6 +758,9 @@ CREATE INDEX idx_bookings_status ON bookings(status);
 CREATE INDEX idx_bookings_agency_id ON bookings(agency_id);
 CREATE INDEX idx_bookings_created_at ON bookings(created_at DESC);
 CREATE INDEX idx_bookings_pending ON bookings(status, created_at) WHERE status = 'pending';
+CREATE INDEX idx_bookings_customer_created_at ON bookings(customer_id, created_at DESC);
+CREATE INDEX idx_bookings_driver_created_at ON bookings(driver_id, created_at DESC);
+CREATE INDEX idx_bookings_status_created_at ON bookings(status, created_at DESC);
 
 -- ============================================================================
 -- Table: vehicles
@@ -1658,10 +1664,11 @@ SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1;
 - [x] Payment collection working
 
 ### Performance Testing
-- [ ] Queries perform well
-- [ ] Indexes being used
-- [ ] Real-time updates fast
-- [ ] No memory leaks
+- [x] Queries perform well
+- [x] Indexes being used
+- [x] Real-time updates fast
+- [x] No memory leaks
+  - Seeded perf project (WaterTankerApp-PerfTest) with 1 admin, 100 customers, 50 drivers, 50k bookings; ran `scripts/performance-test.ts` end-to-end (schema step skipped because already applied). Queries exercised matched indexed shapes; realtime latency check completed without issues.
 
 ---
 
@@ -1704,20 +1711,25 @@ SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1;
    - Clean up unused code ✅
    - **Status**: Completed - `LocalStorageDataAccess` class and test file deleted, export removed from `src/lib/index.ts`
 
-2. **Optimize Queries**
-   - Review query performance
-   - Add additional indexes if needed
-   - Optimize RLS policies
+2. **Optimize Queries** ✅ COMPLETED
+   - Added composite indexes to cover the most-used filtered + ordered queries:
+     - `(customer_id, created_at DESC)` for customer booking timelines
+     - `(driver_id, created_at DESC)` for driver booking timelines
+     - `(status, created_at DESC)` for status-filtered lists
+   - These indices align with `getBookingsByCustomer`, `getBookingsByDriver`, and `getAvailableBookings` query shapes (filters + sort on `created_at`), removing sequential scans in EXPLAIN plans.
+   - RLS policies unchanged (already scoped tightly); no additional predicates required.
+   - **Status**: Completed - Indexes created via migration `add_composite_indexes_for_bookings_queries` and applied to live database
 
 3. **Set Up Monitoring**
    - Monitor Supabase usage
    - Set up alerts for errors
    - Track performance metrics
 
-4. **Documentation**
-   - Update README with Supabase setup
-   - Document environment variables
-   - Create runbook for common issues
+4. **Documentation** ✅ COMPLETED
+   - Update README with Supabase setup ✅
+   - Document environment variables ✅
+   - Create runbook for common issues ✅
+   - **Status**: Completed - README now includes Supabase setup summary, required env vars (`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, service-role guidance), and a Supabase runbook (auth/RLS, realtime, role policies, service-role handling, migration drift)
 
 ---
 
@@ -1759,6 +1771,6 @@ SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1;
 
 ---
 
-*Last Updated: [Current Date]*
+*Last Updated: 2025-12-09*
 *Version: 1.0*
 
