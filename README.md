@@ -1,368 +1,64 @@
 # Water Tanker Booking App
 
-A React Native + Expo mobile application for booking water tankers, backed by Supabase (PostgreSQL + Realtime) with role-aware auth.
+Mobile booking app for on-demand water tanker deliveries. Built with React Native + Expo on a Supabase backend. Supports role-aware experiences for customers, drivers, and admins.
 
-## Project Structure
-
-```
-src/
-├── components/
-│   ├── common/          # Shared components
-│   │   ├── Button.tsx
-│   │   ├── Input.tsx
-│   │   ├── Card.tsx
-│   │   ├── LoadingSpinner.tsx
-│   │   ├── Typography.tsx
-│   │   ├── CustomerMenuDrawer.tsx
-│   │   ├── AdminMenuDrawer.tsx
-│   │   ├── MenuDrawer.tsx
-│   │   ├── SuccessNotification.tsx
-│   │   ├── ErrorBoundary.tsx
-│   │   ├── CustomerIcon.tsx
-│   │   ├── DriverIcon.tsx
-│   │   ├── AdminIcon.tsx
-│   │   └── index.ts
-│   ├── customer/
-│   │   ├── AgencySelectionModal.tsx
-│   │   ├── DateTimeInput.tsx
-│   │   ├── DeliverySummary.tsx
-│   │   ├── PriceBreakdown.tsx
-│   │   ├── SavedAddressModal.tsx
-│   │   └── TankerSelectionModal.tsx
-│   ├── driver/
-│   │   ├── OrdersFilter.tsx
-│   │   ├── OrdersHeader.tsx
-│   │   └── OrdersList.tsx
-│   └── admin/
-│       ├── AddDriverModal.tsx
-│       ├── BookingCard.tsx
-│       ├── BookingDetailsModal.tsx
-│       ├── DriverCard.tsx
-│       ├── DriverModal.tsx
-│       ├── EditProfileForm.tsx
-│       ├── ProfileHeader.tsx
-│       └── StatusUpdateModal.tsx
-├── screens/
-│   ├── auth/
-│   │   ├── RoleEntryScreen.tsx
-│   │   ├── LoginScreen.tsx
-│   │   └── RegisterScreen.tsx
-│   ├── customer/
-│   │   ├── CustomerHomeScreen.tsx
-│   │   ├── BookingScreen.tsx
-│   │   ├── OrderTrackingScreen.tsx
-│   │   ├── OrderHistoryScreen.tsx
-│   │   ├── PastOrdersScreen.tsx
-│   │   ├── ProfileScreen.tsx
-│   │   └── SavedAddressesScreen.tsx
-│   ├── driver/
-│   │   ├── OrdersScreen.tsx
-│   │   ├── CollectPaymentScreen.tsx
-│   │   └── DriverEarningsScreen.tsx
-│   └── admin/
-│       ├── AllBookingsScreen.tsx
-│       ├── DriverManagementScreen.tsx
-│       ├── VehicleManagementScreen.tsx
-│       ├── ReportsScreen.tsx
-│       ├── AdminProfileScreen.tsx
-│       └── AddBankAccountScreen.tsx
-├── navigation/
-│   ├── AuthNavigator.tsx
-│   ├── CustomerNavigator.tsx
-│   ├── DriverNavigator.tsx
-│   └── AdminNavigator.tsx
-├── services/
-│   ├── localStorage.ts
-│   ├── auth.service.ts
-│   ├── booking.service.ts
-│   ├── payment.service.ts
-│   ├── location.service.ts
-│   ├── locationTracking.service.ts
-│   ├── notification.service.ts
-│   ├── user.service.ts
-│   ├── vehicle.service.ts
-│   ├── bankAccount.service.ts
-│   └── index.ts
-├── store/
-│   ├── authStore.ts
-│   ├── bookingStore.ts
-│   ├── userStore.ts
-│   ├── vehicleStore.ts
-│   └── index.ts
-├── lib/                    # Data access layer and business logic
-│   ├── dataAccess.interface.ts
-│   ├── localStorageDataAccess.ts
-│   ├── subscriptionManager.ts
-│   └── index.ts
-├── types/
-│   └── index.ts
-├── utils/
-│   ├── pricing.ts          # Pricing calculations and Indian numbering system formatting
-│   ├── validation.ts
-│   ├── sanitization.ts
-│   ├── rateLimiter.ts
-│   ├── errorHandler.ts     # Centralized error handling
-│   ├── errorLogger.ts
-│   ├── errors.ts           # Error definitions and types
-│   ├── securityLogger.ts
-│   ├── securityAudit.ts
-│   ├── sessionManager.ts
-│   ├── subscriptionManager.ts
-│   ├── reportCalculations.ts
-│   ├── dateUtils.ts        # Date formatting and manipulation utilities
-│   ├── dateSerialization.ts # Date serialization for storage
-│   └── index.ts
-└── constants/
-    └── config.ts
-```
+## Highlights
+- Multi-role auth (customer, driver, admin) with email + password.
+- Realtime order updates via Supabase subscriptions.
+- Distance-based pricing and Indian numbering format for amounts.
+- Driver tools: accept/reject, status updates, earnings, payment collection.
+- Admin tools: bookings, drivers, vehicles, reports, bank accounts.
 
 ## Tech Stack
+- React Native (Expo, TypeScript), React Navigation v6
+- Zustand for state management
+- Supabase (PostgreSQL, Auth, Realtime)
+- Jest + React Native Testing Library
 
-- **Frontend**: React Native with Expo (TypeScript)
-- **Backend**: Supabase (PostgreSQL, Auth, Realtime)
-- **State Management**: Zustand
-- **Navigation**: React Navigation v6
-- **Maps**: React Native Maps
-- **Payment**: Cash on Delivery (COD) for MVP
-- **UI Design**: iOS-style design system with centralized color configuration (UI_CONFIG)
-- **Icons**: Expo Vector Icons (Ionicons)
-- **Number Formatting**: Indian numbering system (lakhs/crores) for amounts and quantities
-- **Testing**: Jest with React Native Testing Library
-- **Data Access Layer**: Abstracted data access layer with Supabase implementation
+## Prerequisites
+- Node.js 18+
+- Expo CLI (`npm install -g expo-cli`)
+- Supabase project with Email provider enabled
 
-## Key Features
+## Setup
+1) Install dependencies: `npm install`
+2) Copy `.env.example` to `.env` and set:
+   - `EXPO_PUBLIC_SUPABASE_URL`
+   - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY` (scripts only, never ship)
+   - `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` (optional)
+3) Start Expo: `npm start`
 
-### Customer Features
-- Email + password authentication
-- Burger menu navigation (Home, Orders, Profile) in header
-- Browse tanker sizes and prices
-- Select delivery location on map
-- View price estimate based on distance
-- Book tanker with scheduled delivery
-- Track order status in real-time
-- View order history
-- Save multiple delivery addresses
+## Useful Scripts
+- `npm start` — run Expo
+- `npm run android` / `npm run ios` / `npm run web`
+- `npm test` — unit/integration tests
+- `npm run test:coverage` — coverage report
 
-### Driver Features
-- Email + password authentication
-- View available booking requests
-- Accept/reject bookings
-- Start delivery and update order status
-- Collect payment workflow with dedicated payment screen
-- View earnings and completed orders
-- Toggle availability status
-- Profile management with photo upload
-
-### Admin Features
-- Tab-based navigation (Bookings, Drivers, Vehicles, Reports, Profile)
-- **All Bookings Management**: View, filter, and manage all platform bookings
-- **Driver Management**: Create, approve, suspend drivers with comprehensive profile management
-- **Vehicle Management**: Add, edit, delete vehicles with insurance and capacity tracking
-- **Bank Account Management**: Add, edit, delete multiple bank accounts with default account selection
-- **Reports & Analytics**: View comprehensive platform statistics and analytics
-- **Profile Management**: Admin profile editing with photo upload
-
-## Getting Started
-
-1. Copy `.env.example` (or create `.env`) and set:
-   ```
-   EXPO_PUBLIC_SUPABASE_URL=your-project-url
-   EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key   # scripts only, keep secret
-   EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_api_key # optional
-   ```
-   - The app reads `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` for runtime auth/data access.
-   - `SUPABASE_SERVICE_ROLE_KEY` is only used by CLI/scripts (never ship to clients).
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm start
-   ```
-
-4. Run tests:
-   ```bash
-   npm test
-   ```
-
-5. Run tests with coverage:
-   ```bash
-   npm run test:coverage
-   ```
-
-## Supabase Setup (summary)
-
-- Create a Supabase project and enable the Email provider.
-- Apply the schema, RLS policies, triggers, and indexes from `SUPABASE_MIGRATION_PLAN.md` (Phase 2).
-- Realtime: ensure the publication includes `bookings`, `notifications`, `users`, `user_roles`, `customers`, `drivers`, `admins`, and `bank_accounts`.
-- Authentication: uses Supabase Auth; login is role-aware via `RoleEntryScreen` selection.
-- Data access layer: `src/lib/supabaseDataAccess.ts` implements all CRUD + realtime subscriptions.
-
-## Auth Flow (Multi-Role)
-
-- Start at Role Entry screen to choose: Customer, Driver, or Admin.
-- Login uses email + password authentication (migrated from phone + password).
-- Login respects the chosen role when multiple accounts exist.
-- Sign Up no longer asks for role; it uses the chosen role from Role Entry/Login.
-- Multi-role users can select their role after login if they have multiple roles with the same email.
-
-## Environment Variables
-
-Required for Supabase:
-- `EXPO_PUBLIC_SUPABASE_URL` — Supabase project URL
-- `EXPO_PUBLIC_SUPABASE_ANON_KEY` — public anon key for client auth/data
-
-Optional:
-- `SUPABASE_SERVICE_ROLE_KEY` — service role key for scripts/tests (do **not** bundle)
-- `EXPO_PUBLIC_GOOGLE_MAPS_API_KEY` — only if you want Google Maps tiles in production
-
-## Data Storage
-
-Primary persistence: Supabase tables with multi-role support (`users`, `user_roles`, `customers`, `drivers`, `admins`, `bookings`, `vehicles`, `tanker_sizes`, `pricing`, `driver_applications`, `notifications`, `bank_accounts`). Realtime is enabled for core tables to keep clients in sync.
-
-Local storage: AsyncStorage remains only for client-side utilities (e.g., session/local caches); it no longer stores system-of-record data.
-
-## MVP Scope
-
-This MVP includes:
-- ✅ All three user roles in single mobile app
-- ✅ Email + password authentication with multi-role support (migrated from phone + password)
-- ✅ Scheduled bookings with date/time picker
-- ✅ Cash on delivery payment
-- ✅ Saved addresses for customers
-- ✅ Order tracking with status updates
-- ✅ Complete order history (current and past orders)
-- ✅ Customer burger menu navigation with drawer interface
-- ✅ Admin tab-based navigation with comprehensive management tools
-- ✅ Driver management (create, approve, suspend, edit)
-- ✅ Vehicle/agency fleet management
-- ✅ Bank account management (add, edit, delete multiple accounts with default selection)
-- ✅ Driver earnings tracking
-- ✅ Driver payment collection workflow (Collect Payment screen)
-- ✅ Distance-based pricing using Haversine formula
-- ✅ Modern iOS-style UI with proper TypeScript support
-- ✅ State management with Zustand stores (auth, bookings, users, vehicles)
-- ✅ Profile management with photo upload for all roles
-- ✅ Security features: rate limiting, security logging, session management, security auditing
-- ✅ Input validation and sanitization for all user inputs
-- ✅ Error boundaries and error logging
-
-## Future Enhancements (v2)
-
-- Online payment gateway integration
-- Immediate/ASAP bookings
-- Driver self-registration workflow
-- Push notifications
-- Ratings and reviews
-- Real-time GPS tracking
-- Google Distance Matrix API integration
-- Automated driver assignment
-
-## Number Formatting
-
-The app implements the **Indian numbering system** for displaying amounts and quantities throughout the application. This ensures proper comma placement according to Indian standards:
-
-- **Format**: Last 3 digits grouped, then groups of 2 digits
-- **Example**: `1234567` displays as `12,34,567` (not `1,234,567`)
-- **Implementation**: Custom formatter in `PricingUtils.formatPrice()` and `PricingUtils.formatNumber()`
-- **Applied to**: All amounts (prices, earnings, revenue) and quantities (tanker quantities, order counts) across all screens
-
-This formatting is applied consistently across:
-- Customer screens (booking prices, order history, past orders)
-- Driver screens (earnings, order details)
-- Admin screens (revenue, bookings, customer stats, vehicle prices)
-
-## Development Status
-
-### ✅ **Completed Features:**
-- **Authentication System**: Complete multi-role authentication with role entry, login, register, and role selection
-- **Navigation System**: 
-  - Customer: Burger menu navigation in header (Home, Orders, Profile)
-  - Driver: Bottom tab navigation (Orders, Earnings)
-  - Admin: Bottom tab navigation (Bookings, Drivers, Vehicles, Reports, Profile)
-- **Customer Screens**: Home, Booking, Order Tracking, Order History, Past Orders, Profile, Saved Addresses
-- **Driver Screens**: Orders, Collect Payment, Earnings
-- **Admin Screens**: All Bookings, Driver Management, Vehicle Management, Bank Account Management, Reports, Admin Profile
-- **TypeScript Support**: All components properly typed with comprehensive type definitions
-- **State Management**: Zustand stores for authentication, bookings, users, and vehicles
-- **Services**: Local storage, auth, booking, payment, location, location tracking, notification, user, vehicle, and bank account services
-- **UI Components**: Reusable common components (Button, Card, Input, Typography, LoadingSpinner, CustomerMenuDrawer, AdminMenuDrawer, MenuDrawer, SuccessNotification, ErrorBoundary, CustomerIcon, DriverIcon, AdminIcon)
-- **Utils**: Distance calculation, pricing, validation, sanitization, rate limiting, error handling, error logging, security logging, security audit, session management, subscription management, report calculations, date utilities, and date serialization
-- **Data Access Layer**: Abstracted data access interface (`lib/`) for seamless migration to backend services
-- **Testing**: Comprehensive test suite with Jest and React Native Testing Library covering components, services, stores, utils, and integration flows
-- **Number Formatting**: Indian numbering system implementation for all amounts and quantities (e.g., ₹12,34,567 instead of ₹1,234,567)
-- **Configuration**: Comprehensive app configuration with constants, error messages, and centralized UI_CONFIG color system
-
-### 🔧 **Current Implementation Details:**
-- **Supabase**: All system-of-record data persisted in Supabase with RLS and realtime subscriptions; scripts exist for migration from AsyncStorage.
-- **Maps**: React Native Maps integration for location selection
-- **Image Picker**: Expo Image Picker for profile photo uploads
-- **Document Picker**: Support for driver license and vehicle registration documents
-- **Location Services**: Expo Location for GPS and location services
-- **Notifications**: Expo Notifications setup (in-app notifications)
-- **Testing**: Jest test suite with coverage reporting for components, services, stores, utils, and integration flows
-- **Error Handling**: Centralized error handling with comprehensive error types and logging
-
-### 📋 **Future Enhancements:**
-1. Online payment gateway integration (Razorpay/Stripe)
-2. Push notifications implementation
-3. Real-time GPS tracking
-4. Google Distance Matrix API integration
-5. Driver self-registration workflow
-6. Ratings and reviews system
-7. Immediate/ASAP bookings
-8. Performance optimization and animations
+## Project Structure (summary)
+- `src/components` — shared UI + role-specific components
+- `src/screens` — auth, customer, driver, admin screens
+- `src/navigation` — navigators per role
+- `src/services` — auth, booking, payment, location, notifications, etc.
+- `src/store` — Zustand stores
+- `src/utils` — pricing, validation, security, formatting
+- `scripts/` — tooling, seeds, test helpers
 
 ## Testing
+- Run all tests: `npm test`
+- Watch mode: `npm run test:watch`
+- Coverage: `npm run test:coverage`
 
-The project includes a comprehensive test suite using Jest and React Native Testing Library:
+## Supabase Notes
+- Ensure realtime publication includes core tables (`bookings`, `notifications`, `users`, `user_roles`, `customers`, `drivers`, `admins`, `bank_accounts`).
+- Role selection is required for multi-role accounts; policies depend on `user_roles`.
+- Keep `SUPABASE_SERVICE_ROLE_KEY` out of client bundles; use only for scripts.
 
-- **Component Tests**: Tests for admin, customer, and driver components
-- **Service Tests**: Tests for all service layers (auth, booking, payment, location, etc.)
-- **Store Tests**: Tests for Zustand stores (auth, booking, user, vehicle)
-- **Utility Tests**: Tests for validation, sanitization, pricing, error handling, and other utilities
-- **Integration Tests**: End-to-end flow tests for booking and payment workflows
-- **Coverage Reports**: Generate coverage reports with `npm run test:coverage`
+## Troubleshooting
+- Auth fails: verify env vars and Supabase Email provider.
+- Realtime silent: confirm subscription joins publication and client is online.
+- RLS denied: ensure matching row in `user_roles` for the chosen role.
 
-Test files are located in `src/__tests__/` mirroring the source structure.
+## Roadmap (v2)
+- Online payments, push notifications, real-time GPS, Distance Matrix, driver self-registration, ratings/reviews, ASAP bookings, performance tuning.
 
-## Scripts
-
-Available npm scripts:
-
-- `npm start` - Start Expo development server
-- `npm run android` - Start Expo with Android
-- `npm run ios` - Start Expo with iOS
-- `npm run web` - Start Expo with web
-- `npm test` - Run Jest tests
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Run tests with coverage report
-
-Additional utility scripts in `scripts/`:
-- `test-admin-role.ts` - Admin role testing utilities
-- `test-general-auth.ts` - General authentication testing
-- `reset-rate-limits.ts` - Reset rate limiting for testing
-
-## Runbook: Common Supabase Issues
-
-- **Sign-up fails with RLS**: Ensure Email provider is enabled and `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set; registration policies rely on auth context.
-- **No realtime updates**: Confirm database publication includes all realtime tables and the client is online; rejoin channels via `subscriptionManager` if the app resumes from background.
-- **Policy denied errors**: The authenticated user must have matching rows in `user_roles`; check role selection on `RoleEntryScreen`.
-- **Service role misuse**: Never ship `SUPABASE_SERVICE_ROLE_KEY` to clients; use only for scripts/tests.
-- **Migrations drift**: Re-run the SQL in `SUPABASE_MIGRATION_PLAN.md` Phase 2 and verify indexes/triggers exist before debugging queries.
-
-## Additional Documentation
-
-- **[MIGRATION_PHONE_TO_EMAIL_AUTH.md](./MIGRATION_PHONE_TO_EMAIL_AUTH.md)**: Comprehensive guide documenting the migration from phone+password to email+password authentication
-- **[SECURITY.md](./SECURITY.md)**: Detailed security documentation covering authentication, authorization, data protection, rate limiting, session management, and security monitoring
-- **[SUPABASE_MIGRATION_PLAN.md](./SUPABASE_MIGRATION_PLAN.md)**: Complete migration plan from AsyncStorage to Supabase with database schema design
-- **[PENDING_ITEMS_SUPABASE.md](./PENDING_ITEMS_SUPABASE.md)**: Pending items and tasks for Supabase migration
-- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)**: Summary of implementation details and decisions
-- **[CODE_QUALITY_REPORT.md](./CODE_QUALITY_REPORT.md)**: Code quality analysis and recommendations
-- **[CODE_REVIEW_PRE_MIGRATION.md](./CODE_REVIEW_PRE_MIGRATION.md)**: Pre-migration code review findings
-- **[ERROR_HANDLING_ANALYSIS.md](./ERROR_HANDLING_ANALYSIS.md)**: Error handling patterns and analysis
-- **[scripts/README.md](./scripts/README.md)**: Testing guides and scripts for admin role and general authentication testing
