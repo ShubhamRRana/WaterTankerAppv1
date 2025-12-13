@@ -8,6 +8,8 @@
 import { LocationService } from './location.service';
 import * as Location from 'expo-location';
 import { SubscriptionManager } from '../utils/subscriptionManager';
+import { supabase } from '../lib/supabaseClient';
+import { deserializeDate } from '../utils/dateSerialization';
 
 export interface DriverLocation {
   id: string;
@@ -138,11 +140,26 @@ export class LocationTrackingService {
 
   /**
    * Update driver location in database
-   * TODO: Implement with your new backend - Supabase removed
    */
   static async updateLocation(update: LocationUpdate): Promise<void> {
     try {
-      // TODO: Implement location update with your new backend
+      const { error } = await supabase
+        .from('driver_locations')
+        .upsert({
+          driver_id: update.driverId,
+          booking_id: update.bookingId || null,
+          latitude: update.latitude,
+          longitude: update.longitude,
+          accuracy: update.accuracy || null,
+          heading: update.heading || null,
+          speed: update.speed || null,
+        }, {
+          onConflict: 'driver_id,booking_id',
+        });
+
+      if (error) {
+        throw error;
+      }
     } catch (error) {
       throw error;
     }
@@ -150,12 +167,36 @@ export class LocationTrackingService {
 
   /**
    * Get current location for a driver
-   * TODO: Implement with your new backend - Supabase removed
    */
   static async getDriverLocation(driverId: string): Promise<DriverLocation | null> {
     try {
-      // TODO: Implement location fetching with your new backend
-      return null;
+      const { data, error } = await supabase
+        .from('driver_locations')
+        .select('*')
+        .eq('driver_id', driverId)
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        return null;
+      }
+
+      const row = data[0];
+      return {
+        id: row.id,
+        driverId: row.driver_id,
+        bookingId: row.booking_id || null,
+        latitude: Number(row.latitude),
+        longitude: Number(row.longitude),
+        accuracy: row.accuracy ? Number(row.accuracy) : undefined,
+        heading: row.heading ? Number(row.heading) : undefined,
+        speed: row.speed ? Number(row.speed) : undefined,
+        timestamp: deserializeDate(row.updated_at) || new Date(),
+      };
     } catch (error) {
       throw error;
     }
@@ -163,12 +204,36 @@ export class LocationTrackingService {
 
   /**
    * Get location for a specific booking
-   * TODO: Implement with your new backend - Supabase removed
    */
   static async getBookingLocation(bookingId: string): Promise<DriverLocation | null> {
     try {
-      // TODO: Implement location fetching with your new backend
-      return null;
+      const { data, error } = await supabase
+        .from('driver_locations')
+        .select('*')
+        .eq('booking_id', bookingId)
+        .order('updated_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        return null;
+      }
+
+      const row = data[0];
+      return {
+        id: row.id,
+        driverId: row.driver_id,
+        bookingId: row.booking_id || null,
+        latitude: Number(row.latitude),
+        longitude: Number(row.longitude),
+        accuracy: row.accuracy ? Number(row.accuracy) : undefined,
+        heading: row.heading ? Number(row.heading) : undefined,
+        speed: row.speed ? Number(row.speed) : undefined,
+        timestamp: deserializeDate(row.updated_at) || new Date(),
+      };
     } catch (error) {
       throw error;
     }

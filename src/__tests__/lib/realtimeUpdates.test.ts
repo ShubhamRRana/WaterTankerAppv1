@@ -3,13 +3,12 @@
  * 
  * Tests for Phase 5, Item 4: Verify real-time subscriptions work correctly
  * - Bookings update in real-time
- * - Notifications appear instantly
  * - Role changes propagate correctly
  */
 
 import { SubscriptionManager, RealtimePayload } from '../../utils/subscriptionManager';
 import { SupabaseDataAccess } from '../../lib/supabaseDataAccess';
-import { Booking, User, Notification } from '../../types/index';
+import { Booking, User } from '../../types/index';
 import { supabase } from '../../lib/supabaseClient';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -268,134 +267,6 @@ describe('Real-time Updates', () => {
     });
   });
 
-  describe('Notification Real-time Updates', () => {
-    it('should trigger callback when notification is inserted', async () => {
-      const userId = 'test-user-id';
-      const callback = jest.fn();
-      
-      // Test notification subscription directly using SubscriptionManager
-      // to avoid React Native dependencies in utils test environment
-      const unsubscribe = SubscriptionManager.subscribe(
-        {
-          channelName: `notifications:${userId}`,
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`,
-          event: 'INSERT',
-        },
-        (payload: RealtimePayload<{
-          id: string;
-          user_id: string;
-          title: string;
-          message: string;
-          type: 'booking' | 'payment' | 'system';
-          is_read: boolean;
-          related_booking_id?: string;
-          created_at: string;
-        }>) => {
-          if (payload.eventType === 'INSERT' && payload.new) {
-            const notification: Notification = {
-              id: payload.new.id,
-              userId: payload.new.user_id,
-              title: payload.new.title,
-              message: payload.new.message,
-              type: payload.new.type,
-              isRead: payload.new.is_read,
-              relatedBookingId: payload.new.related_booking_id,
-              createdAt: new Date(payload.new.created_at),
-            };
-            callback(notification);
-          }
-        }
-      );
-
-      // Wait for subscription
-      await new Promise(resolve => setTimeout(resolve, 10));
-
-      // Simulate notification insert
-      if (postgresChangeHandler) {
-        postgresChangeHandler({
-          eventType: 'INSERT',
-          new: {
-            id: 'notification-id',
-            user_id: userId,
-            title: 'Test Notification',
-            message: 'This is a test notification',
-            type: 'booking',
-            is_read: false,
-            related_booking_id: 'booking-id',
-            created_at: new Date().toISOString(),
-          },
-        });
-      }
-
-      // Wait for callback
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      // Verify callback was called
-      expect(callback).toHaveBeenCalled();
-      const notification = callback.mock.calls[0][0];
-      expect(notification).toBeTruthy();
-      expect(notification.title).toBe('Test Notification');
-      expect(notification.userId).toBe(userId);
-
-      unsubscribe();
-    });
-
-    it('should handle multiple notification subscriptions', async () => {
-      const userId1 = 'user-1';
-      const userId2 = 'user-2';
-      const callback1 = jest.fn();
-      const callback2 = jest.fn();
-      
-      // Create separate subscriptions for each user
-      const unsubscribe1 = SubscriptionManager.subscribe(
-        {
-          channelName: `notifications:${userId1}`,
-          table: 'notifications',
-          filter: `user_id=eq.${userId1}`,
-          event: 'INSERT',
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT' && payload.new) {
-            callback1(payload.new);
-          }
-        }
-      );
-
-      const unsubscribe2 = SubscriptionManager.subscribe(
-        {
-          channelName: `notifications:${userId2}`,
-          table: 'notifications',
-          filter: `user_id=eq.${userId2}`,
-          event: 'INSERT',
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT' && payload.new) {
-            callback2(payload.new);
-          }
-        }
-      );
-
-      await new Promise(resolve => setTimeout(resolve, 10));
-
-      // Verify subscriptions were created for both users
-      // Each subscription creates its own channel
-      expect(supabase.channel).toHaveBeenCalledWith(`notifications:${userId1}`);
-      expect(supabase.channel).toHaveBeenCalledWith(`notifications:${userId2}`);
-      
-      // Verify both channels have postgres_changes listeners
-      expect(mockChannel.on).toHaveBeenCalledWith(
-        'postgres_changes',
-        expect.objectContaining({
-          table: 'notifications',
-        }),
-        expect.any(Function)
-      );
-
-      unsubscribe1();
-      unsubscribe2();
-    });
-  });
 
   describe('Role Changes Propagation', () => {
     it('should trigger callback when user role is added', async () => {

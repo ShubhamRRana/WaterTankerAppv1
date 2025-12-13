@@ -56,20 +56,11 @@ interface RealtimeLatencyResult {
 
 /**
  * Read SQL schema from migration plan
+ * Note: Migration plan file has been removed as migration is complete.
+ * Schema should already be applied to the database.
  */
 async function getSchemaSQL(): Promise<string> {
-  const migrationPlanPath = path.join(__dirname, '..', 'SUPABASE_MIGRATION_PLAN.md');
-  const content = fs.readFileSync(migrationPlanPath, 'utf-8');
-  
-  // Extract SQL between ```sql and ```
-  const sqlStart = content.indexOf('```sql');
-  const sqlEnd = content.indexOf('```', sqlStart + 6);
-  
-  if (sqlStart === -1 || sqlEnd === -1) {
-    throw new Error('Could not find SQL schema in migration plan');
-  }
-  
-  return content.substring(sqlStart + 6, sqlEnd).trim();
+  throw new Error('Schema application skipped - migration is complete and schema should already be in the database. If you need to apply schema, use Supabase Dashboard SQL Editor.');
 }
 
 /**
@@ -101,7 +92,7 @@ async function applySchema(): Promise<void> {
         // Try executing via SQL editor API (if available)
         // For now, we'll use a migration approach
         console.log(`⚠️  Direct SQL execution not available. Please apply schema manually via Supabase Dashboard SQL Editor.`);
-        console.log(`   Schema location: SUPABASE_MIGRATION_PLAN.md (lines 636-1255)`);
+        console.log(`   Note: Migration is complete - schema should already be in the database.`);
         return;
       }
     }

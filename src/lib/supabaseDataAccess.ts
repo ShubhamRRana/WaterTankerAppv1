@@ -11,6 +11,7 @@ import {
   IUserDataAccess,
   IBookingDataAccess,
   IVehicleDataAccess,
+  IBankAccountDataAccess,
   SubscriptionCallback,
   CollectionSubscriptionCallback,
   Unsubscribe,
@@ -24,6 +25,7 @@ import {
   Booking,
   Vehicle,
   Address,
+  BankAccount,
   isCustomerUser,
   isDriverUser,
   isAdminUser,
@@ -126,6 +128,19 @@ interface VehicleRow {
   insurance_expiry_date: string;
   vehicle_capacity: number;
   amount: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BankAccountRow {
+  id: string;
+  admin_id: string;
+  account_holder_name: string;
+  bank_name: string;
+  account_number: string;
+  ifsc_code: string;
+  branch_name: string;
+  is_default: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -393,6 +408,42 @@ function mapVehicleToDb(vehicle: Vehicle): Partial<VehicleRow> {
     amount: vehicle.amount,
     created_at: serializeDate(vehicle.createdAt) || new Date().toISOString(),
     updated_at: serializeDate(vehicle.updatedAt) || new Date().toISOString(),
+  };
+}
+
+/**
+ * Helper: Map BankAccountRow to BankAccount
+ */
+function mapBankAccountFromDb(row: BankAccountRow): BankAccount {
+  return {
+    id: row.id,
+    adminId: row.admin_id,
+    accountHolderName: row.account_holder_name,
+    bankName: row.bank_name,
+    accountNumber: row.account_number,
+    ifscCode: row.ifsc_code,
+    branchName: row.branch_name,
+    isDefault: row.is_default,
+    createdAt: deserializeDate(row.created_at) || new Date(),
+    updatedAt: deserializeDate(row.updated_at) || new Date(),
+  };
+}
+
+/**
+ * Helper: Map BankAccount to BankAccountRow
+ */
+function mapBankAccountToDb(bankAccount: BankAccount): Partial<BankAccountRow> {
+  return {
+    id: bankAccount.id,
+    admin_id: bankAccount.adminId,
+    account_holder_name: bankAccount.accountHolderName,
+    bank_name: bankAccount.bankName,
+    account_number: bankAccount.accountNumber,
+    ifsc_code: bankAccount.ifscCode,
+    branch_name: bankAccount.branchName,
+    is_default: bankAccount.isDefault,
+    created_at: serializeDate(bankAccount.createdAt) || new Date().toISOString(),
+    updated_at: serializeDate(bankAccount.updatedAt) || new Date().toISOString(),
   };
 }
 
@@ -1183,17 +1234,202 @@ class SupabaseVehicleDataAccess implements IVehicleDataAccess {
 }
 
 /**
+ * Supabase Bank Account Data Access Implementation
+ */
+class SupabaseBankAccountDataAccess implements IBankAccountDataAccess {
+  async getBankAccounts(adminId: string): Promise<BankAccount[]> {
+    try {
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .select('*')
+        .eq('admin_id', adminId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return (data || []).map((row) => mapBankAccountFromDb(row as BankAccountRow));
+    } catch (error) {
+      throw new DataAccessError('Failed to get bank accounts', 'getBankAccounts', { error, adminId });
+    }
+  }
+
+  async getBankAccountById(accountId: string, adminId: string): Promise<BankAccount | null> {
+    try {
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .select('*')
+        .eq('id', accountId)
+        .eq('admin_id', adminId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned
+          return null;
+        }
+        throw error;
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      return mapBankAccountFromDb(data as BankAccountRow);
+    } catch (error) {
+      throw new DataAccessError('Failed to get bank account by id', 'getBankAccountById', { error, accountId, adminId });
+    }
+  }
+
+  async getDefaultBankAccount(adminId: string): Promise<BankAccount | null> {
+    try {
+      const { data, error } = await supabase
+        .from('bank_accounts')
+        .select('*')
+        .eq('admin_id', adminId)
+        .eq('is_default', true)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned
+          return null;
+        }
+        throw error;
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      return mapBankAccountFromDb(data as BankAccountRow);
+    } catch (error) {
+      throw new DataAccessError('Failed to get default bank account', 'getDefaultBankAccount', { error, adminId });
+    }
+  }
+
+  async saveBankAccount(bankAccount: BankAccount, adminId: string): Promise<void> {
+    try {
+      // Ensure the account belongs to this admin
+      if (bankAccount.adminId !== adminId) {
+        throw new Error('Bank account does not belong to this admin');
+      }
+
+      // If this account is set as default, unset all other accounts for this admin
+      if (bankAccount.isDefault) {
+        const { error: updateError } = await supabase
+          .from('bank_accounts')
+          .update({ is_default: false })
+          .eq('admin_id', adminId)
+          .neq('id', bankAccount.id);
+
+        if (updateError) {
+          throw updateError;
+        }
+      }
+
+      const bankAccountRow = mapBankAccountToDb(bankAccount);
+      const { error } = await supabase
+        .from('bank_accounts')
+        .upsert(bankAccountRow, { onConflict: 'id' });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      throw new DataAccessError('Failed to save bank account', 'saveBankAccount', { error, adminId });
+    }
+  }
+
+  async updateBankAccount(accountId: string, updates: Partial<BankAccount>, adminId: string): Promise<void> {
+    try {
+      // First verify the account belongs to this admin
+      const existing = await this.getBankAccountById(accountId, adminId);
+      if (!existing) {
+        throw new NotFoundError('Bank account not found or does not belong to this admin');
+      }
+
+      // If setting as default, unset all other accounts for this admin
+      if (updates.isDefault === true) {
+        const { error: updateError } = await supabase
+          .from('bank_accounts')
+          .update({ is_default: false })
+          .eq('admin_id', adminId)
+          .neq('id', accountId);
+
+        if (updateError) {
+          throw updateError;
+        }
+      }
+
+      // Map updates to database format
+      const updateRow: Partial<BankAccountRow> = {};
+      if (updates.accountHolderName !== undefined) updateRow.account_holder_name = updates.accountHolderName;
+      if (updates.bankName !== undefined) updateRow.bank_name = updates.bankName;
+      if (updates.accountNumber !== undefined) updateRow.account_number = updates.accountNumber;
+      if (updates.ifscCode !== undefined) updateRow.ifsc_code = updates.ifscCode;
+      if (updates.branchName !== undefined) updateRow.branch_name = updates.branchName;
+      if (updates.isDefault !== undefined) updateRow.is_default = updates.isDefault;
+      if (updates.updatedAt !== undefined) updateRow.updated_at = serializeDate(updates.updatedAt) || new Date().toISOString();
+
+      const { error } = await supabase
+        .from('bank_accounts')
+        .update(updateRow)
+        .eq('id', accountId)
+        .eq('admin_id', adminId);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to update bank account', 'updateBankAccount', { error, accountId, adminId });
+    }
+  }
+
+  async deleteBankAccount(accountId: string, adminId: string): Promise<void> {
+    try {
+      // First verify the account belongs to this admin
+      const existing = await this.getBankAccountById(accountId, adminId);
+      if (!existing) {
+        throw new NotFoundError('Bank account not found or does not belong to this admin');
+      }
+
+      const { error } = await supabase
+        .from('bank_accounts')
+        .delete()
+        .eq('id', accountId)
+        .eq('admin_id', adminId);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to delete bank account', 'deleteBankAccount', { error, accountId, adminId });
+    }
+  }
+}
+
+/**
  * Complete Supabase Data Access Layer
  */
 export class SupabaseDataAccess implements IDataAccessLayer {
   users: IUserDataAccess;
   bookings: IBookingDataAccess;
   vehicles: IVehicleDataAccess;
+  bankAccounts: IBankAccountDataAccess;
 
   constructor() {
     this.users = new SupabaseUserDataAccess();
     this.bookings = new SupabaseBookingDataAccess();
     this.vehicles = new SupabaseVehicleDataAccess();
+    this.bankAccounts = new SupabaseBankAccountDataAccess();
   }
 
   generateId(): string {

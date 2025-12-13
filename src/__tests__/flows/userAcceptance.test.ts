@@ -5,7 +5,6 @@
  * - Test all user roles (customer, driver, admin)
  * - Test booking flow
  * - Test payment collection
- * - Test notifications
  * 
  * These tests simulate real user scenarios and verify end-to-end functionality
  * from a user's perspective using Supabase backend.
@@ -15,8 +14,7 @@ import { SupabaseDataAccess } from '../../lib/supabaseDataAccess';
 import { AuthService } from '../../services/auth.service';
 import { BookingService } from '../../services/booking.service';
 import { PaymentService } from '../../services/payment.service';
-import { NotificationService } from '../../services/notification.service';
-import { User, Booking, Vehicle, CustomerUser, DriverUser, AdminUser, Address, Notification } from '../../types/index';
+import { User, Booking, Vehicle, CustomerUser, DriverUser, AdminUser, Address } from '../../types/index';
 import { supabase } from '../../lib/supabaseClient';
 
 // Mock Supabase client for testing
@@ -42,7 +40,6 @@ let mockDrivers: any[] = [];
 let mockAdmins: any[] = [];
 let mockBookings: any[] = [];
 let mockVehicles: any[] = [];
-let mockNotifications: any[] = [];
 let mockAuthUsers: Map<string, any> = new Map();
 
 // Mock channel for real-time subscriptions
@@ -115,9 +112,6 @@ jest.mock('../../lib/supabaseClient', () => {
             } else if (table === 'vehicles') {
               const newVehicle = { ...item, id: item.id || `vehicle-${Date.now()}` };
               mockVehicles.push(newVehicle);
-            } else if (table === 'notifications') {
-              const newNotification = { ...item, id: item.id || `notification-${Date.now()}` };
-              mockNotifications.push(newNotification);
             }
           });
           return { data: Array.isArray(data) ? data : [data], error: null };
@@ -138,12 +132,6 @@ jest.mock('../../lib/supabaseClient', () => {
           if (index >= 0) {
             mockBookings[index] = { ...mockBookings[index], ...updates };
             return { data: [mockBookings[index]], error: null };
-          }
-        } else if (table === 'notifications') {
-          const index = mockNotifications.findIndex(n => n.id === updates.id);
-          if (index >= 0) {
-            mockNotifications[index] = { ...mockNotifications[index], ...updates };
-            return { data: [mockNotifications[index]], error: null };
           }
         }
         return { data: [], error: null };
@@ -166,12 +154,6 @@ jest.mock('../../lib/supabaseClient', () => {
             data: filtered[0] || null, 
             error: filtered.length === 0 ? { message: 'Not found' } : null 
           });
-        } else if (table === 'notifications') {
-          const filtered = mockNotifications.filter(n => n[column] === value);
-          queryBuilder.single = jest.fn().mockResolvedValue({ 
-            data: filtered[0] || null, 
-            error: filtered.length === 0 ? { message: 'Not found' } : null 
-          });
         }
         return queryBuilder;
       });
@@ -183,8 +165,6 @@ jest.mock('../../lib/supabaseClient', () => {
       queryBuilder.limit = jest.fn().mockImplementation(async (count: number) => {
         if (table === 'bookings') {
           return { data: mockBookings.slice(0, count), error: null };
-        } else if (table === 'notifications') {
-          return { data: mockNotifications.slice(0, count), error: null };
         }
         return { data: [], error: null };
       });
@@ -240,7 +220,6 @@ beforeEach(() => {
   mockAdmins = [];
   mockBookings = [];
   mockVehicles = [];
-  mockNotifications = [];
   mockAuthUsers.clear();
   mockChannels.clear();
   jest.clearAllMocks();
@@ -759,154 +738,6 @@ describe('User Acceptance Tests - Payment Collection', () => {
     await BookingService.updateBookingStatus(bookingId, 'in_transit');
     booking = await BookingService.getBookingById(bookingId);
     expect(booking?.paymentId).toBe(initialPaymentId);
-  });
-});
-
-describe('User Acceptance Tests - Notifications', () => {
-  it('should create notification when booking is created', async () => {
-    const userId = 'customer-1';
-    const bookingId = 'booking-1';
-    
-    const notification = await NotificationService.createNotification(
-      userId,
-      'New Booking Created',
-      'Your booking has been created successfully',
-      'booking',
-      bookingId
-    );
-    
-    expect(notification).toBeDefined();
-    expect(notification?.userId).toBe(userId);
-    expect(notification?.title).toBe('New Booking Created');
-    expect(notification?.type).toBe('booking');
-    expect(notification?.relatedBookingId).toBe(bookingId);
-    expect(notification?.isRead).toBe(false);
-  });
-
-  it('should create notification when booking is accepted by driver', async () => {
-    const customerId = 'customer-1';
-    const bookingId = 'booking-1';
-    
-    const notification = await NotificationService.createNotification(
-      customerId,
-      'Booking Accepted',
-      'Your booking has been accepted by a driver',
-      'booking',
-      bookingId
-    );
-    
-    expect(notification).toBeDefined();
-    expect(notification?.type).toBe('booking');
-    expect(notification?.relatedBookingId).toBe(bookingId);
-  });
-
-  it('should create payment notification when payment is confirmed', async () => {
-    const customerId = 'customer-1';
-    const bookingId = 'booking-1';
-    
-    const notification = await NotificationService.createNotification(
-      customerId,
-      'Payment Confirmed',
-      'Your payment has been confirmed',
-      'payment',
-      bookingId
-    );
-    
-    expect(notification).toBeDefined();
-    expect(notification?.type).toBe('payment');
-    expect(notification?.relatedBookingId).toBe(bookingId);
-  });
-
-  it('should allow user to retrieve their notifications', async () => {
-    const userId = 'customer-1';
-    
-    // Create multiple notifications
-    await NotificationService.createNotification(
-      userId,
-      'Notification 1',
-      'Message 1',
-      'booking'
-    );
-    await NotificationService.createNotification(
-      userId,
-      'Notification 2',
-      'Message 2',
-      'system'
-    );
-    
-    const notifications = await NotificationService.getNotifications(userId);
-    expect(Array.isArray(notifications)).toBe(true);
-  });
-
-  it('should allow user to mark notification as read', async () => {
-    const userId = 'customer-1';
-    const notification = await NotificationService.createNotification(
-      userId,
-      'Test Notification',
-      'Test Message',
-      'system'
-    );
-    
-    expect(notification?.isRead).toBe(false);
-    
-    if (notification) {
-      await NotificationService.markAsRead(notification.id);
-      // Note: In real implementation, we would fetch and verify
-    }
-  });
-
-  it('should allow user to mark all notifications as read', async () => {
-    const userId = 'customer-1';
-    
-    await NotificationService.createNotification(
-      userId,
-      'Notification 1',
-      'Message 1',
-      'booking'
-    );
-    await NotificationService.createNotification(
-      userId,
-      'Notification 2',
-      'Message 2',
-      'system'
-    );
-    
-    await NotificationService.markAllAsRead(userId);
-    // Note: In real implementation, we would fetch and verify all are marked as read
-  });
-
-  it('should subscribe to real-time notification updates', (done) => {
-    const userId = 'customer-1';
-    let notificationReceived = false;
-    
-    const unsubscribe = NotificationService.subscribeToNotifications(
-      userId,
-      (notification: Notification) => {
-        expect(notification).toBeDefined();
-        expect(notification.userId).toBe(userId);
-        notificationReceived = true;
-        unsubscribe();
-        done();
-      }
-    );
-    
-    // Simulate notification creation
-    setTimeout(() => {
-      NotificationService.createNotification(
-        userId,
-        'Real-time Notification',
-        'This is a real-time notification',
-        'system'
-      );
-    }, 100);
-    
-    // Timeout fallback
-    setTimeout(() => {
-      if (!notificationReceived) {
-        unsubscribe();
-        done();
-      }
-    }, 2000);
   });
 });
 

@@ -162,20 +162,6 @@ export interface Vehicle {
 }
 
 /**
- * In-app notification
- */
-export interface Notification {
-  id: string;
-  userId: string;
-  title: string;
-  message: string;
-  type: 'booking' | 'payment' | 'system';
-  isRead: boolean;
-  relatedBookingId?: string;
-  createdAt: Date;
-}
-
-/**
  * Bank account information for admin
  */
 export interface BankAccount {

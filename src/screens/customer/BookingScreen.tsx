@@ -20,7 +20,7 @@ import { useVehicleStore } from '../../store/vehicleStore';
 import Card from '../../components/common/Card';
 import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-import { Typography, SuccessNotification } from '../../components/common';
+import { Typography } from '../../components/common';
 import TankerSelectionModal from '../../components/customer/TankerSelectionModal';
 import AgencySelectionModal from '../../components/customer/AgencySelectionModal';
 import SavedAddressModal from '../../components/customer/SavedAddressModal';
@@ -61,11 +61,6 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
   const [showSavedAddressModal, setShowSavedAddressModal] = useState(false);
   const [priceBreakdown, setPriceBreakdown] = useState<any>(null);
   const [dateError, setDateError] = useState<string>('');
-  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
-  const [successNotificationData, setSuccessNotificationData] = useState<{
-    title: string;
-    message: string;
-  } | null>(null);
 
   // Ensure auth is initialized when component mounts
   useEffect(() => {
@@ -408,12 +403,17 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
 
       await createBooking(bookingData);
       
-      // Set success notification data
-      setSuccessNotificationData({
-        title: 'Booking Successful!',
-        message: `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
-      });
-      setShowSuccessNotification(true);
+      // Show success alert
+      Alert.alert(
+        'Booking Successful!',
+        `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       Alert.alert('Error', `Failed to create booking: ${errorMessage}. Please try again.`);
@@ -598,22 +598,6 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
         onSelectAddress={handleAddressSelection}
         navigation={navigation}
       />
-      {successNotificationData && (
-        <SuccessNotification
-          visible={showSuccessNotification}
-          title={successNotificationData.title}
-          message={successNotificationData.message}
-          primaryButtonText="OK"
-          onPrimaryPress={() => {
-            setShowSuccessNotification(false);
-            navigation.goBack();
-          }}
-          onClose={() => {
-            setShowSuccessNotification(false);
-            navigation.goBack();
-          }}
-        />
-      )}
       </ScrollView>
     </SafeAreaView>
   );

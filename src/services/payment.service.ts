@@ -1,7 +1,7 @@
 // Payment service for Cash on Delivery (COD) implementation
 // This is a simplified version for MVP - payment gateway integration will be added in v2
 
-import { LocalStorageService } from './localStorage';
+import { dataAccess } from '../lib/index';
 
 export interface PaymentResult {
   success: boolean;
@@ -16,7 +16,7 @@ export class PaymentService {
   static async processCODPayment(bookingId: string, amount: number): Promise<PaymentResult> {
     try {
       // Check if booking exists first
-      const booking = await LocalStorageService.getBookingById(bookingId);
+      const booking = await dataAccess.bookings.getBookingById(bookingId);
       if (!booking) {
         return {
           success: false,
@@ -28,7 +28,7 @@ export class PaymentService {
       // The actual payment happens when the driver delivers
       const paymentId = `cod_${bookingId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      await LocalStorageService.updateBooking(bookingId, {
+      await dataAccess.bookings.updateBooking(bookingId, {
         paymentStatus: 'pending',
         paymentId,
       });
@@ -51,7 +51,7 @@ export class PaymentService {
   static async confirmCODPayment(bookingId: string): Promise<PaymentResult> {
     try {
       // Check if booking exists first
-      const booking = await LocalStorageService.getBookingById(bookingId);
+      const booking = await dataAccess.bookings.getBookingById(bookingId);
       if (!booking) {
         return {
           success: false,
@@ -61,7 +61,7 @@ export class PaymentService {
 
       const paymentId = `cod_confirmed_${bookingId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      await LocalStorageService.updateBooking(bookingId, {
+      await dataAccess.bookings.updateBooking(bookingId, {
         paymentStatus: 'completed',
         paymentId,
       });

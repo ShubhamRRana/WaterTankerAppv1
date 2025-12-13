@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { Typography, Button, Card, LoadingSpinner, AdminMenuDrawer, SuccessNotification } from '../../components/common';
+import { Typography, Button, Card, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
 import ProfileHeader from '../../components/admin/ProfileHeader';
 import EditProfileForm from '../../components/admin/EditProfileForm';
 import { useAuthStore } from '../../store/authStore';
@@ -54,7 +54,6 @@ interface AppState {
   imageLoading: boolean;
   isDirty: boolean;
   menuVisible: boolean;
-  showSuccessNotification: boolean;
   networkError: string | null;
   initialForm: FormState | null;
 }
@@ -71,7 +70,6 @@ type AppAction =
   | { type: 'SET_IMAGE_LOADING'; payload: boolean }
   | { type: 'SET_DIRTY'; payload: boolean }
   | { type: 'SET_MENU_VISIBLE'; payload: boolean }
-  | { type: 'SET_SUCCESS_NOTIFICATION'; payload: boolean }
   | { type: 'SET_NETWORK_ERROR'; payload: string | null }
   | { type: 'RESET_FORM'; payload: FormState }
   | { type: 'INITIALIZE_FORM'; payload: FormState };
@@ -94,7 +92,6 @@ const initialState: AppState = {
   imageLoading: true,
   isDirty: false,
   menuVisible: false,
-  showSuccessNotification: false,
   networkError: null,
   initialForm: null,
 };
@@ -128,8 +125,6 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return { ...state, isDirty: action.payload };
     case 'SET_MENU_VISIBLE':
       return { ...state, menuVisible: action.payload };
-    case 'SET_SUCCESS_NOTIFICATION':
-      return { ...state, showSuccessNotification: action.payload };
     case 'SET_NETWORK_ERROR':
       return { ...state, networkError: action.payload };
     case 'RESET_FORM':
@@ -280,27 +275,6 @@ const AdminProfileScreen: React.FC = () => {
   }, [debouncedBusinessName, debouncedName, debouncedEmail, debouncedPhone, debouncedPassword, state.editForm.password, state.editForm.confirmPassword, state.isEditing]);
 
 
-  // Success animation
-  useEffect(() => {
-    if (state.showSuccessNotification) {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 8,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      fadeAnim.setValue(0);
-      scaleAnim.setValue(0.95);
-    }
-  }, [state.showSuccessNotification]);
 
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
@@ -387,15 +361,12 @@ const AdminProfileScreen: React.FC = () => {
       dispatch({ type: 'SET_EDITING', payload: false });
       dispatch({ type: 'SET_DIRTY', payload: false });
       dispatch({ type: 'SET_ERRORS', payload: {} });
-      dispatch({ type: 'SET_SUCCESS_NOTIFICATION', payload: true });
       
       // Announce success to screen readers
       AccessibilityInfo.announceForAccessibility('Profile updated successfully');
       
-      // Auto-hide success notification after 3 seconds
-      setTimeout(() => {
-        dispatch({ type: 'SET_SUCCESS_NOTIFICATION', payload: false });
-      }, 3000);
+      // Show success alert
+      Alert.alert('Success!', 'Your profile has been updated successfully.');
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to update profile. Please try again.';
       
@@ -629,13 +600,6 @@ const AdminProfileScreen: React.FC = () => {
             onCancel={handleCancelEdit}
           />
         )}
-
-        <SuccessNotification
-          visible={state.showSuccessNotification}
-          title="Success!"
-          message="Your profile has been updated successfully."
-          onClose={() => dispatch({ type: 'SET_SUCCESS_NOTIFICATION', payload: false })}
-        />
 
       </ScrollView>
       </KeyboardAvoidingView>

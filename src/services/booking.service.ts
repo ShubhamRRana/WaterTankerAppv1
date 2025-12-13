@@ -1,11 +1,11 @@
-import { LocalStorageService } from './localStorage';
+import { dataAccess } from '../lib/index';
 import { Booking, BookingStatus } from '../types/index';
 
 /**
  * Booking Service
  * 
  * Handles all booking-related operations including creation, updates, status changes,
- * and retrieval of bookings. Uses LocalStorageService for data persistence.
+ * and retrieval of bookings. Uses dataAccess layer for data persistence.
  * 
  * @example
  * ```typescript
@@ -27,7 +27,7 @@ export class BookingService {
    */
   static async createBooking(bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     try {
-      const id = LocalStorageService.generateId();
+      const id = dataAccess.generateId();
       const newBooking: Booking = {
         ...bookingData,
         id,
@@ -35,7 +35,7 @@ export class BookingService {
         updatedAt: new Date(),
       };
 
-      await LocalStorageService.saveBooking(newBooking);
+      await dataAccess.bookings.saveBooking(newBooking);
       return id;
     } catch (error) {
       throw error;
@@ -67,7 +67,7 @@ export class BookingService {
         Object.assign(updates, additionalData);
       }
 
-      await LocalStorageService.updateBooking(bookingId, updates);
+      await dataAccess.bookings.updateBooking(bookingId, updates);
     } catch (error) {
       throw error;
     }
@@ -82,8 +82,10 @@ export class BookingService {
     options?: { limit?: number; offset?: number; sortBy?: 'createdAt' | 'updatedAt'; sortOrder?: 'asc' | 'desc' }
   ): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getBookingsByCustomer(customerId, options);
-      return bookings as Booking[];
+      const bookings = await dataAccess.bookings.getBookingsByCustomer(customerId);
+      // Note: options (limit, offset, sortBy, sortOrder) are not yet supported in dataAccess interface
+      // This is a limitation that may need to be addressed in future updates
+      return bookings;
     } catch (error) {
       throw error;
     }
@@ -97,8 +99,10 @@ export class BookingService {
     options?: { limit?: number; offset?: number; sortBy?: 'createdAt'; sortOrder?: 'asc' | 'desc' }
   ): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getAvailableBookings(options);
-      return bookings as Booking[];
+      const bookings = await dataAccess.bookings.getAvailableBookings();
+      // Note: options (limit, offset, sortBy, sortOrder) are not yet supported in dataAccess interface
+      // This is a limitation that may need to be addressed in future updates
+      return bookings;
     } catch (error) {
       throw error;
     }
@@ -120,8 +124,10 @@ export class BookingService {
     }
   ): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getBookingsByDriver(driverId, options);
-      return bookings as Booking[];
+      const bookings = await dataAccess.bookings.getBookingsByDriver(driverId);
+      // Note: options (status, limit, offset, sortBy, sortOrder) are not yet supported in dataAccess interface
+      // This is a limitation that may need to be addressed in future updates
+      return bookings;
     } catch (error) {
       throw error;
     }
@@ -140,8 +146,22 @@ export class BookingService {
     }
   ): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getBookingsForEarnings(driverId, options);
-      return bookings as Booking[];
+      // Get all bookings for driver and filter client-side
+      const allBookings = await dataAccess.bookings.getBookingsByDriver(driverId);
+      
+      // Filter by status (default to completed/delivered for earnings)
+      const statusFilter = options?.status || ['delivered', 'completed'];
+      let filtered = allBookings.filter(b => statusFilter.includes(b.status));
+      
+      // Filter by date range if provided
+      if (options?.startDate) {
+        filtered = filtered.filter(b => b.deliveredAt && b.deliveredAt >= options.startDate!);
+      }
+      if (options?.endDate) {
+        filtered = filtered.filter(b => b.deliveredAt && b.deliveredAt <= options.endDate!);
+      }
+      
+      return filtered;
     } catch (error) {
       throw error;
     }
@@ -152,8 +172,8 @@ export class BookingService {
    */
   static async getAllBookings(): Promise<Booking[]> {
     try {
-      const bookings = await LocalStorageService.getBookings();
-      return bookings as Booking[];
+      const bookings = await dataAccess.bookings.getBookings();
+      return bookings;
     } catch (error) {
       throw error;
     }
@@ -164,25 +184,22 @@ export class BookingService {
    */
   static async getBookingById(bookingId: string): Promise<Booking | null> {
     try {
-      const booking = await LocalStorageService.getBookingById(bookingId);
-      return booking as Booking | null;
+      const booking = await dataAccess.bookings.getBookingById(bookingId);
+      return booking;
     } catch (error) {
       throw error;
     }
   }
 
   /**
-   * Subscribe to real-time booking updates using local storage
-   * Note: Real-time subscriptions are not available with local storage
-   * This is a placeholder that returns a no-op unsubscribe function
+   * Subscribe to real-time booking updates
+   * Uses the dataAccess layer which supports real-time subscriptions with Supabase
    */
   static subscribeToBookingUpdates(
     bookingId: string,
     callback: (booking: Booking | null) => void
   ): () => void {
-    // Local storage doesn't support real-time updates
-    // This is a placeholder for compatibility
-    return () => {};
+    return dataAccess.bookings.subscribeToBookingUpdates(bookingId, callback);
   }
 
   /**
@@ -190,7 +207,7 @@ export class BookingService {
    */
   static async cancelBooking(bookingId: string, reason: string): Promise<void> {
     try {
-      await LocalStorageService.updateBooking(bookingId, {
+      await dataAccess.bookings.updateBooking(bookingId, {
         status: 'cancelled',
         cancellationReason: reason,
         updatedAt: new Date(),

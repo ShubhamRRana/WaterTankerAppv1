@@ -8,7 +8,7 @@
  * LocalStorageService or Supabase client.
  */
 
-import { User, Booking, Vehicle } from '../types/index';
+import { User, Booking, Vehicle, BankAccount } from '../types/index';
 
 /**
  * Generic subscription callback type
@@ -65,12 +65,25 @@ export interface IVehicleDataAccess {
 }
 
 /**
+ * Bank account data access interface
+ */
+export interface IBankAccountDataAccess {
+  getBankAccounts(adminId: string): Promise<BankAccount[]>;
+  getBankAccountById(accountId: string, adminId: string): Promise<BankAccount | null>;
+  getDefaultBankAccount(adminId: string): Promise<BankAccount | null>;
+  saveBankAccount(bankAccount: BankAccount, adminId: string): Promise<void>;
+  updateBankAccount(accountId: string, updates: Partial<BankAccount>, adminId: string): Promise<void>;
+  deleteBankAccount(accountId: string, adminId: string): Promise<void>;
+}
+
+/**
  * Complete data access layer interface
  */
 export interface IDataAccessLayer {
   users: IUserDataAccess;
   bookings: IBookingDataAccess;
   vehicles: IVehicleDataAccess;
+  bankAccounts: IBankAccountDataAccess;
   generateId(): string;
   initialize(): Promise<void>;
 }

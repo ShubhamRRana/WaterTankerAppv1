@@ -9,6 +9,16 @@ import {
   deserializeVehicleDates,
 } from '../utils/dateSerialization';
 
+/**
+ * @deprecated This service is deprecated and will be removed in a future version.
+ * All production code should use the `dataAccess` abstraction layer instead.
+ * This service is kept for backward compatibility and testing purposes only.
+ * 
+ * Migration guide: See DATA_ACCESS_LAYER_GUIDE.md for details on using the dataAccess layer.
+ * 
+ * @see {@link ../lib/index.ts} for the dataAccess singleton
+ * @see {@link DATA_ACCESS_LAYER_GUIDE.md} for migration instructions
+ */
 // Local storage service to replace Firebase functionality
 export class LocalStorageService {
   // Generic methods for storing and retrieving data

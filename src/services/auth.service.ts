@@ -5,7 +5,7 @@ import { securityLogger, SecurityEventType, SecuritySeverity } from '../utils/se
 import { rateLimiter } from '../utils/rateLimiter';
 import { SanitizationUtils } from '../utils/sanitization';
 import { ValidationUtils } from '../utils/validation';
-import { SupabaseDataAccess } from '../lib/supabaseDataAccess';
+import { dataAccess } from '../lib/index';
 import { deserializeDate } from '../utils/dateSerialization';
 
 /**
@@ -29,8 +29,6 @@ export interface AuthResult {
  */
 async function fetchUserWithRole(userId: string, role?: UserRole): Promise<AppUser | null> {
   try {
-    const dataAccess = new SupabaseDataAccess();
-    
     // Fetch user
     const { data: userRow, error: userError } = await supabase
       .from('users')
@@ -889,8 +887,6 @@ export class AuthService {
    */
   static async updateUserProfile(id: string, updates: Partial<AppUser>): Promise<void> {
     try {
-      const dataAccess = new SupabaseDataAccess();
-      
       // Get current user
       const currentUser = await dataAccess.users.getUserById(id);
       

@@ -17,7 +17,7 @@ import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Typography } from '../../components/common';
 import { Address, isCustomerUser } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
-import { LocalStorageService } from '../../services/localStorage';
+import { dataAccess } from '../../lib';
 import { UI_CONFIG, LOCATION_CONFIG } from '../../constants/config';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 
@@ -82,7 +82,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
         // Add new address
         // TODO: Replace mock coordinates with actual geocoding service
         const addressToSave: Address = {
-          id: LocalStorageService.generateId(),
+          id: dataAccess.generateId(),
           address: sanitizedAddress,
           latitude: LOCATION_CONFIG.defaultCenter.latitude + (Math.random() - 0.5) * 0.1,
           longitude: LOCATION_CONFIG.defaultCenter.longitude + (Math.random() - 0.5) * 0.1,
