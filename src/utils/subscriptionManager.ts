@@ -141,7 +141,6 @@ export class SubscriptionManager {
             if (status === 'SUBSCRIBED') {
               metrics.status = 'SUBSCRIBED';
               const subscriptionLatency = Date.now() - subscriptionStartTime;
-              console.log(`Subscribed to ${config.channelName} (latency: ${subscriptionLatency}ms)`);
             } else if (status === 'CHANNEL_ERROR') {
               metrics.status = 'CHANNEL_ERROR';
               const error = new Error(`Failed to subscribe to ${config.channelName}`);

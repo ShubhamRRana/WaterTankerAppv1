@@ -449,10 +449,9 @@ async function testRealtimeLatency(): Promise<RealtimeLatencyResult[]> {
     .on('postgres_changes', 
       { event: '*', schema: 'public', table: 'bookings' },
       (payload) => {
-        const latency = Date.now() - payload.commit_timestamp;
         results.push({
           event: payload.eventType,
-          latency,
+          latency: 0, // Latency calculated separately using startTime/endTime approach
           timestamp: Date.now(),
         });
       }
