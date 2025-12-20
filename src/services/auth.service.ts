@@ -26,8 +26,11 @@ export interface AuthResult {
 
 /**
  * Helper: Fetch user from Supabase with specific role
+ * @param userId - The user ID to fetch (must be the current/new user_id, not a cached one)
+ * @param role - Optional role to filter by
+ * @param retryCount - Internal retry counter for handling race conditions
  */
-async function fetchUserWithRole(userId: string, role?: UserRole): Promise<AppUser | null> {
+async function fetchUserWithRole(userId: string, role?: UserRole, retryCount: number = 0): Promise<AppUser | null> {
   try {
     // Fetch user
     const { data: userRow, error: userError } = await supabase
@@ -37,6 +40,10 @@ async function fetchUserWithRole(userId: string, role?: UserRole): Promise<AppUs
       .single();
 
     if (userError || !userRow) {
+      // If this is a retry and we still can't find the user, log the error
+      if (retryCount > 0) {
+        console.error(`Failed to fetch user after ${retryCount} retries. User ID: ${userId}, Error:`, userError?.message);
+      }
       return null;
     }
 
@@ -47,6 +54,11 @@ async function fetchUserWithRole(userId: string, role?: UserRole): Promise<AppUs
       .eq('user_id', userId);
 
     if (rolesError || !roles || roles.length === 0) {
+      // Retry once if roles are not found (might be a race condition after registration)
+      if (retryCount === 0) {
+        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+        return fetchUserWithRole(userId, role, 1);
+      }
       return null;
     }
 
@@ -66,25 +78,46 @@ async function fetchUserWithRole(userId: string, role?: UserRole): Promise<AppUs
     const selectedRole = role || roles[0].role;
 
     if (selectedRole === 'customer') {
-      const { data } = await supabase
+      const { data, error: customerError } = await supabase
         .from('customers')
         .select('*')
         .eq('user_id', userId)
         .single();
+      
+      // If customer data not found and this is the first attempt, retry once
+      if (customerError && retryCount === 0) {
+        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+        return fetchUserWithRole(userId, role, 1);
+      }
+      
       customerData = data;
     } else if (selectedRole === 'driver') {
-      const { data } = await supabase
+      const { data, error: driverError } = await supabase
         .from('drivers')
         .select('*')
         .eq('user_id', userId)
         .single();
+      
+      // If driver data not found and this is the first attempt, retry once
+      if (driverError && retryCount === 0) {
+        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+        return fetchUserWithRole(userId, role, 1);
+      }
+      
       driverData = data;
     } else if (selectedRole === 'admin') {
-      const { data } = await supabase
+      const { data, error: adminError } = await supabase
         .from('admins')
         .select('*')
         .eq('user_id', userId)
         .single();
+      
+      // If admin data not found and this is the first attempt, retry once
+      if (adminError && retryCount === 0) {
+        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+        return fetchUserWithRole(userId, role, 1);
+      }
+      
       adminData = data;
     }
 
@@ -152,14 +185,16 @@ async function getUserRoles(userId: string): Promise<UserRole[]> {
 
     if (!roles || roles.length === 0) {
       // Check if user exists in users table
-      const { data: userExists } = await supabase
+      const { data: userExists, error: userCheckError } = await supabase
         .from('users')
         .select('id')
         .eq('id', userId)
         .single();
       
       if (!userExists) {
-        console.error(`User ${userId} does not exist in users table`);
+        // Log more details for debugging
+        console.error(`User ${userId} does not exist in users table. Error:`, userCheckError?.message);
+        console.error(`This might indicate a stale user_id is being used. Current session user_id should match the newly created user_id.`);
       }
       return [];
     }
@@ -478,14 +513,20 @@ export class AuthService {
         }
       }
 
-      // Fetch the created user
+      // Small delay to ensure database writes are committed
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Fetch the created user using the newly generated userId
+      // Ensure we're using the userId from authData, not from any cached session
       const newUser = await fetchUserWithRole(userId, role);
 
       if (!newUser) {
-        securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, 'Failed to fetch created user');
+        // Log the actual userId being used for debugging
+        console.error(`Failed to fetch user after registration. User ID used: ${userId}, Email: ${sanitizedEmail}`);
+        securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, `Failed to fetch created user with ID: ${userId}`);
         return {
           success: false,
-          error: 'Registration successful but failed to fetch user data'
+          error: 'Registration successful but failed to fetch user data. Please try logging in.'
         };
       }
 

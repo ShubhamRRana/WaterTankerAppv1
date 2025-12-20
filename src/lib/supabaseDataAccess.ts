@@ -150,6 +150,7 @@ interface BankAccountRow {
  */
 async function getCurrentUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
+  // console.log('session', session);
   return session?.user?.id || null;
 }
 

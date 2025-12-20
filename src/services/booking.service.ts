@@ -51,6 +51,11 @@ export class BookingService {
     additionalData?: Partial<Booking>
   ): Promise<void> {
     try {
+      const existingBooking = await dataAccess.bookings.getBookingById(bookingId);
+      if (!existingBooking) {
+        throw new Error('Booking not found');
+      }
+
       const updates: Partial<Booking> = {
         status,
         updatedAt: new Date(),
@@ -68,6 +73,34 @@ export class BookingService {
       }
 
       await dataAccess.bookings.updateBooking(bookingId, updates);
+
+      // Keep driver earnings in sync with monthly delivered bookings
+      if (status === 'delivered') {
+        const driverId = additionalData?.driverId || existingBooking.driverId;
+        if (driverId) {
+          try {
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const monthlyDeliveredBookings = await this.getBookingsForEarnings(driverId, {
+              startDate: monthStart,
+              status: ['delivered'],
+            });
+
+            const monthlyEarnings = monthlyDeliveredBookings.reduce(
+              (sum, booking) => sum + (booking.totalPrice || 0),
+              0
+            );
+            const monthlyCompleted = monthlyDeliveredBookings.length;
+
+            await dataAccess.users.updateUserProfile(driverId, {
+              totalEarnings: monthlyEarnings,
+              completedOrders: monthlyCompleted,
+            });
+          } catch (earningsError) {
+            console.error('Failed to update driver monthly earnings', earningsError);
+          }
+        }
+      }
     } catch (error) {
       throw error;
     }
@@ -149,8 +182,8 @@ export class BookingService {
       // Get all bookings for driver and filter client-side
       const allBookings = await dataAccess.bookings.getBookingsByDriver(driverId);
       
-      // Filter by status (default to completed/delivered for earnings)
-      const statusFilter = options?.status || ['delivered', 'completed'];
+      // Filter by status (default to delivered for earnings)
+      const statusFilter = options?.status || ['delivered'];
       let filtered = allBookings.filter(b => statusFilter.includes(b.status));
       
       // Filter by date range if provided
