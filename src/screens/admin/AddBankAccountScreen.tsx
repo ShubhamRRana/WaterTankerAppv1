@@ -19,8 +19,9 @@ import { Typography, Card, Button, LoadingSpinner, Input, AdminMenuDrawer } from
 import { BankAccount } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
-import { BankAccountService } from '../../services';
+import { BankAccountService, StorageService } from '../../services';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
+import { Image } from 'react-native';
 
 type AddBankAccountScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'BankAccounts'>;
 
@@ -28,17 +29,15 @@ interface AddBankAccountModalProps {
   visible: boolean;
   onClose: () => void;
   formData: {
-    accountHolderName: string;
     bankName: string;
-    accountNumber: string;
-    reEnterAccountNumber: string;
-    ifscCode: string;
-    branchName: string;
+    qrCodeImageUri: string | null;
+    qrCodeImageUrl: string | null;
     isDefault: boolean;
   };
   formErrors: {[key: string]: string};
   isSubmitting: boolean;
-  onFormChange: (field: string, value: string | boolean) => void;
+  onFormChange: (field: string, value: string | boolean | null) => void;
+  onPickImage: () => void;
   onSubmit: () => void;
   onReset: () => void;
   onDelete?: () => void;
@@ -52,6 +51,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
   formErrors,
   isSubmitting,
   onFormChange,
+  onPickImage,
   onSubmit,
   onReset,
   onDelete,
@@ -97,25 +97,14 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
           <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
             <Card style={styles.detailCard}>
               <Typography variant="h3" style={styles.detailSectionTitle}>
-                Account Information
+                Bank Account Details
               </Typography>
               
               <View style={styles.formField}>
                 <Input
-                  label="Account Holder Name *"
-                  value={formData.accountHolderName}
-                  onChangeText={(text) => onFormChange('accountHolderName', text)}
-                  placeholder="Enter account holder name"
-                  error={formErrors.accountHolderName}
-                  autoCapitalize="words"
-                />
-              </View>
-
-              <View style={styles.formField}>
-                <Input
                   label="Bank Name *"
                   value={formData.bankName}
-                  onChangeText={(text) => onFormChange('bankName', text)}
+                  onChangeText={(value) => onFormChange('bankName', value)}
                   placeholder="Enter bank name"
                   error={formErrors.bankName}
                   autoCapitalize="words"
@@ -123,50 +112,50 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
               </View>
 
               <View style={styles.formField}>
-                <Input
-                  label="Account Number *"
-                  value={formData.accountNumber}
-                  onChangeText={(text) => onFormChange('accountNumber', text.replace(/\D/g, ''))}
-                  placeholder="Enter account number"
-                  error={formErrors.accountNumber}
-                  keyboardType="numeric"
-                  maxLength={20}
-                />
-              </View>
-
-              <View style={styles.formField}>
-                <Input
-                  label="Re-enter Account Number *"
-                  value={formData.reEnterAccountNumber}
-                  onChangeText={(text) => onFormChange('reEnterAccountNumber', text.replace(/\D/g, ''))}
-                  placeholder="Re-enter account number"
-                  error={formErrors.reEnterAccountNumber}
-                  keyboardType="numeric"
-                  maxLength={20}
-                />
-              </View>
-
-              <View style={styles.formField}>
-                <Input
-                  label="IFSC Code *"
-                  value={formData.ifscCode}
-                  onChangeText={(text) => onFormChange('ifscCode', text.toUpperCase())}
-                  placeholder="Enter IFSC code (e.g., HDFC0001234)"
-                  error={formErrors.ifscCode}
-                  autoCapitalize="characters"
-                  maxLength={11}
-                />
-              </View>
-
-              <View style={styles.formField}>
-                <Input
-                  label="Branch Name *"
-                  value={formData.branchName}
-                  onChangeText={(text) => onFormChange('branchName', text)}
-                  placeholder="Enter branch name"
-                  error={formErrors.branchName}
-                  autoCapitalize="words"
-                />
+                <Typography variant="body" style={styles.imageLabel}>
+                  Upload Bank Account QR Code *
+                </Typography>
+                <Typography variant="caption" style={styles.imageHint}>
+                  Select a QR code image from your gallery
+                </Typography>
+                
+                {(formData.qrCodeImageUri || (formData.qrCodeImageUrl && typeof formData.qrCodeImageUrl === 'string' && formData.qrCodeImageUrl.trim() !== '')) ? (
+                  <View style={styles.imagePreviewContainer}>
+                    <Image
+                      source={{ uri: formData.qrCodeImageUri || formData.qrCodeImageUrl || '' }}
+                      style={styles.qrCodePreview}
+                      resizeMode="contain"
+                    />
+                    <TouchableOpacity
+                      style={styles.removeImageButton}
+                      onPress={() => {
+                        onFormChange('qrCodeImageUri', null);
+                        onFormChange('qrCodeImageUrl', null);
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      <Ionicons name="close-circle" size={24} color={UI_CONFIG.colors.error} />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.imagePickerButton}
+                    onPress={onPickImage}
+                    disabled={isSubmitting}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="image-outline" size={48} color={UI_CONFIG.colors.primary} />
+                    <Typography variant="body" style={styles.imagePickerText}>
+                      Tap to select QR code image
+                    </Typography>
+                  </TouchableOpacity>
+                )}
+                
+                {formErrors.qrCodeImageUrl && (
+                  <Typography variant="caption" style={styles.errorText}>
+                    {formErrors.qrCodeImageUrl}
+                  </Typography>
+                )}
               </View>
 
               <View style={styles.formField}>
@@ -212,25 +201,14 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
         <ScrollView style={styles.modalContent} keyboardShouldPersistTaps="handled">
           <Card style={styles.detailCard}>
             <Typography variant="h3" style={styles.detailSectionTitle}>
-              Account Information
+              Bank Account Details
             </Typography>
             
             <View style={styles.formField}>
               <Input
-                label="Account Holder Name *"
-                value={formData.accountHolderName}
-                onChangeText={(text) => onFormChange('accountHolderName', text)}
-                placeholder="Enter account holder name"
-                error={formErrors.accountHolderName}
-                autoCapitalize="words"
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Input
                 label="Bank Name *"
                 value={formData.bankName}
-                onChangeText={(text) => onFormChange('bankName', text)}
+                onChangeText={(value) => onFormChange('bankName', value)}
                 placeholder="Enter bank name"
                 error={formErrors.bankName}
                 autoCapitalize="words"
@@ -238,50 +216,50 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
             </View>
 
             <View style={styles.formField}>
-              <Input
-                label="Account Number *"
-                value={formData.accountNumber}
-                onChangeText={(text) => onFormChange('accountNumber', text.replace(/\D/g, ''))}
-                placeholder="Enter account number"
-                error={formErrors.accountNumber}
-                keyboardType="numeric"
-                maxLength={20}
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Input
-                label="Re-enter Account Number *"
-                value={formData.reEnterAccountNumber}
-                onChangeText={(text) => onFormChange('reEnterAccountNumber', text.replace(/\D/g, ''))}
-                placeholder="Re-enter account number"
-                error={formErrors.reEnterAccountNumber}
-                keyboardType="numeric"
-                maxLength={20}
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Input
-                label="IFSC Code *"
-                value={formData.ifscCode}
-                onChangeText={(text) => onFormChange('ifscCode', text.toUpperCase())}
-                placeholder="Enter IFSC code (e.g., HDFC0001234)"
-                error={formErrors.ifscCode}
-                autoCapitalize="characters"
-                maxLength={11}
-              />
-            </View>
-
-            <View style={styles.formField}>
-              <Input
-                label="Branch Name *"
-                value={formData.branchName}
-                onChangeText={(text) => onFormChange('branchName', text)}
-                placeholder="Enter branch name"
-                error={formErrors.branchName}
-                autoCapitalize="words"
-              />
+              <Typography variant="body" style={styles.imageLabel}>
+                Upload Bank Account QR Code *
+              </Typography>
+              <Typography variant="caption" style={styles.imageHint}>
+                Select a QR code image from your gallery
+              </Typography>
+              
+              {(formData.qrCodeImageUri || (formData.qrCodeImageUrl && typeof formData.qrCodeImageUrl === 'string' && formData.qrCodeImageUrl.trim() !== '')) ? (
+                <View style={styles.imagePreviewContainer}>
+                  <Image
+                    source={{ uri: formData.qrCodeImageUri || formData.qrCodeImageUrl || '' }}
+                    style={styles.qrCodePreview}
+                    resizeMode="contain"
+                  />
+                  <TouchableOpacity
+                    style={styles.removeImageButton}
+                    onPress={() => {
+                      onFormChange('qrCodeImageUri', null);
+                      onFormChange('qrCodeImageUrl', null);
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    <Ionicons name="close-circle" size={24} color={UI_CONFIG.colors.error} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.imagePickerButton}
+                  onPress={onPickImage}
+                  disabled={isSubmitting}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="image-outline" size={48} color={UI_CONFIG.colors.primary} />
+                  <Typography variant="body" style={styles.imagePickerText}>
+                    Tap to select QR code image
+                  </Typography>
+                </TouchableOpacity>
+              )}
+              
+              {formErrors.qrCodeImageUrl && (
+                <Typography variant="caption" style={styles.errorText}>
+                  {formErrors.qrCodeImageUrl}
+                </Typography>
+              )}
             </View>
 
             <View style={styles.formField}>
@@ -338,12 +316,9 @@ const AddBankAccountScreen: React.FC = () => {
   const [editingAccount, setEditingAccount] = useState<BankAccount | null>(null);
   
   const [formData, setFormData] = useState({
-    accountHolderName: '',
     bankName: '',
-    accountNumber: '',
-    reEnterAccountNumber: '',
-    ifscCode: '',
-    branchName: '',
+    qrCodeImageUri: null as string | null,
+    qrCodeImageUrl: null as string | null,
     isDefault: false,
   });
 
@@ -379,19 +354,16 @@ const AddBankAccountScreen: React.FC = () => {
 
   const resetForm = () => {
     setFormData({
-      accountHolderName: '',
       bankName: '',
-      accountNumber: '',
-      reEnterAccountNumber: '',
-      ifscCode: '',
-      branchName: '',
+      qrCodeImageUri: null,
+      qrCodeImageUrl: null,
       isDefault: false,
     });
     setFormErrors({});
     setEditingAccount(null);
   };
 
-  const handleFormChange = (field: string, value: string | boolean) => {
+  const handleFormChange = (field: string, value: string | boolean | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error for this field when user starts typing
     if (formErrors[field]) {
@@ -403,45 +375,28 @@ const AddBankAccountScreen: React.FC = () => {
     }
   };
 
+  const handlePickImage = async () => {
+    try {
+      const imageUri = await StorageService.pickImage();
+      if (imageUri) {
+        handleFormChange('qrCodeImageUri', imageUri);
+        handleFormChange('qrCodeImageUrl', null); // Clear existing URL when new image is picked
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to pick image';
+      Alert.alert('Error', errorMessage);
+    }
+  };
+
   const validateForm = (): boolean => {
     const errors: {[key: string]: string} = {};
 
-    if (!formData.accountHolderName.trim()) {
-      errors.accountHolderName = 'Account holder name is required';
-    } else if (formData.accountHolderName.trim().length < 2) {
-      errors.accountHolderName = 'Account holder name must be at least 2 characters';
-    }
-
-    if (!formData.bankName.trim()) {
+    if (!formData.bankName || formData.bankName.trim() === '') {
       errors.bankName = 'Bank name is required';
-    } else if (formData.bankName.trim().length < 2) {
-      errors.bankName = 'Bank name must be at least 2 characters';
     }
 
-    if (!formData.accountNumber.trim()) {
-      errors.accountNumber = 'Account number is required';
-    } else if (formData.accountNumber.trim().length < 9) {
-      errors.accountNumber = 'Account number must be at least 9 digits';
-    } else if (formData.accountNumber.trim().length > 20) {
-      errors.accountNumber = 'Account number must not exceed 20 digits';
-    }
-
-    if (!formData.reEnterAccountNumber.trim()) {
-      errors.reEnterAccountNumber = 'Please re-enter account number';
-    } else if (formData.accountNumber !== formData.reEnterAccountNumber) {
-      errors.reEnterAccountNumber = 'Account numbers do not match';
-    }
-
-    if (!formData.ifscCode.trim()) {
-      errors.ifscCode = 'IFSC code is required';
-    } else if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(formData.ifscCode.trim())) {
-      errors.ifscCode = 'Invalid IFSC code format (e.g., HDFC0001234)';
-    }
-
-    if (!formData.branchName.trim()) {
-      errors.branchName = 'Branch name is required';
-    } else if (formData.branchName.trim().length < 2) {
-      errors.branchName = 'Branch name must be at least 2 characters';
+    if (!formData.qrCodeImageUri && !formData.qrCodeImageUrl) {
+      errors.qrCodeImageUrl = 'QR code image is required';
     }
 
     setFormErrors(errors);
@@ -455,12 +410,42 @@ const AddBankAccountScreen: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      let qrCodeImageUrl = formData.qrCodeImageUrl;
+      let oldImagePath: string | null = null;
+
+      // If editing and a new image was picked, delete the old image first
+      if (editingAccount && formData.qrCodeImageUri && editingAccount.qrCodeImageUrl) {
+        oldImagePath = StorageService.extractFilePathFromUrl(editingAccount.qrCodeImageUrl);
+      }
+
+      // If a new image was picked, upload it first
+      if (formData.qrCodeImageUri) {
+        const uploadResult = await StorageService.uploadQRCodeImage(
+          formData.qrCodeImageUri,
+          user.id,
+          editingAccount?.id
+        );
+        qrCodeImageUrl = uploadResult.url;
+
+        // Delete the old image from storage after successful upload
+        if (oldImagePath) {
+          try {
+            await StorageService.deleteQRCodeImage(oldImagePath);
+            console.log('Old QR code image deleted from storage:', oldImagePath);
+          } catch (storageError) {
+            console.error('Error deleting old QR code image from storage:', storageError);
+            // Continue even if old image deletion fails
+          }
+        }
+      }
+
+      if (!qrCodeImageUrl) {
+        throw new Error('QR code image URL is required');
+      }
+
       const accountData = {
-        accountHolderName: SanitizationUtils.sanitizeText(formData.accountHolderName.trim()),
-        bankName: SanitizationUtils.sanitizeText(formData.bankName.trim()),
-        accountNumber: formData.accountNumber.trim(),
-        ifscCode: formData.ifscCode.trim().toUpperCase(),
-        branchName: SanitizationUtils.sanitizeText(formData.branchName.trim()),
+        bankName: formData.bankName.trim(),
+        qrCodeImageUrl,
         isDefault: formData.isDefault,
       };
 
@@ -477,7 +462,8 @@ const AddBankAccountScreen: React.FC = () => {
       loadBankAccounts();
     } catch (error) {
       console.error('Error saving bank account:', error);
-      Alert.alert('Error', 'Failed to save bank account. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save bank account. Please try again.';
+      Alert.alert('Error', errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -486,12 +472,9 @@ const AddBankAccountScreen: React.FC = () => {
   const handleEditAccount = (account: BankAccount) => {
     setEditingAccount(account);
     setFormData({
-      accountHolderName: account.accountHolderName,
-      bankName: account.bankName,
-      accountNumber: account.accountNumber,
-      reEnterAccountNumber: account.accountNumber,
-      ifscCode: account.ifscCode,
-      branchName: account.branchName,
+      bankName: account.bankName || '',
+      qrCodeImageUri: null,
+      qrCodeImageUrl: account.qrCodeImageUrl || null,
       isDefault: account.isDefault,
     });
     setShowAddModal(true);
@@ -510,6 +493,23 @@ const AddBankAccountScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
+              // Delete the QR code image from storage if it exists
+              if (editingAccount.qrCodeImageUrl) {
+                try {
+                  const filePath = StorageService.extractFilePathFromUrl(editingAccount.qrCodeImageUrl);
+                  if (filePath) {
+                    await StorageService.deleteQRCodeImage(filePath);
+                    console.log('QR code image deleted from storage:', filePath);
+                  } else {
+                    console.warn('Could not extract file path from URL:', editingAccount.qrCodeImageUrl);
+                  }
+                } catch (storageError) {
+                  console.error('Error deleting QR code image from storage:', storageError);
+                  // Continue with account deletion even if image deletion fails
+                }
+              }
+
+              // Delete the bank account from database
               await BankAccountService.deleteBankAccount(editingAccount.id, user.id);
               Alert.alert('Success', 'Bank account deleted successfully');
               resetForm();
@@ -558,9 +558,11 @@ const AddBankAccountScreen: React.FC = () => {
         <View style={styles.accountHeader}>
           <View style={styles.accountInfo}>
             <View style={styles.accountTitleRow}>
-              <Typography variant="h3" style={styles.accountBankName}>
-                {account.bankName}
-              </Typography>
+              <View style={styles.bankNameContainer}>
+                <Typography variant="h3" style={styles.accountBankName}>
+                  {account.bankName || 'Bank Account'}
+                </Typography>
+              </View>
               {account.isDefault && (
                 <View style={styles.defaultBadge}>
                   <Typography variant="caption" style={styles.defaultBadgeText}>
@@ -569,15 +571,24 @@ const AddBankAccountScreen: React.FC = () => {
                 </View>
               )}
             </View>
-            <Typography variant="body" style={styles.accountHolderName}>
-              {account.accountHolderName}
-            </Typography>
-            <Typography variant="body" style={styles.accountDetails}>
-              Account: ••••{account.accountNumber.slice(-4)}
-            </Typography>
-            <Typography variant="body" style={styles.accountDetails}>
-              IFSC: {account.ifscCode} | {account.branchName}
-            </Typography>
+            {account.bankName && account.bankName.trim() !== '' && (
+              <Typography variant="caption" style={styles.accountSubtitle}>
+                Bank Account
+              </Typography>
+            )}
+            {account.qrCodeImageUrl ? (
+              <View style={styles.qrCodeContainer}>
+                <Image
+                  source={{ uri: account.qrCodeImageUrl }}
+                  style={styles.qrCodeImage}
+                  resizeMode="contain"
+                />
+              </View>
+            ) : (
+              <Typography variant="body" style={styles.accountDetails}>
+                No QR code image available
+              </Typography>
+            )}
           </View>
           <View style={styles.accountActions}>
             {!account.isDefault && (
@@ -686,6 +697,7 @@ const AddBankAccountScreen: React.FC = () => {
         formErrors={formErrors}
         isSubmitting={isSubmitting}
         onFormChange={handleFormChange}
+        onPickImage={handlePickImage}
         onSubmit={handleAddAccount}
         onReset={resetForm}
         onDelete={handleDeleteAccount}
@@ -758,6 +770,7 @@ const styles = StyleSheet.create({
   accountCard: {
     marginBottom: UI_CONFIG.spacing.md,
     padding: UI_CONFIG.spacing.md,
+    minHeight: 200,
   },
   accountCardContent: {
     width: '100%',
@@ -773,12 +786,23 @@ const styles = StyleSheet.create({
   accountTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
+    flexWrap: 'wrap',
+  },
+  bankNameContainer: {
+    flex: 1,
+    marginRight: 8,
   },
   accountBankName: {
     fontWeight: '600',
     color: UI_CONFIG.colors.text,
-    marginRight: 8,
+    fontSize: 18,
+    lineHeight: 24,
+  },
+  accountSubtitle: {
+    color: UI_CONFIG.colors.textSecondary,
+    fontSize: 12,
+    marginBottom: 8,
   },
   defaultBadge: {
     backgroundColor: UI_CONFIG.colors.primary,
@@ -918,6 +942,64 @@ const styles = StyleSheet.create({
   },
   cancelButton: {
     flex: 1,
+  },
+  imageLabel: {
+    marginBottom: 8,
+    color: UI_CONFIG.colors.text,
+    fontWeight: '500',
+  },
+  imageHint: {
+    marginBottom: 12,
+    color: UI_CONFIG.colors.textSecondary,
+    fontSize: 12,
+  },
+  imagePickerButton: {
+    borderWidth: 2,
+    borderColor: UI_CONFIG.colors.border,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: UI_CONFIG.colors.surface,
+    minHeight: 200,
+  },
+  imagePickerText: {
+    marginTop: 12,
+    color: UI_CONFIG.colors.primary,
+    fontWeight: '500',
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    marginTop: 8,
+  },
+  qrCodePreview: {
+    width: '100%',
+    height: 300,
+    borderRadius: 12,
+    backgroundColor: UI_CONFIG.colors.surface,
+  },
+  qrCodeImage: {
+    width: 180,
+    height: 180,
+    borderRadius: 8,
+    backgroundColor: UI_CONFIG.colors.surface,
+  },
+  qrCodeContainer: {
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderRadius: 12,
+    padding: 4,
+  },
+  errorText: {
+    color: UI_CONFIG.colors.error,
+    marginTop: 4,
   },
 });
 

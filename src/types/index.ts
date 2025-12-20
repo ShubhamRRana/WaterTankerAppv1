@@ -167,11 +167,8 @@ export interface Vehicle {
 export interface BankAccount {
   id: string;
   adminId: string; // ID of the admin user who owns this bank account
-  accountHolderName: string;
-  bankName: string;
-  accountNumber: string;
-  ifscCode: string;
-  branchName: string;
+  bankName: string; // Name of the bank
+  qrCodeImageUrl: string; // URL of the QR code image for payment collection
   isDefault: boolean;
   createdAt: Date;
   updatedAt: Date;

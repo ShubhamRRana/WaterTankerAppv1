@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import QRCode from 'react-native-qrcode-svg';
 import { Typography, Button } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 import { useBookingStore } from '../../store/bookingStore';
-import { BankAccountService } from '../../services/bankAccount.service';
 import { Alert } from 'react-native';
 import { DriverStackParamList } from '../../navigation/DriverNavigator';
-import { Booking, BankAccount } from '../../types';
+import { Booking } from '../../types';
+import { BankAccountService } from '../../services';
 
 type CollectPaymentScreenRouteProp = RouteProp<DriverStackParamList, 'CollectPayment'>;
 type CollectPaymentScreenNavigationProp = StackNavigationProp<DriverStackParamList, 'CollectPayment'>;
@@ -22,15 +21,16 @@ const CollectPaymentScreen: React.FC = () => {
   const orderId = route.params.orderId;
 
   const [booking, setBooking] = useState<Booking | null>(null);
-  const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [qrCodeImageUrl, setQrCodeImageUrl] = useState<string | null>(null);
+  const [loadingQRCode, setLoadingQRCode] = useState(false);
 
   useEffect(() => {
-    loadBookingAndBankAccount();
+    loadBooking();
   }, [orderId]);
 
-  const loadBookingAndBankAccount = async () => {
+  const loadBooking = async () => {
     if (!orderId) {
       setError('Order ID not found');
       setLoading(false);
@@ -51,52 +51,48 @@ const CollectPaymentScreen: React.FC = () => {
 
       setBooking(bookingData);
 
-      // Check if agencyId exists
-      if (!bookingData.agencyId) {
-        setError('Account details have not been updated by the owner');
-        setLoading(false);
-        return;
+      // Fetch QR code image for the admin
+      if (bookingData.agencyId) {
+        setLoadingQRCode(true);
+        try {
+          const defaultAccount = await BankAccountService.getDefaultBankAccount(bookingData.agencyId);
+          // Check if default account has a valid (non-empty) QR code URL
+          if (defaultAccount?.qrCodeImageUrl && defaultAccount.qrCodeImageUrl.trim() !== '') {
+            console.log('Found QR code URL from default account:', defaultAccount.qrCodeImageUrl);
+            setQrCodeImageUrl(defaultAccount.qrCodeImageUrl);
+          } else {
+            // If no default account, try to get the first available account
+            const allAccounts = await BankAccountService.getAllBankAccounts(bookingData.agencyId);
+            console.log('No default account, checking all accounts. Count:', allAccounts.length);
+            if (allAccounts.length > 0) {
+              // Find first account with valid QR code URL (non-empty)
+              const accountWithQR = allAccounts.find(acc => acc.qrCodeImageUrl && acc.qrCodeImageUrl.trim() !== '');
+              if (accountWithQR?.qrCodeImageUrl) {
+                console.log('Found QR code URL from first available account:', accountWithQR.qrCodeImageUrl);
+                setQrCodeImageUrl(accountWithQR.qrCodeImageUrl);
+              } else {
+                console.log('No accounts with valid QR code URL found');
+              }
+            } else {
+              console.log('No bank accounts found for agency:', bookingData.agencyId);
+            }
+          }
+        } catch (qrError) {
+          console.error('Error loading QR code:', qrError);
+          // Don't show error to user, just log it
+        } finally {
+          setLoadingQRCode(false);
+        }
+      } else {
+        console.log('No agencyId found on booking');
       }
-
-      // Fetch default bank account for the agency
-      const defaultAccount = await BankAccountService.getDefaultBankAccount(bookingData.agencyId);
-      
-      if (!defaultAccount) {
-        setError('Account details have not been updated by the owner');
-        setLoading(false);
-        return;
-      }
-
-      setBankAccount(defaultAccount);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load payment details';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load booking details';
       setError(errorMessage);
       Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
-  };
-
-  const generateQRCodeData = (): string => {
-    if (!bankAccount || !booking) {
-      return '';
-    }
-
-    // Generate QR code data with bank account details
-    // Format: JSON string with bank account information for payment
-    const qrData = {
-      type: 'bank_account_payment',
-      accountHolderName: bankAccount.accountHolderName,
-      accountNumber: bankAccount.accountNumber,
-      ifscCode: bankAccount.ifscCode,
-      bankName: bankAccount.bankName,
-      branchName: bankAccount.branchName,
-      amount: booking.totalPrice,
-      orderId: booking.id,
-      agencyName: booking.agencyName || 'Water Tanker Service',
-    };
-
-    return JSON.stringify(qrData);
   };
 
   const handleCompleteDelivery = async () => {
@@ -122,14 +118,14 @@ const CollectPaymentScreen: React.FC = () => {
         <View style={[styles.container, styles.centerContent]}>
           <ActivityIndicator size="large" color={UI_CONFIG.colors.primary} />
           <Typography variant="body" style={styles.loadingText}>
-            Loading payment details...
+            Loading booking details...
           </Typography>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (error || !bankAccount) {
+  if (error || !booking) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={[styles.container, styles.centerContent]}>
@@ -137,7 +133,7 @@ const CollectPaymentScreen: React.FC = () => {
             Collect Payment
           </Typography>
           <Typography variant="body" style={[styles.subtitle, styles.errorText]}>
-            {error || 'Account details have not been updated by the owner'}
+            {error || 'Booking not found'}
           </Typography>
           <View style={styles.buttonContainer}>
             <Button
@@ -164,75 +160,60 @@ const CollectPaymentScreen: React.FC = () => {
               Collect Payment
             </Typography>
             <Typography variant="body" style={styles.subtitle}>
-              Scan the QR code below to make payment
+              Complete the payment collection process
             </Typography>
 
-            <View style={styles.qrCodeContainer}>
-              <QRCode
-                value={generateQRCodeData()}
-                size={250}
-                color={UI_CONFIG.colors.text}
-                backgroundColor="#FFFFFF"
-                logoSize={0}
-              />
-            </View>
-
             {booking && (
-              <View style={styles.paymentInfo}>
-                <Typography variant="body" style={styles.amountLabel}>
-                  Amount to Pay
-                </Typography>
-                <Typography variant="h2" style={styles.amount}>
-                  ₹{booking.totalPrice.toLocaleString('en-IN')}
-                </Typography>
-              </View>
-            )}
+              <>
+                <View style={styles.paymentInfo}>
+                  <Typography variant="body" style={styles.amountLabel}>
+                    Amount to Pay
+                  </Typography>
+                  <Typography variant="h2" style={styles.amount}>
+                    ₹{booking.totalPrice.toLocaleString('en-IN')}
+                  </Typography>
+                </View>
 
-            <View style={styles.bankDetails}>
-              <Typography variant="body" style={styles.bankDetailsTitle}>
-                Bank Details
-              </Typography>
-              <View style={styles.bankDetailRow}>
-                <Typography variant="body" style={styles.bankDetailLabel}>
-                  Account Holder:
-                </Typography>
-                <Typography variant="body" style={styles.bankDetailValue}>
-                  {bankAccount.accountHolderName}
-                </Typography>
-              </View>
-              <View style={styles.bankDetailRow}>
-                <Typography variant="body" style={styles.bankDetailLabel}>
-                  Account Number:
-                </Typography>
-                <Typography variant="body" style={styles.bankDetailValue}>
-                  {bankAccount.accountNumber}
-                </Typography>
-              </View>
-              <View style={styles.bankDetailRow}>
-                <Typography variant="body" style={styles.bankDetailLabel}>
-                  IFSC Code:
-                </Typography>
-                <Typography variant="body" style={styles.bankDetailValue}>
-                  {bankAccount.ifscCode}
-                </Typography>
-              </View>
-              <View style={styles.bankDetailRow}>
-                <Typography variant="body" style={styles.bankDetailLabel}>
-                  Bank:
-                </Typography>
-                <Typography variant="body" style={styles.bankDetailValue}>
-                  {bankAccount.bankName}
-                </Typography>
-              </View>
-              <View style={styles.bankDetailRow}>
-                <Typography variant="body" style={styles.bankDetailLabel}>
-                  Branch:
-                </Typography>
-                <Typography variant="body" style={styles.bankDetailValue}>
-                  {bankAccount.branchName}
-                </Typography>
-              </View>
-            </View>
+                <View style={styles.qrCodeSection}>
+                  <Typography variant="h3" style={styles.qrCodeTitle}>
+                    Scan QR Code to Pay
+                  </Typography>
+                  {loadingQRCode ? (
+                    <View style={styles.qrCodeLoadingContainer}>
+                      <ActivityIndicator size="large" color={UI_CONFIG.colors.primary} />
+                      <Typography variant="body" style={styles.qrCodeLoadingText}>
+                        Loading QR code...
+                      </Typography>
+                    </View>
+                  ) : qrCodeImageUrl ? (
+                    <View style={styles.qrCodeContainer}>
+                      <Image
+                        source={{ uri: qrCodeImageUrl }}
+                        style={styles.qrCodeImage}
+                        resizeMode="contain"
+                        onError={(error) => {
+                          console.error('Error loading QR code image:', error);
+                          console.error('Failed URL:', qrCodeImageUrl);
+                          setQrCodeImageUrl(null);
+                        }}
+                        onLoad={() => {
+                          console.log('QR code image loaded successfully from:', qrCodeImageUrl);
+                        }}
+                        onLoadStart={() => {
+                          console.log('Starting to load QR code image from:', qrCodeImageUrl);
+                        }}
+                      />
+                    </View>
+                  ) : (
+                    <View style={styles.qrCodeErrorContainer}>
+                      <Typography variant="body" style={styles.qrCodeErrorText}>
+                        QR code not available. Please contact the admin.
+                      </Typography>
+                    </View>
+                  )}
+                </View>
+              </>
+            )}
           </View>
           <View style={styles.buttonContainer}>
             <Button
@@ -293,23 +274,10 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.error,
     marginBottom: 24,
   },
-  qrCodeContainer: {
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
   paymentInfo: {
     alignItems: 'center',
     marginBottom: 24,
+    marginTop: 24,
   },
   amountLabel: {
     fontSize: 15,
@@ -321,36 +289,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: UI_CONFIG.colors.primary,
   },
-  bankDetails: {
-    width: '100%',
-    backgroundColor: UI_CONFIG.colors.surface,
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-  },
-  bankDetailsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.text,
-    marginBottom: 12,
-  },
-  bankDetailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  bankDetailLabel: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-    flex: 1,
-  },
-  bankDetailValue: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.text,
-    fontWeight: '500',
-    flex: 1,
-    textAlign: 'right',
-  },
   buttonContainer: {
     paddingBottom: 20,
     paddingTop: 10,
@@ -360,6 +298,53 @@ const styles = StyleSheet.create({
   },
   backButton: {
     backgroundColor: UI_CONFIG.colors.primary,
+  },
+  qrCodeSection: {
+    marginTop: 32,
+    alignItems: 'center',
+    width: '100%',
+  },
+  qrCodeTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: UI_CONFIG.colors.text,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  qrCodeContainer: {
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    maxWidth: 300,
+    minHeight: 300,
+  },
+  qrCodeImage: {
+    width: 280,
+    height: 280,
+    borderRadius: 8,
+  },
+  qrCodeLoadingContainer: {
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrCodeLoadingText: {
+    marginTop: 12,
+    color: UI_CONFIG.colors.textSecondary,
+  },
+  qrCodeErrorContainer: {
+    padding: 24,
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderRadius: 12,
+    width: '100%',
+    maxWidth: 300,
+  },
+  qrCodeErrorText: {
+    color: UI_CONFIG.colors.textSecondary,
+    textAlign: 'center',
   },
 });
 

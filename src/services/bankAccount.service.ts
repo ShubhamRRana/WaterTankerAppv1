@@ -48,8 +48,9 @@ export class BankAccountService {
 
   /**
    * Create a new bank account for a specific admin user
+   * If isDefault is true, this will automatically unset all other accounts for that admin as default
    */
-  static async createBankAccount(accountData: Omit<BankAccount, 'id' | 'createdAt' | 'updatedAt'>, adminId: string): Promise<BankAccount> {
+  static async createBankAccount(accountData: Omit<BankAccount, 'id' | 'createdAt' | 'updatedAt' | 'adminId'>, adminId: string): Promise<BankAccount> {
     try {
       const id = dataAccess.generateId();
       const newAccount: BankAccount = {
@@ -60,6 +61,7 @@ export class BankAccountService {
         updatedAt: new Date(),
       };
 
+      // saveBankAccount handles unsetting other defaults if isDefault is true
       await dataAccess.bankAccounts.saveBankAccount(newAccount, adminId);
       return newAccount;
     } catch (error) {

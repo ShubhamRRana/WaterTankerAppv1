@@ -135,11 +135,8 @@ interface VehicleRow {
 interface BankAccountRow {
   id: string;
   admin_id: string;
-  account_holder_name: string;
-  bank_name: string;
-  account_number: string;
-  ifsc_code: string;
-  branch_name: string;
+  bank_name: string | null;
+  qr_code_image_url: string;
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -419,11 +416,8 @@ function mapBankAccountFromDb(row: BankAccountRow): BankAccount {
   return {
     id: row.id,
     adminId: row.admin_id,
-    accountHolderName: row.account_holder_name,
-    bankName: row.bank_name,
-    accountNumber: row.account_number,
-    ifscCode: row.ifsc_code,
-    branchName: row.branch_name,
+    bankName: row.bank_name || '',
+    qrCodeImageUrl: row.qr_code_image_url,
     isDefault: row.is_default,
     createdAt: deserializeDate(row.created_at) || new Date(),
     updatedAt: deserializeDate(row.updated_at) || new Date(),
@@ -437,11 +431,8 @@ function mapBankAccountToDb(bankAccount: BankAccount): Partial<BankAccountRow> {
   return {
     id: bankAccount.id,
     admin_id: bankAccount.adminId,
-    account_holder_name: bankAccount.accountHolderName,
-    bank_name: bankAccount.bankName,
-    account_number: bankAccount.accountNumber,
-    ifsc_code: bankAccount.ifscCode,
-    branch_name: bankAccount.branchName,
+    bank_name: bankAccount.bankName || null,
+    qr_code_image_url: bankAccount.qrCodeImageUrl,
     is_default: bankAccount.isDefault,
     created_at: serializeDate(bankAccount.createdAt) || new Date().toISOString(),
     updated_at: serializeDate(bankAccount.updatedAt) || new Date().toISOString(),
@@ -1366,11 +1357,8 @@ class SupabaseBankAccountDataAccess implements IBankAccountDataAccess {
 
       // Map updates to database format
       const updateRow: Partial<BankAccountRow> = {};
-      if (updates.accountHolderName !== undefined) updateRow.account_holder_name = updates.accountHolderName;
-      if (updates.bankName !== undefined) updateRow.bank_name = updates.bankName;
-      if (updates.accountNumber !== undefined) updateRow.account_number = updates.accountNumber;
-      if (updates.ifscCode !== undefined) updateRow.ifsc_code = updates.ifscCode;
-      if (updates.branchName !== undefined) updateRow.branch_name = updates.branchName;
+      if (updates.bankName !== undefined) updateRow.bank_name = updates.bankName || null;
+      if (updates.qrCodeImageUrl !== undefined) updateRow.qr_code_image_url = updates.qrCodeImageUrl;
       if (updates.isDefault !== undefined) updateRow.is_default = updates.isDefault;
       if (updates.updatedAt !== undefined) updateRow.updated_at = serializeDate(updates.updatedAt) || new Date().toISOString();
 
