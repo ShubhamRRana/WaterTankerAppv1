@@ -431,7 +431,6 @@ const AddBankAccountScreen: React.FC = () => {
         if (oldImagePath) {
           try {
             await StorageService.deleteQRCodeImage(oldImagePath);
-            console.log('Old QR code image deleted from storage:', oldImagePath);
           } catch (storageError) {
             console.error('Error deleting old QR code image from storage:', storageError);
             // Continue even if old image deletion fails
@@ -499,7 +498,6 @@ const AddBankAccountScreen: React.FC = () => {
                   const filePath = StorageService.extractFilePathFromUrl(editingAccount.qrCodeImageUrl);
                   if (filePath) {
                     await StorageService.deleteQRCodeImage(filePath);
-                    console.log('QR code image deleted from storage:', filePath);
                   } else {
                     console.warn('Could not extract file path from URL:', editingAccount.qrCodeImageUrl);
                   }
