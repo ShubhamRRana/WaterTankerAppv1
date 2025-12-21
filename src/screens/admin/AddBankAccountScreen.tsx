@@ -571,24 +571,6 @@ const AddBankAccountScreen: React.FC = () => {
                 </View>
               )}
             </View>
-            {account.bankName && account.bankName.trim() !== '' && (
-              <Typography variant="caption" style={styles.accountSubtitle}>
-                Bank Account
-              </Typography>
-            )}
-            {account.qrCodeImageUrl ? (
-              <View style={styles.qrCodeContainer}>
-                <Image
-                  source={{ uri: account.qrCodeImageUrl }}
-                  style={styles.qrCodeImage}
-                  resizeMode="contain"
-                />
-              </View>
-            ) : (
-              <Typography variant="body" style={styles.accountDetails}>
-                No QR code image available
-              </Typography>
-            )}
           </View>
           <View style={styles.accountActions}>
             {!account.isDefault && (
@@ -770,7 +752,8 @@ const styles = StyleSheet.create({
   accountCard: {
     marginBottom: UI_CONFIG.spacing.md,
     padding: UI_CONFIG.spacing.md,
-    minHeight: 200,
+    borderWidth: 1,
+    borderColor: '#000000',
   },
   accountCardContent: {
     width: '100%',
@@ -778,7 +761,7 @@ const styles = StyleSheet.create({
   accountHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   accountInfo: {
     flex: 1,

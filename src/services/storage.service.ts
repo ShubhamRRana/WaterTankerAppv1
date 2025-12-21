@@ -79,14 +79,15 @@ export class StorageService {
         : `qr-code-${adminId}-${timestamp}.jpg`;
       const filePath = `qr-codes/${adminId}/${fileName}`;
 
-      // Read the file as blob
-      const response = await fetch(imageUri);
-      const blob = await response.blob();
+      // Read file as ArrayBuffer using fetch (as per Supabase React Native example)
+      // This is the recommended approach from Supabase documentation
+      const arrayBuffer = await fetch(imageUri).then((res) => res.arrayBuffer());
 
       // Upload to Supabase Storage
+      // Supabase accepts ArrayBuffer directly in React Native
       const { data, error } = await supabase.storage
         .from('bank-qr-codes')
-        .upload(filePath, blob, {
+        .upload(filePath, arrayBuffer, {
           contentType: 'image/jpeg',
           upsert: true, // Replace if exists
         });
