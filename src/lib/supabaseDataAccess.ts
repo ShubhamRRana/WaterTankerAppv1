@@ -147,7 +147,6 @@ interface BankAccountRow {
  */
 async function getCurrentUserId(): Promise<string | null> {
   const { data: { session } } = await supabase.auth.getSession();
-  // console.log('session', session);
   return session?.user?.id || null;
 }
 
@@ -709,7 +708,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
               callback(user);
             }
           } catch (error) {
-            console.error('Error fetching user in subscription:', error);
+            // Error fetching user in subscription
           }
         }
       }
@@ -731,7 +730,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
             callback(user);
           }
         } catch (error) {
-          console.error('Error fetching user in role subscription:', error);
+          // Error fetching user in role subscription
         }
       }
     );
@@ -751,7 +750,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
             callback(user);
           }
         } catch (error) {
-          console.error('Error fetching user in customer subscription:', error);
+          // Error fetching user in customer subscription
         }
       }
     );
@@ -770,7 +769,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
             callback(user);
           }
         } catch (error) {
-          console.error('Error fetching user in driver subscription:', error);
+          // Error fetching user in driver subscription
         }
       }
     );
@@ -789,7 +788,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
             callback(user);
           }
         } catch (error) {
-          console.error('Error fetching user in admin subscription:', error);
+          // Error fetching user in admin subscription
         }
       }
     );
@@ -825,7 +824,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
               }
             }
           } catch (error) {
-            console.error('Error in all users subscription:', error);
+            // Error in all users subscription
           }
         } else if (payload.eventType === 'DELETE') {
           const userId = payload.old?.id;
@@ -851,7 +850,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
               callback(user, 'UPDATE');
             }
           } catch (error) {
-            console.error('Error in user roles subscription:', error);
+            // Error in user roles subscription
           }
         }
       }
@@ -989,6 +988,7 @@ class SupabaseBookingDataAccess implements IBookingDataAccess {
         .from('bookings')
         .select('*')
         .eq('status', 'pending')
+        .is('driver_id', null)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -1023,7 +1023,7 @@ class SupabaseBookingDataAccess implements IBookingDataAccess {
               const booking = mapBookingFromDb(payload.new as BookingRow);
               callback(booking);
             } catch (error) {
-              console.error('Error mapping booking in subscription:', error);
+              // Error mapping booking in subscription
             }
           }
         }
@@ -1179,7 +1179,7 @@ class SupabaseVehicleDataAccess implements IVehicleDataAccess {
               const vehicle = mapVehicleFromDb(payload.new as VehicleRow);
               callback(vehicle);
             } catch (error) {
-              console.error('Error mapping vehicle in subscription:', error);
+              // Error mapping vehicle in subscription
             }
           }
         }
@@ -1204,7 +1204,7 @@ class SupabaseVehicleDataAccess implements IVehicleDataAccess {
               const vehicle = mapVehicleFromDb(payload.old as VehicleRow);
               callback(vehicle, 'DELETE');
             } catch (error) {
-              console.error('Error mapping vehicle in subscription:', error);
+              // Error mapping vehicle in subscription
             }
           }
           return;
@@ -1216,7 +1216,7 @@ class SupabaseVehicleDataAccess implements IVehicleDataAccess {
               const vehicle = mapVehicleFromDb(payload.new as VehicleRow);
               callback(vehicle, payload.eventType === 'INSERT' ? 'INSERT' : 'UPDATE');
             } catch (error) {
-              console.error('Error mapping vehicle in subscription:', error);
+              // Error mapping vehicle in subscription
             }
           }
         }

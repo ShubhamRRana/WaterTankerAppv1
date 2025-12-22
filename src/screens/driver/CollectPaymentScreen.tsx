@@ -58,33 +58,23 @@ const CollectPaymentScreen: React.FC = () => {
           const defaultAccount = await BankAccountService.getDefaultBankAccount(bookingData.agencyId);
           // Check if default account has a valid (non-empty) QR code URL
           if (defaultAccount?.qrCodeImageUrl && defaultAccount.qrCodeImageUrl.trim() !== '') {
-            console.log('Found QR code URL from default account:', defaultAccount.qrCodeImageUrl);
             setQrCodeImageUrl(defaultAccount.qrCodeImageUrl);
           } else {
             // If no default account, try to get the first available account
             const allAccounts = await BankAccountService.getAllBankAccounts(bookingData.agencyId);
-            console.log('No default account, checking all accounts. Count:', allAccounts.length);
             if (allAccounts.length > 0) {
               // Find first account with valid QR code URL (non-empty)
               const accountWithQR = allAccounts.find(acc => acc.qrCodeImageUrl && acc.qrCodeImageUrl.trim() !== '');
               if (accountWithQR?.qrCodeImageUrl) {
-                console.log('Found QR code URL from first available account:', accountWithQR.qrCodeImageUrl);
                 setQrCodeImageUrl(accountWithQR.qrCodeImageUrl);
-              } else {
-                console.log('No accounts with valid QR code URL found');
               }
-            } else {
-              console.log('No bank accounts found for agency:', bookingData.agencyId);
             }
           }
         } catch (qrError) {
-          console.error('Error loading QR code:', qrError);
-          // Don't show error to user, just log it
+          // Don't show error to user, just silently fail
         } finally {
           setLoadingQRCode(false);
         }
-      } else {
-        console.log('No agencyId found on booking');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load booking details';
@@ -191,16 +181,8 @@ const CollectPaymentScreen: React.FC = () => {
                         source={{ uri: qrCodeImageUrl }}
                         style={styles.qrCodeImage}
                         resizeMode="contain"
-                        onError={(error) => {
-                          console.error('Error loading QR code image:', error);
-                          console.error('Failed URL:', qrCodeImageUrl);
+                        onError={() => {
                           setQrCodeImageUrl(null);
-                        }}
-                        onLoad={() => {
-                          console.log('QR code image loaded successfully from:', qrCodeImageUrl);
-                        }}
-                        onLoadStart={() => {
-                          console.log('Starting to load QR code image from:', qrCodeImageUrl);
                         }}
                       />
                     </View>

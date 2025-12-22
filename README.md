@@ -512,7 +512,7 @@ Ensure your Supabase project has the following tables configured:
 - `tanker_sizes` - Tanker size configurations
 - `pricing` - Pricing configuration
 
-**Important**: Enable Row Level Security (RLS) policies and configure realtime publications for:
+**Important**: Row Level Security (RLS) is enabled on all tables with comprehensive policies. Configure realtime publications for:
 - `bookings`
 - `notifications`
 - `users`
@@ -521,6 +521,11 @@ Ensure your Supabase project has the following tables configured:
 - `drivers`
 - `admins`
 - `bank_accounts`
+- `vehicles`
+- `tanker_sizes`
+- `pricing`
+- `driver_applications`
+- `driver_locations`
 
 ### 5. Start the Development Server
 
@@ -654,11 +659,78 @@ The project maintains comprehensive test coverage for:
 
 ### Row Level Security (RLS)
 
-Ensure RLS policies are configured for:
-- Users can only access their own data
-- Drivers can view available bookings
-- Admins have full access to their agency data
-- Customers can only view their own bookings
+RLS is **enabled on all tables** with comprehensive role-based access control policies:
+
+#### Tables with RLS Enabled
+- `users` - User profile access control
+- `user_roles` - Role management access
+- `customers` - Customer data access
+- `drivers` - Driver data access
+- `admins` - Admin data access
+- `bookings` - Booking access by role
+- `vehicles` - Vehicle management by agency
+- `bank_accounts` - Bank account access by admin and drivers (for payment collection)
+- `tanker_sizes` - Public read, admin write
+- `pricing` - Public read, admin write
+- `driver_applications` - Public create, admin manage
+- `driver_locations` - Driver and customer access
+
+#### Policy Overview
+
+**Users Table:**
+- Users can view, insert, and update their own profile
+- Admins can view all users
+- Customers can read admin users (for agency selection during booking)
+
+**User Roles Table:**
+- Users can view and insert their own roles
+- Admins can view all user roles
+- Customers can read admin roles (to identify agencies)
+
+**Customers Table:**
+- Customers can view, insert, and update their own data
+- Admins can view all customer data
+
+**Drivers Table:**
+- Drivers can view, insert, and update their own data
+- Admins can view and update all driver data
+
+**Admins Table:**
+- Admins can view, insert, and update their own data
+- Admins can view other admin data
+- Customers can read admin data (for agency selection during booking)
+
+**Bookings Table:**
+- Customers can create, view, and update their own bookings
+- Drivers can view available bookings and update assigned bookings
+- Admins can view and update bookings for their agency
+
+**Vehicles Table:**
+- Admins can manage vehicles for their agency (full CRUD)
+- Customers can read vehicles from any agency (for booking creation)
+
+**Bank Accounts Table:**
+- Admins can manage their own bank accounts (full CRUD)
+- Drivers can read bank accounts for agencies where they have assigned bookings (for QR code display during payment collection)
+
+**Tanker Sizes Table:**
+- Everyone can view active tanker sizes
+- Admins can view all sizes and manage them (full CRUD)
+
+**Pricing Table:**
+- Everyone can view pricing
+- Admins can insert and update pricing
+
+**Driver Applications Table:**
+- Anyone can create driver applications
+- Admins can view and update all applications
+
+**Driver Locations Table:**
+- Drivers can insert and view their own locations
+- Admins can view all driver locations
+- Customers can view driver locations for their active bookings
+
+All policies use a secure `has_role()` helper function that checks user roles from the `user_roles` table.
 
 ### Realtime Subscriptions
 

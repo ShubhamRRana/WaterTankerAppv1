@@ -97,7 +97,7 @@ export class BookingService {
               completedOrders: monthlyCompleted,
             });
           } catch (earningsError) {
-            console.error('Failed to update driver monthly earnings', earningsError);
+            // Failed to update driver monthly earnings
           }
         }
       }

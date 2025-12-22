@@ -116,7 +116,7 @@ export class SubscriptionManager {
                     if (config.onError) {
                       config.onError(error instanceof Error ? error : new Error(String(error)));
                     } else {
-                      console.error('Subscription callback error:', error);
+                      // Subscription callback error
                     }
                   });
               } else {
@@ -130,7 +130,7 @@ export class SubscriptionManager {
               if (config.onError) {
                 config.onError(error instanceof Error ? error : new Error(String(error)));
               } else {
-                console.error('Subscription callback error:', error);
+                // Subscription callback error
               }
             }
           }
@@ -149,7 +149,7 @@ export class SubscriptionManager {
               if (config.onError) {
                 config.onError(error);
               } else {
-                console.error('Subscription error:', error);
+                // Subscription error
               }
             } else if (status === 'TIMED_OUT') {
               metrics.status = 'TIMED_OUT';

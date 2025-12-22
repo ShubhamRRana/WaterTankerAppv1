@@ -26,7 +26,6 @@ export class StorageService {
       }
       return true;
     } catch (error) {
-      console.error('Error requesting permissions:', error);
       return false;
     }
   }
@@ -54,7 +53,6 @@ export class StorageService {
 
       return result.assets[0].uri;
     } catch (error) {
-      console.error('Error picking image:', error);
       throw error;
     }
   }
@@ -110,7 +108,6 @@ export class StorageService {
         path: filePath,
       };
     } catch (error) {
-      console.error('Error uploading QR code image:', error);
       throw error;
     }
   }
@@ -129,7 +126,6 @@ export class StorageService {
         throw new Error(`Failed to delete image: ${error.message}`);
       }
     } catch (error) {
-      console.error('Error deleting QR code image:', error);
       throw error;
     }
   }
@@ -146,7 +142,6 @@ export class StorageService {
       const match = url.match(/\/bank-qr-codes\/(.+)$/);
       return match ? match[1] : null;
     } catch (error) {
-      console.error('Error extracting file path from URL:', error);
       return null;
     }
   }

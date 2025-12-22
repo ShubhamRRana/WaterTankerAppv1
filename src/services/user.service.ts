@@ -163,7 +163,6 @@ export class UserService {
       isInitialized = true;
       callback([...allUsers]);
     }).catch(error => {
-      console.error('Error fetching initial users for subscription:', error);
       isInitialized = true;
       callback([]);
     });
@@ -189,8 +188,8 @@ export class UserService {
           dataAccess.users.getUsers().then(users => {
             allUsers = users;
             callback([...allUsers]);
-          }).catch(error => {
-            console.error('Error refetching users after delete:', error);
+          }).catch(() => {
+            // Error refetching users after delete
           });
         }
       }

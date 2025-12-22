@@ -66,6 +66,77 @@ supabase db push
 - Run after creating the bucket in the dashboard
 - The SQL policies can be applied via SQL Editor after the bucket is created
 
+### 003_add_bank_name_column.sql
+
+**Purpose**: Adds a `bank_name` column to the `bank_accounts` table.
+
+**When to Run**: 
+- Run when you need to store bank names along with QR codes
+
+### 004_allow_customers_read_admin_info.sql
+
+**Purpose**: Allows customers to read admin/agency information for booking creation.
+
+**Problem Solved**: 
+- After enabling RLS policies, customers were unable to fetch tanker agency information when creating bookings
+- This migration fixes the issue by allowing customers to read admin data needed for agency selection
+
+**Changes**:
+- Creates `has_role()` helper function to check user roles
+- Adds RLS policy: "Customers can read admin users" on `users` table
+- Adds RLS policy: "Customers can read admin roles" on `user_roles` table  
+- Adds RLS policy: "Customers can read admin data" on `admins` table
+
+**Security Notes**:
+- Customers can only SELECT (read) admin information, not modify it
+- Only authenticated users with 'customer' role can access admin data
+- This maintains security while enabling the booking flow
+
+**When to Run**: 
+- Run immediately after enabling RLS if customers cannot see agency information
+- Required for booking creation flow to work properly
+
+### 005_allow_customers_read_vehicles.sql
+
+**Purpose**: Allows customers to read vehicles from agencies for booking creation.
+
+**Problem Solved**: 
+- After enabling RLS policies, customers could select agencies but could not see vehicles for those agencies
+- This migration fixes the issue by allowing customers to read vehicles needed for booking
+
+**Changes**:
+- Adds RLS policy: "Customers can read vehicles" on `vehicles` table
+
+**Security Notes**:
+- Customers can only SELECT (read) vehicles, not modify them
+- Only authenticated users with 'customer' role can access vehicles
+- This maintains security while enabling the booking flow
+
+**When to Run**: 
+- Run immediately after enabling RLS if customers cannot see vehicles for selected agencies
+- Required for complete booking creation flow to work properly
+
+### 008_allow_drivers_read_bank_accounts.sql
+
+**Purpose**: Allows drivers to read bank accounts for payment collection.
+
+**Problem Solved**: 
+- After enabling RLS policies, drivers were unable to fetch QR codes from bank accounts when collecting payment for completed bookings
+- This migration fixes the issue by allowing drivers to read bank accounts for agencies where they have assigned bookings
+
+**Changes**:
+- Adds RLS policy: "Drivers can read bank accounts for assigned bookings" on `bank_accounts` table
+
+**Security Notes**:
+- Drivers can only SELECT (read) bank accounts, not modify them
+- Only authenticated users with 'driver' role can access bank accounts
+- Drivers can only access bank accounts for agencies where they have active or completed bookings (not cancelled)
+- This maintains security while enabling the payment collection flow
+
+**When to Run**: 
+- Run immediately after enabling RLS if drivers cannot see QR codes on the Collect Payment screen
+- Required for payment collection flow to work properly
+
 ## Verification
 
 After running a migration, verify the changes:

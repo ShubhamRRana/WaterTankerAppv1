@@ -101,7 +101,6 @@ export class LocalStorageService {
       const serialized = updatedBookings.map(b => serializeBookingDates(b as any));
       await this.setItem('bookings', serialized);
     } catch (error) {
-      console.error('Error saving booking to local storage:', error);
       throw error;
     }
   }

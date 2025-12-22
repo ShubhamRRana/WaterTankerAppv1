@@ -335,7 +335,6 @@ const AddBankAccountScreen: React.FC = () => {
       const accounts = await BankAccountService.getAllBankAccounts(user.id);
       setBankAccounts(accounts);
     } catch (error) {
-      console.error('Error loading bank accounts:', error);
       Alert.alert('Error', 'Failed to load bank accounts. Please try again.');
     } finally {
       setLoading(false);
@@ -432,7 +431,6 @@ const AddBankAccountScreen: React.FC = () => {
           try {
             await StorageService.deleteQRCodeImage(oldImagePath);
           } catch (storageError) {
-            console.error('Error deleting old QR code image from storage:', storageError);
             // Continue even if old image deletion fails
           }
         }
@@ -460,7 +458,6 @@ const AddBankAccountScreen: React.FC = () => {
       setShowAddModal(false);
       loadBankAccounts();
     } catch (error) {
-      console.error('Error saving bank account:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save bank account. Please try again.';
       Alert.alert('Error', errorMessage);
     } finally {
@@ -498,11 +495,8 @@ const AddBankAccountScreen: React.FC = () => {
                   const filePath = StorageService.extractFilePathFromUrl(editingAccount.qrCodeImageUrl);
                   if (filePath) {
                     await StorageService.deleteQRCodeImage(filePath);
-                  } else {
-                    console.warn('Could not extract file path from URL:', editingAccount.qrCodeImageUrl);
                   }
                 } catch (storageError) {
-                  console.error('Error deleting QR code image from storage:', storageError);
                   // Continue with account deletion even if image deletion fails
                 }
               }
@@ -514,7 +508,6 @@ const AddBankAccountScreen: React.FC = () => {
               setShowAddModal(false);
               loadBankAccounts();
             } catch (error) {
-              console.error('Error deleting bank account:', error);
               Alert.alert('Error', 'Failed to delete bank account. Please try again.');
             }
           },
@@ -529,7 +522,6 @@ const AddBankAccountScreen: React.FC = () => {
       await BankAccountService.setDefaultBankAccount(accountId, user.id);
       loadBankAccounts();
     } catch (error) {
-      console.error('Error setting default account:', error);
       Alert.alert('Error', 'Failed to set default account. Please try again.');
     }
   };

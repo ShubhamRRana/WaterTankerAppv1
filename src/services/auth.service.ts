@@ -40,9 +40,9 @@ async function fetchUserWithRole(userId: string, role?: UserRole, retryCount: nu
       .single();
 
     if (userError || !userRow) {
-      // If this is a retry and we still can't find the user, log the error
+      // If this is a retry and we still can't find the user, silently fail
       if (retryCount > 0) {
-        console.error(`Failed to fetch user after ${retryCount} retries. User ID: ${userId}, Error:`, userError?.message);
+        // Failed to fetch user after retries
       }
       return null;
     }
@@ -177,8 +177,6 @@ async function getUserRoles(userId: string): Promise<UserRole[]> {
       .eq('user_id', userId);
 
     if (error) {
-      // Log the error for debugging
-      console.error('Error fetching user roles:', error);
       securityLogger.logAuthAttempt('unknown', false, `Failed to fetch roles: ${error.message}`);
       return [];
     }
@@ -192,16 +190,13 @@ async function getUserRoles(userId: string): Promise<UserRole[]> {
         .single();
       
       if (!userExists) {
-        // Log more details for debugging
-        console.error(`User ${userId} does not exist in users table. Error:`, userCheckError?.message);
-        console.error(`This might indicate a stale user_id is being used. Current session user_id should match the newly created user_id.`);
+        // User does not exist in users table
       }
       return [];
     }
 
     return roles.map(r => r.role as UserRole);
   } catch (error) {
-    console.error('Exception in getUserRoles:', error);
     return [];
   }
 }
@@ -521,8 +516,6 @@ export class AuthService {
       const newUser = await fetchUserWithRole(userId, role);
 
       if (!newUser) {
-        // Log the actual userId being used for debugging
-        console.error(`Failed to fetch user after registration. User ID used: ${userId}, Email: ${sanitizedEmail}`);
         securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, `Failed to fetch created user with ID: ${userId}`);
         return {
           success: false,
