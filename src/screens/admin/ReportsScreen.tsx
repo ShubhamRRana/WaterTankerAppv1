@@ -16,6 +16,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useBookingStore } from '../../store/bookingStore';
 import { useAuthStore } from '../../store/authStore';
 import { Typography, AdminMenuDrawer } from '../../components/common';
+import { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
@@ -25,6 +26,8 @@ import {
   calculateYearlyData,
   calculateMonthlyBreakdown,
 } from '../../utils/reportCalculations';
+import { errorLogger } from '../../utils/errorLogger';
+import { exportReportToExcel } from '../../utils/excelExport';
 
 type ReportsScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Reports'>;
 
@@ -140,13 +143,31 @@ const ReportsScreen: React.FC = () => {
     }
   };
 
-  const handleMenuNavigate = (route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile') => {
+  const handleMenuNavigate = (route: AdminRoute) => {
     if (route === 'Reports') {
       // Already on Reports, just close menu
       return;
     }
     navigation.navigate(route);
   };
+
+  const handleDownloadExcel = async () => {
+    try {
+      await exportReportToExcel(
+        periodType,
+        selectedYear,
+        selectedMonth,
+        totalRevenue,
+        totalOrders,
+        dailyBreakdown,
+        monthlyBreakdown
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to export report. Please try again.');
+      errorLogger.medium('Failed to export report', error);
+    }
+  };
+
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -174,6 +195,13 @@ const ReportsScreen: React.FC = () => {
                 Comprehensive business insights
               </Typography>
             </View>
+            <TouchableOpacity 
+              style={styles.downloadButton} 
+              onPress={handleDownloadExcel}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="download-outline" size={24} color={UI_CONFIG.colors.text} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -433,6 +461,7 @@ const ReportsScreen: React.FC = () => {
             ))}
           </View>
         )}
+
       </ScrollView>
       <AdminMenuDrawer
         visible={menuVisible}
@@ -468,6 +497,10 @@ const styles = StyleSheet.create({
   menuButton: {
     padding: 8,
     marginRight: 12,
+  },
+  downloadButton: {
+    padding: 8,
+    marginLeft: 12,
   },
   headerTextContainer: {
     flex: 1,

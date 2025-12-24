@@ -217,6 +217,7 @@ export interface RegisterForm {
   name: string;
   role: UserRole;
   phone: string; // Required: for contact purposes
+  businessName?: string; // Optional: for admin registration
 }
 
 export interface BookingForm {

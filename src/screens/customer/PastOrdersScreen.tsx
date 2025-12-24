@@ -25,6 +25,7 @@ import {
   calculateMonthlyBreakdown,
 } from '../../utils/reportCalculations';
 import { errorLogger } from '../../utils/errorLogger';
+import { exportReportToExcel } from '../../utils/excelExport';
 
 const { width } = Dimensions.get('window');
 
@@ -140,6 +141,7 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
     navigation.navigate(route);
   };
 
+
   const monthlyData = periodType === 'month' 
     ? calculateMonthlyData(bookings, selectedYear, selectedMonth)
     : calculateYearlyData(bookings, selectedYear);
@@ -152,6 +154,23 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
     ? calculateMonthlyBreakdown(bookings, selectedYear)
     : [];
 
+  const handleDownloadExcel = async () => {
+    try {
+      await exportReportToExcel(
+        periodType,
+        selectedYear,
+        selectedMonth,
+        totalRevenue,
+        totalOrders,
+        dailyBreakdown,
+        monthlyBreakdown
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to export report. Please try again.');
+      errorLogger.medium('Failed to export report', error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView 
@@ -162,22 +181,30 @@ const PastOrdersScreen: React.FC<PastOrdersScreenProps> = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.menuButton} 
-            onPress={() => setMenuVisible(true)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
-          </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Typography variant="h2" style={styles.title}>
-              Past Orders
-            </Typography>
-            <Typography variant="body" style={styles.subtitle}>
-              Your order history & analytics
-            </Typography>
+            <TouchableOpacity 
+              style={styles.menuButton} 
+              onPress={() => setMenuVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+            </TouchableOpacity>
+            <View style={styles.headerTextContainer}>
+              <Typography variant="h2" style={styles.title}>
+                Past Orders
+              </Typography>
+              <Typography variant="body" style={styles.subtitle}>
+                Your order history & analytics
+              </Typography>
+            </View>
+            <TouchableOpacity 
+              style={styles.downloadButton} 
+              onPress={handleDownloadExcel}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="download-outline" size={24} color={UI_CONFIG.colors.text} />
+            </TouchableOpacity>
           </View>
-          <View style={{ width: 24 }} />
         </View>
 
         {/* Period Type Toggle */}
@@ -461,18 +488,25 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
     backgroundColor: UI_CONFIG.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: UI_CONFIG.colors.border,
   },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   menuButton: {
+    padding: 8,
     marginRight: 12,
   },
-  headerContent: {
+  downloadButton: {
+    padding: 8,
+    marginLeft: 12,
+  },
+  headerTextContainer: {
     flex: 1,
   },
   title: {
