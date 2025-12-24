@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Modal,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Card from '../common/Card';
@@ -15,9 +16,9 @@ import { UI_CONFIG } from '../../constants/config';
 interface AgencySelectionModalProps {
   visible: boolean;
   onClose: () => void;
-  agencies: Array<{ id: string; name: string }>;
+  agencies: Array<{ id: string; name: string; ownerName?: string }>;
   selectedAgencyId: string | null;
-  onSelectAgency: (agency: { id: string; name: string }) => void;
+  onSelectAgency: (agency: { id: string; name: string; ownerName?: string }) => void;
   loading: boolean;
 }
 
@@ -29,6 +30,28 @@ const AgencySelectionModal: React.FC<AgencySelectionModalProps> = ({
   onSelectAgency,
   loading,
 }) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter agencies based on search query (business name or owner name)
+  const filteredAgencies = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return agencies;
+    }
+    const query = searchQuery.toLowerCase().trim();
+    return agencies.filter(agency => {
+      const businessName = agency.name?.toLowerCase() || '';
+      const ownerName = agency.ownerName?.toLowerCase() || '';
+      return businessName.includes(query) || ownerName.includes(query);
+    });
+  }, [agencies, searchQuery]);
+
+  // Reset search when modal closes
+  React.useEffect(() => {
+    if (!visible) {
+      setSearchQuery('');
+    }
+  }, [visible]);
+
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
       <View style={styles.modalContainer}>
@@ -40,15 +63,34 @@ const AgencySelectionModal: React.FC<AgencySelectionModalProps> = ({
           <View style={{ width: 24 }} />
         </View>
 
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color={UI_CONFIG.colors.textSecondary} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by business or owner name..."
+              placeholderTextColor={UI_CONFIG.colors.textSecondary}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color={UI_CONFIG.colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
         <ScrollView style={styles.modalContent}>
           {loading ? (
             <View style={styles.emptyState}>
               <LoadingSpinner />
               <Typography variant="body" style={styles.emptyStateText}>Loading agencies...</Typography>
             </View>
-          ) : agencies.length > 0 ? (
+          ) : filteredAgencies.length > 0 ? (
             <>
-              {agencies.map((agency, index) => (
+              {filteredAgencies.map((agency, index) => (
                 <Card
                   key={agency.id || `agency-${index}`}
                   style={[
@@ -59,6 +101,11 @@ const AgencySelectionModal: React.FC<AgencySelectionModalProps> = ({
                 >
                   <View style={styles.tankerInfo}>
                     <Typography variant="body" style={styles.tankerName}>{agency.name}</Typography>
+                    {agency.ownerName && (
+                      <Typography variant="caption" style={styles.ownerName}>
+                        Owner: {agency.ownerName}
+                      </Typography>
+                    )}
                   </View>
                   <Ionicons
                     name={selectedAgencyId === agency.id ? 'radio-button-on' : 'radio-button-off'}
@@ -71,8 +118,14 @@ const AgencySelectionModal: React.FC<AgencySelectionModalProps> = ({
           ) : (
             <View style={styles.emptyState}>
               <Ionicons name="business-outline" size={64} color={UI_CONFIG.colors.textSecondary} />
-              <Typography variant="body" style={styles.emptyStateText}>No agencies available</Typography>
-              <Typography variant="caption" style={styles.emptyStateSubtext}>Please contact support if you need assistance</Typography>
+              <Typography variant="body" style={styles.emptyStateText}>
+                {searchQuery.trim() ? 'No agencies found' : 'No agencies available'}
+              </Typography>
+              <Typography variant="caption" style={styles.emptyStateSubtext}>
+                {searchQuery.trim() 
+                  ? 'Try adjusting your search terms' 
+                  : 'Please contact support if you need assistance'}
+              </Typography>
             </View>
           )}
         </ScrollView>
@@ -101,6 +154,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: UI_CONFIG.colors.text,
   },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_CONFIG.colors.border,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: UI_CONFIG.colors.background,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: UI_CONFIG.colors.text,
+    marginLeft: 0,
+  },
   modalContent: {
     flex: 1,
     paddingHorizontal: 20,
@@ -125,6 +200,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: UI_CONFIG.colors.text,
     marginBottom: 4,
+  },
+  ownerName: {
+    fontSize: 14,
+    color: UI_CONFIG.colors.textSecondary,
+    marginTop: 2,
   },
   emptyState: {
     flex: 1,

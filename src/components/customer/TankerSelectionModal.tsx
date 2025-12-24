@@ -30,7 +30,7 @@ interface TankerSelectionModalProps {
     vehicleNumber: string;
   }) => void;
   loading: boolean;
-  selectedAgency: { id: string; name: string } | null;
+  selectedAgency: { id: string; name: string; ownerName?: string } | null;
 }
 
 const TankerSelectionModal: React.FC<TankerSelectionModalProps> = ({

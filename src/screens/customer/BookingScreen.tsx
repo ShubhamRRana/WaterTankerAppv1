@@ -48,7 +48,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
   const { fetchVehiclesByAgency } = useVehicleStore();
 
   const [selectedVehicle, setSelectedVehicle] = useState<{ id: string; capacity: number; amount: number; vehicleNumber: string } | null>(null);
-  const [selectedAgency, setSelectedAgency] = useState<{ id: string; name: string } | null>(null);
+  const [selectedAgency, setSelectedAgency] = useState<{ id: string; name: string; ownerName?: string } | null>(null);
   const [availableVehicles, setAvailableVehicles] = useState<Array<{ id: string; vehicleCapacity: number; amount: number; vehicleNumber: string }>>([]);
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState<string>('');
@@ -97,13 +97,14 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
   }, []);
 
   // Build tanker agencies list from admin users with business names
-  const tankerAgencies: Array<{ id: string; name: string }> = React.useMemo(() => {
+  const tankerAgencies: Array<{ id: string; name: string; ownerName?: string }> = React.useMemo(() => {
     return allUsers
       .filter(isAdminUser)
       .filter(admin => admin.businessName || admin.name)
       .map(admin => ({
         id: admin.id,
-        name: admin.businessName || admin.name || 'Unnamed Agency'
+        name: admin.businessName || admin.name || 'Unnamed Agency',
+        ownerName: admin.name
       }));
   }, [allUsers]);
 
@@ -166,7 +167,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
     setShowTankerModal(false);
   };
 
-  const handleAgencySelection = (agency: { id: string; name: string }) => {
+  const handleAgencySelection = (agency: { id: string; name: string; ownerName?: string }) => {
     setSelectedAgency(agency);
     setShowAgencyModal(false);
   };
@@ -452,6 +453,11 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
               <Typography variant="body" style={styles.selectionLabel}>
                 {selectedAgency ? selectedAgency.name : 'Choose tanker agency'}
               </Typography>
+              {selectedAgency?.ownerName && (
+                <Typography variant="caption" style={styles.selectionSubtext}>
+                  Owner: {selectedAgency.ownerName}
+                </Typography>
+              )}
             </View>
             <Ionicons name="chevron-forward" size={20} color={UI_CONFIG.colors.textSecondary} />
           </View>
