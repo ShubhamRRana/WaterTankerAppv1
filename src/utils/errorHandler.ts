@@ -196,7 +196,7 @@ export function handleError(
   const logContext = {
     ...context,
     errorCode: getErrorCode(normalizedError),
-    originalError: error instanceof Error ? error.message : String(error),
+    originalError: getErrorMessage(error),
   };
   
   errorLogger.log(

@@ -15,6 +15,8 @@ import {
   SubscriptionCallback,
   CollectionSubscriptionCallback,
   Unsubscribe,
+  PaginationOptions,
+  BookingQueryOptions,
 } from './dataAccess.interface';
 import { SubscriptionManager } from '../utils/subscriptionManager';
 import {
@@ -911,12 +913,27 @@ class SupabaseBookingDataAccess implements IBookingDataAccess {
     }
   }
 
-  async getBookings(): Promise<Booking[]> {
+  async getBookings(options?: PaginationOptions): Promise<Booking[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('bookings')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*');
+
+      // Apply sorting
+      const sortBy = options?.sortBy || 'created_at';
+      const sortOrder = options?.sortOrder || 'desc';
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+      // Apply pagination
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+      if (options?.offset !== undefined) {
+        const endRange = options.limit ? options.offset + options.limit - 1 : options.offset + 999;
+        query = query.range(options.offset, endRange);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
@@ -946,13 +963,28 @@ class SupabaseBookingDataAccess implements IBookingDataAccess {
     }
   }
 
-  async getBookingsByCustomer(customerId: string): Promise<Booking[]> {
+  async getBookingsByCustomer(customerId: string, options?: PaginationOptions): Promise<Booking[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('bookings')
         .select('*')
-        .eq('customer_id', customerId)
-        .order('created_at', { ascending: false });
+        .eq('customer_id', customerId);
+
+      // Apply sorting
+      const sortBy = options?.sortBy || 'created_at';
+      const sortOrder = options?.sortOrder || 'desc';
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+      // Apply pagination
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+      if (options?.offset !== undefined) {
+        const endRange = options.limit ? options.offset + options.limit - 1 : options.offset + 999;
+        query = query.range(options.offset, endRange);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
@@ -964,13 +996,33 @@ class SupabaseBookingDataAccess implements IBookingDataAccess {
     }
   }
 
-  async getBookingsByDriver(driverId: string): Promise<Booking[]> {
+  async getBookingsByDriver(driverId: string, options?: BookingQueryOptions): Promise<Booking[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('bookings')
         .select('*')
-        .eq('driver_id', driverId)
-        .order('created_at', { ascending: false });
+        .eq('driver_id', driverId);
+
+      // Apply status filtering
+      if (options?.status && options.status.length > 0) {
+        query = query.in('status', options.status);
+      }
+
+      // Apply sorting
+      const sortBy = options?.sortBy || 'created_at';
+      const sortOrder = options?.sortOrder || 'desc';
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+      // Apply pagination
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+      if (options?.offset !== undefined) {
+        const endRange = options.limit ? options.offset + options.limit - 1 : options.offset + 999;
+        query = query.range(options.offset, endRange);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
@@ -982,14 +1034,29 @@ class SupabaseBookingDataAccess implements IBookingDataAccess {
     }
   }
 
-  async getAvailableBookings(): Promise<Booking[]> {
+  async getAvailableBookings(options?: PaginationOptions): Promise<Booking[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('bookings')
         .select('*')
         .eq('status', 'pending')
-        .is('driver_id', null)
-        .order('created_at', { ascending: false });
+        .is('driver_id', null);
+
+      // Apply sorting
+      const sortBy = options?.sortBy || 'created_at';
+      const sortOrder = options?.sortOrder || 'desc';
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+      // Apply pagination
+      if (options?.limit) {
+        query = query.limit(options.limit);
+      }
+      if (options?.offset !== undefined) {
+        const endRange = options.limit ? options.offset + options.limit - 1 : options.offset + 999;
+        query = query.range(options.offset, endRange);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;

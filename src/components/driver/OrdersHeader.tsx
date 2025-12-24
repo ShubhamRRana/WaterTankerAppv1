@@ -5,7 +5,7 @@ import { Typography } from '../common';
 import { UI_CONFIG } from '../../constants/config';
 
 interface OrdersHeaderProps {
-  userName?: string;
+  userName: string | undefined;
   onLogout: () => void;
 }
 

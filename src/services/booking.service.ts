@@ -1,5 +1,7 @@
 import { dataAccess } from '../lib/index';
 import { Booking, BookingStatus } from '../types/index';
+import { handleAsyncOperationWithRethrow, handleError } from '../utils/errorHandler';
+import type { PaginationOptions, BookingQueryOptions } from '../lib/dataAccess.interface';
 
 /**
  * Booking Service
@@ -26,20 +28,24 @@ export class BookingService {
    * Note: bookingData.customerId, agencyId, driverId should be id values
    */
   static async createBooking(bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    try {
-      const id = dataAccess.generateId();
-      const newBooking: Booking = {
-        ...bookingData,
-        id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const id = dataAccess.generateId();
+        const newBooking: Booking = {
+          ...bookingData,
+          id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-      await dataAccess.bookings.saveBooking(newBooking);
-      return id;
-    } catch (error) {
-      throw error;
-    }
+        await dataAccess.bookings.saveBooking(newBooking);
+        return id;
+      },
+      {
+        context: { operation: 'createBooking', customerId: bookingData.customerId, agencyId: bookingData.agencyId },
+        userFacing: false,
+      }
+    );
   }
 
   /**
@@ -50,60 +56,68 @@ export class BookingService {
     status: BookingStatus,
     additionalData?: Partial<Booking>
   ): Promise<void> {
-    try {
-      const existingBooking = await dataAccess.bookings.getBookingById(bookingId);
-      if (!existingBooking) {
-        throw new Error('Booking not found');
-      }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const existingBooking = await dataAccess.bookings.getBookingById(bookingId);
+        if (!existingBooking) {
+          throw new Error('Booking not found');
+        }
 
-      const updates: Partial<Booking> = {
-        status,
-        updatedAt: new Date(),
-      };
+        const updates: Partial<Booking> = {
+          status,
+          updatedAt: new Date(),
+        };
 
-      if (status === 'accepted') {
-        updates.acceptedAt = new Date();
-      } else if (status === 'delivered') {
-        updates.deliveredAt = new Date();
-      }
+        if (status === 'accepted') {
+          updates.acceptedAt = new Date();
+        } else if (status === 'delivered') {
+          updates.deliveredAt = new Date();
+        }
 
-      // Merge additional data
-      if (additionalData) {
-        Object.assign(updates, additionalData);
-      }
+        // Merge additional data
+        if (additionalData) {
+          Object.assign(updates, additionalData);
+        }
 
-      await dataAccess.bookings.updateBooking(bookingId, updates);
+        await dataAccess.bookings.updateBooking(bookingId, updates);
 
-      // Keep driver earnings in sync with monthly delivered bookings
-      if (status === 'delivered') {
-        const driverId = additionalData?.driverId || existingBooking.driverId;
-        if (driverId) {
-          try {
-            const now = new Date();
-            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-            const monthlyDeliveredBookings = await this.getBookingsForEarnings(driverId, {
-              startDate: monthStart,
-              status: ['delivered'],
-            });
+        // Keep driver earnings in sync with monthly delivered bookings
+        if (status === 'delivered') {
+          const driverId = additionalData?.driverId || existingBooking.driverId;
+          if (driverId) {
+            try {
+              const now = new Date();
+              const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+              const monthlyDeliveredBookings = await this.getBookingsForEarnings(driverId, {
+                startDate: monthStart,
+                status: ['delivered'],
+              });
 
-            const monthlyEarnings = monthlyDeliveredBookings.reduce(
-              (sum, booking) => sum + (booking.totalPrice || 0),
-              0
-            );
-            const monthlyCompleted = monthlyDeliveredBookings.length;
+              const monthlyEarnings = monthlyDeliveredBookings.reduce(
+                (sum, booking) => sum + (booking.totalPrice || 0),
+                0
+              );
+              const monthlyCompleted = monthlyDeliveredBookings.length;
 
-            await dataAccess.users.updateUserProfile(driverId, {
-              totalEarnings: monthlyEarnings,
-              completedOrders: monthlyCompleted,
-            });
-          } catch (earningsError) {
-            // Failed to update driver monthly earnings
+              await dataAccess.users.updateUserProfile(driverId, {
+                totalEarnings: monthlyEarnings,
+                completedOrders: monthlyCompleted,
+              });
+            } catch (earningsError) {
+              // Failed to update driver monthly earnings - log but don't fail the main operation
+              handleError(earningsError, {
+                context: { operation: 'updateDriverEarnings', driverId, bookingId },
+                userFacing: false,
+              });
+            }
           }
         }
+      },
+      {
+        context: { operation: 'updateBookingStatus', bookingId, status },
+        userFacing: false,
       }
-    } catch (error) {
-      throw error;
-    }
+    );
   }
 
   /**
@@ -114,14 +128,24 @@ export class BookingService {
     customerId: string, 
     options?: { limit?: number; offset?: number; sortBy?: 'createdAt' | 'updatedAt'; sortOrder?: 'asc' | 'desc' }
   ): Promise<Booking[]> {
-    try {
-      const bookings = await dataAccess.bookings.getBookingsByCustomer(customerId);
-      // Note: options (limit, offset, sortBy, sortOrder) are not yet supported in dataAccess interface
-      // This is a limitation that may need to be addressed in future updates
-      return bookings;
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        // Map service options to data access options (camelCase to snake_case)
+        const paginationOptions: PaginationOptions = {
+          limit: options?.limit,
+          offset: options?.offset,
+          sortBy: options?.sortBy === 'createdAt' ? 'created_at' : options?.sortBy === 'updatedAt' ? 'updated_at' : undefined,
+          sortOrder: options?.sortOrder,
+        };
+        
+        const bookings = await dataAccess.bookings.getBookingsByCustomer(customerId, paginationOptions);
+        return bookings;
+      },
+      {
+        context: { operation: 'getBookingsByCustomer', customerId, options },
+        userFacing: false,
+      }
+    );
   }
 
   /**
@@ -131,14 +155,24 @@ export class BookingService {
   static async getAvailableBookings(
     options?: { limit?: number; offset?: number; sortBy?: 'createdAt'; sortOrder?: 'asc' | 'desc' }
   ): Promise<Booking[]> {
-    try {
-      const bookings = await dataAccess.bookings.getAvailableBookings();
-      // Note: options (limit, offset, sortBy, sortOrder) are not yet supported in dataAccess interface
-      // This is a limitation that may need to be addressed in future updates
-      return bookings;
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        // Map service options to data access options (camelCase to snake_case)
+        const paginationOptions: PaginationOptions = {
+          limit: options?.limit,
+          offset: options?.offset,
+          sortBy: options?.sortBy === 'createdAt' ? 'created_at' : undefined,
+          sortOrder: options?.sortOrder,
+        };
+        
+        const bookings = await dataAccess.bookings.getAvailableBookings(paginationOptions);
+        return bookings;
+      },
+      {
+        context: { operation: 'getAvailableBookings', options },
+        userFacing: false,
+      }
+    );
   }
 
   /**
@@ -156,14 +190,27 @@ export class BookingService {
       sortOrder?: 'asc' | 'desc' 
     }
   ): Promise<Booking[]> {
-    try {
-      const bookings = await dataAccess.bookings.getBookingsByDriver(driverId);
-      // Note: options (status, limit, offset, sortBy, sortOrder) are not yet supported in dataAccess interface
-      // This is a limitation that may need to be addressed in future updates
-      return bookings;
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        // Map service options to data access options (camelCase to snake_case)
+        const queryOptions: BookingQueryOptions = {
+          status: options?.status,
+          limit: options?.limit,
+          offset: options?.offset,
+          sortBy: options?.sortBy === 'createdAt' ? 'created_at' : 
+                  options?.sortBy === 'updatedAt' ? 'updated_at' : 
+                  options?.sortBy === 'deliveredAt' ? 'delivered_at' : undefined,
+          sortOrder: options?.sortOrder,
+        };
+        
+        const bookings = await dataAccess.bookings.getBookingsByDriver(driverId, queryOptions);
+        return bookings;
+      },
+      {
+        context: { operation: 'getBookingsByDriver', driverId, options },
+        userFacing: false,
+      }
+    );
   }
 
   /**
@@ -178,50 +225,71 @@ export class BookingService {
       status?: BookingStatus[];
     }
   ): Promise<Booking[]> {
-    try {
-      // Get all bookings for driver and filter client-side
-      const allBookings = await dataAccess.bookings.getBookingsByDriver(driverId);
-      
-      // Filter by status (default to delivered for earnings)
-      const statusFilter = options?.status || ['delivered'];
-      let filtered = allBookings.filter(b => statusFilter.includes(b.status));
-      
-      // Filter by date range if provided
-      if (options?.startDate) {
-        filtered = filtered.filter(b => b.deliveredAt && b.deliveredAt >= options.startDate!);
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        // Get all bookings for driver and filter client-side
+        const allBookings = await dataAccess.bookings.getBookingsByDriver(driverId);
+        
+        // Filter by status (default to delivered for earnings)
+        const statusFilter = options?.status || ['delivered'];
+        let filtered = allBookings.filter(b => statusFilter.includes(b.status));
+        
+        // Filter by date range if provided
+        if (options?.startDate) {
+          filtered = filtered.filter(b => b.deliveredAt && b.deliveredAt >= options.startDate!);
+        }
+        if (options?.endDate) {
+          filtered = filtered.filter(b => b.deliveredAt && b.deliveredAt <= options.endDate!);
+        }
+        
+        return filtered;
+      },
+      {
+        context: { operation: 'getBookingsForEarnings', driverId, options },
+        userFacing: false,
       }
-      if (options?.endDate) {
-        filtered = filtered.filter(b => b.deliveredAt && b.deliveredAt <= options.endDate!);
-      }
-      
-      return filtered;
-    } catch (error) {
-      throw error;
-    }
+    );
   }
 
   /**
    * Get all bookings (admin only)
+   * @param options - Optional pagination and sorting options
    */
-  static async getAllBookings(): Promise<Booking[]> {
-    try {
-      const bookings = await dataAccess.bookings.getBookings();
-      return bookings;
-    } catch (error) {
-      throw error;
-    }
+  static async getAllBookings(options?: { limit?: number; offset?: number; sortBy?: 'createdAt' | 'updatedAt'; sortOrder?: 'asc' | 'desc' }): Promise<Booking[]> {
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        // Map service options to data access options (camelCase to snake_case)
+        const paginationOptions: PaginationOptions = {
+          limit: options?.limit,
+          offset: options?.offset,
+          sortBy: options?.sortBy === 'createdAt' ? 'created_at' : options?.sortBy === 'updatedAt' ? 'updated_at' : undefined,
+          sortOrder: options?.sortOrder,
+        };
+        
+        const bookings = await dataAccess.bookings.getBookings(paginationOptions);
+        return bookings;
+      },
+      {
+        context: { operation: 'getAllBookings', options },
+        userFacing: false,
+      }
+    );
   }
 
   /**
    * Get a single booking by ID
    */
   static async getBookingById(bookingId: string): Promise<Booking | null> {
-    try {
-      const booking = await dataAccess.bookings.getBookingById(bookingId);
-      return booking;
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const booking = await dataAccess.bookings.getBookingById(bookingId);
+        return booking;
+      },
+      {
+        context: { operation: 'getBookingById', bookingId },
+        userFacing: false,
+      }
+    );
   }
 
   /**
@@ -239,14 +307,18 @@ export class BookingService {
    * Cancel a booking
    */
   static async cancelBooking(bookingId: string, reason: string): Promise<void> {
-    try {
-      await dataAccess.bookings.updateBooking(bookingId, {
-        status: 'cancelled',
-        cancellationReason: reason,
-        updatedAt: new Date(),
-      });
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        await dataAccess.bookings.updateBooking(bookingId, {
+          status: 'cancelled',
+          cancellationReason: reason,
+          updatedAt: new Date(),
+        });
+      },
+      {
+        context: { operation: 'cancelBooking', bookingId, reason },
+        userFacing: false,
+      }
+    );
   }
 }

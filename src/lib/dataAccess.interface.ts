@@ -22,6 +22,23 @@ export type CollectionSubscriptionCallback<T> = (data: T | null, eventType: 'INS
 export type Unsubscribe = () => void;
 
 /**
+ * Pagination and sorting options for queries
+ */
+export interface PaginationOptions {
+  limit?: number;
+  offset?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+/**
+ * Booking query options with filtering and pagination
+ */
+export interface BookingQueryOptions extends PaginationOptions {
+  status?: string[];
+}
+
+/**
  * User data access interface
  */
 export interface IUserDataAccess {
@@ -42,11 +59,11 @@ export interface IUserDataAccess {
 export interface IBookingDataAccess {
   saveBooking(booking: Booking): Promise<void>;
   updateBooking(bookingId: string, updates: Partial<Booking>): Promise<void>;
-  getBookings(): Promise<Booking[]>;
+  getBookings(options?: PaginationOptions): Promise<Booking[]>;
   getBookingById(bookingId: string): Promise<Booking | null>;
-  getBookingsByCustomer(customerId: string): Promise<Booking[]>;
-  getBookingsByDriver(driverId: string): Promise<Booking[]>;
-  getAvailableBookings(): Promise<Booking[]>;
+  getBookingsByCustomer(customerId: string, options?: PaginationOptions): Promise<Booking[]>;
+  getBookingsByDriver(driverId: string, options?: BookingQueryOptions): Promise<Booking[]>;
+  getAvailableBookings(options?: PaginationOptions): Promise<Booking[]>;
   subscribeToBookingUpdates(bookingId: string, callback: SubscriptionCallback<Booking>): Unsubscribe;
 }
 

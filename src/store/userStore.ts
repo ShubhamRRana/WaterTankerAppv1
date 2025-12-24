@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { User, UserRole } from '../types';
 import { UserService } from '../services/user.service';
+import { handleError } from '../utils/errorHandler';
+import { ErrorSeverity } from '../utils/errorLogger';
+import { getErrorMessage } from '../utils/errors';
 
 interface UserState {
   users: User[];
@@ -36,7 +39,12 @@ export const useUserStore = create<UserState>((set, get) => ({
       const users = await UserService.getAllUsers();
       set({ users, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch users';
+      handleError(error, {
+        context: { operation: 'fetchAllUsers' },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to fetch users');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -48,7 +56,12 @@ export const useUserStore = create<UserState>((set, get) => ({
       const users = await UserService.getUsersByRole(role);
       set({ users, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch users by role';
+      handleError(error, {
+        context: { operation: 'fetchUsersByRole', role },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to fetch users by role');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -63,7 +76,12 @@ export const useUserStore = create<UserState>((set, get) => ({
       const { users } = get();
       set({ users: [...users, newUser], isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to add user';
+      handleError(error, {
+        context: { operation: 'addUser', userData: { email: userData.email, role: userData.role } },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to add user');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -81,7 +99,12 @@ export const useUserStore = create<UserState>((set, get) => ({
       );
       set({ users: updatedUsers, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update user';
+      handleError(error, {
+        context: { operation: 'updateUser', userId },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to update user');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -101,7 +124,12 @@ export const useUserStore = create<UserState>((set, get) => ({
         isLoading: false 
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete user';
+      handleError(error, {
+        context: { operation: 'deleteUser', userId },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to delete user');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }

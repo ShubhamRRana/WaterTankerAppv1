@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../../constants/config';
+import { handleError } from '../../utils/errorHandler';
 import { AuthStackParamList, UserRole } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -266,8 +267,10 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
       await register(sanitizedEmail, password, sanitizedName, role, sanitizedPhone, sanitizedBusinessName.trim() || undefined);
       Alert.alert('Success', SUCCESS_MESSAGES.auth.registerSuccess);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : ERROR_MESSAGES.auth.userExists;
-      Alert.alert('Registration Failed', errorMessage);
+      handleError(error, {
+        context: { operation: 'register', email: sanitizedEmail, role },
+        userFacing: true,
+      });
     }
   };
 

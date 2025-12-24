@@ -7,6 +7,7 @@
 
 import { supabase } from '../lib/supabaseClient';
 import * as ImagePicker from 'expo-image-picker';
+import { handleAsyncOperationWithRethrow, handleError } from '../utils/errorHandler';
 
 export interface UploadResult {
   url: string;
@@ -26,6 +27,10 @@ export class StorageService {
       }
       return true;
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'requestImagePickerPermissions' },
+        userFacing: false,
+      });
       return false;
     }
   }
@@ -53,6 +58,10 @@ export class StorageService {
 
       return result.assets[0].uri;
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'pickImage' },
+        userFacing: false,
+      });
       throw error;
     }
   }
@@ -108,6 +117,10 @@ export class StorageService {
         path: filePath,
       };
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'uploadQRCodeImage', adminId, accountId },
+        userFacing: false,
+      });
       throw error;
     }
   }
@@ -126,6 +139,10 @@ export class StorageService {
         throw new Error(`Failed to delete image: ${error.message}`);
       }
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'deleteQRCodeImage', filePath },
+        userFacing: false,
+      });
       throw error;
     }
   }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,7 +12,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
 import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import { Typography } from '../../components/common';
 import { Address, isCustomerUser } from '../../types';
@@ -128,7 +127,7 @@ const SavedAddressesScreen: React.FC<SavedAddressesScreenProps> = ({ navigation 
               
               // If we deleted the default address, make the first remaining address default
               if (updatedAddresses.length > 0 && !updatedAddresses.some(addr => addr.isDefault)) {
-                updatedAddresses[0].isDefault = true;
+                updatedAddresses[0]!.isDefault = true;
               }
 
               setAddresses(updatedAddresses);

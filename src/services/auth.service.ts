@@ -7,6 +7,8 @@ import { SanitizationUtils } from '../utils/sanitization';
 import { ValidationUtils } from '../utils/validation';
 import { dataAccess } from '../lib/index';
 import { deserializeDate } from '../utils/dateSerialization';
+import { handleError } from '../utils/errorHandler';
+import { getErrorMessage } from '../utils/errors';
 
 /**
  * Result of authentication operations
@@ -162,6 +164,10 @@ async function fetchUserWithRole(userId: string, role?: UserRole, retryCount: nu
 
     return null;
   } catch (error) {
+    handleError(error, {
+      context: { operation: 'fetchUserWithRole', userId, role },
+      userFacing: false,
+    });
     return null;
   }
 }
@@ -197,6 +203,10 @@ async function getUserRoles(userId: string): Promise<UserRole[]> {
 
     return roles.map(r => r.role as UserRole);
   } catch (error) {
+    handleError(error, {
+      context: { operation: 'getUserRoles', userId },
+      userFacing: false,
+    });
     return [];
   }
 }
@@ -307,41 +317,24 @@ export class AuthService {
       rateLimiter.record('register', sanitizedEmail);
 
       // Check if user already exists in users table
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:310',message:'Checking if user exists',data:{email:sanitizedEmail,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       const { data: existingUser, error: userCheckError } = await supabase
         .from('users')
         .select('id')
         .eq('email', sanitizedEmail.toLowerCase())
         .maybeSingle();
 
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:315',message:'User existence check result',data:{existingUser:!!existingUser,userId:existingUser?.id,userCheckError:userCheckError?.message,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-
       let userId: string;
 
       if (existingUser) {
         // User already exists - verify password by attempting to sign in
         // This ensures the user owns the account before adding a new role
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:321',message:'Attempting sign in with password for existing user',data:{email:sanitizedEmail,existingUserId:existingUser.id,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: sanitizedEmail,
           password: password,
         });
 
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:327',message:'Sign in result',data:{authSuccess:!!authData?.user,authUserId:authData?.user?.id,authError:authError?.message,existingUserId:existingUser.id,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-
         if (authError || !authData.user) {
           securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, authError?.message || 'Invalid password for existing account');
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:330',message:'Sign in failed - returning error',data:{authError:authError?.message,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-          // #endregion
           return {
             success: false,
             error: authError?.message || 'Invalid password. Please use the correct password for this email address.'
@@ -351,9 +344,6 @@ export class AuthService {
         // Verify the authenticated user ID matches the existing user ID
         if (authData.user.id !== existingUser.id) {
           securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, 'User ID mismatch');
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:337',message:'User ID mismatch detected',data:{authUserId:authData.user.id,existingUserId:existingUser.id,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
           await supabase.auth.signOut();
           return {
             success: false,
@@ -362,9 +352,6 @@ export class AuthService {
         }
 
         // User exists and password is correct - check if they already have this role
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:345',message:'Checking if role already exists',data:{userId:existingUser.id,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         const { data: existingRole, error: roleCheckError } = await supabase
           .from('user_roles')
           .select('*')
@@ -372,15 +359,8 @@ export class AuthService {
           .eq('role', role)
           .maybeSingle();
 
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:352',message:'Role existence check result',data:{roleExists:!!existingRole,roleCheckError:roleCheckError?.message,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
-
         if (existingRole) {
           securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, 'User already exists');
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:355',message:'Role already exists - returning error',data:{role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
           await supabase.auth.signOut();
           return {
             success: false,
@@ -392,19 +372,12 @@ export class AuthService {
         userId = existingUser.id;
 
         // Create user role (now authenticated, so RLS will allow)
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:365',message:'Attempting to insert new role',data:{userId,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         const { error: roleError } = await supabase
           .from('user_roles')
           .insert({
             user_id: userId,
             role: role,
           });
-
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:373',message:'Role insertion result',data:{roleError:roleError?.message,roleErrorCode:roleError?.code,roleErrorDetails:roleError?.details,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
 
         if (roleError) {
           securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, roleError.message);
@@ -434,9 +407,6 @@ export class AuthService {
       } else {
         // User doesn't exist in users table - try to create in Supabase Auth first
         // But if email already exists in Supabase Auth, try to sign in instead
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:399',message:'Attempting signUp for new user',data:{email:sanitizedEmail,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: sanitizedEmail,
           password: password,
@@ -448,30 +418,16 @@ export class AuthService {
           }
         });
 
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:410',message:'SignUp result',data:{authSuccess:!!authData?.user,authUserId:authData?.user?.id,authError:authError?.message,authErrorCode:authError?.status,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
-
         // If signUp fails because email already exists in Supabase Auth, try to sign in instead
         // This handles the case where user exists in Auth but not in users table
         if (authError && (authError.message?.includes('already registered') || authError.message?.includes('already exists') || authError.status === 422)) {
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:454',message:'Email exists in Auth, attempting sign in instead',data:{email:sanitizedEmail,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-          // #endregion
           const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
             email: sanitizedEmail,
             password: password,
           });
 
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:461',message:'Sign in result after signUp failure',data:{authSuccess:!!signInData?.user,authUserId:signInData?.user?.id,signInError:signInError?.message,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-          // #endregion
-
           if (signInError || !signInData?.user) {
             securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, signInError?.message || 'Invalid password for existing account');
-            // #region agent log
-            fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:467',message:'Sign in failed after signUp failure',data:{signInError:signInError?.message,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-            // #endregion
             return {
               success: false,
               error: signInError?.message || 'Invalid password. Please use the correct password for this email address.'
@@ -547,9 +503,6 @@ export class AuthService {
           const errorMessage = authError ? (authError as any).message : 'Registration failed';
           const errorStatus = authError ? (authError as any).status : undefined;
           securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, errorMessage);
-          // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/7e273b3e-ec70-4d5e-8ff1-a496bf1ac1e8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'auth.service.ts:413',message:'SignUp failed - returning error',data:{authError:errorMessage,authErrorCode:errorStatus,role},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-          // #endregion
           return {
             success: false,
             error: errorMessage
@@ -705,11 +658,11 @@ export class AuthService {
         SanitizationUtils.sanitizeEmail(email),
         role,
         false,
-        error instanceof Error ? error.message : 'Registration failed'
+        getErrorMessage(error, 'Registration failed')
       );
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Registration failed'
+        error: getErrorMessage(error, 'Registration failed')
       };
     }
   }
@@ -902,11 +855,11 @@ export class AuthService {
       securityLogger.logAuthAttempt(
         SanitizationUtils.sanitizeEmail(email),
         false,
-        error instanceof Error ? error.message : 'Login failed'
+        getErrorMessage(error, 'Login failed')
       );
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Login failed'
+        error: getErrorMessage(error, 'Login failed')
       };
     }
   }
@@ -994,7 +947,7 @@ export class AuthService {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Login failed'
+        error: getErrorMessage(error, 'Login failed')
       };
     }
   }
@@ -1028,6 +981,10 @@ export class AuthService {
         userId
       );
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'logout', userId },
+        userFacing: false,
+      });
       throw error;
     }
   }
@@ -1066,7 +1023,10 @@ export class AuthService {
         return await fetchUserWithRole(session.user.id);
       }
     } catch (error) {
-      // Error logged via errorLogger if needed
+      handleError(error, {
+        context: { operation: 'getCurrentUserData', id },
+        userFacing: false,
+      });
       return null;
     }
   }
@@ -1105,6 +1065,10 @@ export class AuthService {
       // Update in database
       await dataAccess.users.updateUserProfile(id, updatedUser);
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'updateUserProfile', id },
+        userFacing: false,
+      });
       throw error;
     }
   }
@@ -1133,7 +1097,10 @@ export class AuthService {
       // Supabase doesn't need initialization like LocalStorage
       // Database schema is already set up
     } catch (error) {
-      // Error logged via errorLogger if needed
+      handleError(error, {
+        context: { operation: 'initializeApp' },
+        userFacing: false,
+      });
     }
   }
 

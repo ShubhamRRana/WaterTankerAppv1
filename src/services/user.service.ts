@@ -2,6 +2,7 @@
 
 import { dataAccess } from '../lib';
 import { User, UserRole } from '../types/index';
+import { handleAsyncOperationWithRethrow, handleError } from '../utils/errorHandler';
 
 /**
  * UserService - Handles user management operations for admin users
@@ -28,36 +29,48 @@ export class UserService {
    * Get all users from the data access layer
    */
   static async getAllUsers(): Promise<User[]> {
-    try {
-      const users = await dataAccess.users.getUsers();
-      return users;
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const users = await dataAccess.users.getUsers();
+        return users;
+      },
+      {
+        context: { operation: 'getAllUsers' },
+        userFacing: false,
+      }
+    );
   }
 
   /**
    * Get users by role
    */
   static async getUsersByRole(role: UserRole): Promise<User[]> {
-    try {
-      const allUsers = await dataAccess.users.getUsers();
-      return allUsers.filter(u => u.role === role);
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const allUsers = await dataAccess.users.getUsers();
+        return allUsers.filter(u => u.role === role);
+      },
+      {
+        context: { operation: 'getUsersByRole', role },
+        userFacing: false,
+      }
+    );
   }
 
   /**
    * Get a single user by id (primary key for fetching users)
    */
   static async getUserById(id: string): Promise<User | null> {
-    try {
-      const user = await dataAccess.users.getUserById(id);
-      return user;
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const user = await dataAccess.users.getUserById(id);
+        return user;
+      },
+      {
+        context: { operation: 'getUserById', id },
+        userFacing: false,
+      }
+    );
   }
 
   /**
@@ -65,19 +78,23 @@ export class UserService {
    * Returns a Map of userId -> User for O(1) lookup
    */
   static async getUsersByIds(userIds: string[]): Promise<Map<string, User>> {
-    try {
-      const allUsers = await dataAccess.users.getUsers();
-      const userMap = new Map<string, User>();
-      userIds.forEach(id => {
-        const user = allUsers.find(u => u.id === id);
-        if (user) {
-          userMap.set(id, user);
-        }
-      });
-      return userMap;
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const allUsers = await dataAccess.users.getUsers();
+        const userMap = new Map<string, User>();
+        userIds.forEach(id => {
+          const user = allUsers.find(u => u.id === id);
+          if (user) {
+            userMap.set(id, user);
+          }
+        });
+        return userMap;
+      },
+      {
+        context: { operation: 'getUsersByIds', userIdCount: userIds.length },
+        userFacing: false,
+      }
+    );
   }
 
   /**
@@ -85,40 +102,48 @@ export class UserService {
    * Note: This creates the user profile only. Auth account should be created via AuthService.register()
    */
   static async createUser(userData: Omit<User, 'id' | 'createdAt'>): Promise<User> {
-    try {
-      const id = dataAccess.generateId();
-      const newUser: User = {
-        ...userData,
-        id,
-        createdAt: new Date(),
-      };
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const id = dataAccess.generateId();
+        const newUser: User = {
+          ...userData,
+          id,
+          createdAt: new Date(),
+        };
 
-      await dataAccess.users.saveUserToCollection(newUser);
-      return newUser;
-    } catch (error) {
-      throw error;
-    }
+        await dataAccess.users.saveUserToCollection(newUser);
+        return newUser;
+      },
+      {
+        context: { operation: 'createUser', role: userData.role },
+        userFacing: false,
+      }
+    );
   }
 
   /**
    * Update user profile by id
    */
   static async updateUser(id: string, updates: Partial<User>): Promise<void> {
-    try {
-      const currentUser = await dataAccess.users.getUserById(id);
-      
-      if (!currentUser) {
-        throw new Error('User not found');
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const currentUser = await dataAccess.users.getUserById(id);
+        
+        if (!currentUser) {
+          throw new Error('User not found');
+        }
+
+        // Merge updates (excluding id and role)
+        const { id: userId, role, ...allowedUpdates } = updates;
+        const updatedUser = { ...currentUser, ...allowedUpdates };
+
+        await dataAccess.users.updateUserProfile(id, updatedUser);
+      },
+      {
+        context: { operation: 'updateUser', id },
+        userFacing: false,
       }
-
-      // Merge updates (excluding id and role)
-      const { id: userId, role, ...allowedUpdates } = updates;
-      const updatedUser = { ...currentUser, ...allowedUpdates };
-
-      await dataAccess.users.updateUserProfile(id, updatedUser);
-    } catch (error) {
-      throw error;
-    }
+    );
   }
 
   /**
@@ -126,14 +151,18 @@ export class UserService {
    * Note: This is a placeholder - actual deletion should be handled through AuthService
    */
   static async deleteUser(id: string): Promise<void> {
-    try {
-      // In Supabase, user deletion should be handled through AuthService
-      // This method is kept for compatibility but may need to be implemented
-      // based on your deletion requirements (soft delete vs hard delete)
-      throw new Error('User deletion should be handled through AuthService');
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        // In Supabase, user deletion should be handled through AuthService
+        // This method is kept for compatibility but may need to be implemented
+        // based on your deletion requirements (soft delete vs hard delete)
+        throw new Error('User deletion should be handled through AuthService');
+      },
+      {
+        context: { operation: 'deleteUser', id },
+        userFacing: false,
+      }
+    );
   }
 
   /**
@@ -163,6 +192,10 @@ export class UserService {
       isInitialized = true;
       callback([...allUsers]);
     }).catch(error => {
+      handleError(error, {
+        context: { operation: 'subscribeToAllUsersUpdates', phase: 'initialization' },
+        userFacing: false,
+      });
       isInitialized = true;
       callback([]);
     });
@@ -188,8 +221,11 @@ export class UserService {
           dataAccess.users.getUsers().then(users => {
             allUsers = users;
             callback([...allUsers]);
-          }).catch(() => {
-            // Error refetching users after delete
+          }).catch(error => {
+            handleError(error, {
+              context: { operation: 'subscribeToAllUsersUpdates', phase: 'refetchAfterDelete' },
+              userFacing: false,
+            });
           });
         }
       }

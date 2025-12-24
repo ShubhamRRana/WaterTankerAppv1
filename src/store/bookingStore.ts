@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { Booking, BookingStatus } from '../types';
 import { BookingService } from '../services/booking.service';
+import { handleError } from '../utils/errorHandler';
+import { getErrorMessage } from '../utils/errors';
 
 /**
  * Booking store state interface
@@ -67,7 +69,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       set({ isLoading: false });
       return bookingId;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
+      handleError(error, {
+        context: { operation: 'createBooking', bookingId: bookingData.customerId },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to create booking');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -88,7 +94,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       
       set({ bookings: updatedBookings, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update booking status';
+      handleError(error, {
+        context: { operation: 'updateBookingStatus', bookingId, status },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to update booking status');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -100,7 +110,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const bookings = await BookingService.getBookingsByCustomer(customerId);
       set({ bookings, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch customer bookings';
+      handleError(error, {
+        context: { operation: 'fetchCustomerBookings', customerId },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to fetch customer bookings');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -119,7 +133,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       });
       set({ bookings, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch available bookings';
+      handleError(error, {
+        context: { operation: 'fetchAvailableBookings' },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to fetch available bookings');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -139,7 +157,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       });
       set({ bookings, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch driver bookings';
+      handleError(error, {
+        context: { operation: 'fetchDriverBookings', driverId, options },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to fetch driver bookings');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -156,7 +178,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       set({ isLoading: false });
       return bookings;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch earnings bookings';
+      handleError(error, {
+        context: { operation: 'fetchDriverBookingsForEarnings', driverId, options },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to fetch earnings bookings');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -168,7 +194,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const bookings = await BookingService.getAllBookings();
       set({ bookings, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch all bookings';
+      handleError(error, {
+        context: { operation: 'fetchAllBookings' },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to fetch all bookings');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -181,7 +211,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       set({ isLoading: false });
       return booking;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch booking';
+      handleError(error, {
+        context: { operation: 'getBookingById', bookingId },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to fetch booking');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -202,7 +236,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       
       set({ bookings: updatedBookings, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to cancel booking';
+      handleError(error, {
+        context: { operation: 'cancelBooking', bookingId, reason },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to cancel booking');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }

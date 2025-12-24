@@ -6,10 +6,11 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
-import { Typography } from '../../components/common';
+// import { Typography } from '../../components/common';
 import { Booking } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { DriverStackParamList, DriverTabParamList } from '../../navigation/DriverNavigator';
+import { getErrorMessage } from '../../utils/errors';
 import OrdersHeader from '../../components/driver/OrdersHeader';
 import OrdersFilter, { OrderTab } from '../../components/driver/OrdersFilter';
 import OrdersList from '../../components/driver/OrdersList';
@@ -95,7 +96,7 @@ const OrdersScreen: React.FC = () => {
       // Don't set error if request was aborted
       if (signal.aborted) return;
       
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load orders';
+      const errorMessage = getErrorMessage(error, 'Failed to load orders');
       setLocalError(errorMessage);
           }
   }, [activeTab, user?.id, fetchAvailableBookings, fetchDriverBookings, clearError]);
@@ -239,7 +240,7 @@ const OrdersScreen: React.FC = () => {
       }
       await loadOrdersData(true);
       
-      const errorMessage = error instanceof Error ? error.message : 'Failed to accept order';
+      const errorMessage = getErrorMessage(error, 'Failed to accept order');
       setLocalError(errorMessage);
       Alert.alert('Error', errorMessage);
     } finally {
@@ -286,7 +287,7 @@ const OrdersScreen: React.FC = () => {
       }
       await loadOrdersData(true);
       
-      const errorMessage = error instanceof Error ? error.message : 'Failed to start delivery';
+      const errorMessage = getErrorMessage(error, 'Failed to start delivery');
       setLocalError(errorMessage);
       Alert.alert('Error', errorMessage);
     } finally {

@@ -2,6 +2,8 @@
 // This is a simplified version for MVP - payment gateway integration will be added in v2
 
 import { dataAccess } from '../lib/index';
+import { handleError } from '../utils/errorHandler';
+import { getErrorMessage } from '../utils/errors';
 
 export interface PaymentResult {
   success: boolean;
@@ -38,9 +40,13 @@ export class PaymentService {
         paymentId,
       };
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'processCODPayment', bookingId, amount },
+        userFacing: false,
+      });
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Payment processing failed',
+        error: getErrorMessage(error, 'Payment processing failed'),
       };
     }
   }
@@ -71,9 +77,13 @@ export class PaymentService {
         paymentId,
       };
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'confirmCODPayment', bookingId },
+        userFacing: false,
+      });
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Payment confirmation failed',
+        error: getErrorMessage(error, 'Payment confirmation failed'),
       };
     }
   }

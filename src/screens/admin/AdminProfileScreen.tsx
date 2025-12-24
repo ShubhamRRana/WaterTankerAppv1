@@ -21,6 +21,7 @@ import { User, isAdminUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
+import { getErrorMessage } from '../../utils/errors';
 
 type AdminProfileScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Profile'>;
 
@@ -368,7 +369,7 @@ const AdminProfileScreen: React.FC = () => {
       // Show success alert
       Alert.alert('Success!', 'Your profile has been updated successfully.');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update profile. Please try again.';
+      const errorMessage = getErrorMessage(error, 'Failed to update profile. Please try again.');
       
       // Check if it's a network error
       if (errorMessage.toLowerCase().includes('network') || errorMessage.toLowerCase().includes('fetch')) {
@@ -400,7 +401,7 @@ const AdminProfileScreen: React.FC = () => {
             try {
               await logout();
             } catch (error) {
-              const errorMessage = error instanceof Error ? error.message : 'Failed to logout. Please try again.';
+              const errorMessage = getErrorMessage(error, 'Failed to logout. Please try again.');
               Alert.alert('Error', errorMessage);
             }
           },

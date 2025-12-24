@@ -10,6 +10,7 @@ import * as Location from 'expo-location';
 import { SubscriptionManager } from '../utils/subscriptionManager';
 import { supabase } from '../lib/supabaseClient';
 import { deserializeDate } from '../utils/dateSerialization';
+import { handleAsyncOperationWithRethrow, handleError } from '../utils/errorHandler';
 
 export interface DriverLocation {
   id: string;
@@ -96,7 +97,10 @@ export class LocationTrackingService {
             longitude: currentLocation.longitude,
           });
         } catch (error) {
-          // Error handling for periodic location update
+          handleError(error, {
+            context: { operation: 'startTracking', phase: 'periodicUpdate', driverId, bookingId },
+            userFacing: false,
+          });
         }
       }, updateInterval);
 
@@ -111,6 +115,10 @@ export class LocationTrackingService {
         longitude: initialLocation.longitude,
       });
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'startTracking', driverId, bookingId },
+        userFacing: false,
+      });
       throw error;
     }
   }
@@ -134,6 +142,10 @@ export class LocationTrackingService {
         this.updateIntervals.delete(driverId);
       }
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'stopTracking', driverId },
+        userFacing: false,
+      });
       throw error;
     }
   }
@@ -142,101 +154,113 @@ export class LocationTrackingService {
    * Update driver location in database
    */
   static async updateLocation(update: LocationUpdate): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('driver_locations')
-        .upsert({
-          driver_id: update.driverId,
-          booking_id: update.bookingId || null,
-          latitude: update.latitude,
-          longitude: update.longitude,
-          accuracy: update.accuracy || null,
-          heading: update.heading || null,
-          speed: update.speed || null,
-        }, {
-          onConflict: 'driver_id,booking_id',
-        });
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const { error } = await supabase
+          .from('driver_locations')
+          .upsert({
+            driver_id: update.driverId,
+            booking_id: update.bookingId || null,
+            latitude: update.latitude,
+            longitude: update.longitude,
+            accuracy: update.accuracy || null,
+            heading: update.heading || null,
+            speed: update.speed || null,
+          }, {
+            onConflict: 'driver_id,booking_id',
+          });
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
+      },
+      {
+        context: { operation: 'updateLocation', driverId: update.driverId, bookingId: update.bookingId },
+        userFacing: false,
       }
-    } catch (error) {
-      throw error;
-    }
+    );
   }
 
   /**
    * Get current location for a driver
    */
   static async getDriverLocation(driverId: string): Promise<DriverLocation | null> {
-    try {
-      const { data, error } = await supabase
-        .from('driver_locations')
-        .select('*')
-        .eq('driver_id', driverId)
-        .order('updated_at', { ascending: false })
-        .limit(1);
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const { data, error } = await supabase
+          .from('driver_locations')
+          .select('*')
+          .eq('driver_id', driverId)
+          .order('updated_at', { ascending: false })
+          .limit(1);
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          return null;
+        }
+
+        const row = data[0];
+        return {
+          id: row.id,
+          driverId: row.driver_id,
+          bookingId: row.booking_id || null,
+          latitude: Number(row.latitude),
+          longitude: Number(row.longitude),
+          accuracy: row.accuracy ? Number(row.accuracy) : undefined,
+          heading: row.heading ? Number(row.heading) : undefined,
+          speed: row.speed ? Number(row.speed) : undefined,
+          timestamp: deserializeDate(row.updated_at) || new Date(),
+        };
+      },
+      {
+        context: { operation: 'getDriverLocation', driverId },
+        userFacing: false,
       }
-
-      if (!data || data.length === 0) {
-        return null;
-      }
-
-      const row = data[0];
-      return {
-        id: row.id,
-        driverId: row.driver_id,
-        bookingId: row.booking_id || null,
-        latitude: Number(row.latitude),
-        longitude: Number(row.longitude),
-        accuracy: row.accuracy ? Number(row.accuracy) : undefined,
-        heading: row.heading ? Number(row.heading) : undefined,
-        speed: row.speed ? Number(row.speed) : undefined,
-        timestamp: deserializeDate(row.updated_at) || new Date(),
-      };
-    } catch (error) {
-      throw error;
-    }
+    );
   }
 
   /**
    * Get location for a specific booking
    */
   static async getBookingLocation(bookingId: string): Promise<DriverLocation | null> {
-    try {
-      const { data, error } = await supabase
-        .from('driver_locations')
-        .select('*')
-        .eq('booking_id', bookingId)
-        .order('updated_at', { ascending: false })
-        .limit(1);
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const { data, error } = await supabase
+          .from('driver_locations')
+          .select('*')
+          .eq('booking_id', bookingId)
+          .order('updated_at', { ascending: false })
+          .limit(1);
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
+
+        if (!data || data.length === 0) {
+          return null;
+        }
+
+        const row = data[0];
+        return {
+          id: row.id,
+          driverId: row.driver_id,
+          bookingId: row.booking_id || null,
+          latitude: Number(row.latitude),
+          longitude: Number(row.longitude),
+          accuracy: row.accuracy ? Number(row.accuracy) : undefined,
+          heading: row.heading ? Number(row.heading) : undefined,
+          speed: row.speed ? Number(row.speed) : undefined,
+          timestamp: deserializeDate(row.updated_at) || new Date(),
+        };
+      },
+      {
+        context: { operation: 'getBookingLocation', bookingId },
+        userFacing: false,
       }
-
-      if (!data || data.length === 0) {
-        return null;
-      }
-
-      const row = data[0];
-      return {
-        id: row.id,
-        driverId: row.driver_id,
-        bookingId: row.booking_id || null,
-        latitude: Number(row.latitude),
-        longitude: Number(row.longitude),
-        accuracy: row.accuracy ? Number(row.accuracy) : undefined,
-        heading: row.heading ? Number(row.heading) : undefined,
-        speed: row.speed ? Number(row.speed) : undefined,
-        timestamp: deserializeDate(row.updated_at) || new Date(),
-      };
-    } catch (error) {
-      throw error;
-    }
+    );
   }
 
   /**
@@ -253,7 +277,10 @@ export class LocationTrackingService {
         filter: `driver_id=eq.${driverId}`,
         event: 'UPDATE',
         onError: (error) => {
-          // Error handling for driver location subscription
+          handleError(error, {
+            context: { operation: 'subscribeToDriverLocation', driverId },
+            userFacing: false,
+          });
         },
       },
       async (payload) => {
@@ -293,7 +320,10 @@ export class LocationTrackingService {
         filter: `booking_id=eq.${bookingId}`,
         event: 'UPDATE',
         onError: (error) => {
-          // Error handling for booking location subscription
+          handleError(error, {
+            context: { operation: 'subscribeToBookingLocation', bookingId },
+            userFacing: false,
+          });
         },
       },
       async (payload) => {

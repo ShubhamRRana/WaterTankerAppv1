@@ -142,15 +142,18 @@ export function isErrorType<T extends AppError>(
 
 /**
  * Extract error message from unknown error type
+ * @param error - The error to extract message from
+ * @param defaultMessage - Optional default message if error is not an Error instance or string
+ * @returns The error message or default message
  */
-export function getErrorMessage(error: unknown): string {
+export function getErrorMessage(error: unknown, defaultMessage = 'An unknown error occurred'): string {
   if (error instanceof Error) {
     return error.message;
   }
   if (typeof error === 'string') {
     return error;
   }
-  return 'An unknown error occurred';
+  return defaultMessage;
 }
 
 /**

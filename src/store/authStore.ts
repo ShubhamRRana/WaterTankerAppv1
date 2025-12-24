@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { User, UserRole } from '../types/index';
 import { AuthService } from '../services/auth.service';
 import { supabase } from '../lib/supabaseClient';
+import { handleError } from '../utils/errorHandler';
+import { ErrorSeverity } from '../utils/errorLogger';
 
 /**
  * Authentication store state interface
@@ -80,6 +82,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // Subscribe to auth changes after initialization
       get().subscribeToAuthChanges();
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'initializeAuth' },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
       set({ isLoading: false });
     }
   },
@@ -109,6 +116,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error(result.error || 'Login failed');
       }
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'login', email },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
       set({ isLoading: false });
       throw error;
     }
@@ -129,6 +141,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error(result.error || 'Login failed');
       }
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'loginWithRole', email, role },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
       set({ isLoading: false });
       throw error;
     }
@@ -160,6 +177,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         throw new Error(result.error || 'Registration failed');
       }
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'register', email, role },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
       set({ isLoading: false });
       throw error;
     }
@@ -175,6 +197,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'logout' },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
       set({ isLoading: false });
       throw error;
     }
@@ -193,6 +220,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
       });
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'updateUser', userId: user.id },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
       set({ isLoading: false });
       throw error;
     }

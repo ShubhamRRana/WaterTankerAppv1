@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
-  Modal,
-  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -26,18 +24,22 @@ import AgencySelectionModal from '../../components/customer/AgencySelectionModal
 import SavedAddressModal from '../../components/customer/SavedAddressModal';
 import DateTimeInput from '../../components/customer/DateTimeInput';
 import PriceBreakdown from '../../components/customer/PriceBreakdown';
-import { Address, BookingForm, TankerSize, isAdminUser, isCustomerUser } from '../../types';
+import { Address, isAdminUser, isCustomerUser } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
 import { UI_CONFIG, LOCATION_CONFIG } from '../../constants/config';
-import { errorLogger } from '../../utils/errorLogger';
+import { handleError } from '../../utils/errorHandler';
 import { createScheduledDate as createScheduledDateFromUtils } from '../../utils/dateUtils';
-
-const { width } = Dimensions.get('window');
 
 type BookingScreenNavigationProp = StackNavigationProp<CustomerStackParamList, 'Booking'>;
 
 interface BookingScreenProps {
+}
+
+interface PriceBreakdown {
+  tankerSize: string;
+  basePrice: number;
+  totalPrice: number;
 }
 
 const BookingScreen: React.FC<BookingScreenProps> = () => {
@@ -59,7 +61,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
   const [showTankerModal, setShowTankerModal] = useState(false);
   const [showAgencyModal, setShowAgencyModal] = useState(false);
   const [showSavedAddressModal, setShowSavedAddressModal] = useState(false);
-  const [priceBreakdown, setPriceBreakdown] = useState<any>(null);
+  const [priceBreakdown, setPriceBreakdown] = useState<PriceBreakdown | null>(null);
   const [dateError, setDateError] = useState<string>('');
 
   // Ensure auth is initialized when component mounts
@@ -80,8 +82,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
         setDeliveryAddress(defaultAddress.address);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, deliveryAddress]);
 
   // Fetch admin users (agencies) with business names
   useEffect(() => {
@@ -89,12 +90,14 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
       try {
         await fetchUsersByRole('admin');
       } catch (error) {
-        errorLogger.medium('Failed to load agencies', error);
+        handleError(error, {
+          context: { operation: 'loadAgencies' },
+          userFacing: false,
+        });
       }
     };
     loadAgencies();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchUsersByRole]);
 
   // Build tanker agencies list from admin users with business names
   const tankerAgencies: Array<{ id: string; name: string; ownerName?: string }> = React.useMemo(() => {
@@ -120,7 +123,10 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
           setSelectedVehicle(null);
           setPriceBreakdown(null);
         } catch (error) {
-          errorLogger.medium('Failed to load vehicles for agency', error, { agencyId: selectedAgency.id });
+          handleError(error, {
+            context: { operation: 'loadVehiclesForAgency', agencyId: selectedAgency.id },
+            userFacing: false,
+          });
           setAvailableVehicles([]);
         } finally {
           setVehiclesLoading(false);
@@ -134,16 +140,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
     loadVehiclesForAgency();
   }, [selectedAgency, fetchVehiclesByAgency]);
 
-  useEffect(() => {
-    if (selectedVehicle && selectedVehicle.amount !== undefined) {
-      calculatePrice();
-    } else if (!selectedVehicle) {
-      setPriceBreakdown(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVehicle]);
-
-  const calculatePrice = () => {
+  const calculatePrice = useCallback(() => {
     if (!selectedVehicle) return;
     
     // Only show base price, no distance-based charges
@@ -155,9 +152,17 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
       basePrice: basePrice,
       totalPrice: totalPrice,
     });
-  };
+  }, [selectedVehicle]);
 
-  const handleVehicleSelection = (vehicle: { id: string; capacity: number; amount: number; vehicleNumber: string }) => {
+  useEffect(() => {
+    if (selectedVehicle && selectedVehicle.amount !== undefined) {
+      calculatePrice();
+    } else if (!selectedVehicle) {
+      setPriceBreakdown(null);
+    }
+  }, [selectedVehicle, calculatePrice]);
+
+  const handleVehicleSelection = useCallback((vehicle: { id: string; capacity: number; amount: number; vehicleNumber: string }) => {
     setSelectedVehicle({
       id: vehicle.id,
       capacity: vehicle.capacity != null ? vehicle.capacity : 0,
@@ -165,17 +170,17 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
       vehicleNumber: vehicle.vehicleNumber || ''
     });
     setShowTankerModal(false);
-  };
+  }, []);
 
-  const handleAgencySelection = (agency: { id: string; name: string; ownerName?: string }) => {
+  const handleAgencySelection = useCallback((agency: { id: string; name: string; ownerName?: string }) => {
     setSelectedAgency(agency);
     setShowAgencyModal(false);
-  };
+  }, []);
 
-  const handleAddressSelection = (address: Address) => {
+  const handleAddressSelection = useCallback((address: Address) => {
     setDeliveryAddress(address.address);
     setShowSavedAddressModal(false);
-  };
+  }, []);
 
   // Validate date using ValidationUtils
   const validateDate = (dateString: string): { isValid: boolean; error: string } => {
@@ -221,23 +226,23 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
     }
   };
 
-  const handleDateChange = (text: string) => {
+  const handleDateChange = useCallback((text: string) => {
     const formatted = formatDateInput(text);
     setDeliveryDate(formatted);
     
     // Validate the date
     const validation = validateDate(formatted);
     setDateError(validation.isValid ? '' : validation.error);
-  };
+  }, []);
 
-  const handleTimeChange = (text: string) => {
+  const handleTimeChange = useCallback((text: string) => {
     const formatted = formatTimeInput(text);
     setDeliveryTime(formatted);
-  };
+  }, []);
 
-  const handleTimePeriodChange = (period: 'AM' | 'PM') => {
+  const handleTimePeriodChange = useCallback((period: 'AM' | 'PM') => {
     setTimePeriod(period);
-  };
+  }, []);
 
   // Validate time input using ValidationUtils
   const validateTime = (timeString: string): { isValid: boolean; error: string } => {
@@ -268,8 +273,37 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
     setSpecialInstructions(sanitized);
   }, []);
 
+  // Memoized modal close handlers
+  const handleCloseTankerModal = useCallback(() => {
+    setShowTankerModal(false);
+  }, []);
 
-  const handleBooking = async () => {
+  const handleCloseAgencyModal = useCallback(() => {
+    setShowAgencyModal(false);
+  }, []);
+
+  const handleCloseSavedAddressModal = useCallback(() => {
+    setShowSavedAddressModal(false);
+  }, []);
+
+  // Memoized disabled state for Book Now button
+  const isBookingDisabled = useMemo(() => {
+    return !selectedVehicle || 
+           !selectedAgency || 
+           !deliveryAddress.trim() || 
+           !deliveryDate.trim() || 
+           !deliveryTime.trim() || 
+           !priceBreakdown || 
+           !!(dateError && dateError.length > 0);
+  }, [selectedVehicle, selectedAgency, deliveryAddress, deliveryDate, deliveryTime, priceBreakdown, dateError]);
+
+  // Memoized addresses array for SavedAddressModal
+  const savedAddresses = useMemo(() => {
+    return user && isCustomerUser(user) ? (user.savedAddresses || []) : [];
+  }, [user]);
+
+
+  const handleBooking = useCallback(async () => {
     if (!selectedVehicle || !selectedAgency || !user) {
       Alert.alert('Error', 'Please select agency and vehicle');
       return;
@@ -397,7 +431,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
         totalPrice: priceBreakdown.totalPrice,
         deliveryAddress: bookingAddress,
         distance: 0, // Distance not used for pricing
-        scheduledFor: scheduledForDate,
+        ...(scheduledForDate && { scheduledFor: scheduledForDate }),
         paymentStatus: 'pending' as const,
         canCancel: true,
       };
@@ -416,10 +450,12 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
         ]
       );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      Alert.alert('Error', `Failed to create booking: ${errorMessage}. Please try again.`);
+      handleError(error, {
+      context: { operation: 'createBooking', userId: user?.id, agencyId: selectedAgency?.id },
+      userFacing: true,
+    });
     }
-  };
+  }, [selectedVehicle, selectedAgency, user, deliveryAddress, deliveryDate, deliveryTime, timePeriod, priceBreakdown, createBooking, initializeAuth, navigation]);
 
 
 
@@ -554,9 +590,9 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
       {/* Price Breakdown */}
       {priceBreakdown && (
         <PriceBreakdown
-          agencyName={selectedAgency?.name}
-          vehicleCapacity={selectedVehicle?.capacity}
-          vehicleNumber={selectedVehicle?.vehicleNumber}
+          {...(selectedAgency?.name && { agencyName: selectedAgency.name })}
+          {...(selectedVehicle?.capacity !== undefined && { vehicleCapacity: selectedVehicle.capacity })}
+          {...(selectedVehicle?.vehicleNumber && { vehicleNumber: selectedVehicle.vehicleNumber })}
           basePrice={priceBreakdown.basePrice}
           totalPrice={priceBreakdown.totalPrice}
         />
@@ -567,22 +603,14 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
         <Button
           title="Book Now"
           onPress={handleBooking}
-          disabled={
-            !selectedVehicle || 
-            !selectedAgency || 
-            !deliveryAddress.trim() || 
-            !deliveryDate.trim() || 
-            !deliveryTime.trim() || 
-            !priceBreakdown || 
-            !!(dateError && dateError.length > 0)
-          }
+          disabled={isBookingDisabled}
           style={styles.bookButton}
         />
       </View>
 
       <TankerSelectionModal
         visible={showTankerModal}
-        onClose={() => setShowTankerModal(false)}
+        onClose={handleCloseTankerModal}
         vehicles={availableVehicles}
         selectedVehicleId={selectedVehicle?.id || null}
         onSelectVehicle={handleVehicleSelection}
@@ -591,7 +619,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
       />
       <AgencySelectionModal
         visible={showAgencyModal}
-        onClose={() => setShowAgencyModal(false)}
+        onClose={handleCloseAgencyModal}
         agencies={tankerAgencies}
         selectedAgencyId={selectedAgency?.id || null}
         onSelectAgency={handleAgencySelection}
@@ -599,8 +627,8 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
       />
       <SavedAddressModal
         visible={showSavedAddressModal}
-        onClose={() => setShowSavedAddressModal(false)}
-        addresses={user && isCustomerUser(user) ? (user.savedAddresses || []) : []}
+        onClose={handleCloseSavedAddressModal}
+        addresses={savedAddresses}
         onSelectAddress={handleAddressSelection}
         navigation={navigation}
       />

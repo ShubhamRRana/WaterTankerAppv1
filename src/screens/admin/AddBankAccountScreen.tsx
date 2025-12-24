@@ -21,6 +21,7 @@ import { UI_CONFIG } from '../../constants/config';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { BankAccountService, StorageService } from '../../services';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
+import { getErrorMessage } from '../../utils/errors';
 import { Image } from 'react-native';
 
 type AddBankAccountScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'BankAccounts'>;
@@ -382,7 +383,7 @@ const AddBankAccountScreen: React.FC = () => {
         handleFormChange('qrCodeImageUrl', null); // Clear existing URL when new image is picked
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to pick image';
+      const errorMessage = getErrorMessage(error, 'Failed to pick image');
       Alert.alert('Error', errorMessage);
     }
   };
@@ -458,7 +459,7 @@ const AddBankAccountScreen: React.FC = () => {
       setShowAddModal(false);
       loadBankAccounts();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save bank account. Please try again.';
+      const errorMessage = getErrorMessage(error, 'Failed to save bank account. Please try again.');
       Alert.alert('Error', errorMessage);
     } finally {
       setIsSubmitting(false);

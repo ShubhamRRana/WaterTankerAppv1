@@ -16,6 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../../constants/config';
+import { handleError } from '../../utils/errorHandler';
+import { getErrorMessage } from '../../utils/errors';
 import { AuthStackParamList } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -146,13 +148,15 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
         await login(sanitizedEmail, password);
       }
     } catch (error) {
-      // Check if error is due to role mismatch
-      const errorMessage = error instanceof Error ? error.message : 'Login failed';
-      if (errorMessage.includes('not found with selected role') || errorMessage.includes('User not found with selected role')) {
-        Alert.alert('Login Failed', ERROR_MESSAGES.auth.roleMismatch);
-      } else {
-        Alert.alert('Login Failed', ERROR_MESSAGES.auth.invalidCredentials);
-      }
+      // Check if error is due to role mismatch for custom message
+      const errorMessage = getErrorMessage(error, 'Login failed');
+      const isRoleMismatch = errorMessage.includes('not found with selected role') || errorMessage.includes('User not found with selected role');
+      
+      handleError(error, {
+        context: { operation: 'login', email: sanitizedEmail, preferredRole },
+        userFacing: true,
+        alertMessage: isRoleMismatch ? ERROR_MESSAGES.auth.roleMismatch : undefined,
+      });
     }
   };
 

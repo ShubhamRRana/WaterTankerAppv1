@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { Vehicle } from '../types';
 import { VehicleService } from '../services/vehicle.service';
+import { handleError } from '../utils/errorHandler';
+import { ErrorSeverity } from '../utils/errorLogger';
+import { getErrorMessage } from '../utils/errors';
 
 interface VehicleState {
   vehicles: Vehicle[];
@@ -38,7 +41,12 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
       const vehicles = await VehicleService.getAllVehicles();
       set({ vehicles, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch vehicles';
+      handleError(error, {
+        context: { operation: 'fetchAllVehicles' },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to fetch vehicles');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -51,7 +59,12 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
       set({ vehicles, isLoading: false });
       return vehicles;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch vehicles by agency';
+      handleError(error, {
+        context: { operation: 'fetchVehiclesByAgency', agencyId },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to fetch vehicles by agency');
       set({ isLoading: false, error: errorMessage });
       throw new Error(errorMessage);
     }
@@ -66,7 +79,12 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
       const { vehicles } = get();
       set({ vehicles: [...vehicles, newVehicle], isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to add vehicle';
+      handleError(error, {
+        context: { operation: 'addVehicle', agencyId: vehicleData.agencyId },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to add vehicle');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -84,7 +102,12 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
       );
       set({ vehicles: updatedVehicles, isLoading: false });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update vehicle';
+      handleError(error, {
+        context: { operation: 'updateVehicle', vehicleId },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to update vehicle');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }
@@ -103,7 +126,12 @@ export const useVehicleStore = create<VehicleState>((set, get) => ({
         isLoading: false 
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete vehicle';
+      handleError(error, {
+        context: { operation: 'deleteVehicle', vehicleId },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to delete vehicle');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }

@@ -101,8 +101,7 @@ const DriverManagementScreen: React.FC = () => {
         setSelectedDriver(updatedDriver);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drivers, bookings]);
+  }, [drivers, bookings, selectedDriver]);
 
   const loadDrivers = async () => {
     try {

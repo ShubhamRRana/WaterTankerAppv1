@@ -2,6 +2,7 @@
 
 import { dataAccess } from '../lib';
 import { Vehicle } from '../types/index';
+import { handleAsyncOperationWithRethrow } from '../utils/errorHandler';
 
 /**
  * VehicleService - Handles vehicle CRUD operations using the data access layer
@@ -11,11 +12,15 @@ export class VehicleService {
    * Get all vehicles
    */
   static async getAllVehicles(): Promise<Vehicle[]> {
-    try {
-      return await dataAccess.vehicles.getVehicles();
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        return await dataAccess.vehicles.getVehicles();
+      },
+      {
+        context: { operation: 'getAllVehicles' },
+        userFacing: false,
+      }
+    );
   }
 
   /**
@@ -23,22 +28,30 @@ export class VehicleService {
    * Note: agencyId should be id value
    */
   static async getVehiclesByAgency(agencyId: string): Promise<Vehicle[]> {
-    try {
-      return await dataAccess.vehicles.getVehiclesByAgency(agencyId);
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        return await dataAccess.vehicles.getVehiclesByAgency(agencyId);
+      },
+      {
+        context: { operation: 'getVehiclesByAgency', agencyId },
+        userFacing: false,
+      }
+    );
   }
 
   /**
    * Get a single vehicle by ID
    */
   static async getVehicleById(vehicleId: string): Promise<Vehicle | null> {
-    try {
-      return await dataAccess.vehicles.getVehicleById(vehicleId);
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        return await dataAccess.vehicles.getVehicleById(vehicleId);
+      },
+      {
+        context: { operation: 'getVehicleById', vehicleId },
+        userFacing: false,
+      }
+    );
   }
 
   /**
@@ -46,42 +59,54 @@ export class VehicleService {
    * Note: vehicleData.agencyId should be id value
    */
   static async createVehicle(vehicleData: Omit<Vehicle, 'id' | 'createdAt' | 'updatedAt'>): Promise<Vehicle> {
-    try {
-      const id = dataAccess.generateId();
-      const newVehicle: Vehicle = {
-        ...vehicleData,
-        id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        const id = dataAccess.generateId();
+        const newVehicle: Vehicle = {
+          ...vehicleData,
+          id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-      await dataAccess.vehicles.saveVehicle(newVehicle);
-      return newVehicle;
-    } catch (error) {
-      throw error;
-    }
+        await dataAccess.vehicles.saveVehicle(newVehicle);
+        return newVehicle;
+      },
+      {
+        context: { operation: 'createVehicle', agencyId: vehicleData.agencyId },
+        userFacing: false,
+      }
+    );
   }
 
   /**
    * Update a vehicle
    */
   static async updateVehicle(vehicleId: string, updates: Partial<Vehicle>): Promise<void> {
-    try {
-      await dataAccess.vehicles.updateVehicle(vehicleId, updates);
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        await dataAccess.vehicles.updateVehicle(vehicleId, updates);
+      },
+      {
+        context: { operation: 'updateVehicle', vehicleId },
+        userFacing: false,
+      }
+    );
   }
 
   /**
    * Delete a vehicle
    */
   static async deleteVehicle(vehicleId: string): Promise<void> {
-    try {
-      await dataAccess.vehicles.deleteVehicle(vehicleId);
-    } catch (error) {
-      throw error;
-    }
+    return handleAsyncOperationWithRethrow(
+      async () => {
+        await dataAccess.vehicles.deleteVehicle(vehicleId);
+      },
+      {
+        context: { operation: 'deleteVehicle', vehicleId },
+        userFacing: false,
+      }
+    );
   }
 
   /**

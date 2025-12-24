@@ -6,6 +6,8 @@
 
 import * as ExpoLocation from 'expo-location';
 import { LOCATION_CONFIG } from '../constants/config';
+import { handleError } from '../utils/errorHandler';
+import { getErrorMessage } from '../utils/errors';
 
 export interface Location {
   latitude: number;
@@ -49,6 +51,10 @@ export class LocationService {
       const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
       return status === 'granted';
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'requestPermissions' },
+        userFacing: false,
+      });
       return false;
     }
   }
@@ -61,6 +67,10 @@ export class LocationService {
       const { status } = await ExpoLocation.getForegroundPermissionsAsync();
       return status === 'granted';
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'hasPermissions' },
+        userFacing: false,
+      });
       return false;
     }
   }
@@ -91,7 +101,11 @@ export class LocationService {
         longitude: location.coords.longitude,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to get location';
+      handleError(error, {
+        context: { operation: 'getCurrentLocation' },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to get location');
       throw new Error(`Geolocation error: ${errorMessage}`);
     }
   }
@@ -130,7 +144,11 @@ export class LocationService {
         }
       );
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to watch location';
+      handleError(error, {
+        context: { operation: 'watchPositionAsync' },
+        userFacing: false,
+      });
+      const errorMessage = getErrorMessage(error, 'Failed to watch location');
       throw new Error(`Location watch error: ${errorMessage}`);
     }
   }
@@ -142,6 +160,10 @@ export class LocationService {
       // For MVP, we'll return a placeholder
       return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
     } catch (error) {
+      handleError(error, {
+        context: { operation: 'getAddressFromCoordinates', location },
+        userFacing: false,
+      });
       throw new Error('Failed to get address from coordinates');
     }
   }
@@ -157,6 +179,10 @@ export class LocationService {
       if (error instanceof Error && error.message === 'Address geocoding not implemented in MVP') {
         throw error;
       }
+      handleError(error, {
+        context: { operation: 'getCoordinatesFromAddress', address },
+        userFacing: false,
+      });
       throw new Error('Failed to get coordinates from address');
     }
   }
