@@ -13,6 +13,12 @@ export default {
     extra: {
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+      eas: {
+        "projectId": "d87af120-6b69-4668-908e-002561c55444"
+      }
+    },
+    android: {
+      package: "com.watertanker.app"
     },
   },
 };

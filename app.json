@@ -1,5 +1,10 @@
 {
   "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "d87af120-6b69-4668-908e-002561c55444"
+      }
+    },
     "fonts": [
       "assets/fonts/PlayfairDisplay-Regular.ttf"
     ],
