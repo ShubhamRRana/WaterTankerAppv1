@@ -16,748 +16,289 @@ tar: src/utils: Cannot mkdir: Permission denied
 tar: src/__tests__: Cannot mkdir: Permission denied
 tar: assets/fonts: Cannot mkdir: Permission denied
 tar: assets/fonts/PlayfairDisplay-Regular.ttf: Cannot open: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/auth: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/constants: Cannot mkdir: Permission denied
-tar: src/constants/config.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/dataAccess.interface.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/index.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/subscriptionManager.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/supabaseClient.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/supabaseDataAccess.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/__mocks__: Cannot mkdir: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/AdminNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/AuthNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/CustomerNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/DriverNavigator.tsx: Cannot open: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/auth.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/bankAccount.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/booking.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/index.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/local: Cannot mkdir: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/localStorage.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/location.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/locationTracking.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/payment.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/storage.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/user.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/vehicle.service.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/authStore.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/bookingStore.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/index.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/userStore.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/vehicleStore.ts: Cannot open: No such file or directory
-tar: src/types: Cannot mkdir: Permission denied
-tar: src/types/index.ts: Cannot open: No such file or directory
-tar: src/types: Cannot mkdir: Permission denied
-tar: src/types/react-native-qrcode-svg.d.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/analytics.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/dateSerialization.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/dateUtils.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/errorHandler.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/errorLogger.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/errors.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/excelExport.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/index.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/pricing.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/rateLimiter.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/reportCalculations.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/sanitization.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/securityAudit.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/securityLogger.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/sessionManager.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/subscriptionManager.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/validation.ts: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/AddDriverModal.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/BookingCard.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/BookingDetailsModal.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/DriverCard.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/DriverModal.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/EditProfileForm.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/ProfileHeader.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/StatusUpdateModal.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/AdminIcon.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/AdminMenuDrawer.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Button.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Card.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/CustomerIcon.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/CustomerMenuDrawer.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/DriverIcon.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/ErrorBoundary.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/index.ts: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Input.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/LoadingSpinner.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/MenuDrawer.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Typography.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/AgencySelectionModal.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/DateTimeInput.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/DeliverySummary.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/PriceBreakdown.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/SavedAddressModal.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/TankerSelectionModal.tsx: Cannot open: No such file or directory
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/components/driver/OrdersFilter.tsx: Cannot open: No such file or directory
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/components/driver/OrdersHeader.tsx: Cannot open: No such file or directory
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/components/driver/OrdersList.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/AddBankAccountScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/AdminProfileScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/AllBookingsScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/DriverManagementScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/ReportsScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/VehicleManagementScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens/auth/LoginScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens/auth/RegisterScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens/auth/RoleEntryScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/BookingScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/CustomerHomeScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/OrderHistoryScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/OrderTrackingScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/PastOrdersScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/ProfileScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/SavedAddressesScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/screens/driver/CollectPaymentScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/screens/driver/DriverEarningsScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/screens/driver/OrdersScreen.tsx: Cannot open: No such file or directory
-tar: Exiting with failure status due to previous errors
-tar: assets/adaptive-icon.png: Cannot open: Permission denied
-tar: assets/favicon.png: Cannot open: Permission denied
-tar: assets/fonts: Cannot mkdir: Permission denied
-tar: assets/icon.png: Cannot open: Permission denied
-tar: assets/splash-icon.png: Cannot open: Permission denied
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/config: Cannot mkdir: Permission denied
-tar: src/constants: Cannot mkdir: Permission denied
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/types: Cannot mkdir: Permission denied
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/__tests__: Cannot mkdir: Permission denied
-tar: assets/fonts: Cannot mkdir: Permission denied
-tar: assets/fonts/PlayfairDisplay-Regular.ttf: Cannot open: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/auth: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/constants: Cannot mkdir: Permission denied
-tar: src/constants/config.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/dataAccess.interface.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/index.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/subscriptionManager.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/supabaseClient.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/supabaseDataAccess.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/__mocks__: Cannot mkdir: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/AdminNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/AuthNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/CustomerNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/DriverNavigator.tsx: Cannot open: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/auth.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/bankAccount.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/booking.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/index.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/local: Cannot mkdir: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/localStorage.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/location.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/locationTracking.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/payment.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/storage.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/user.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/vehicle.service.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/authStore.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/bookingStore.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/index.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/userStore.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/vehicleStore.ts: Cannot open: No such file or directory
-tar: src/types: Cannot mkdir: Permission denied
-tar: src/types/index.ts: Cannot open: No such file or directory
-tar: src/types: Cannot mkdir: Permission denied
-tar: src/types/react-native-qrcode-svg.d.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/analytics.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/dateSerialization.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/dateUtils.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/errorHandler.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/errorLogger.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/errors.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/excelExport.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/index.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/pricing.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/rateLimiter.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/reportCalculations.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/sanitization.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/securityAudit.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/securityLogger.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/sessionManager.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/subscriptionManager.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/validation.ts: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/AddDriverModal.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/BookingCard.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/BookingDetailsModal.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/DriverCard.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/DriverModal.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/EditProfileForm.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/ProfileHeader.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/StatusUpdateModal.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/AdminIcon.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/AdminMenuDrawer.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Button.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Card.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/CustomerIcon.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/CustomerMenuDrawer.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/DriverIcon.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/ErrorBoundary.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/index.ts: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Input.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/LoadingSpinner.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/MenuDrawer.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Typography.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/AgencySelectionModal.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/DateTimeInput.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/DeliverySummary.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/PriceBreakdown.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/SavedAddressModal.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/TankerSelectionModal.tsx: Cannot open: No such file or directory
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/components/driver/OrdersFilter.tsx: Cannot open: No such file or directory
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/components/driver/OrdersHeader.tsx: Cannot open: No such file or directory
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/components/driver/OrdersList.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/AddBankAccountScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/AdminProfileScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/AllBookingsScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/DriverManagementScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/ReportsScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/VehicleManagementScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens/auth/LoginScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens/auth/RegisterScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens/auth/RoleEntryScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/BookingScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/CustomerHomeScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/OrderHistoryScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/OrderTrackingScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/PastOrdersScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/ProfileScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/SavedAddressesScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/screens/driver/CollectPaymentScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/screens/driver/DriverEarningsScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/screens/driver/OrdersScreen.tsx: Cannot open: No such file or directory
-tar: Exiting with failure status due to previous errors
-tar: assets/adaptive-icon.png: Cannot open: Permission denied
-tar: assets/favicon.png: Cannot open: Permission denied
-tar: assets/fonts: Cannot mkdir: Permission denied
-tar: assets/icon.png: Cannot open: Permission denied
-tar: assets/splash-icon.png: Cannot open: Permission denied
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/config: Cannot mkdir: Permission denied
-tar: src/constants: Cannot mkdir: Permission denied
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/types: Cannot mkdir: Permission denied
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/__tests__: Cannot mkdir: Permission denied
-tar: assets/fonts: Cannot mkdir: Permission denied
-tar: assets/fonts/PlayfairDisplay-Regular.ttf: Cannot open: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/auth: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/constants: Cannot mkdir: Permission denied
-tar: src/constants/config.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/dataAccess.interface.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/index.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/subscriptionManager.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/supabaseClient.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/supabaseDataAccess.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/__mocks__: Cannot mkdir: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/AdminNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/AuthNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar:
-src/navigation/CustomerNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/DriverNavigator.tsx: Cannot open: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/auth.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/bankAccount.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/booking.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/index.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/local: Cannot mkdir: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/localStorage.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/location.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/locationTracking.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/payment.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/storage.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/user.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/vehicle.service.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/authStore.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/bookingStore.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/index.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/userStore.ts: Cannot open: No such file or directory
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/store/vehicleStore.ts: Cannot open: No such file or directory
-tar: src/types: Cannot mkdir: Permission denied
-tar: src/types/index.ts: Cannot open
-: No such file or directory
-tar: src/types: Cannot mkdir: Permission denied
-tar: src/types/react-native-qrcode-svg.d.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/analytics.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/dateSerialization.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/dateUtils.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/errorHandler.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/errorLogger.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/errors.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/excelExport.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/index.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/pricing.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/rateLimiter.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/reportCalculations.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/sanitization.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/securityAudit.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/securityLogger.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/sessionManager.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/subscriptionManager.ts: Cannot open: No such file or directory
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/utils/validation.ts: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/AddDriverModal.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/BookingCard.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/BookingDetailsModal.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/DriverCard.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/DriverModal.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/EditProfileForm.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/ProfileHeader.tsx: Cannot open: No such file or directory
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components/admin/StatusUpdateModal.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/AdminIcon.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/AdminMenuDrawer.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Button.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Card.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/CustomerIcon.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/CustomerMenuDrawer.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/DriverIcon.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/ErrorBoundary.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar:
-src/components/common/index.ts: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Input.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/LoadingSpinner.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/MenuDrawer.tsx: Cannot open: No such file or directory
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components/common/Typography.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/AgencySelectionModal.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/DateTimeInput.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/DeliverySummary.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/PriceBreakdown.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/SavedAddressModal.tsx: Cannot open: No such file or directory
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components/customer/TankerSelectionModal.tsx: Cannot open: No such file or directory
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/components/driver/OrdersFilter.tsx: Cannot open: No such file or directory
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/components/driver/OrdersHeader.tsx: Cannot open: No such file or directory
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/components/driver/OrdersList.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/AddBankAccountScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/AdminProfileScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/AllBookingsScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/DriverManagementScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/ReportsScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens/admin/VehicleManagementScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens/auth/LoginScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens/auth/RegisterScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens/auth/RoleEntryScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/BookingScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/CustomerHomeScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/OrderHistoryScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/OrderTrackingScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/PastOrdersScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/ProfileScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens/customer/SavedAddressesScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/screens/driver/CollectPaymentScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/screens/driver/DriverEarningsScreen.tsx: Cannot open: No such file or directory
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/screens/driver/OrdersScreen.tsx: Cannot open: No such file or directory
-tar: Exiting with failure status due to previous errors
-tar: assets/adaptive-icon.png: Cannot open: Permission denied
-tar: assets/favicon.png: Cannot open: Permission denied
-tar: assets/fonts: Cannot mkdir: Permission denied
-tar: assets/icon.png: Cannot open: Permission denied
-tar: assets/splash-icon.png: Cannot open: Permission denied
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/config: Cannot mkdir: Permission denied
-tar: src/constants: Cannot mkdir: Permission denied
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/store: Cannot mkdir: Permission denied
-tar: src/types: Cannot mkdir: Permission denied
-tar: src/utils: Cannot mkdir: Permission denied
-tar: src/__tests__: Cannot mkdir: Permission denied
-tar: assets/fonts: Cannot mkdir: Permission denied
-tar: assets/fonts/PlayfairDisplay-Regular.ttf: Cannot open: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/admin: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/auth: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/common: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/customer: Cannot mkdir: No such file or directory
-tar: src/components: Cannot mkdir: Permission denied
-tar: src/components/driver: Cannot mkdir: No such file or directory
-tar: src/constants: Cannot mkdir: Permission denied
-tar: src/constants/config.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/dataAccess.interface.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/index.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/subscriptionManager.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/supabaseClient.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/supabaseDataAccess.ts: Cannot open: No such file or directory
-tar: src/lib: Cannot mkdir: Permission denied
-tar: src/lib/__mocks__: Cannot mkdir: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/AdminNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/AuthNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/CustomerNavigator.tsx: Cannot open: No such file or directory
-tar: src/navigation: Cannot mkdir: Permission denied
-tar: src/navigation/DriverNavigator.tsx: Cannot open: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/admin: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/auth: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/customer: Cannot mkdir: No such file or directory
-tar: src/screens: Cannot mkdir: Permission denied
-tar: src/screens/driver: Cannot mkdir: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/auth.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/bankAccount.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/booking.service.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/index.ts: Cannot open: No such file or directory
-tar: src/services: Cannot mkdir: Permission denied
-tar: src/services/local: Cannot mkdir: No such file or directory
-tar: src/services: Cannot mkdir
+tar: src/components: Cannot mkdir
 : Permission denied
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/auth: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/constants: Cannot mkdir: Permission denied
+tar: src/constants/config.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/dataAccess.interface.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/index.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/subscriptionManager.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/supabaseClient.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/supabaseDataAccess.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/__mocks__: Cannot mkdir: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/AdminNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/AuthNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/CustomerNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/DriverNavigator.tsx: Cannot open: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/auth.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/bankAccount.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/booking.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/index.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/local: Cannot mkdir: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/localStorage.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/location.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/locationTracking.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/payment.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/storage.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/user.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/vehicle.service.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/authStore.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/bookingStore.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/index.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/userStore.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/vehicleStore.ts: Cannot open: No such file or directory
+tar: src/types: Cannot mkdir: Permission denied
+tar: src/types/index.ts: Cannot open: No such file or directory
+tar: src/types: Cannot mkdir: Permission denied
+tar: src/types/react-native-qrcode-svg.d.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/analytics.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/dateSerialization.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/dateUtils.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/errorHandler.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/errorLogger.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/errors.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/excelExport.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/index.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/pricing.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/rateLimiter.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/reportCalculations.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/sanitization.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/securityAudit.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/securityLogger.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/sessionManager.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/subscriptionManager.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/validation.ts: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/AddDriverModal.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/BookingCard.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/BookingDetailsModal.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/DriverCard.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/DriverModal.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/EditProfileForm.tsx: Cannot open
+: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/ProfileHeader.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/StatusUpdateModal.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/AdminIcon.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/AdminMenuDrawer.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Button.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Card.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/CustomerIcon.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/CustomerMenuDrawer.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/DriverIcon.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/ErrorBoundary.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/index.ts: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Input.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/LoadingSpinner.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/MenuDrawer.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Typography.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/AgencySelectionModal.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/DateTimeInput.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/DeliverySummary.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/PriceBreakdown.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/SavedAddressModal.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/TankerSelectionModal.tsx: Cannot open: No such file or directory
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/components/driver/OrdersFilter.tsx: Cannot open: No such file or directory
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/components/driver/OrdersHeader.tsx: Cannot open: No such file or directory
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/components/driver/OrdersList.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/AddBankAccountScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/AdminProfileScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/AllBookingsScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/DriverManagementScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/ReportsScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/VehicleManagementScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens/auth/LoginScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens/auth/RegisterScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens/auth/RoleEntryScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/BookingScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/CustomerHomeScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/OrderHistoryScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/OrderTrackingScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/PastOrdersScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/ProfileScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/SavedAddressesScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/screens/driver/CollectPaymentScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/screens/driver/DriverEarningsScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/screens/driver/OrdersScreen.tsx: Cannot open: No such file or directory
+tar:
+Exiting with failure status due to previous errors
+tar: assets/adaptive-icon.png: Cannot open: Permission denied
+tar: assets/favicon.png: Cannot open: Permission denied
+tar: assets/fonts: Cannot mkdir: Permission denied
+tar: assets/icon.png: Cannot open: Permission denied
+tar: assets/splash-icon.png: Cannot open: Permission denied
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/config: Cannot mkdir: Permission denied
+tar: src/constants: Cannot mkdir: Permission denied
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/types: Cannot mkdir: Permission denied
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/__tests__: Cannot mkdir: Permission denied
+tar: assets/fonts: Cannot mkdir: Permission denied
+tar: assets/fonts/PlayfairDisplay-Regular.ttf: Cannot open: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/auth: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/constants: Cannot mkdir: Permission denied
+tar: src/constants/config.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/dataAccess.interface.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/index.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/subscriptionManager.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/supabaseClient.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/supabaseDataAccess.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/__mocks__: Cannot mkdir: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/AdminNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/AuthNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/CustomerNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/DriverNavigator.tsx: Cannot open: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/auth.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/bankAccount.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/booking.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/index.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/local: Cannot mkdir: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
 tar: src/services/localStorage.ts: Cannot open: No such file or directory
 tar: src/services: Cannot mkdir: Permission denied
 tar: src/services/location.service.ts: Cannot open: No such file or directory
@@ -904,7 +445,466 @@ tar: src/screens/customer/CustomerHomeScreen.tsx: Cannot open: No such file or d
 tar: src/screens/customer: Cannot mkdir: No such file or directory
 tar: src/screens/customer/OrderHistoryScreen.tsx: Cannot open: No such file or directory
 tar: src/screens/customer: Cannot mkdir: No such file or directory
-
+tar: src/screens/customer/OrderTrackingScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/PastOrdersScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/ProfileScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/SavedAddressesScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/screens/driver/CollectPaymentScreen.tsx: Cannot open
+: No such file or directory
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/screens/driver/DriverEarningsScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/screens/driver/OrdersScreen.tsx: Cannot open: No such file or directory
+tar: Exiting with failure status due to previous errors
+tar: assets/adaptive-icon.png: Cannot open: Permission denied
+tar: assets/favicon.png: Cannot open: Permission denied
+tar: assets/fonts: Cannot mkdir: Permission denied
+tar: assets/icon.png: Cannot open: Permission denied
+tar: assets/splash-icon.png: Cannot open: Permission denied
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/config: Cannot mkdir: Permission denied
+tar: src/constants: Cannot mkdir: Permission denied
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/types: Cannot mkdir: Permission denied
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/__tests__: Cannot mkdir: Permission denied
+tar: assets/fonts: Cannot mkdir: Permission denied
+tar: assets/fonts/PlayfairDisplay-Regular.ttf: Cannot open: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/auth: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/constants: Cannot mkdir: Permission denied
+tar: src/constants/config.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/dataAccess.interface.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/index.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/subscriptionManager.ts: Cannot open: No such file or directory
+tar:
+src/lib: Cannot mkdir: Permission denied
+tar: src/lib/supabaseClient.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/supabaseDataAccess.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/__mocks__: Cannot mkdir: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/AdminNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/AuthNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/CustomerNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/DriverNavigator.tsx: Cannot open: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/auth.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/bankAccount.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/booking.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/index.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/local: Cannot mkdir: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/localStorage.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/location.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/locationTracking.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/payment.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/storage.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/user.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/vehicle.service.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/authStore.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/bookingStore.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/index.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/userStore.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/vehicleStore.ts: Cannot open: No such file or directory
+tar: src/types: Cannot mkdir: Permission denied
+tar: src/types/index.ts: Cannot open: No such file or directory
+tar: src/types: Cannot mkdir: Permission denied
+tar: src/types/react-native-qrcode-svg.d.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/analytics.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/dateSerialization.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/dateUtils.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/errorHandler.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/errorLogger.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/errors.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/excelExport.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/index.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/pricing.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/rateLimiter.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/reportCalculations.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/sanitization.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/securityAudit.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/securityLogger.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/sessionManager.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/subscriptionManager.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/validation.ts: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/AddDriverModal.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/BookingCard.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/BookingDetailsModal.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/DriverCard.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/DriverModal.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/EditProfileForm.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/ProfileHeader.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/StatusUpdateModal.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/AdminIcon.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/AdminMenuDrawer.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Button.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Card.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/CustomerIcon.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/CustomerMenuDrawer.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/DriverIcon.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/ErrorBoundary.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/index.ts: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Input.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/LoadingSpinner.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/MenuDrawer.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Typography.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/AgencySelectionModal.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/DateTimeInput.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/DeliverySummary.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/PriceBreakdown.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/SavedAddressModal.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/TankerSelectionModal.tsx: Cannot open: No such file or directory
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/components/driver/OrdersFilter.tsx: Cannot open: No such file or directory
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/components/driver/OrdersHeader.tsx: Cannot open: No such file or directory
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/components/driver/OrdersList.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/AddBankAccountScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/AdminProfileScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/AllBookingsScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/DriverManagementScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/ReportsScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/VehicleManagementScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens/auth/LoginScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens/auth/RegisterScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens/auth/RoleEntryScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/BookingScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/CustomerHomeScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/OrderHistoryScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/OrderTrackingScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/PastOrdersScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/ProfileScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/SavedAddressesScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/screens/driver/CollectPaymentScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/screens/driver/DriverEarningsScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/screens/driver/OrdersScreen.tsx: Cannot open: No such file or directory
+tar: Exiting with failure status due to previous errors
+tar: assets/adaptive-icon.png: Cannot open: Permission denied
+tar: assets/favicon.png: Cannot open: Permission denied
+tar: assets/fonts: Cannot mkdir: Permission denied
+tar: assets/icon.png: Cannot open: Permission denied
+tar: assets/splash-icon.png: Cannot open: Permission denied
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/config: Cannot mkdir: Permission denied
+tar: src/constants: Cannot mkdir: Permission denied
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/types: Cannot mkdir: Permission denied
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/__tests__: Cannot mkdir: Permission denied
+tar: assets/fonts: Cannot mkdir: Permission denied
+tar: assets/fonts/PlayfairDisplay-Regular.ttf: Cannot open: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/auth: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components: Cannot mkdir: Permission denied
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/constants: Cannot mkdir: Permission denied
+tar: src/constants/config.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/dataAccess.interface.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/index.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/subscriptionManager.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/supabaseClient.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/supabaseDataAccess.ts: Cannot open: No such file or directory
+tar: src/lib: Cannot mkdir: Permission denied
+tar: src/lib/__mocks__: Cannot mkdir: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/AdminNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/AuthNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/CustomerNavigator.tsx: Cannot open: No such file or directory
+tar: src/navigation: Cannot mkdir: Permission denied
+tar: src/navigation/DriverNavigator.tsx: Cannot open: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens: Cannot mkdir: Permission denied
+tar: src/screens/driver: Cannot mkdir: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/auth.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/bankAccount.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/booking.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/index.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/local: Cannot mkdir: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/localStorage.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/location.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/locationTracking.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/payment.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/storage.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/user.service.ts: Cannot open: No such file or directory
+tar: src/services: Cannot mkdir: Permission denied
+tar: src/services/vehicle.service.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/authStore.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/bookingStore.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/index.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/userStore.ts: Cannot open: No such file or directory
+tar: src/store: Cannot mkdir: Permission denied
+tar: src/store/vehicleStore.ts: Cannot open: No such file or directory
+tar: src/types: Cannot mkdir: Permission denied
+tar: src/types/index.ts: Cannot open: No such file or directory
+tar: src/types: Cannot mkdir: Permission denied
+tar: src/types/react-native-qrcode-svg.d.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/analytics.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/dateSerialization.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/dateUtils.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/errorHandler.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/errorLogger.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/errors.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/excelExport.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/index.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/pricing.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/rateLimiter.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/reportCalculations.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/sanitization.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/securityAudit.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/securityLogger.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/sessionManager.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/subscriptionManager.ts: Cannot open: No such file or directory
+tar: src/utils: Cannot mkdir: Permission denied
+tar: src/utils/validation.ts: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/AddDriverModal.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/BookingCard.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/BookingDetailsModal.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/DriverCard.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/DriverModal.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/EditProfileForm.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/ProfileHeader.tsx: Cannot open: No such file or directory
+tar: src/components/admin: Cannot mkdir: No such file or directory
+tar: src/components/admin/StatusUpdateModal.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/AdminIcon.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/AdminMenuDrawer.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Button.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Card.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/CustomerIcon.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/CustomerMenuDrawer.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/DriverIcon.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/ErrorBoundary.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/index.ts: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Input.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/LoadingSpinner.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/MenuDrawer.tsx: Cannot open: No such file or directory
+tar: src/components/common: Cannot mkdir: No such file or directory
+tar: src/components/common/Typography.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/AgencySelectionModal.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/DateTimeInput.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/DeliverySummary.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/PriceBreakdown.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/SavedAddressModal.tsx: Cannot open: No such file or directory
+tar: src/components/customer: Cannot mkdir: No such file or directory
+tar: src/components/customer/TankerSelectionModal.tsx: Cannot open: No such file or directory
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/components/driver/OrdersFilter.tsx: Cannot open: No such file or directory
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/components/driver/OrdersHeader.tsx: Cannot open: No such file or directory
+tar: src/components/driver: Cannot mkdir: No such file or directory
+tar: src/components/driver/OrdersList.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/AddBankAccountScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/AdminProfileScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/AllBookingsScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/DriverManagementScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/ReportsScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/admin: Cannot mkdir: No such file or directory
+tar: src/screens/admin/VehicleManagementScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens/auth/LoginScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens/auth/RegisterScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/auth: Cannot mkdir: No such file or directory
+tar: src/screens/auth/RoleEntryScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/BookingScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/CustomerHomeScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
+tar: src/screens/customer/OrderHistoryScreen.tsx: Cannot open: No such file or directory
+tar: src/screens/customer: Cannot mkdir: No such file or directory
 tar: src/screens/customer/OrderTrackingScreen.tsx: Cannot open: No such file or directory
 tar: src/screens/customer: Cannot mkdir: No such file or directory
 tar: src/screens/customer/PastOrdersScreen.tsx: Cannot open: No such file or directory
