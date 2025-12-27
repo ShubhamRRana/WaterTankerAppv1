@@ -12,7 +12,10 @@
       "distribution": "internal"
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EAS_NO_VCS": "0"
+      }
     }
   },
   "submit": {
