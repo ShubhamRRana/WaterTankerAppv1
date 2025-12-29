@@ -30,6 +30,9 @@ const OrdersScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [processingOrder, setProcessingOrder] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [showAmountModal, setShowAmountModal] = useState(false);
+  const [isSubmittingAmount, setIsSubmittingAmount] = useState(false);
   const previousTabRef = useRef<OrderTab>('available');
   const tabChangeTimeRef = useRef<number>(0);
   

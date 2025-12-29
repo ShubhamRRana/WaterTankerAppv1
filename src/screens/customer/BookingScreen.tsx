@@ -23,10 +23,9 @@ import TankerSelectionModal from '../../components/customer/TankerSelectionModal
 import AgencySelectionModal from '../../components/customer/AgencySelectionModal';
 import SavedAddressModal from '../../components/customer/SavedAddressModal';
 import DateTimeInput from '../../components/customer/DateTimeInput';
-import PriceBreakdown from '../../components/customer/PriceBreakdown';
 import { Address, isAdminUser, isCustomerUser } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
-import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
+import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { UI_CONFIG, LOCATION_CONFIG } from '../../constants/config';
 import { handleError } from '../../utils/errorHandler';
 import { createScheduledDate as createScheduledDateFromUtils } from '../../utils/dateUtils';
@@ -167,7 +166,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
     setSelectedVehicle({
       id: vehicle.id,
       capacity: vehicle.capacity != null ? vehicle.capacity : 0,
-      amount: vehicle.amount,
+      ...(vehicle.amount !== undefined && { amount: vehicle.amount }),
       vehicleNumber: vehicle.vehicleNumber || ''
     });
     setShowTankerModal(false);
@@ -391,7 +390,8 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
         return;
       }
 
-      if (!priceBreakdown?.basePrice || !priceBreakdown?.totalPrice) {
+      if (priceBreakdown?.basePrice === undefined || priceBreakdown?.basePrice === null ||
+          priceBreakdown?.totalPrice === undefined || priceBreakdown?.totalPrice === null) {
         Alert.alert('Error', 'Price information is missing. Please try again.');
         return;
       }
@@ -587,17 +587,6 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
           />
         </Card>
       </View>
-
-      {/* Price Breakdown */}
-      {priceBreakdown && (
-        <PriceBreakdown
-          {...(selectedAgency?.name && { agencyName: selectedAgency.name })}
-          {...(selectedVehicle?.capacity !== undefined && { vehicleCapacity: selectedVehicle.capacity })}
-          {...(selectedVehicle?.vehicleNumber && { vehicleNumber: selectedVehicle.vehicleNumber })}
-          basePrice={priceBreakdown.basePrice}
-          totalPrice={priceBreakdown.totalPrice}
-        />
-      )}
 
       {/* Book Now Button */}
       <View style={styles.section}>
