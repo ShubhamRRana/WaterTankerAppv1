@@ -291,7 +291,13 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({ navigation, r
           </View>
           <View style={styles.detailRow}>
             <Typography variant="body" style={styles.detailLabel}>Total Amount</Typography>
-            <Typography variant="body" style={styles.detailValue}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
+            {booking.totalPrice > 0 ? (
+              <Typography variant="body" style={styles.detailValue}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
+            ) : (
+              <Typography variant="body" style={[styles.detailValue, { fontStyle: 'italic', color: UI_CONFIG.colors.textSecondary }]}>
+                To be determined
+              </Typography>
+            )}
           </View>
           <View style={styles.detailRow}>
             <Typography variant="body" style={styles.detailLabel}>Order Date</Typography>

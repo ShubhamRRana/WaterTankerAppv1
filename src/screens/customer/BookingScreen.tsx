@@ -49,9 +49,9 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
   const { fetchUsersByRole, users: allUsers, isLoading: usersLoading } = useUserStore();
   const { fetchVehiclesByAgency } = useVehicleStore();
 
-  const [selectedVehicle, setSelectedVehicle] = useState<{ id: string; capacity: number; amount: number; vehicleNumber: string } | null>(null);
+  const [selectedVehicle, setSelectedVehicle] = useState<{ id: string; capacity: number; amount?: number; vehicleNumber: string } | null>(null);
   const [selectedAgency, setSelectedAgency] = useState<{ id: string; name: string; ownerName?: string } | null>(null);
-  const [availableVehicles, setAvailableVehicles] = useState<Array<{ id: string; vehicleCapacity: number; amount: number; vehicleNumber: string }>>([]);
+  const [availableVehicles, setAvailableVehicles] = useState<Array<{ id: string; vehicleCapacity: number; amount?: number; vehicleNumber: string }>>([]);
   const [vehiclesLoading, setVehiclesLoading] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState<string>('');
   const [deliveryDate, setDeliveryDate] = useState<string>('');
@@ -143,9 +143,10 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
   const calculatePrice = useCallback(() => {
     if (!selectedVehicle) return;
     
-    // Only show base price, no distance-based charges
-    const basePrice = selectedVehicle.amount || 0;
-    const totalPrice = basePrice;
+    // Amount will be set by driver at delivery time
+    // Set to 0 for now, will be updated when driver accepts order
+    const basePrice = 0;
+    const totalPrice = 0;
     
     setPriceBreakdown({
       tankerSize: `${selectedVehicle.capacity || 0}L Tanker`,
@@ -155,14 +156,14 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
   }, [selectedVehicle]);
 
   useEffect(() => {
-    if (selectedVehicle && selectedVehicle.amount !== undefined) {
+    if (selectedVehicle) {
       calculatePrice();
     } else if (!selectedVehicle) {
       setPriceBreakdown(null);
     }
   }, [selectedVehicle, calculatePrice]);
 
-  const handleVehicleSelection = useCallback((vehicle: { id: string; capacity: number; amount: number; vehicleNumber: string }) => {
+  const handleVehicleSelection = useCallback((vehicle: { id: string; capacity: number; amount?: number; vehicleNumber: string }) => {
     setSelectedVehicle({
       id: vehicle.id,
       capacity: vehicle.capacity != null ? vehicle.capacity : 0,
@@ -441,7 +442,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
       // Show success alert
       Alert.alert(
         'Booking Successful!',
-        `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nOrder ID: ${bookingData.customerId.slice(-6)}\nTotal Amount: ${PricingUtils.formatPrice(priceBreakdown.totalPrice)}`,
+        `Your booking has been placed successfully.\nAgency: ${selectedAgency.name}\nOrder ID: ${bookingData.customerId.slice(-6)}\nAmount: Will be determined at delivery`,
         [
           {
             text: 'OK',
@@ -524,7 +525,7 @@ const BookingScreen: React.FC<BookingScreenProps> = () => {
               </Typography>
               {selectedVehicle && (
                 <Typography variant="caption" style={styles.selectionSubtext}>
-                  Base price: {PricingUtils.formatPrice(selectedVehicle.amount)} per tanker
+                  Amount will be determined at delivery
                 </Typography>
               )}
             </View>

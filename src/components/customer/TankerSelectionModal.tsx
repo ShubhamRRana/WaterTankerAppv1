@@ -19,14 +19,14 @@ interface TankerSelectionModalProps {
   vehicles: Array<{
     id: string;
     vehicleCapacity: number;
-    amount: number;
+    amount?: number;
     vehicleNumber: string;
   }>;
   selectedVehicleId: string | null;
   onSelectVehicle: (vehicle: {
     id: string;
     capacity: number;
-    amount: number;
+    amount?: number;
     vehicleNumber: string;
   }) => void;
   loading: boolean;
@@ -45,7 +45,7 @@ const TankerSelectionModal: React.FC<TankerSelectionModalProps> = ({
   const handleVehicleSelection = (vehicle: {
     id: string;
     vehicleCapacity: number;
-    amount: number;
+    amount?: number;
     vehicleNumber: string;
   }) => {
     onSelectVehicle({
@@ -89,7 +89,7 @@ const TankerSelectionModal: React.FC<TankerSelectionModalProps> = ({
                       {vehicle.vehicleCapacity}L Tanker - {vehicle.vehicleNumber}
                     </Typography>
                     <Typography variant="caption" style={styles.tankerPrice}>
-                      {PricingUtils.formatPrice(vehicle.amount)} base price
+                      Amount to be determined at delivery
                     </Typography>
                   </View>
                   <Ionicons

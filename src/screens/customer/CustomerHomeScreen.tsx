@@ -224,7 +224,13 @@ const CustomerHomeScreen: React.FC<CustomerHomeScreenProps> = () => {
                 <Typography variant="body" style={styles.tankerSize}>
                   {booking.tankerSize}L Tanker
                 </Typography>
-                <Typography variant="body" style={styles.orderPrice}>{formatPrice(booking.totalPrice)}</Typography>
+                {booking.totalPrice > 0 ? (
+                  <Typography variant="body" style={styles.orderPrice}>{formatPrice(booking.totalPrice)}</Typography>
+                ) : (
+                  <Typography variant="body" style={[styles.orderPrice, { fontStyle: 'italic', color: UI_CONFIG.colors.textSecondary }]}>
+                    To be determined
+                  </Typography>
+                )}
               </View>
               <View style={styles.addressRow}>
                 <Ionicons name="location" size={16} color={UI_CONFIG.colors.success} />

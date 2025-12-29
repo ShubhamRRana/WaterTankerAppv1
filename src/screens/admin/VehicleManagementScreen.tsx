@@ -34,7 +34,6 @@ interface AddVehicleModalProps {
     insuranceCompanyName: string;
     insuranceExpiryDate: string;
     vehicleCapacity: string;
-    amount: string;
   };
   formErrors: {[key: string]: string};
   isSubmitting: boolean;
@@ -136,17 +135,6 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   keyboardType="numeric"
                 />
               </View>
-
-              <View style={styles.formField}>
-                <Input
-                  label="Amount (₹) *"
-                  value={formData.amount}
-                  onChangeText={(text) => onFormChange('amount', text)}
-                  placeholder="Enter amount"
-                  error={formErrors.amount}
-                  keyboardType="numeric"
-                />
-              </View>
             </Card>
 
             <View style={styles.modalActions}>
@@ -220,17 +208,6 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
                   keyboardType="numeric"
                 />
               </View>
-
-              <View style={styles.formField}>
-                <Input
-                  label="Amount (₹) *"
-                  value={formData.amount}
-                  onChangeText={(text) => onFormChange('amount', text)}
-                  placeholder="Enter amount"
-                  error={formErrors.amount}
-                  keyboardType="numeric"
-                />
-              </View>
             </Card>
 
             <View style={styles.modalActions}>
@@ -275,7 +252,6 @@ const VehicleManagementScreen: React.FC = () => {
     insuranceCompanyName: '',
     insuranceExpiryDate: '',
     vehicleCapacity: '',
-    amount: '',
   });
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -332,12 +308,6 @@ const VehicleManagementScreen: React.FC = () => {
     if (!capacityValidation.isValid) {
       errors.vehicleCapacity = capacityValidation.error || 'Valid vehicle capacity is required';
     }
-
-    // Validate amount
-    const amountValidation = ValidationUtils.validateAmount(addVehicleForm.amount);
-    if (!amountValidation.isValid) {
-      errors.amount = amountValidation.error || 'Valid amount is required';
-    }
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -384,7 +354,6 @@ const VehicleManagementScreen: React.FC = () => {
           insuranceCompanyName: SanitizationUtils.sanitizeBusinessName(addVehicleForm.insuranceCompanyName),
           insuranceExpiryDate: insuranceExpiryDate,
           vehicleCapacity: parseFloat(addVehicleForm.vehicleCapacity),
-          amount: parseFloat(addVehicleForm.amount),
         });
         
         Alert.alert('Success', 'Vehicle added successfully');
@@ -404,7 +373,6 @@ const VehicleManagementScreen: React.FC = () => {
           insuranceCompanyName: SanitizationUtils.sanitizeBusinessName(addVehicleForm.insuranceCompanyName),
           insuranceExpiryDate: insuranceExpiryDate,
           vehicleCapacity: parseFloat(addVehicleForm.vehicleCapacity),
-          amount: parseFloat(addVehicleForm.amount),
         });
         
         Alert.alert('Success', 'Vehicle updated successfully');
@@ -416,7 +384,6 @@ const VehicleManagementScreen: React.FC = () => {
         insuranceCompanyName: '',
         insuranceExpiryDate: '',
         vehicleCapacity: '',
-        amount: '',
       });
       setFormErrors({});
       setEditingVehicle(null);
@@ -434,7 +401,6 @@ const VehicleManagementScreen: React.FC = () => {
       insuranceCompanyName: '',
       insuranceExpiryDate: '',
       vehicleCapacity: '',
-      amount: '',
     });
     setFormErrors({});
     setEditingVehicle(null);
@@ -453,7 +419,6 @@ const VehicleManagementScreen: React.FC = () => {
         return `${day}/${month}/${year}`;
       })() : '',
       vehicleCapacity: vehicle.vehicleCapacity?.toString() || '',
-      amount: vehicle.amount?.toString() || '',
     });
     setFormErrors({});
     setShowAddVehicleModal(true);
@@ -503,7 +468,6 @@ const VehicleManagementScreen: React.FC = () => {
         sanitizedValue = SanitizationUtils.sanitizeDateString(value);
         break;
       case 'vehicleCapacity':
-      case 'amount':
         sanitizedValue = SanitizationUtils.sanitizeNumber(value);
         break;
       default:
@@ -586,12 +550,6 @@ const VehicleManagementScreen: React.FC = () => {
               Capacity: {vehicle.vehicleCapacity} Liters
             </Typography>
           </View>
-          <View style={styles.detailRow}>
-            <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="caption" style={styles.detailText}>
-              Amount: {PricingUtils.formatPrice(vehicle.amount)}
-            </Typography>
-          </View>
         </View>
       </TouchableOpacity>
     </Card>
@@ -644,12 +602,6 @@ const VehicleManagementScreen: React.FC = () => {
                 <Typography variant="body" style={styles.detailLabel}>Vehicle Capacity</Typography>
                 <Typography variant="body" style={styles.detailValue}>
                   {selectedVehicle.vehicleCapacity} Liters
-                </Typography>
-              </View>
-              <View style={styles.detailItem}>
-                <Typography variant="body" style={styles.detailLabel}>Amount</Typography>
-                <Typography variant="body" style={styles.detailValue}>
-                  {PricingUtils.formatPrice(selectedVehicle.amount)}
                 </Typography>
               </View>
               <View style={styles.detailItem}>

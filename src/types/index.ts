@@ -156,7 +156,7 @@ export interface Vehicle {
   insuranceCompanyName: string;
   insuranceExpiryDate: Date;
   vehicleCapacity: number; // in liters
-  amount: number; // in rupees
+  amount?: number; // in rupees (optional - set by driver at delivery time)
   createdAt: Date;
   updatedAt: Date;
 }

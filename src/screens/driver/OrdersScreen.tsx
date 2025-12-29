@@ -14,6 +14,7 @@ import { getErrorMessage } from '../../utils/errors';
 import OrdersHeader from '../../components/driver/OrdersHeader';
 import OrdersFilter, { OrderTab } from '../../components/driver/OrdersFilter';
 import OrdersList from '../../components/driver/OrdersList';
+import AmountInputModal from '../../components/driver/AmountInputModal';
 
 type OrdersScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<DriverTabParamList, 'Orders'>,
@@ -183,13 +184,20 @@ const OrdersScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const handleAcceptOrder = useCallback(async (orderId: string) => {
-    if (!user?.id) return;
+  const handleAcceptOrder = useCallback((orderId: string) => {
+    // Show amount input modal first
+    setPendingOrderId(orderId);
+    setShowAmountModal(true);
+  }, []);
+
+  const handleAmountSubmit = useCallback(async (amount: number) => {
+    if (!user?.id || !pendingOrderId) return;
     
-    setProcessingOrder(orderId);
+    setIsSubmittingAmount(true);
+    setProcessingOrder(pendingOrderId);
     
     // Optimistic update: Update local bookings immediately
-    const currentBooking = bookings.find(b => b.id === orderId);
+    const currentBooking = bookings.find(b => b.id === pendingOrderId);
     if (currentBooking) {
       const optimisticBooking: Booking = {
         ...currentBooking,
@@ -199,6 +207,8 @@ const OrdersScreen: React.FC = () => {
         driverPhone: user.phone || '',
         acceptedAt: new Date(),
         updatedAt: new Date(),
+        basePrice: amount,
+        totalPrice: amount,
       };
       
       // Update cache optimistically
@@ -206,7 +216,7 @@ const OrdersScreen: React.FC = () => {
       if (dataCache.current[cacheKey]) {
         dataCache.current[cacheKey] = {
           data: dataCache.current[cacheKey]!.data.map(b => 
-            b.id === orderId ? optimisticBooking : b
+            b.id === pendingOrderId ? optimisticBooking : b
           ),
           timestamp: Date.now(),
         };
@@ -214,12 +224,19 @@ const OrdersScreen: React.FC = () => {
     }
     
     try {
-      await updateBookingStatus(orderId, 'accepted', {
+      await updateBookingStatus(pendingOrderId, 'accepted', {
         driverId: user.id,
         driverName: user.name,
         driverPhone: user.phone || '',
         acceptedAt: new Date(),
+        basePrice: amount,
+        totalPrice: amount,
+        distanceCharge: 0,
       });
+      
+      // Close modal
+      setShowAmountModal(false);
+      setPendingOrderId(null);
       
       // Invalidate caches since order moved from available to active
       dataCache.current.available = null;
@@ -245,8 +262,15 @@ const OrdersScreen: React.FC = () => {
       Alert.alert('Error', errorMessage);
     } finally {
       setProcessingOrder(null);
+      setIsSubmittingAmount(false);
     }
-  }, [user, bookings, activeTab, updateBookingStatus, loadOrdersData]);
+  }, [user, bookings, activeTab, updateBookingStatus, loadOrdersData, pendingOrderId]);
+
+  const handleAmountModalClose = useCallback(() => {
+    setShowAmountModal(false);
+    setPendingOrderId(null);
+    setIsSubmittingAmount(false);
+  }, []);
 
   const handleStartDelivery = useCallback(async (orderId: string) => {
     setProcessingOrder(orderId);
@@ -392,6 +416,16 @@ const OrdersScreen: React.FC = () => {
           }}
         />
       </View>
+      
+      <AmountInputModal
+        visible={showAmountModal}
+        onClose={handleAmountModalClose}
+        onSubmit={handleAmountSubmit}
+        isSubmitting={isSubmittingAmount}
+        orderId={pendingOrderId || undefined}
+        customerName={pendingOrderId ? bookings.find(b => b.id === pendingOrderId)?.customerName : undefined}
+        vehicleCapacity={pendingOrderId ? bookings.find(b => b.id === pendingOrderId)?.tankerSize : undefined}
+      />
     </SafeAreaView>
   );
 };

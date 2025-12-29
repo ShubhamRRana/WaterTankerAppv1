@@ -333,7 +333,13 @@ const OrderHistoryScreen: React.FC<OrderHistoryScreenProps> = ({ navigation }) =
                 })()}
                 <View style={styles.detailRow}>
                   <Ionicons name="cash" size={16} color={UI_CONFIG.colors.warning} />
-                  <Typography variant="body" style={styles.detailText}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
+                  {booking.totalPrice > 0 ? (
+                    <Typography variant="body" style={styles.detailText}>{PricingUtils.formatPrice(booking.totalPrice)}</Typography>
+                  ) : (
+                    <Typography variant="body" style={[styles.detailText, { fontStyle: 'italic', color: UI_CONFIG.colors.textSecondary }]}>
+                      To be determined
+                    </Typography>
+                  )}
                 </View>
                 {booking.status === 'delivered' && booking.deliveredAt && (
                   <View style={styles.detailRow}>

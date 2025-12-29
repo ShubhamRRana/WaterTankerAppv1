@@ -45,13 +45,24 @@ const PriceBreakdown: React.FC<PriceBreakdownProps> = ({
             <Typography variant="body" style={styles.priceValue}>{vehicleNumber}</Typography>
           </View>
         )}
-        <View style={styles.priceRow}>
-          <Typography variant="body" style={styles.priceLabel}>Unit Price</Typography>
-          <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(basePrice)}</Typography>
-        </View>
+        {basePrice > 0 ? (
+          <View style={styles.priceRow}>
+            <Typography variant="body" style={styles.priceLabel}>Unit Price</Typography>
+            <Typography variant="body" style={styles.priceValue}>{PricingUtils.formatPrice(basePrice)}</Typography>
+          </View>
+        ) : (
+          <View style={styles.priceRow}>
+            <Typography variant="body" style={styles.priceLabel}>Unit Price</Typography>
+            <Typography variant="body" style={[styles.priceValue, styles.pendingText]}>To be determined</Typography>
+          </View>
+        )}
         <View style={[styles.priceRow, styles.totalRow]}>
           <Typography variant="h3" style={styles.totalLabel}>Total Amount</Typography>
-          <Typography variant="h3" style={styles.totalValue}>{PricingUtils.formatPrice(totalPrice)}</Typography>
+          {totalPrice > 0 ? (
+            <Typography variant="h3" style={styles.totalValue}>{PricingUtils.formatPrice(totalPrice)}</Typography>
+          ) : (
+            <Typography variant="h3" style={[styles.totalValue, styles.pendingText]}>To be determined</Typography>
+          )}
         </View>
       </Card>
     </View>
@@ -102,6 +113,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: UI_CONFIG.colors.primary,
+  },
+  pendingText: {
+    color: UI_CONFIG.colors.textSecondary,
+    fontStyle: 'italic',
   },
 });
 

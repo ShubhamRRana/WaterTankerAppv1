@@ -129,7 +129,7 @@ interface VehicleRow {
   insurance_company_name: string;
   insurance_expiry_date: string;
   vehicle_capacity: number;
-  amount: number;
+  amount: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -387,7 +387,7 @@ function mapVehicleFromDb(row: VehicleRow): Vehicle {
     insuranceCompanyName: row.insurance_company_name,
     insuranceExpiryDate: deserialized.insuranceExpiryDate,
     vehicleCapacity: row.vehicle_capacity,
-    amount: Number(row.amount),
+    amount: row.amount != null ? Number(row.amount) : undefined,
     createdAt: deserialized.createdAt,
     updatedAt: deserialized.updatedAt,
   };
@@ -404,7 +404,7 @@ function mapVehicleToDb(vehicle: Vehicle): Partial<VehicleRow> {
     insurance_company_name: vehicle.insuranceCompanyName,
     insurance_expiry_date: serializeDate(vehicle.insuranceExpiryDate) || new Date().toISOString(),
     vehicle_capacity: vehicle.vehicleCapacity,
-    amount: vehicle.amount,
+    amount: vehicle.amount ?? null,
     created_at: serializeDate(vehicle.createdAt) || new Date().toISOString(),
     updated_at: serializeDate(vehicle.updatedAt) || new Date().toISOString(),
   };

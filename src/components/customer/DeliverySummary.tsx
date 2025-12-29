@@ -84,9 +84,15 @@ const DeliverySummary: React.FC<DeliverySummaryProps> = ({
             <Ionicons name="cash-outline" size={18} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="body" style={styles.summaryLabel}>Total Amount</Typography>
           </View>
-          <Typography variant="body" style={[styles.summaryValue, styles.amountValue]}>
-            {PricingUtils.formatPrice(amount)}
-          </Typography>
+          {amount > 0 ? (
+            <Typography variant="body" style={[styles.summaryValue, styles.amountValue]}>
+              {PricingUtils.formatPrice(amount)}
+            </Typography>
+          ) : (
+            <Typography variant="body" style={[styles.summaryValue, styles.amountValue, styles.pendingText]}>
+              To be determined at delivery
+            </Typography>
+          )}
         </View>
 
         {(date || time) ? (
@@ -169,6 +175,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'left',
     width: '100%',
+  },
+  pendingText: {
+    fontStyle: 'italic',
+    color: UI_CONFIG.colors.textSecondary,
   },
 });
 
