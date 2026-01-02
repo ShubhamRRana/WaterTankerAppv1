@@ -40,7 +40,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [isButtonPressed, setIsButtonPressed] = useState(false);
   
-  const { login, loginWithRole, isLoading } = useAuthStore();
+  const { login, loginWithCredentialsAndRole, isLoading } = useAuthStore();
 
   // Real-time validation handlers
   const handleEmailChange = (text: string) => {
@@ -111,19 +111,10 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     try {
       const preferredRole = route?.params?.preferredRole;
       
-      // If preferredRole is provided, use loginWithRole directly
+      // If preferredRole is provided, use loginWithCredentialsAndRole
+      // This sets the pending role BEFORE auth to prevent race conditions
       if (preferredRole) {
-        const loginResult = await AuthService.login(sanitizedEmail, password, preferredRole);
-        
-        if (!loginResult.success) {
-          Alert.alert('Login Failed', loginResult.error || ERROR_MESSAGES.auth.invalidCredentials);
-          return;
-        }
-        
-        if (loginResult.user) {
-          // Use the store's loginWithRole method to set the user state
-          await loginWithRole(sanitizedEmail, preferredRole);
-        }
+        await loginWithCredentialsAndRole(sanitizedEmail, password, preferredRole);
         return;
       }
       

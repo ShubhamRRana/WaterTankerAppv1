@@ -16,9 +16,12 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   unsubscribeAuth: (() => void) | null;
-  isRoleSpecificLogin: boolean;
+  /** Role-specific login in progress - prevents auth listener from overriding role */
+  pendingLoginRole: UserRole | null;
   login: (email: string, password: string) => Promise<void>;
   loginWithRole: (email: string, role: UserRole) => Promise<void>;
+  loginWithCredentialsAndRole: (email: string, password: string, role: UserRole) => Promise<void>;
+  setPendingLoginRole: (role: UserRole | null) => void;
   register: (
     email: string,
     password: string,
@@ -57,7 +60,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   isAuthenticated: false,
   unsubscribeAuth: null,
-  isRoleSpecificLogin: false,
+  pendingLoginRole: null,
 
   initializeAuth: async () => {
     set({ isLoading: true });
@@ -129,7 +132,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   loginWithRole: async (email: string, role: UserRole) => {
-    set({ isLoading: true, isRoleSpecificLogin: true });
+    // Set pending role to prevent auth listener from overriding with wrong role
+    set({ isLoading: true, pendingLoginRole: role });
     try {
       const result = await AuthService.loginWithRole(email, role);
       if (result.success && result.user) {
@@ -137,14 +141,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           user: result.user,
           isAuthenticated: true,
           isLoading: false,
+          pendingLoginRole: null,
         });
-        // Clear the flag after a short delay to allow navigation to complete
-        // This prevents the auth state change listener from overriding the selected role
-        setTimeout(() => {
-          set({ isRoleSpecificLogin: false });
-        }, 1000);
       } else {
-        set({ isLoading: false, isRoleSpecificLogin: false });
+        set({ isLoading: false, pendingLoginRole: null });
         throw new Error(result.error || 'Login failed');
       }
     } catch (error) {
@@ -153,9 +153,48 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         userFacing: false,
         severity: ErrorSeverity.MEDIUM,
       });
-      set({ isLoading: false, isRoleSpecificLogin: false });
+      set({ isLoading: false, pendingLoginRole: null });
       throw error;
     }
+  },
+
+  loginWithCredentialsAndRole: async (email: string, password: string, role: UserRole) => {
+    // Set pending role BEFORE auth to prevent listener from overriding with wrong role
+    set({ isLoading: true, pendingLoginRole: role });
+    try {
+      const result = await AuthService.login(email, password, role);
+      if (result.success && result.user) {
+        set({
+          user: result.user,
+          isAuthenticated: true,
+          isLoading: false,
+          pendingLoginRole: null,
+        });
+      } else {
+        // Login failed - sign out to clean up and clear pending role
+        await AuthService.logout();
+        set({ isLoading: false, pendingLoginRole: null });
+        throw new Error(result.error || 'Login failed');
+      }
+    } catch (error) {
+      // Ensure we're signed out on failure
+      try {
+        await AuthService.logout();
+      } catch {
+        // Ignore logout errors
+      }
+      handleError(error, {
+        context: { operation: 'loginWithCredentialsAndRole', email, role },
+        userFacing: false,
+        severity: ErrorSeverity.MEDIUM,
+      });
+      set({ isLoading: false, pendingLoginRole: null });
+      throw error;
+    }
+  },
+
+  setPendingLoginRole: (role: UserRole | null) => {
+    set({ pendingLoginRole: role });
   },
 
   register: async (
@@ -258,11 +297,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Subscribe to Supabase Auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        // Skip updating user if a role-specific login is in progress
-        // This prevents the listener from overriding the selected role
-        const { isRoleSpecificLogin, user } = get();
-        if (isRoleSpecificLogin && user) {
-          // User was already set with specific role, don't override
+        // Check if a role-specific login is in progress
+        const { pendingLoginRole, user: currentUser } = get();
+        if (pendingLoginRole) {
+          // A role-specific login is in progress - let the login function handle authentication
+          // This prevents the listener from setting the wrong role before validation completes
+          return;
+        }
+        // If user is already set (by login function), don't override
+        if (currentUser) {
           return;
         }
         // Fetch user data with first available role
@@ -277,13 +320,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({
           user: null,
           isAuthenticated: false,
+          pendingLoginRole: null,
         });
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
         // Token refreshed, user still authenticated
-        // Skip updating user if a role-specific login is in progress
-        const { isRoleSpecificLogin, user } = get();
-        if (isRoleSpecificLogin && user) {
-          // User was already set with specific role, don't override
+        // Check if a role-specific login is in progress
+        const { pendingLoginRole } = get();
+        if (pendingLoginRole) {
+          // Let the login function handle it
           return;
         }
         const userData = await AuthService.getCurrentUserData(session.user.id);
