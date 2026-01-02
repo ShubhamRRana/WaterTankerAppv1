@@ -16,6 +16,7 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   unsubscribeAuth: (() => void) | null;
+  isRoleSpecificLogin: boolean;
   login: (email: string, password: string) => Promise<void>;
   loginWithRole: (email: string, role: UserRole) => Promise<void>;
   register: (
@@ -56,6 +57,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   isAuthenticated: false,
   unsubscribeAuth: null,
+  isRoleSpecificLogin: false,
 
   initializeAuth: async () => {
     set({ isLoading: true });
@@ -127,7 +129,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   loginWithRole: async (email: string, role: UserRole) => {
-    set({ isLoading: true });
+    set({ isLoading: true, isRoleSpecificLogin: true });
     try {
       const result = await AuthService.loginWithRole(email, role);
       if (result.success && result.user) {
@@ -136,8 +138,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isAuthenticated: true,
           isLoading: false,
         });
+        // Clear the flag after a short delay to allow navigation to complete
+        // This prevents the auth state change listener from overriding the selected role
+        setTimeout(() => {
+          set({ isRoleSpecificLogin: false });
+        }, 1000);
       } else {
-        set({ isLoading: false });
+        set({ isLoading: false, isRoleSpecificLogin: false });
         throw new Error(result.error || 'Login failed');
       }
     } catch (error) {
@@ -146,7 +153,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         userFacing: false,
         severity: ErrorSeverity.MEDIUM,
       });
-      set({ isLoading: false });
+      set({ isLoading: false, isRoleSpecificLogin: false });
       throw error;
     }
   },
@@ -251,6 +258,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // Subscribe to Supabase Auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
+        // Skip updating user if a role-specific login is in progress
+        // This prevents the listener from overriding the selected role
+        const { isRoleSpecificLogin, user } = get();
+        if (isRoleSpecificLogin && user) {
+          // User was already set with specific role, don't override
+          return;
+        }
         // Fetch user data with first available role
         const userData = await AuthService.getCurrentUserData(session.user.id);
         if (userData) {
@@ -266,6 +280,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         });
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
         // Token refreshed, user still authenticated
+        // Skip updating user if a role-specific login is in progress
+        const { isRoleSpecificLogin, user } = get();
+        if (isRoleSpecificLogin && user) {
+          // User was already set with specific role, don't override
+          return;
+        }
         const userData = await AuthService.getCurrentUserData(session.user.id);
         if (userData) {
           set({
