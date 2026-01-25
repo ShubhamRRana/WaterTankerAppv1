@@ -7,6 +7,10 @@ import { useFonts } from 'expo-font';
 import { View, ActivityIndicator } from 'react-native';
 import { UI_CONFIG } from './src/constants/config';
 
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/e2f12602-3cdd-4886-b458-25ca917e626a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:9',message:'App.tsx module loaded successfully',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+// #endregion
+
 // Lazy load navigators for code splitting
 const AuthNavigator = lazy(() => import('./src/navigation/AuthNavigator'));
 const CustomerNavigator = lazy(() => import('./src/navigation/CustomerNavigator'));
@@ -32,6 +36,9 @@ export type RootStackParamList = {
 const Stack = createStackNavigator<RootStackParamList>();
 
 const App: React.FC = () => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2f12602-3cdd-4886-b458-25ca917e626a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:35',message:'App component rendering',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   const { user, initializeAuth, isLoading } = useAuthStore();
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
 
@@ -39,10 +46,21 @@ const App: React.FC = () => {
   const [fontsLoaded] = useFonts({
     'PlayfairDisplay-Regular': require('./assets/fonts/PlayfairDisplay-Regular.ttf'),
   });
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/e2f12602-3cdd-4886-b458-25ca917e626a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:42',message:'After useFonts hook',data:{fontsLoaded},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
 
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e2f12602-3cdd-4886-b458-25ca917e626a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:44',message:'Calling initializeAuth',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     // Initialize the auth system and load any existing user
-    initializeAuth();
+    initializeAuth().catch((error) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e2f12602-3cdd-4886-b458-25ca917e626a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:47',message:'initializeAuth error',data:{error:error?.message,stack:error?.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+    });
   }, [initializeAuth]);
 
   // Helper function to determine initial route based on user

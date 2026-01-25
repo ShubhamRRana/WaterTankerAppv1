@@ -63,12 +63,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   pendingLoginRole: null,
 
   initializeAuth: async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/e2f12602-3cdd-4886-b458-25ca917e626a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'authStore.ts:65',message:'initializeAuth called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     set({ isLoading: true });
     try {
       await AuthService.initializeApp();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e2f12602-3cdd-4886-b458-25ca917e626a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'authStore.ts:68',message:'AuthService.initializeApp completed',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       
       // Check for existing Supabase session
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e2f12602-3cdd-4886-b458-25ca917e626a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'authStore.ts:71',message:'Calling supabase.auth.getSession',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       const { data: { session } } = await supabase.auth.getSession();
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/e2f12602-3cdd-4886-b458-25ca917e626a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'authStore.ts:72',message:'supabase.auth.getSession completed',data:{hasSession:!!session,hasUser:!!session?.user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       if (session?.user) {
         const userData = await AuthService.getCurrentUserData(session.user.id);
         set({

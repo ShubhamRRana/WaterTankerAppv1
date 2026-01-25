@@ -1,6 +1,14 @@
 // app.config.js
 
-import 'dotenv/config'; // Load .env file
+// Load .env file if dotenv is available (may not be available during EAS build config)
+// EAS CLI uses require() to load this config, so we use a try-catch with require
+try {
+  // Use require for compatibility with EAS CLI's CommonJS loader
+  require('dotenv/config');
+} catch (e) {
+  // dotenv not available, environment variables should be set via system/env
+  // This is expected during EAS build configuration - env vars should be set in EAS secrets
+}
 
 export default {
   expo: {
