@@ -39,6 +39,7 @@ A comprehensive mobile application for on-demand water tanker delivery services.
 - **Driver Management**: Add, edit, and manage driver accounts
 - **Vehicle Management**: Manage vehicle fleet with insurance and capacity details
 - **Bank Account Management**: Manage bank accounts for payments
+- **Expense Management**: Track and manage business expenses (diesel and maintenance) with receipt image uploads
 - **Reports & Analytics**: Generate reports on bookings, revenue, and driver performance
 
 ## Tech Stack
@@ -179,6 +180,18 @@ classDiagram
         +Date updatedAt
     }
     
+    class Expense {
+        +string id
+        +string adminId
+        +ExpenseType expenseType
+        +number amount
+        +string? description
+        +Date expenseDate
+        +string? receiptImageUrl
+        +Date createdAt
+        +Date updatedAt
+    }
+    
     class TankerSize {
         +string id
         +number size
@@ -196,6 +209,7 @@ classDiagram
     Booking "0..1" --> "1" AdminUser : agencyId
     Vehicle "1" --> "1" AdminUser : agencyId
     BankAccount "1" --> "1" AdminUser : adminId
+    Expense "1" --> "1" AdminUser : adminId
     CustomerUser "1" --> "*" Address : savedAddresses
 ```
 
@@ -226,6 +240,7 @@ graph TB
         E --> Q[DriverManagementScreen]
         E --> R[VehicleManagementScreen]
         E --> S[ReportsScreen]
+        E --> TA[ExpenseScreen]
     end
     
     subgraph "State Management Layer"
@@ -243,52 +258,57 @@ graph TB
         AB[LocationService]
         AC[VehicleService]
         AD[BankAccountService]
+        AE[ExpenseService]
     end
     
     subgraph "Data Access Layer"
-        AE[IDataAccessLayer]
-        AF[SupabaseDataAccess]
-        AG[IUserDataAccess]
-        AH[IBookingDataAccess]
-        AI[IVehicleDataAccess]
-        AJ[IBankAccountDataAccess]
+        AF[IDataAccessLayer]
+        AG[SupabaseDataAccess]
+        AH[IUserDataAccess]
+        AI[IBookingDataAccess]
+        AJ[IVehicleDataAccess]
+        AK[IBankAccountDataAccess]
+        AL[IExpenseDataAccess]
     end
     
     subgraph "Infrastructure Layer"
-        AK[Supabase Client]
-        AL[SubscriptionManager]
-        AM[ErrorHandler]
-        AN[Validation Utils]
-        AO[Pricing Utils]
+        AM[Supabase Client]
+        AN[SubscriptionManager]
+        AO[ErrorHandler]
+        AP[Validation Utils]
+        AQ[Pricing Utils]
     end
     
     I --> T
     J --> U
     M --> U
     P --> U
+    TA --> AE
     
     T --> X
     U --> Y
     V --> Z
     W --> AC
     
-    X --> AE
-    Y --> AE
-    Z --> AE
-    AC --> AE
-    AD --> AE
-    
+    X --> AF
+    Y --> AF
+    Z --> AF
+    AC --> AF
+    AD --> AF
     AE --> AF
-    AF --> AG
-    AF --> AH
-    AF --> AI
-    AF --> AJ
     
-    AF --> AK
-    AF --> AL
-    X --> AM
-    Y --> AN
-    Y --> AO
+    AF --> AG
+    AG --> AH
+    AG --> AI
+    AG --> AJ
+    AG --> AK
+    AG --> AL
+    
+    AG --> AM
+    AG --> AN
+    X --> AO
+    Y --> AP
+    Y --> AQ
 ```
 
 ### 3. Sequence Diagram - Booking Flow
@@ -522,6 +542,7 @@ Ensure your Supabase project has the following tables configured:
 - `admins`
 - `bank_accounts`
 - `vehicles`
+- `expenses`
 - `tanker_sizes`
 - `pricing`
 - `driver_applications`
@@ -569,7 +590,8 @@ WaterTankerAppv1/
 │   │   ├── payment.service.ts
 │   │   ├── location.service.ts
 │   │   ├── vehicle.service.ts
-│   │   └── bankAccount.service.ts
+│   │   ├── bankAccount.service.ts
+│   │   └── expense.service.ts
 │   │
 │   ├── store/             # Zustand state management
 │   │   ├── authStore.ts
@@ -670,6 +692,7 @@ RLS is **enabled on all tables** with comprehensive role-based access control po
 - `bookings` - Booking access by role
 - `vehicles` - Vehicle management by agency
 - `bank_accounts` - Bank account access by admin and drivers (for payment collection)
+- `expenses` - Admin can manage their own expenses (full CRUD)
 - `tanker_sizes` - Public read, admin write
 - `pricing` - Public read, admin write
 - `driver_applications` - Public create, admin manage
@@ -712,6 +735,11 @@ RLS is **enabled on all tables** with comprehensive role-based access control po
 **Bank Accounts Table:**
 - Admins can manage their own bank accounts (full CRUD)
 - Drivers can read bank accounts for agencies where they have assigned bookings (for QR code display during payment collection)
+
+**Expenses Table:**
+- Admins can create, view, update, and delete their own expenses
+- Supports filtering by expense type (diesel or maintenance)
+- Includes receipt image upload functionality
 
 **Tanker Sizes Table:**
 - Everyone can view active tanker sizes
