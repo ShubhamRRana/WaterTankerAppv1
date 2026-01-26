@@ -12,6 +12,7 @@ import {
   IBookingDataAccess,
   IVehicleDataAccess,
   IBankAccountDataAccess,
+  IExpenseDataAccess,
   SubscriptionCallback,
   CollectionSubscriptionCallback,
   Unsubscribe,
@@ -28,6 +29,7 @@ import {
   Vehicle,
   Address,
   BankAccount,
+  Expense,
   isCustomerUser,
   isDriverUser,
   isAdminUser,
@@ -37,7 +39,6 @@ import {
   NotFoundError,
 } from '../utils/errors';
 import {
-  deserializeUserDates,
   deserializeBookingDates,
   deserializeVehicleDates,
   serializeDate,
@@ -144,6 +145,18 @@ interface BankAccountRow {
   updated_at: string;
 }
 
+interface ExpenseRow {
+  id: string;
+  admin_id: string;
+  expense_type: 'diesel' | 'maintenance';
+  amount: number;
+  description: string | null;
+  receipt_image_url: string | null;
+  expense_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
 /**
  * Helper: Get current user ID from Supabase Auth session
  */
@@ -168,14 +181,14 @@ function mapUserFromDb(
   }
 
   // If selectedRole is provided, use that role; otherwise use the first role
-  const role = selectedRole || roles[0].role;
+  const role = selectedRole || roles[0]!.role;
 
   const baseUser = {
     id: userRow.id,
     email: userRow.email,
     password: userRow.password_hash, // Temporary, will be removed after auth migration
     name: userRow.name,
-    phone: userRow.phone || undefined,
+    ...(userRow.phone && { phone: userRow.phone }),
     createdAt: deserializeDate(userRow.created_at) || new Date(),
   };
 
@@ -196,19 +209,20 @@ function mapUserFromDb(
       if (!driverData) {
         return null;
       }
+      const licenseExpiry = deserializeDate(driverData.license_expiry);
       const driver: DriverUser = {
         ...baseUser,
         role: 'driver',
         vehicleNumber: driverData.vehicle_number,
         licenseNumber: driverData.license_number,
-        licenseExpiry: deserializeDate(driverData.license_expiry) || undefined,
+        ...(licenseExpiry !== null && { licenseExpiry }),
         driverLicenseImage: driverData.driver_license_image_url,
         vehicleRegistrationImage: driverData.vehicle_registration_image_url,
         totalEarnings: Number(driverData.total_earnings),
         completedOrders: driverData.completed_orders,
         createdByAdmin: driverData.created_by_admin,
-        emergencyContactName: driverData.emergency_contact_name || undefined,
-        emergencyContactPhone: driverData.emergency_contact_phone || undefined,
+        ...(driverData.emergency_contact_name && { emergencyContactName: driverData.emergency_contact_name }),
+        ...(driverData.emergency_contact_phone && { emergencyContactPhone: driverData.emergency_contact_phone }),
       };
       return driver;
     }
@@ -217,7 +231,7 @@ function mapUserFromDb(
       const admin: AdminUser = {
         ...baseUser,
         role: 'admin',
-        businessName: adminData?.business_name || undefined,
+        ...(adminData?.business_name && { businessName: adminData.business_name }),
       };
       return admin;
     }
@@ -289,7 +303,13 @@ async function mapUserToDb(user: User): Promise<{
     };
   }
 
-  return { userRow, roleRows, customerRow, driverRow, adminRow };
+  return {
+    userRow,
+    roleRows,
+    ...(customerRow && { customerRow }),
+    ...(driverRow && { driverRow }),
+    ...(adminRow && { adminRow }),
+  };
 }
 
 /**
@@ -311,28 +331,28 @@ function mapBookingFromDb(row: BookingRow): Booking {
     customerId: row.customer_id,
     customerName: row.customer_name,
     customerPhone: row.customer_phone,
-    agencyId: row.agency_id || undefined,
-    agencyName: row.agency_name || undefined,
-    driverId: row.driver_id || undefined,
-    driverName: row.driver_name || undefined,
-    driverPhone: row.driver_phone || undefined,
+    ...(row.agency_id && { agencyId: row.agency_id }),
+    ...(row.agency_name && { agencyName: row.agency_name }),
+    ...(row.driver_id && { driverId: row.driver_id }),
+    ...(row.driver_name && { driverName: row.driver_name }),
+    ...(row.driver_phone && { driverPhone: row.driver_phone }),
     status: row.status as Booking['status'],
     tankerSize: row.tanker_size,
-    quantity: row.quantity || 1,
+    ...(row.quantity !== null && row.quantity !== undefined && { quantity: row.quantity }),
     basePrice: Number(row.base_price),
     distanceCharge: Number(row.distance_charge),
     totalPrice: Number(row.total_price),
     deliveryAddress,
     distance: Number(row.distance),
-    scheduledFor: deserialized.scheduledFor,
+    ...(deserialized.scheduledFor && { scheduledFor: deserialized.scheduledFor }),
     paymentStatus: row.payment_status as Booking['paymentStatus'],
-    paymentId: row.payment_id || undefined,
-    cancellationReason: row.cancellation_reason || undefined,
+    ...(row.payment_id && { paymentId: row.payment_id }),
+    ...(row.cancellation_reason && { cancellationReason: row.cancellation_reason }),
     canCancel: row.can_cancel,
     createdAt: deserialized.createdAt,
     updatedAt: deserialized.updatedAt,
-    acceptedAt: deserialized.acceptedAt,
-    deliveredAt: deserialized.deliveredAt,
+    ...(deserialized.acceptedAt && { acceptedAt: deserialized.acceptedAt }),
+    ...(deserialized.deliveredAt && { deliveredAt: deserialized.deliveredAt }),
   };
 }
 
@@ -387,7 +407,7 @@ function mapVehicleFromDb(row: VehicleRow): Vehicle {
     insuranceCompanyName: row.insurance_company_name,
     insuranceExpiryDate: deserialized.insuranceExpiryDate,
     vehicleCapacity: row.vehicle_capacity,
-    amount: row.amount != null ? Number(row.amount) : undefined,
+    ...(row.amount != null && { amount: Number(row.amount) }),
     createdAt: deserialized.createdAt,
     updatedAt: deserialized.updatedAt,
   };
@@ -437,6 +457,40 @@ function mapBankAccountToDb(bankAccount: BankAccount): Partial<BankAccountRow> {
     is_default: bankAccount.isDefault,
     created_at: serializeDate(bankAccount.createdAt) || new Date().toISOString(),
     updated_at: serializeDate(bankAccount.updatedAt) || new Date().toISOString(),
+  };
+}
+
+/**
+ * Helper: Map ExpenseRow to Expense
+ */
+function mapExpenseFromDb(row: ExpenseRow): Expense {
+  return {
+    id: row.id,
+    adminId: row.admin_id,
+    expenseType: row.expense_type,
+    amount: Number(row.amount),
+    ...(row.description && { description: row.description }),
+    ...(row.receipt_image_url && { receiptImageUrl: row.receipt_image_url }),
+    expenseDate: deserializeDate(row.expense_date) || new Date(),
+    createdAt: deserializeDate(row.created_at) || new Date(),
+    updatedAt: deserializeDate(row.updated_at) || new Date(),
+  };
+}
+
+/**
+ * Helper: Map Expense to ExpenseRow
+ */
+function mapExpenseToDb(expense: Expense): Partial<ExpenseRow> {
+  return {
+    id: expense.id,
+    admin_id: expense.adminId,
+    expense_type: expense.expenseType,
+    amount: expense.amount,
+    description: expense.description || null,
+    receipt_image_url: expense.receiptImageUrl || null,
+    expense_date: serializeDate(expense.expenseDate) || new Date().toISOString(),
+    created_at: serializeDate(expense.createdAt) || new Date().toISOString(),
+    updated_at: serializeDate(expense.updatedAt) || new Date().toISOString(),
   };
 }
 
@@ -724,7 +778,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
         filter: `user_id=eq.${id}`,
         event: '*',
       },
-      async (payload) => {
+      async (_payload) => {
         // When roles change, fetch updated user
         try {
           const user = await this.getUserById(id);
@@ -745,7 +799,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
         filter: `user_id=eq.${id}`,
         event: '*',
       },
-      async (payload) => {
+      async (_payload) => {
         try {
           const user = await this.getUserById(id);
           if (user) {
@@ -764,7 +818,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
         filter: `user_id=eq.${id}`,
         event: '*',
       },
-      async (payload) => {
+      async (_payload) => {
         try {
           const user = await this.getUserById(id);
           if (user) {
@@ -783,7 +837,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
         filter: `user_id=eq.${id}`,
         event: '*',
       },
-      async (payload) => {
+      async (_payload) => {
         try {
           const user = await this.getUserById(id);
           if (user) {
@@ -1473,6 +1527,150 @@ class SupabaseBankAccountDataAccess implements IBankAccountDataAccess {
 }
 
 /**
+ * Supabase Expense Data Access Implementation
+ */
+class SupabaseExpenseDataAccess implements IExpenseDataAccess {
+  async getExpenses(adminId: string): Promise<Expense[]> {
+    try {
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('admin_id', adminId)
+        .order('expense_date', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return (data || []).map((row) => mapExpenseFromDb(row as ExpenseRow));
+    } catch (error) {
+      throw new DataAccessError('Failed to get expenses', 'getExpenses', { error, adminId });
+    }
+  }
+
+  async getExpenseById(expenseId: string, adminId: string): Promise<Expense | null> {
+    try {
+      const { data, error } = await supabase
+        .from('expenses')
+        .select('*')
+        .eq('id', expenseId)
+        .eq('admin_id', adminId)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned
+          return null;
+        }
+        throw error;
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      return mapExpenseFromDb(data as ExpenseRow);
+    } catch (error) {
+      throw new DataAccessError('Failed to get expense by id', 'getExpenseById', { error, expenseId, adminId });
+    }
+  }
+
+  async saveExpense(expense: Expense, adminId: string): Promise<void> {
+    try {
+      // Ensure the expense belongs to this admin
+      if (expense.adminId !== adminId) {
+        throw new Error('Expense does not belong to this admin');
+      }
+
+      const expenseRow = mapExpenseToDb(expense);
+      const { error } = await supabase
+        .from('expenses')
+        .insert(expenseRow);
+
+      if (error) {
+        // Include Supabase error details in the message for better debugging
+        const errorMsg = error.message || error.hint || 'Unknown database error';
+        throw new DataAccessError(`Failed to save expense: ${errorMsg}`, 'saveExpense', { 
+          error, 
+          adminId,
+          supabaseError: {
+            message: error.message,
+            code: error.code,
+            details: error.details,
+            hint: error.hint
+          }
+        });
+      }
+    } catch (error) {
+      // If it's already a DataAccessError, rethrow it
+      if (error instanceof DataAccessError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to save expense', 'saveExpense', { error, adminId });
+    }
+  }
+
+  async updateExpense(expenseId: string, updates: Partial<Expense>, adminId: string): Promise<void> {
+    try {
+      // First verify the expense belongs to this admin
+      const existing = await this.getExpenseById(expenseId, adminId);
+      if (!existing) {
+        throw new NotFoundError('Expense not found or does not belong to this admin');
+      }
+
+      // Map updates to database format
+      const updateRow: Partial<ExpenseRow> = {};
+      if (updates.expenseType !== undefined) updateRow.expense_type = updates.expenseType;
+      if (updates.amount !== undefined) updateRow.amount = updates.amount;
+      if (updates.description !== undefined) updateRow.description = updates.description || null;
+      if (updates.receiptImageUrl !== undefined) updateRow.receipt_image_url = updates.receiptImageUrl || null;
+      if (updates.expenseDate !== undefined) updateRow.expense_date = serializeDate(updates.expenseDate) || new Date().toISOString();
+      if (updates.updatedAt !== undefined) updateRow.updated_at = serializeDate(updates.updatedAt) || new Date().toISOString();
+
+      const { error } = await supabase
+        .from('expenses')
+        .update(updateRow)
+        .eq('id', expenseId)
+        .eq('admin_id', adminId);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to update expense', 'updateExpense', { error, expenseId, adminId });
+    }
+  }
+
+  async deleteExpense(expenseId: string, adminId: string): Promise<void> {
+    try {
+      // First verify the expense belongs to this admin
+      const existing = await this.getExpenseById(expenseId, adminId);
+      if (!existing) {
+        throw new NotFoundError('Expense not found or does not belong to this admin');
+      }
+
+      const { error } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('id', expenseId)
+        .eq('admin_id', adminId);
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to delete expense', 'deleteExpense', { error, expenseId, adminId });
+    }
+  }
+}
+
+/**
  * Complete Supabase Data Access Layer
  */
 export class SupabaseDataAccess implements IDataAccessLayer {
@@ -1480,12 +1678,14 @@ export class SupabaseDataAccess implements IDataAccessLayer {
   bookings: IBookingDataAccess;
   vehicles: IVehicleDataAccess;
   bankAccounts: IBankAccountDataAccess;
+  expenses: IExpenseDataAccess;
 
   constructor() {
     this.users = new SupabaseUserDataAccess();
     this.bookings = new SupabaseBookingDataAccess();
     this.vehicles = new SupabaseVehicleDataAccess();
     this.bankAccounts = new SupabaseBankAccountDataAccess();
+    this.expenses = new SupabaseExpenseDataAccess();
   }
 
   generateId(): string {

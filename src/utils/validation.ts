@@ -270,8 +270,8 @@ export class ValidationUtils {
     return { isValid: true };
   }
 
-  // Date string validation (DD-MM-YYYY format)
-  static validateDateString(dateString: string, required: boolean = true): { isValid: boolean; error?: string } {
+  // Date string validation for expenses (DD/MM/YYYY or DD-MM-YYYY format) - allows past dates
+  static validateExpenseDateString(dateString: string, required: boolean = true): { isValid: boolean; error?: string } {
     if (!dateString || !dateString.trim()) {
       return required 
         ? { isValid: false, error: 'Date is required' }
@@ -279,17 +279,26 @@ export class ValidationUtils {
     }
 
     if (dateString.length < 10) {
-      return { isValid: false, error: 'Please enter a complete date (DD-MM-YYYY)' };
+      return { isValid: false, error: 'Please enter a complete date (DD/MM/YYYY)' };
     }
 
     try {
-      // Parse the date string (DD-MM-YYYY format)
-      const dateParts = dateString.split('-');
+      // Parse the date string (accept both DD/MM/YYYY and DD-MM-YYYY formats)
+      const dateParts = dateString.includes('/') 
+        ? dateString.split('/')
+        : dateString.split('-');
+      
       if (dateParts.length !== 3) {
-        return { isValid: false, error: 'Invalid date format. Use DD-MM-YYYY' };
+        return { isValid: false, error: 'Invalid date format. Use DD/MM/YYYY' };
       }
 
       const [dayStr, monthStr, yearStr] = dateParts;
+      
+      // Check if all parts exist
+      if (!dayStr || !monthStr || !yearStr) {
+        return { isValid: false, error: 'Invalid date format. Use DD/MM/YYYY' };
+      }
+      
       const day = parseInt(dayStr, 10);
       const month = parseInt(monthStr, 10);
       const year = parseInt(yearStr, 10);
@@ -299,16 +308,90 @@ export class ValidationUtils {
         return { isValid: false, error: 'Date must contain only numbers' };
       }
 
-      // Detect if format is YYYY-MM-DD instead of DD-MM-YYYY
-      // If first part is 4 digits and > 31, or if day > 31, it's likely YYYY-MM-DD format
+      // Detect if format is YYYY-MM-DD or YYYY/MM/DD instead of DD-MM-YYYY or DD/MM/YYYY
       if ((dayStr.length === 4 && day > 31) || day > 31) {
-        return { isValid: false, error: 'Invalid date format. Use DD-MM-YYYY' };
+        return { isValid: false, error: 'Invalid date format. Use DD/MM/YYYY' };
       }
 
       // Create date object (month is 0-indexed in JavaScript Date)
       const inputDate = new Date(year, month - 1, day);
       
-      // Check if the date is valid (handles invalid dates like 32-13-2024)
+      // Check if the date is valid
+      if (isNaN(inputDate.getTime())) {
+        return { isValid: false, error: 'Invalid date - this date does not exist' };
+      }
+
+      if (inputDate.getDate() !== day || inputDate.getMonth() !== month - 1 || inputDate.getFullYear() !== year) {
+        return { isValid: false, error: 'Invalid date - please check the date' };
+      }
+
+      // Validate year range (expenses can be from reasonable past to reasonable future)
+      if (year < 2020 || year > 2030) {
+        return { isValid: false, error: 'Year must be between 2020 and 2030' };
+      }
+
+      if (month < 1 || month > 12) {
+        return { isValid: false, error: 'Month must be between 1 and 12' };
+      }
+
+      if (day < 1 || day > 31) {
+        return { isValid: false, error: 'Day must be between 1 and 31' };
+      }
+
+      return { isValid: true };
+    } catch (error) {
+      return { isValid: false, error: 'Invalid date format' };
+    }
+  }
+
+  // Date string validation (DD/MM/YYYY or DD-MM-YYYY format) - for bookings (no past dates)
+  static validateDateString(dateString: string, required: boolean = true): { isValid: boolean; error?: string } {
+    if (!dateString || !dateString.trim()) {
+      return required 
+        ? { isValid: false, error: 'Date is required' }
+        : { isValid: true };
+    }
+
+    if (dateString.length < 10) {
+      return { isValid: false, error: 'Please enter a complete date (DD/MM/YYYY)' };
+    }
+
+    try {
+      // Parse the date string (accept both DD/MM/YYYY and DD-MM-YYYY formats)
+      const dateParts = dateString.includes('/') 
+        ? dateString.split('/')
+        : dateString.split('-');
+      
+      if (dateParts.length !== 3) {
+        return { isValid: false, error: 'Invalid date format. Use DD/MM/YYYY' };
+      }
+
+      const [dayStr, monthStr, yearStr] = dateParts;
+      
+      // Check if all parts exist
+      if (!dayStr || !monthStr || !yearStr) {
+        return { isValid: false, error: 'Invalid date format. Use DD/MM/YYYY' };
+      }
+      
+      const day = parseInt(dayStr, 10);
+      const month = parseInt(monthStr, 10);
+      const year = parseInt(yearStr, 10);
+      
+      // Check if the date components are valid numbers
+      if (isNaN(day) || isNaN(month) || isNaN(year)) {
+        return { isValid: false, error: 'Date must contain only numbers' };
+      }
+
+      // Detect if format is YYYY-MM-DD or YYYY/MM/DD instead of DD-MM-YYYY or DD/MM/YYYY
+      // If first part is 4 digits and > 31, or if day > 31, it's likely YYYY-MM-DD format
+      if ((dayStr.length === 4 && day > 31) || day > 31) {
+        return { isValid: false, error: 'Invalid date format. Use DD/MM/YYYY' };
+      }
+
+      // Create date object (month is 0-indexed in JavaScript Date)
+      const inputDate = new Date(year, month - 1, day);
+      
+      // Check if the date is valid (handles invalid dates like 32/13/2024 or 32-13-2024)
       if (isNaN(inputDate.getTime())) {
         return { isValid: false, error: 'Invalid date - this date does not exist' };
       }
@@ -397,8 +480,16 @@ export class ValidationUtils {
         return { isValid: false, error: 'Invalid time format. Use HH:MM' };
       }
 
-      const hours = parseInt(timeMatch[1], 10);
-      const minutes = parseInt(timeMatch[2], 10);
+      const hoursStr = timeMatch[1];
+      const minutesStr = timeMatch[2];
+      
+      // Check if match groups exist
+      if (!hoursStr || !minutesStr) {
+        return { isValid: false, error: 'Invalid time format. Use HH:MM' };
+      }
+      
+      const hours = parseInt(hoursStr, 10);
+      const minutes = parseInt(minutesStr, 10);
 
       // Validate time components
       if (isNaN(hours) || isNaN(minutes)) {
@@ -474,9 +565,18 @@ export class ValidationUtils {
       return { isValid: false, error: 'Use DD/MM/YYYY or DD-MM-YYYY format' };
     }
 
-    const day = parseInt(expiryMatch[1], 10);
-    const month = parseInt(expiryMatch[2], 10) - 1;
-    const year = parseInt(expiryMatch[3], 10);
+    const dayStr = expiryMatch[1];
+    const monthStr = expiryMatch[2];
+    const yearStr = expiryMatch[3];
+    
+    // Check if match groups exist
+    if (!dayStr || !monthStr || !yearStr) {
+      return { isValid: false, error: 'Use DD/MM/YYYY or DD-MM-YYYY format' };
+    }
+    
+    const day = parseInt(dayStr, 10);
+    const month = parseInt(monthStr, 10) - 1;
+    const year = parseInt(yearStr, 10);
     const candidate = new Date(year, month, day);
     
     if (isNaN(candidate.getTime())) {

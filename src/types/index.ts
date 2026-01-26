@@ -174,6 +174,26 @@ export interface BankAccount {
   updatedAt: Date;
 }
 
+/**
+ * Expense type values
+ */
+export type ExpenseType = 'diesel' | 'maintenance';
+
+/**
+ * Expense entity for tracking admin expenses
+ */
+export interface Expense {
+  id: string;
+  adminId: string; // ID of the admin user who owns this expense
+  expenseType: ExpenseType; // Type of expense: diesel or maintenance
+  amount: number; // Expense amount in rupees
+  description?: string; // Optional description of the expense
+  expenseDate: Date; // Date when the expense occurred
+  receiptImageUrl?: string; // Optional URL of the receipt image
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Navigation types
 /**
  * Authentication stack navigation parameters

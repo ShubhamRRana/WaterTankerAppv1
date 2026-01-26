@@ -1,8 +1,7 @@
 import React from 'react';
-import { Ionicons } from '@expo/vector-icons';
 import MenuDrawer, { MenuItem } from './MenuDrawer';
 
-export type AdminRoute = 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile' | 'BankAccounts';
+export type AdminRoute = 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile' | 'BankAccounts' | 'Expenses';
 
 interface AdminMenuDrawerProps {
   visible: boolean;
@@ -66,6 +65,15 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
       },
     },
     {
+      label: 'Expenses',
+      icon: 'cash-outline',
+      route: 'Expenses',
+      onPress: () => {
+        onNavigate('Expenses');
+        onClose();
+      },
+    },
+    {
       label: 'Profile',
       icon: 'person-circle-outline',
       route: 'Profile',
@@ -82,7 +90,7 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
       onClose={onClose}
       onNavigate={onNavigate}
       onLogout={onLogout}
-      currentRoute={currentRoute}
+      {...(currentRoute ? { currentRoute } : {})}
       menuItems={menuItems}
     />
   );

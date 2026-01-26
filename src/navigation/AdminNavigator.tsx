@@ -6,6 +6,7 @@ import DriverManagementScreen from '../screens/admin/DriverManagementScreen';
 import VehicleManagementScreen from '../screens/admin/VehicleManagementScreen';
 import ReportsScreen from '../screens/admin/ReportsScreen';
 import AddBankAccountScreen from '../screens/admin/AddBankAccountScreen';
+import ExpenseScreen from '../screens/admin/ExpenseScreen';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 
 export type AdminStackParamList = {
@@ -15,6 +16,7 @@ export type AdminStackParamList = {
   Reports: undefined;
   Profile: undefined;
   BankAccounts: undefined;
+  Expenses: undefined;
 };
 
 const Stack = createStackNavigator<AdminStackParamList>();
@@ -34,6 +36,7 @@ const AdminNavigator: React.FC = () => {
         <Stack.Screen name="Reports" component={ReportsScreen} />
         <Stack.Screen name="Profile" component={AdminProfileScreen} />
         <Stack.Screen name="BankAccounts" component={AddBankAccountScreen} />
+        <Stack.Screen name="Expenses" component={ExpenseScreen} />
       </Stack.Navigator>
     </ErrorBoundary>
   );

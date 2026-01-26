@@ -9,4 +9,5 @@ export type { DriverLocation, LocationUpdate } from './locationTracking.service'
 export { UserService } from './user.service';
 export { VehicleService } from './vehicle.service';
 export { BankAccountService } from './bankAccount.service';
+export { ExpenseService } from './expense.service';
 export { StorageService } from './storage.service';
