@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -8,7 +8,9 @@ import {
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
-  Image
+  Image,
+  Animated,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,9 +20,11 @@ import { useAuthStore } from '../../store/authStore';
 import { Typography, Card, Button, Input, AdminMenuDrawer } from '../../components/common';
 import { ExpenseType, Expense } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
-import { ValidationUtils, SanitizationUtils } from '../../utils';
+import { ValidationUtils, SanitizationUtils, PricingUtils } from '../../utils';
 import { ExpenseService, StorageService } from '../../services';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
+import { exportExpensesToExcel } from '../../utils/excelExport';
+import { errorLogger } from '../../utils/errorLogger';
 
 type ExpenseScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Expenses'>;
 
@@ -48,7 +52,39 @@ const ExpenseScreen: React.FC = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<ExpenseType | null>(null);
+  
+  // Period filter state
+  const [periodType, setPeriodType] = useState<'month' | 'year'>('month');
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  
+  // Summary filter state
+  const [summaryFilter, setSummaryFilter] = useState<'all' | 'diesel' | 'maintenance'>('all');
+  const [summaryDropdownVisible, setSummaryDropdownVisible] = useState(false);
+  
+  // Animation values for glass gliders
+  const periodTypeGliderAnim = useRef(new Animated.Value(0)).current;
+  const monthGliderAnim = useRef(new Animated.Value(0)).current;
+  const yearGliderAnim = useRef(new Animated.Value(0)).current;
+  
+  // Width measurements for glider positioning
+  const [periodTypeOptionWidth, setPeriodTypeOptionWidth] = useState(0);
+  const [monthOptionWidth, setMonthOptionWidth] = useState(0);
+  const [yearOptionWidth, setYearOptionWidth] = useState(0);
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  // Generate year options (current year + 4 previous years)
+  const getAvailableYears = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = 0; i < 5; i++) {
+      years.push(currentYear - i);
+    }
+    return years;
+  };
+
+  const availableYears = getAvailableYears();
 
   // Format date to DD/MM/YYYY
   const formatDate = (date: Date): string => {
@@ -72,6 +108,43 @@ const ExpenseScreen: React.FC = () => {
     }
   }, [viewMode, user?.id]);
 
+  // Animate glider when periodType changes
+  useEffect(() => {
+    if (periodTypeOptionWidth > 0) {
+      Animated.spring(periodTypeGliderAnim, {
+        toValue: periodType === 'month' ? 0 : periodTypeOptionWidth,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [periodType, periodTypeOptionWidth]);
+
+  // Animate glider when selectedMonth changes
+  useEffect(() => {
+    if (monthOptionWidth > 0) {
+      Animated.spring(monthGliderAnim, {
+        toValue: selectedMonth * monthOptionWidth,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [selectedMonth, monthOptionWidth]);
+
+  // Animate glider when selectedYear changes
+  useEffect(() => {
+    if (yearOptionWidth > 0) {
+      const yearIndex = availableYears.indexOf(selectedYear);
+      Animated.spring(yearGliderAnim, {
+        toValue: yearIndex >= 0 ? yearIndex * yearOptionWidth : 0,
+        useNativeDriver: true,
+        tension: 120,
+        friction: 8,
+      }).start();
+    }
+  }, [selectedYear, yearOptionWidth]);
+
   const loadExpenses = async () => {
     if (!user?.id) return;
     
@@ -92,10 +165,53 @@ const ExpenseScreen: React.FC = () => {
     await loadExpenses();
   };
 
-  // Filter expenses based on selected filter
-  const filteredExpenses = selectedFilter
-    ? expenses.filter(expense => expense.expenseType === selectedFilter)
-    : expenses;
+  // Filter expenses based on period and summary filter
+  const getFilteredExpensesByPeriod = () => {
+    let periodFiltered: Expense[] = [];
+    
+    if (periodType === 'month') {
+      const monthStart = new Date(selectedYear, selectedMonth, 1);
+      const monthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
+      
+      periodFiltered = expenses.filter(expense => {
+        const expenseDate = new Date(expense.expenseDate);
+        return expenseDate >= monthStart && expenseDate <= monthEnd;
+      });
+    } else {
+      const yearStart = new Date(selectedYear, 0, 1);
+      const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
+      
+      periodFiltered = expenses.filter(expense => {
+        const expenseDate = new Date(expense.expenseDate);
+        return expenseDate >= yearStart && expenseDate <= yearEnd;
+      });
+    }
+    
+    // Apply type filter based on summary filter
+    if (summaryFilter === 'all') {
+      return periodFiltered;
+    } else {
+      return periodFiltered.filter(expense => expense.expenseType === summaryFilter);
+    }
+  };
+
+  const filteredExpenses = getFilteredExpensesByPeriod();
+
+  // Calculate summary for filtered expenses based on summary filter
+  const getSummaryExpenses = () => {
+    if (summaryFilter === 'all') {
+      return filteredExpenses;
+    } else {
+      return filteredExpenses.filter(e => e.expenseType === summaryFilter);
+    }
+  };
+
+  const summaryExpenses = getSummaryExpenses();
+  const totalAmount = summaryExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const dieselExpenses = summaryExpenses.filter(e => e.expenseType === 'diesel');
+  const maintenanceExpenses = summaryExpenses.filter(e => e.expenseType === 'maintenance');
+  const dieselTotal = dieselExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const maintenanceTotal = maintenanceExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
   const handleDeleteExpense = (expenseId: string) => {
     Alert.alert(
@@ -295,6 +411,20 @@ const ExpenseScreen: React.FC = () => {
     navigation.navigate(route);
   };
 
+  const handleDownloadExcel = async () => {
+    try {
+      await exportExpensesToExcel(
+        expenses,
+        periodType,
+        selectedYear,
+        selectedMonth
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to export expenses. Please try again.');
+      errorLogger.medium('Failed to export expenses', error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
@@ -309,7 +439,16 @@ const ExpenseScreen: React.FC = () => {
         <Typography variant="h1" style={styles.headerTitle}>
           Expenses
         </Typography>
-        <View style={styles.headerRight} />
+        {viewMode === 'manage' && (
+          <TouchableOpacity
+            style={styles.downloadButton}
+            onPress={handleDownloadExcel}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="download-outline" size={24} color={UI_CONFIG.colors.text} />
+          </TouchableOpacity>
+        )}
+        {viewMode === 'add' && <View style={styles.headerRight} />}
       </View>
 
       {/* View Mode Toggle Buttons */}
@@ -528,56 +667,327 @@ const ExpenseScreen: React.FC = () => {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {/* Filter Buttons */}
-          <View style={styles.filterContainer}>
-            <TouchableOpacity
-              style={[
-                styles.filterButton,
-                selectedFilter === 'diesel' && styles.filterButtonActive,
-              ]}
-              onPress={() => setSelectedFilter(selectedFilter === 'diesel' ? null : 'diesel')}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name={selectedFilter === 'diesel' ? 'car' : 'car-outline'}
-                size={20}
-                color={selectedFilter === 'diesel' ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.text}
-              />
-              <Typography
-                variant="body"
-                style={[
-                  styles.filterButtonText,
-                  selectedFilter === 'diesel' && styles.filterButtonTextActive,
-                ]}
+          {/* Period Type Toggle */}
+          <View style={styles.periodTypeToggle}>
+            <View style={styles.glassRadioGroup}>
+              <TouchableOpacity
+                style={styles.glassRadioOption}
+                onPress={() => setPeriodType('month')}
+                activeOpacity={0.8}
+                onLayout={(e) => {
+                  if (periodTypeOptionWidth === 0) {
+                    setPeriodTypeOptionWidth(e.nativeEvent.layout.width);
+                  }
+                }}
               >
-                Diesel
-              </Typography>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.filterButton,
-                selectedFilter === 'maintenance' && styles.filterButtonActive,
-              ]}
-              onPress={() => setSelectedFilter(selectedFilter === 'maintenance' ? null : 'maintenance')}
-              activeOpacity={0.7}
-            >
-              <Ionicons
-                name={selectedFilter === 'maintenance' ? 'construct' : 'construct-outline'}
-                size={20}
-                color={selectedFilter === 'maintenance' ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.text}
-              />
-              <Typography
-                variant="body"
-                style={[
-                  styles.filterButtonText,
-                  selectedFilter === 'maintenance' && styles.filterButtonTextActive,
-                ]}
+                <Typography 
+                  variant="body" 
+                  style={[
+                    styles.glassRadioLabel,
+                    periodType === 'month' && styles.glassRadioLabelActive
+                  ]}
+                >
+                  Month
+                </Typography>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.glassRadioOption}
+                onPress={() => setPeriodType('year')}
+                activeOpacity={0.8}
               >
-                Maintenance
-              </Typography>
-            </TouchableOpacity>
+                <Typography 
+                  variant="body" 
+                  style={[
+                    styles.glassRadioLabel,
+                    periodType === 'year' && styles.glassRadioLabelActive
+                  ]}
+                >
+                  Year
+                </Typography>
+              </TouchableOpacity>
+              {periodTypeOptionWidth > 0 && (
+                <Animated.View
+                  style={[
+                    styles.glassGlider,
+                    {
+                      width: periodTypeOptionWidth,
+                      transform: [{
+                        translateX: periodTypeGliderAnim,
+                      }],
+                    },
+                  ]}
+                />
+              )}
+            </View>
           </View>
+
+          {/* Month Selector */}
+          {periodType === 'month' && (
+            <View style={styles.filterContainer}>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.monthSelector}
+                contentContainerStyle={styles.monthSelectorContent}
+              >
+                <View style={styles.glassRadioGroup}>
+                  {months.map((month, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.glassRadioOption}
+                      onPress={() => setSelectedMonth(index)}
+                      activeOpacity={0.8}
+                      onLayout={(e) => {
+                        if (monthOptionWidth === 0 && index === 0) {
+                          setMonthOptionWidth(e.nativeEvent.layout.width);
+                        }
+                      }}
+                    >
+                      <Typography 
+                        variant="body" 
+                        style={[
+                          styles.glassRadioLabel,
+                          selectedMonth === index && styles.glassRadioLabelActive
+                        ]}
+                      >
+                        {month}
+                      </Typography>
+                    </TouchableOpacity>
+                  ))}
+                  {monthOptionWidth > 0 && (
+                    <Animated.View
+                      style={[
+                        styles.glassGlider,
+                        {
+                          width: monthOptionWidth,
+                          transform: [{
+                            translateX: monthGliderAnim,
+                          }],
+                        },
+                      ]}
+                    />
+                  )}
+                </View>
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Year Selector */}
+          {periodType === 'year' && (
+            <View style={styles.filterContainer}>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.monthSelector}
+                contentContainerStyle={styles.monthSelectorContent}
+              >
+                <View style={styles.glassRadioGroup}>
+                  {availableYears.map((year, index) => (
+                    <TouchableOpacity
+                      key={year}
+                      style={styles.glassRadioOption}
+                      onPress={() => setSelectedYear(year)}
+                      activeOpacity={0.8}
+                      onLayout={(e) => {
+                        if (yearOptionWidth === 0 && index === 0) {
+                          setYearOptionWidth(e.nativeEvent.layout.width);
+                        }
+                      }}
+                    >
+                      <Typography 
+                        variant="body" 
+                        style={[
+                          styles.glassRadioLabel,
+                          selectedYear === year && styles.glassRadioLabelActive
+                        ]}
+                      >
+                        {year}
+                      </Typography>
+                    </TouchableOpacity>
+                  ))}
+                  {yearOptionWidth > 0 && (
+                    <Animated.View
+                      style={[
+                        styles.glassGlider,
+                        {
+                          width: yearOptionWidth,
+                          transform: [{
+                            translateX: yearGliderAnim,
+                          }],
+                        },
+                      ]}
+                    />
+                  )}
+                </View>
+              </ScrollView>
+            </View>
+          )}
+
+          {/* Summary Card */}
+          {filteredExpenses.length > 0 && (
+            <>
+              <Card style={styles.summaryCard}>
+                <Typography variant="h3" style={styles.summaryTitle}>
+                  {periodType === 'month' 
+                    ? `${months[selectedMonth]} ${selectedYear} Summary` 
+                    : `${selectedYear} Summary`}
+                </Typography>
+                <View style={styles.summaryMetrics}>
+                  {summaryFilter === 'all' && (
+                    <>
+                      <View style={styles.summaryMetric}>
+                        <Typography variant="h2" style={styles.summaryValue}>
+                          {PricingUtils.formatPrice(totalAmount)}
+                        </Typography>
+                        <Typography variant="caption" style={styles.summaryLabel}>
+                          Total Expenses
+                        </Typography>
+                      </View>
+                      <View style={styles.summaryMetric}>
+                        <Typography variant="h2" style={styles.summaryValue}>
+                          {PricingUtils.formatPrice(dieselTotal)}
+                        </Typography>
+                        <Typography variant="caption" style={styles.summaryLabel}>
+                          Diesel
+                        </Typography>
+                      </View>
+                      <View style={styles.summaryMetric}>
+                        <Typography variant="h2" style={styles.summaryValue}>
+                          {PricingUtils.formatPrice(maintenanceTotal)}
+                        </Typography>
+                        <Typography variant="caption" style={styles.summaryLabel}>
+                          Maintenance
+                        </Typography>
+                      </View>
+                    </>
+                  )}
+                  {summaryFilter === 'diesel' && (
+                    <View style={[styles.summaryMetric, styles.summaryMetricSingle]}>
+                      <Typography variant="h2" style={styles.summaryValue}>
+                        {PricingUtils.formatPrice(dieselTotal)}
+                      </Typography>
+                      <Typography variant="caption" style={styles.summaryLabel}>
+                        Diesel Expenses
+                      </Typography>
+                    </View>
+                  )}
+                  {summaryFilter === 'maintenance' && (
+                    <View style={[styles.summaryMetric, styles.summaryMetricSingle]}>
+                      <Typography variant="h2" style={styles.summaryValue}>
+                        {PricingUtils.formatPrice(maintenanceTotal)}
+                      </Typography>
+                      <Typography variant="caption" style={styles.summaryLabel}>
+                        Maintenance Expenses
+                      </Typography>
+                    </View>
+                  )}
+                </View>
+              </Card>
+
+              {/* Summary Filter Dropdown */}
+              <View style={styles.summaryFilterContainer}>
+                <TouchableOpacity
+                  style={styles.summaryFilterButton}
+                  onPress={() => setSummaryDropdownVisible(true)}
+                  activeOpacity={0.7}
+                >
+                  <Typography variant="body" style={styles.summaryFilterButtonText}>
+                    {summaryFilter === 'all' ? 'All' : summaryFilter === 'diesel' ? 'Diesel' : 'Maintenance'}
+                  </Typography>
+                  <Ionicons name="chevron-down" size={20} color={UI_CONFIG.colors.text} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Dropdown Modal */}
+              <Modal
+                visible={summaryDropdownVisible}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setSummaryDropdownVisible(false)}
+              >
+                <TouchableOpacity
+                  style={styles.dropdownOverlay}
+                  activeOpacity={1}
+                  onPress={() => setSummaryDropdownVisible(false)}
+                >
+                  <View style={styles.dropdownContent}>
+                    <TouchableOpacity
+                      style={[
+                        styles.dropdownOption,
+                        summaryFilter === 'all' && styles.dropdownOptionActive
+                      ]}
+                      onPress={() => {
+                        setSummaryFilter('all');
+                        setSummaryDropdownVisible(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Typography
+                        variant="body"
+                        style={[
+                          styles.dropdownOptionText,
+                          summaryFilter === 'all' && styles.dropdownOptionTextActive
+                        ]}
+                      >
+                        All
+                      </Typography>
+                      {summaryFilter === 'all' && (
+                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.dropdownOption,
+                        summaryFilter === 'diesel' && styles.dropdownOptionActive
+                      ]}
+                      onPress={() => {
+                        setSummaryFilter('diesel');
+                        setSummaryDropdownVisible(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Typography
+                        variant="body"
+                        style={[
+                          styles.dropdownOptionText,
+                          summaryFilter === 'diesel' && styles.dropdownOptionTextActive
+                        ]}
+                      >
+                        Diesel
+                      </Typography>
+                      {summaryFilter === 'diesel' && (
+                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.dropdownOption,
+                        summaryFilter === 'maintenance' && styles.dropdownOptionActive
+                      ]}
+                      onPress={() => {
+                        setSummaryFilter('maintenance');
+                        setSummaryDropdownVisible(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Typography
+                        variant="body"
+                        style={[
+                          styles.dropdownOptionText,
+                          summaryFilter === 'maintenance' && styles.dropdownOptionTextActive
+                        ]}
+                      >
+                        Maintenance
+                      </Typography>
+                      {summaryFilter === 'maintenance' && (
+                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              </Modal>
+            </>
+          )}
 
           {isLoadingExpenses && expenses.length === 0 ? (
             <Card style={styles.emptyState}>
@@ -589,16 +999,20 @@ const ExpenseScreen: React.FC = () => {
             <Card style={styles.emptyState}>
               <Ionicons name="receipt-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="body" style={styles.emptyText}>
-                {selectedFilter ? `No ${selectedFilter} expenses found` : 'No expenses found'}
+                {summaryFilter !== 'all'
+                  ? `No ${summaryFilter} expenses found for ${periodType === 'month' ? months[selectedMonth] + ' ' + selectedYear : selectedYear}`
+                  : `No expenses found for ${periodType === 'month' ? months[selectedMonth] + ' ' + selectedYear : selectedYear}`}
               </Typography>
               <Typography variant="caption" style={styles.emptySubtext}>
-                {selectedFilter ? 'Try selecting a different filter' : 'Add your first expense to get started'}
+                {summaryFilter !== 'all' ? 'Try selecting a different filter or period' : 'Add your first expense or try a different period'}
               </Typography>
             </Card>
           ) : (
             <>
               <Typography variant="h3" style={styles.sectionTitle}>
-                {selectedFilter ? `${selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)} Expenses` : 'All Expenses'} ({filteredExpenses.length})
+                {summaryFilter !== 'all'
+                  ? `${summaryFilter.charAt(0).toUpperCase() + summaryFilter.slice(1)} Expenses` 
+                  : 'All Expenses'} ({filteredExpenses.length})
               </Typography>
               {filteredExpenses.map((expense) => (
                 <Card key={expense.id} style={styles.expenseCard}>
@@ -692,6 +1106,9 @@ const styles = StyleSheet.create({
   },
   headerRight: {
     width: 40,
+  },
+  downloadButton: {
+    padding: 8,
   },
   content: {
     flex: 1,
@@ -945,6 +1362,162 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 150,
     borderRadius: 12,
+  },
+  periodTypeToggle: {
+    paddingHorizontal: UI_CONFIG.spacing.lg,
+    paddingVertical: UI_CONFIG.spacing.md,
+    alignItems: 'center',
+  },
+  monthSelector: {
+    paddingVertical: UI_CONFIG.spacing.md,
+  },
+  monthSelectorContent: {
+    paddingHorizontal: UI_CONFIG.spacing.lg,
+  },
+  glassRadioGroup: {
+    position: 'relative',
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 16,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    borderWidth: 0,
+  },
+  glassRadioOption: {
+    flex: 1,
+    minWidth: 80,
+    paddingVertical: 12.8,
+    paddingHorizontal: 25.6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  glassRadioLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+    color: UI_CONFIG.colors.text,
+  },
+  glassRadioLabelActive: {
+    color: UI_CONFIG.colors.text,
+  },
+  glassGlider: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 16,
+    zIndex: 1,
+    backgroundColor: UI_CONFIG.colors.accent,
+    shadowColor: UI_CONFIG.colors.accent,
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 18,
+    elevation: 10,
+    height: '100%',
+  },
+  summaryCard: {
+    marginBottom: 16,
+    padding: 16,
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: UI_CONFIG.colors.text,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  summaryMetrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    gap: 8,
+  },
+  summaryMetric: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  summaryMetricSingle: {
+    flex: 0,
+    alignSelf: 'center',
+  },
+  summaryValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: UI_CONFIG.colors.primary,
+    marginBottom: 4,
+  },
+  summaryLabel: {
+    fontSize: 12,
+    color: UI_CONFIG.colors.textSecondary,
+    textAlign: 'center',
+  },
+  summaryFilterContainer: {
+    marginBottom: 16,
+  },
+  summaryFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderWidth: 1,
+    borderColor: UI_CONFIG.colors.border,
+  },
+  summaryFilterButtonText: {
+    color: UI_CONFIG.colors.text,
+    fontWeight: '500',
+  },
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownContent: {
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderRadius: 12,
+    padding: 8,
+    minWidth: 200,
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  dropdownOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  dropdownOptionActive: {
+    backgroundColor: UI_CONFIG.colors.background,
+  },
+  dropdownOptionText: {
+    color: UI_CONFIG.colors.text,
+    fontWeight: '500',
+  },
+  dropdownOptionTextActive: {
+    color: UI_CONFIG.colors.primary,
+    fontWeight: '600',
   },
 });
 

@@ -6,7 +6,7 @@
 
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
-import { Booking } from '../types';
+import { Booking, Expense } from '../types';
 import { formatDate } from './dateUtils';
 import { PricingUtils } from './pricing';
 import { errorLogger } from './errorLogger';
@@ -243,6 +243,135 @@ export async function exportReportToExcel(
 
   } catch (error) {
     errorLogger.medium('Failed to export report to Excel', error, { periodType, selectedYear, selectedMonth });
+    throw error;
+  }
+}
+
+/**
+ * Export expenses to Excel file (CSV format)
+ * @param expenses - Array of expenses to export
+ * @param periodType - 'month' or 'year'
+ * @param selectedYear - Selected year
+ * @param selectedMonth - Selected month (0-11, only used for month period)
+ * @param fileName - Optional custom file name
+ */
+export async function exportExpensesToExcel(
+  expenses: Expense[],
+  periodType: 'month' | 'year',
+  selectedYear: number,
+  selectedMonth: number,
+  fileName?: string
+): Promise<void> {
+  try {
+    // Filter expenses based on period
+    let filteredExpenses: Expense[] = [];
+    
+    if (periodType === 'month') {
+      const monthStart = new Date(selectedYear, selectedMonth, 1);
+      const monthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
+      
+      filteredExpenses = expenses.filter(expense => {
+        const expenseDate = new Date(expense.expenseDate);
+        return expenseDate >= monthStart && expenseDate <= monthEnd;
+      });
+    } else {
+      const yearStart = new Date(selectedYear, 0, 1);
+      const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
+      
+      filteredExpenses = expenses.filter(expense => {
+        const expenseDate = new Date(expense.expenseDate);
+        return expenseDate >= yearStart && expenseDate <= yearEnd;
+      });
+    }
+
+    if (filteredExpenses.length === 0) {
+      throw new Error(`No expenses found for the selected period`);
+    }
+
+    // Calculate summary
+    const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const dieselExpenses = filteredExpenses.filter(e => e.expenseType === 'diesel');
+    const maintenanceExpenses = filteredExpenses.filter(e => e.expenseType === 'maintenance');
+    const dieselTotal = dieselExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+    const maintenanceTotal = maintenanceExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+    // Generate CSV content with multiple sections
+    const csvRows: string[] = [];
+    
+    // Summary section
+    csvRows.push('Summary');
+    csvRows.push('Metric,Value');
+    csvRows.push(`Total Expenses,"${PricingUtils.formatPrice(totalAmount)}"`);
+    csvRows.push(`Diesel Expenses,"${PricingUtils.formatPrice(dieselTotal)}"`);
+    csvRows.push(`Maintenance Expenses,"${PricingUtils.formatPrice(maintenanceTotal)}"`);
+    csvRows.push(`Total Count,"${filteredExpenses.length}"`);
+    csvRows.push(''); // Empty row separator
+    
+    // Expense details section
+    csvRows.push('Expense Details');
+    
+    // Prepare data for Excel
+    const excelData = filteredExpenses.map(expense => {
+      const expenseDate = new Date(expense.expenseDate);
+      const createdAt = new Date(expense.createdAt);
+      
+      return {
+        'Date': formatDate(expenseDate, 'date'),
+        'Type': expense.expenseType === 'diesel' ? 'Diesel' : 'Maintenance',
+        'Amount (₹)': PricingUtils.formatPrice(expense.amount),
+        'Description': expense.description || '',
+        'Created At': formatDate(createdAt, 'datetime'),
+      };
+    });
+
+    if (excelData.length > 0) {
+      const headers = Object.keys(excelData[0]);
+      csvRows.push(headers.map(header => `"${header.replace(/"/g, '""')}"`).join(','));
+      
+      excelData.forEach((row: Record<string, any>) => {
+        const values = headers.map(header => {
+          const value = row[header] ?? '';
+          return `"${String(value).replace(/"/g, '""')}"`;
+        });
+        csvRows.push(values.join(','));
+      });
+    } else {
+      csvRows.push('No data available');
+    }
+
+    const csvContent = csvRows.join('\n');
+
+    // Generate file name
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const defaultFileName = periodType === 'month'
+      ? `Expenses_${monthNames[selectedMonth]}_${selectedYear}.csv`
+      : `Expenses_${selectedYear}.csv`;
+    const finalFileName = fileName || defaultFileName;
+
+    // Write to file
+    const docDir = getDocumentDirectory();
+    const fileUri = `${docDir}${finalFileName}`;
+    await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    // Share the file
+    const isAvailable = await Sharing.isAvailableAsync();
+    if (isAvailable) {
+      const dialogTitle = periodType === 'month'
+        ? `Export ${monthNames[selectedMonth]} ${selectedYear} Expenses`
+        : `Export ${selectedYear} Expenses`;
+      
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'text/csv',
+        dialogTitle,
+      });
+    } else {
+      throw new Error('Sharing is not available on this device');
+    }
+
+  } catch (error) {
+    errorLogger.medium('Failed to export expenses to Excel', error, { periodType, selectedYear, selectedMonth });
     throw error;
   }
 }
