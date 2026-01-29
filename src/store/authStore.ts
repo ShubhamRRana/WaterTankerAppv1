@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User, UserRole } from '../types/index';
+import { User, UserRole, AdminUser } from '../types/index';
 import { AuthService } from '../services/auth.service';
 import { supabase } from '../lib/supabaseClient';
 import { handleError } from '../utils/errorHandler';
@@ -221,7 +221,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const additionalData: Partial<User> = { phone };
       if (role === 'admin' && businessName) {
-        additionalData.businessName = businessName;
+        (additionalData as Partial<AdminUser>).businessName = businessName;
       }
       const result = await AuthService.register(email, password, name, role, additionalData);
       if (result.success && result.user) {
@@ -307,7 +307,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     // Subscribe to Supabase Auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: { user: { id: string } } | null) => {
       if (event === 'SIGNED_IN' && session?.user) {
         // Check if a role-specific login is in progress
         const { pendingLoginRole, user: currentUser } = get();

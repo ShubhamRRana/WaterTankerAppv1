@@ -18,7 +18,8 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "resolveJsonModule": true,
-    "target": "esnext"
+    "target": "esnext",
+    "types": []
   },
   "include": [
     "**/*.ts",
@@ -26,6 +27,5 @@
   ],
   "exclude": [
     "node_modules"
-  ],
-  "extends": "expo/tsconfig.base"
+  ]
 }
