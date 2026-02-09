@@ -26,16 +26,19 @@ export class UserService {
   }
 
   /**
-   * Get all users from the data access layer
+   * Get all users from the data access layer.
+   * When adminId is provided (e.g. admin viewing driver list), only drivers created by that admin are included.
    */
-  static async getAllUsers(): Promise<User[]> {
+  static async getAllUsers(adminId?: string): Promise<User[]> {
     return handleAsyncOperationWithRethrow(
       async () => {
-        const users = await dataAccess.users.getUsers();
+        const users = await dataAccess.users.getUsers(
+          adminId ? { createdByAdminId: adminId } : undefined
+        );
         return users;
       },
       {
-        context: { operation: 'getAllUsers' },
+        context: { operation: 'getAllUsers', adminId },
         userFacing: false,
       }
     );

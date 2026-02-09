@@ -13,7 +13,7 @@ interface UserState {
   unsubscribeAllUsers: (() => void) | null;
   
   // Actions
-  fetchAllUsers: () => Promise<void>;
+  fetchAllUsers: (adminId?: string) => Promise<void>;
   fetchUsersByRole: (role: UserRole) => Promise<void>;
   addUser: (userData: Omit<User, 'id' | 'createdAt'>) => Promise<void>;
   updateUser: (userId: string, updates: Partial<User>) => Promise<void>;
@@ -33,10 +33,10 @@ export const useUserStore = create<UserState>((set, get) => ({
   error: null,
   unsubscribeAllUsers: null,
 
-  fetchAllUsers: async () => {
+  fetchAllUsers: async (adminId?: string) => {
     set({ isLoading: true, error: null });
     try {
-      const users = await UserService.getAllUsers();
+      const users = await UserService.getAllUsers(adminId);
       set({ users, isLoading: false });
     } catch (error) {
       handleError(error, {

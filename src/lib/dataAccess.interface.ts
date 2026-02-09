@@ -46,11 +46,13 @@ export interface IUserDataAccess {
   saveUser(user: User): Promise<void>;
   removeUser(): Promise<void>;
   getUserById(id: string): Promise<User | null>;
-  getUsers(): Promise<User[]>;
+  getUsers(options?: { createdByAdminId?: string }): Promise<User[]>;
   saveUserToCollection(user: User): Promise<void>;
   updateUserProfile(id: string, updates: Partial<User>): Promise<void>;
   subscribeToUserUpdates(id: string, callback: SubscriptionCallback<User>): Unsubscribe;
   subscribeToAllUsersUpdates(callback: CollectionSubscriptionCallback<User>): Unsubscribe;
+  /** Permanently delete a customer account and all related data (bookings, customer row, roles, user). */
+  deleteCustomerAccount(customerId: string): Promise<void>;
 }
 
 /**

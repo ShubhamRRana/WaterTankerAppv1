@@ -17,6 +17,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useFocusEffect } from '@react-navigation/native';
 import { Typography, LoadingSpinner, CustomerMenuDrawer } from '../../components/common';
 import { useAuthStore } from '../../store/authStore';
+import { AuthService } from '../../services/auth.service';
 import { User } from '../../types';
 import { CustomerStackParamList } from '../../navigation/CustomerNavigator';
 import { UI_CONFIG } from '../../constants/config';
@@ -43,6 +44,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     phone?: string;
   }>({});
   const [menuVisible, setMenuVisible] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -197,6 +199,33 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
     }
   };
 
+  const handleDeleteAccountPress = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete this account? The action cannot be reversed and all your data will be deleted permanently.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (!user) return;
+            setIsDeleting(true);
+            try {
+              const result = await AuthService.deleteCustomerAccount(user.id);
+              if (result.success) {
+                return;
+              }
+              Alert.alert('Error', result.error ?? 'Failed to delete account.');
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const formatDate = (date: Date | string) => {
     return formatDateOnly(date, 'en-US');
   };
@@ -330,6 +359,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               style={[styles.actionButton, isEditing && styles.actionButtonActive]}
               onPress={isEditing ? handleCancelEdit : handleEditProfile}
               activeOpacity={0.8}
+              disabled={isDeleting}
             >
               <Ionicons 
                 name={isEditing ? "close-circle" : "create-outline"} 
@@ -341,6 +371,18 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                 isEditing && styles.actionButtonTextActive
               ]}>
                 {isEditing ? "Cancel" : "Edit Profile"}
+              </Typography>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionButton, styles.deleteAccountButton]}
+              onPress={handleDeleteAccountPress}
+              activeOpacity={0.8}
+              disabled={isDeleting}
+            >
+              <Ionicons name="trash-outline" size={22} color={UI_CONFIG.colors.error} />
+              <Typography variant="body" style={styles.deleteAccountButtonText}>
+                {isDeleting ? 'Deleting...' : 'Delete Account'}
               </Typography>
             </TouchableOpacity>
           </Animated.View>
@@ -635,6 +677,17 @@ const styles = StyleSheet.create({
   actionButtonsContainer: {
     paddingHorizontal: 20,
     marginTop: 24,
+  },
+  deleteAccountButton: {
+    marginTop: 12,
+    borderColor: UI_CONFIG.colors.error,
+    backgroundColor: `${UI_CONFIG.colors.error}10`,
+  },
+  deleteAccountButtonText: {
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    color: UI_CONFIG.colors.error,
   },
   actionButton: {
     flexDirection: 'row',

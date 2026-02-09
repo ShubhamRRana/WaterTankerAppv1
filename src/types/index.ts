@@ -50,6 +50,7 @@ export interface DriverUser extends BaseUser {
   totalEarnings?: number;
   completedOrders?: number;
   createdByAdmin?: boolean; // Track if driver was created by admin
+  createdByAdminId?: string; // User ID of the admin who created this driver (scopes visibility)
   emergencyContactName?: string;
   emergencyContactPhone?: string;
 }

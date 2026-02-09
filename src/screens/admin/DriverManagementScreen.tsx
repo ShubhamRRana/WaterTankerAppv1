@@ -16,6 +16,7 @@ import { useUserStore } from '../../store/userStore';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { Typography, Card, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
+import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import AddDriverModal from '../../components/admin/AddDriverModal';
 import DriverModal from '../../components/admin/DriverModal';
 import DriverCard from '../../components/admin/DriverCard';
@@ -106,7 +107,7 @@ const DriverManagementScreen: React.FC = () => {
   const loadDrivers = async () => {
     try {
       await Promise.all([
-        fetchAllUsers(),
+        fetchAllUsers(currentUser?.id),
         fetchAllBookings(),
       ]);
     } catch (error) {
@@ -118,7 +119,7 @@ const DriverManagementScreen: React.FC = () => {
     setRefreshing(true);
     try {
       await Promise.all([
-        fetchAllUsers(),
+        fetchAllUsers(currentUser?.id),
         fetchAllBookings(),
       ]);
     } catch (error) {
@@ -188,9 +189,9 @@ const DriverManagementScreen: React.FC = () => {
     if (!expiryMatch) {
       errors.licenseExpiry = 'Use DD/MM/YYYY format';
     } else {
-      const day = parseInt(expiryMatch[1], 10);
-      const month = parseInt(expiryMatch[2], 10) - 1;
-      const year = parseInt(expiryMatch[3], 10);
+      const day = parseInt(expiryMatch[1] ?? '', 10);
+      const month = parseInt(expiryMatch[2] ?? '', 10) - 1;
+      const year = parseInt(expiryMatch[3] ?? '', 10);
       const candidate = new Date(year, month, day);
       if (isNaN(candidate.getTime())) {
         errors.licenseExpiry = 'Invalid date';
@@ -214,27 +215,30 @@ const DriverManagementScreen: React.FC = () => {
         const licenseExpiryDate = (() => {
           const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
           if (!m) return undefined;
-          const d = parseInt(m[1], 10);
-          const mo = parseInt(m[2], 10) - 1;
-          const y = parseInt(m[3], 10);
+          const d = parseInt(m[1] ?? '', 10);
+          const mo = parseInt(m[2] ?? '', 10) - 1;
+          const y = parseInt(m[3] ?? '', 10);
           return new Date(y, mo, d);
         })();
         
+        const driverData: Partial<DriverUser> = {
+          totalEarnings: 0,
+          completedOrders: 0,
+          createdByAdmin: true,
+          licenseNumber: addDriverForm.licenseNumber.trim(),
+          emergencyContactName: addDriverForm.emergencyContactName.trim(),
+          emergencyContactPhone: addDriverForm.emergencyContactPhone,
+        };
+        if (addDriverForm.phone) driverData.phone = addDriverForm.phone;
+        if (currentUser?.id) driverData.createdByAdminId = currentUser.id;
+        if (licenseExpiryDate) driverData.licenseExpiry = licenseExpiryDate;
+
         const registerResult = await AuthService.register(
           addDriverForm.email,
           addDriverForm.password,
           addDriverForm.name.trim(),
           'driver',
-          {
-            phone: addDriverForm.phone ? addDriverForm.phone : undefined,
-            totalEarnings: 0,
-            completedOrders: 0,
-            createdByAdmin: true, // Mark as created by admin
-            licenseNumber: addDriverForm.licenseNumber.trim(),
-            emergencyContactName: addDriverForm.emergencyContactName.trim(),
-            emergencyContactPhone: addDriverForm.emergencyContactPhone,
-            licenseExpiry: licenseExpiryDate,
-          }
+          driverData
         );
         
         if (!registerResult.success) {
@@ -244,7 +248,7 @@ const DriverManagementScreen: React.FC = () => {
         }
         
         // Refresh users list to show the newly created driver
-        await fetchAllUsers();
+        await fetchAllUsers(currentUser?.id);
         
         Alert.alert('Success', 'Driver added successfully');
       } else {
@@ -259,22 +263,23 @@ const DriverManagementScreen: React.FC = () => {
         }
         
         // Update existing driver
+        const licenseExpiryParsed = (() => {
+          const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
+          if (!m) return undefined;
+          const d = parseInt(m[1] ?? '', 10);
+          const mo = parseInt(m[2] ?? '', 10) - 1;
+          const y = parseInt(m[3] ?? '', 10);
+          return new Date(y, mo, d);
+        })();
         const updateData: Partial<DriverUser> = {
           name: addDriverForm.name.trim(),
           email: SanitizationUtils.sanitizeEmail(addDriverForm.email),
-          phone: addDriverForm.phone ? addDriverForm.phone : undefined,
           licenseNumber: addDriverForm.licenseNumber.trim(),
           emergencyContactName: addDriverForm.emergencyContactName.trim(),
           emergencyContactPhone: addDriverForm.emergencyContactPhone,
-          licenseExpiry: (() => {
-            const m = addDriverForm.licenseExpiry.match(/^(\d{2})[\/\-](\d{2})[\/\-](\d{4})$/);
-            if (!m) return undefined;
-            const d = parseInt(m[1], 10);
-            const mo = parseInt(m[2], 10) - 1;
-            const y = parseInt(m[3], 10);
-            return new Date(y, mo, d);
-          })(),
         };
+        if (addDriverForm.phone) updateData.phone = addDriverForm.phone;
+        if (licenseExpiryParsed) updateData.licenseExpiry = licenseExpiryParsed;
         
         // Only update password if provided
         if (addDriverForm.password) {
@@ -423,7 +428,7 @@ const DriverManagementScreen: React.FC = () => {
     }
   };
 
-  const handleMenuNavigate = (route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile') => {
+  const handleMenuNavigate = (route: AdminRoute) => {
     if (route === 'Drivers') {
       // Already on Drivers, just close menu
       return;

@@ -591,6 +591,7 @@ export class AuthService {
             total_earnings: driverData?.totalEarnings ?? 0,
             completed_orders: driverData?.completedOrders ?? 0,
             created_by_admin: driverData?.createdByAdmin ?? false,
+            created_by_admin_id: driverData?.createdByAdminId || null,
             emergency_contact_name: driverData?.emergencyContactName || null,
             emergency_contact_phone: driverData?.emergencyContactPhone || null,
             updated_at: new Date().toISOString(),
@@ -1101,6 +1102,33 @@ export class AuthService {
         context: { operation: 'initializeApp' },
         userFacing: false,
       });
+    }
+  }
+
+  /**
+   * Permanently delete the current customer account and all related data (bookings, profile, then sign out).
+   * Only allowed when the current user is a customer and the id matches the current user.
+   *
+   * @returns Promise resolving to { success, error? }
+   */
+  static async deleteCustomerAccount(customerId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user || session.user.id !== customerId) {
+        return { success: false, error: 'You can only delete your own account.' };
+      }
+
+      const currentUser = await fetchUserWithRole(customerId, 'customer');
+      if (!currentUser || currentUser.role !== 'customer') {
+        return { success: false, error: 'Only customer accounts can be deleted from here.' };
+      }
+
+      await dataAccess.users.deleteCustomerAccount(customerId);
+      await AuthService.logout();
+      return { success: true };
+    } catch (error) {
+      const message = getErrorMessage(error, 'Failed to delete account. Please try again.');
+      return { success: false, error: message };
     }
   }
 

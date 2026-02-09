@@ -81,6 +81,7 @@ interface DriverRow {
   total_earnings: number;
   completed_orders: number;
   created_by_admin: boolean;
+  created_by_admin_id: string | null;
   emergency_contact_name: string | null;
   emergency_contact_phone: string | null;
   created_at: string;
@@ -221,6 +222,7 @@ function mapUserFromDb(
         totalEarnings: Number(driverData.total_earnings),
         completedOrders: driverData.completed_orders,
         createdByAdmin: driverData.created_by_admin,
+        ...(driverData.created_by_admin_id && { createdByAdminId: driverData.created_by_admin_id }),
         ...(driverData.emergency_contact_name && { emergencyContactName: driverData.emergency_contact_name }),
         ...(driverData.emergency_contact_phone && { emergencyContactPhone: driverData.emergency_contact_phone }),
       };
@@ -289,6 +291,7 @@ async function mapUserToDb(user: User): Promise<{
       total_earnings: user.totalEarnings || 0,
       completed_orders: user.completedOrders || 0,
       created_by_admin: user.createdByAdmin || false,
+      created_by_admin_id: (user as DriverUser).createdByAdminId || null,
       emergency_contact_name: user.emergencyContactName || null,
       emergency_contact_phone: user.emergencyContactPhone || null,
       created_at: serializeDate(user.createdAt) || new Date().toISOString(),
@@ -575,6 +578,52 @@ class SupabaseUserDataAccess implements IUserDataAccess {
     }
   }
 
+  async deleteCustomerAccount(customerId: string): Promise<void> {
+    try {
+      // Delete in order: bookings (FK to customer), then customers, user_roles, users
+      const { error: bookingsError } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('customer_id', customerId);
+
+      if (bookingsError) {
+        throw new DataAccessError('Failed to delete customer bookings', 'deleteCustomerAccount', { error: bookingsError, customerId });
+      }
+
+      const { error: customersError } = await supabase
+        .from('customers')
+        .delete()
+        .eq('user_id', customerId);
+
+      if (customersError) {
+        throw new DataAccessError('Failed to delete customer profile', 'deleteCustomerAccount', { error: customersError, customerId });
+      }
+
+      const { error: rolesError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', customerId);
+
+      if (rolesError) {
+        throw new DataAccessError('Failed to delete user roles', 'deleteCustomerAccount', { error: rolesError, customerId });
+      }
+
+      const { error: usersError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', customerId);
+
+      if (usersError) {
+        throw new DataAccessError('Failed to delete user', 'deleteCustomerAccount', { error: usersError, customerId });
+      }
+    } catch (error) {
+      if (error instanceof DataAccessError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to delete customer account', 'deleteCustomerAccount', { error, customerId });
+    }
+  }
+
   async getUserById(id: string): Promise<User | null> {
     try {
       // Fetch user
@@ -635,7 +684,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
     }
   }
 
-  async getUsers(): Promise<User[]> {
+  async getUsers(options?: { createdByAdminId?: string }): Promise<User[]> {
     try {
       // Fetch all users
       const { data: userRows, error: userError } = await supabase
@@ -659,9 +708,13 @@ class SupabaseUserDataAccess implements IUserDataAccess {
         throw rolesError;
       }
 
-      // Fetch all role-specific data
+      // Fetch all role-specific data; when createdByAdminId is set, only drivers created by that admin
       const { data: customers } = await supabase.from('customers').select('*');
-      const { data: drivers } = await supabase.from('drivers').select('*');
+      let driversQuery = supabase.from('drivers').select('*');
+      if (options?.createdByAdminId) {
+        driversQuery = driversQuery.eq('created_by_admin_id', options.createdByAdminId);
+      }
+      const { data: drivers } = await driversQuery;
       const { data: admins } = await supabase.from('admins').select('*');
 
       // Group roles by user_id

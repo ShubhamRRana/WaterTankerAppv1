@@ -25,6 +25,7 @@ A comprehensive mobile application for on-demand water tanker delivery services.
 - **Order History**: View past and current orders
 - **Price Calculation**: Automatic distance-based pricing with Indian numbering format
 - **Scheduled Deliveries**: Schedule deliveries for future dates
+- **Delete Account**: Permanently delete account from the Profile screen (with confirmation); removes all customer data and bookings, then logs out (requires migration `013_allow_customer_delete_own_account` for RLS DELETE policies)
 
 ### Driver Features
 - **Order Management**: Accept/reject available bookings
@@ -702,16 +703,19 @@ RLS is **enabled on all tables** with comprehensive role-based access control po
 
 **Users Table:**
 - Users can view, insert, and update their own profile
+- Users can delete their own row (for customer Delete Account flow; `id = auth.uid()`)
 - Admins can view all users
 - Customers can read admin users (for agency selection during booking)
 
 **User Roles Table:**
 - Users can view and insert their own roles
+- Users can delete their own role rows (for account deletion; `user_id = auth.uid()`)
 - Admins can view all user roles
 - Customers can read admin roles (to identify agencies)
 
 **Customers Table:**
 - Customers can view, insert, and update their own data
+- Customers can delete their own row (for Delete Account; `user_id = auth.uid()`)
 - Admins can view all customer data
 
 **Drivers Table:**
@@ -725,6 +729,7 @@ RLS is **enabled on all tables** with comprehensive role-based access control po
 
 **Bookings Table:**
 - Customers can create, view, and update their own bookings
+- Customers can delete their own bookings (for Delete Account; `customer_id = auth.uid()`)
 - Drivers can view available bookings and update assigned bookings
 - Admins can view and update bookings for their agency
 
@@ -759,6 +764,8 @@ RLS is **enabled on all tables** with comprehensive role-based access control po
 - Customers can view driver locations for their active bookings
 
 All policies use a secure `has_role()` helper function that checks user roles from the `user_roles` table.
+
+**Customer Delete Account (migration 013):** The migration `013_allow_customer_delete_own_account.sql` adds DELETE policies so that authenticated users can remove their own data for the Delete Account flow: `bookings` (by `customer_id`), `customers` (by `user_id`), `user_roles` (by `user_id`), and `users` (by `id`). Apply this migration if customers use the Profile → Delete Account feature.
 
 ### Realtime Subscriptions
 
