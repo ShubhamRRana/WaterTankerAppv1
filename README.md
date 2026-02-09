@@ -25,7 +25,7 @@ A comprehensive mobile application for on-demand water tanker delivery services.
 - **Order History**: View past and current orders
 - **Price Calculation**: Automatic distance-based pricing with Indian numbering format
 - **Scheduled Deliveries**: Schedule deliveries for future dates
-- **Delete Account**: Permanently delete account from the Profile screen (with confirmation); removes all customer data and bookings, then logs out (requires migration `013_allow_customer_delete_own_account` for RLS DELETE policies)
+- **Delete Account**: Permanently delete account from the Profile screen (with confirmation); removes all customer data and bookings, then logs out
 
 ### Driver Features
 - **Order Management**: Accept/reject available bookings
