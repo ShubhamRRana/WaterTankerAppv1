@@ -5,6 +5,13 @@ import { supabase } from '../lib/supabaseClient';
 import { handleError } from '../utils/errorHandler';
 import { ErrorSeverity } from '../utils/errorLogger';
 
+/** Returns true if the error is a network failure (e.g. device can't reach Supabase). */
+function isNetworkFailure(error: unknown): boolean {
+  if (error instanceof TypeError && error.message === 'Network request failed') return true;
+  const msg = error && typeof (error as Error).message === 'string' ? (error as Error).message : '';
+  return msg.includes('Network request failed') || msg.includes('network') || msg.includes('fetch failed');
+}
+
 /**
  * Authentication store state interface
  * 
@@ -66,11 +73,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ isLoading: true });
     try {
       await AuthService.initializeApp();
-      
-      // Check for existing Supabase session
-      const { data: { session } } = await supabase.auth.getSession();
+
+      let session = null;
+      try {
+        const result = await supabase.auth.getSession();
+        session = result.data?.session ?? null;
+      } catch (sessionError) {
+        if (isNetworkFailure(sessionError)) {
+          set({ user: null, isAuthenticated: false, isLoading: false });
+          get().subscribeToAuthChanges();
+          return;
+        }
+        throw sessionError;
+      }
+
       if (session?.user) {
-        const userData = await AuthService.getCurrentUserData(session.user.id);
+        let userData = null;
+        try {
+          userData = await AuthService.getCurrentUserData(session.user.id);
+        } catch (userError) {
+          if (isNetworkFailure(userError)) {
+            set({ user: null, isAuthenticated: false, isLoading: false });
+            get().subscribeToAuthChanges();
+            return;
+          }
+          throw userError;
+        }
         set({
           user: userData,
           isAuthenticated: !!userData,
@@ -83,10 +111,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isLoading: false,
         });
       }
-      
-      // Subscribe to auth changes after initialization
+
       get().subscribeToAuthChanges();
     } catch (error) {
+      if (isNetworkFailure(error)) {
+        set({ user: null, isAuthenticated: false, isLoading: false });
+        get().subscribeToAuthChanges();
+        return;
+      }
       handleError(error, {
         context: { operation: 'initializeAuth' },
         userFacing: false,
@@ -296,47 +328,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     // Subscribe to Supabase Auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: string, session: { user: { id: string } } | null) => {
+      const fetchAndSetUser = async (userId: string) => {
+        try {
+          const userData = await AuthService.getCurrentUserData(userId);
+          if (userData) set({ user: userData, isAuthenticated: true });
+        } catch (err) {
+          if (!isNetworkFailure(err)) handleError(err, { context: { operation: 'onAuthStateChange' }, userFacing: false, severity: ErrorSeverity.MEDIUM });
+        }
+      };
+
       if (event === 'SIGNED_IN' && session?.user) {
-        // Check if a role-specific login is in progress
         const { pendingLoginRole, user: currentUser } = get();
-        if (pendingLoginRole) {
-          // A role-specific login is in progress - let the login function handle authentication
-          // This prevents the listener from setting the wrong role before validation completes
-          return;
-        }
-        // If user is already set (by login function), don't override
-        if (currentUser) {
-          return;
-        }
-        // Fetch user data with first available role
-        const userData = await AuthService.getCurrentUserData(session.user.id);
-        if (userData) {
-          set({
-            user: userData,
-            isAuthenticated: true,
-          });
-        }
+        if (pendingLoginRole || currentUser) return;
+        await fetchAndSetUser(session.user.id);
       } else if (event === 'SIGNED_OUT') {
-        set({
-          user: null,
-          isAuthenticated: false,
-          pendingLoginRole: null,
-        });
+        set({ user: null, isAuthenticated: false, pendingLoginRole: null });
       } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        // Token refreshed, user still authenticated
-        // Check if a role-specific login is in progress
         const { pendingLoginRole } = get();
-        if (pendingLoginRole) {
-          // Let the login function handle it
-          return;
-        }
-        const userData = await AuthService.getCurrentUserData(session.user.id);
-        if (userData) {
-          set({
-            user: userData,
-            isAuthenticated: true,
-          });
-        }
+        if (pendingLoginRole) return;
+        await fetchAndSetUser(session.user.id);
       }
     });
     

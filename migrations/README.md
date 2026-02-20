@@ -137,6 +137,36 @@ supabase db push
 - Run immediately after enabling RLS if drivers cannot see QR codes on the Collect Payment screen
 - Required for payment collection flow to work properly
 
+### 014_allow_users_insert_update_own.sql
+
+**Purpose**: Allows authenticated users to insert and update their own row on the `users` table.
+
+**Problem Solved**: 
+- After enabling **email authentication** in Supabase, new account creation fails with:  
+  `new row violates row-level security policy for table "users"`.
+- With email auth, sign-up creates a user in Supabase Auth and then inserts a row into `public.users` using the new user's JWT. Without an RLS policy allowing INSERT where `id = auth.uid()`, that insert is denied.
+
+**Changes**:
+- Adds RLS policy: `users_insert_own` — INSERT allowed when `id = auth.uid()`
+- Adds RLS policy: `users_update_own` — UPDATE allowed when `id = auth.uid()`
+
+**When to Run**: 
+- Run as soon as you enable email authentication in Supabase Auth if registration/create account fails with an RLS violation on `users`.
+
+### 015_sync_auth_user_to_public_users_trigger.sql
+
+**Purpose**: Creates a trigger on `auth.users` so that when a new user is created in Supabase Auth, a row is automatically inserted into `public.users` and `public.user_roles`. The trigger runs with `SECURITY DEFINER` and bypasses RLS.
+
+**Problem Solved**: 
+- Even with policy 014, registration can still fail with "new row violates row-level security policy for table users" when **Confirm email** is enabled: after `signUp()` the client often has no session until the user confirms, so the client-side insert runs without `auth.uid()` and is denied by RLS.
+- The trigger runs on the server when Auth inserts into `auth.users`, so the `public.users` (and `user_roles`) row is created regardless of client session. The app then only creates role-specific data (customers, drivers, admins).
+
+**Requirements**: 
+- The app passes `name`, `role`, and `phone` in `signUp` options `data` so the trigger can populate `users` and `user_roles`. Apply this migration **and** deploy the app change that uses it.
+
+**When to Run**: 
+- Run if you still get RLS violation on `users` after 014, or if you use **Confirm email** and want sign-up to work without requiring a session on the client.
+
 ## Verification
 
 After running a migration, verify the changes:

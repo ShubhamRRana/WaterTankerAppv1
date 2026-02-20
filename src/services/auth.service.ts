@@ -414,6 +414,7 @@ export class AuthService {
             data: {
               name: sanitizedName,
               role: role,
+              phone: sanitizedPhone,
             }
           }
         });
@@ -508,44 +509,19 @@ export class AuthService {
             error: errorMessage
           };
         } else {
-          // New user successfully created in Supabase Auth
+          // New user successfully created in Supabase Auth.
+          // Rows in public.users and public.user_roles are created by the database trigger
+          // (migration 015) so we avoid RLS issues when the client has no session yet (e.g. confirm email).
           userId = authData.user.id;
 
-          // Create user record in users table
-          const { error: userError } = await supabase
-            .from('users')
-            .insert({
-              id: userId,
-              email: sanitizedEmail,
-              password_hash: '', // No longer needed with Supabase Auth
-              name: sanitizedName,
-              phone: sanitizedPhone,
-            });
-
-          if (userError) {
-            // Note: Cannot delete auth user from client - would need service role key
-            // Auth user will remain but user profile creation failed
-            // This should be handled by admin cleanup or the user can try registering again
-            securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, userError.message);
+          // Trigger may not have run yet; give it a moment then verify the row exists.
+          await new Promise(resolve => setTimeout(resolve, 500));
+          const { data: userRow } = await supabase.from('users').select('id').eq('id', userId).maybeSingle();
+          if (!userRow) {
+            securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, 'User profile not created by trigger');
             return {
               success: false,
-              error: userError.message || 'Failed to create user profile'
-            };
-          }
-
-          // Create user role
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({
-              user_id: userId,
-              role: role,
-            });
-
-          if (roleError) {
-            securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, roleError.message);
-            return {
-              success: false,
-              error: roleError.message || 'Failed to assign user role'
+              error: 'Account was created but profile setup failed. Please try logging in, or contact support if this persists.'
             };
           }
         }
