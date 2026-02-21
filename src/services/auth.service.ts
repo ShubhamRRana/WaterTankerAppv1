@@ -1109,6 +1109,33 @@ export class AuthService {
   }
 
   /**
+   * Permanently delete the current admin account and all related data (expenses, bank accounts, profile, then sign out).
+   * Only allowed when the current user is an admin and the id matches the current user.
+   *
+   * @returns Promise resolving to { success, error? }
+   */
+  static async deleteAdminAccount(adminId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user || session.user.id !== adminId) {
+        return { success: false, error: 'You can only delete your own account.' };
+      }
+
+      const currentUser = await fetchUserWithRole(adminId, 'admin');
+      if (!currentUser || currentUser.role !== 'admin') {
+        return { success: false, error: 'Only admin accounts can be deleted from here.' };
+      }
+
+      await dataAccess.users.deleteAdminAccount(adminId);
+      await AuthService.logout();
+      return { success: true };
+    } catch (error) {
+      const message = getErrorMessage(error, 'Failed to delete account. Please try again.');
+      return { success: false, error: message };
+    }
+  }
+
+  /**
    * Reset rate limit for login attempts for a specific email or all emails.
    * 
    * Useful for unblocking users who have exceeded rate limits during testing or legitimate use.

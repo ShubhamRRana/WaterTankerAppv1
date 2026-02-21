@@ -624,6 +624,82 @@ class SupabaseUserDataAccess implements IUserDataAccess {
     }
   }
 
+  async deleteAdminAccount(adminId: string): Promise<void> {
+    try {
+      // Delete in order: expenses, bank_accounts, clear driver refs, admins, user_roles, users
+      const { error: expensesError } = await supabase
+        .from('expenses')
+        .delete()
+        .eq('admin_id', adminId);
+
+      if (expensesError) {
+        throw new DataAccessError('Failed to delete admin expenses', 'deleteAdminAccount', { error: expensesError, adminId });
+      }
+
+      const { error: bankAccountsError } = await supabase
+        .from('bank_accounts')
+        .delete()
+        .eq('admin_id', adminId);
+
+      if (bankAccountsError) {
+        throw new DataAccessError('Failed to delete admin bank accounts', 'deleteAdminAccount', { error: bankAccountsError, adminId });
+      }
+
+      const { error: adminsError } = await supabase
+        .from('admins')
+        .delete()
+        .eq('user_id', adminId);
+
+      if (adminsError) {
+        throw new DataAccessError('Failed to delete admin profile', 'deleteAdminAccount', { error: adminsError, adminId });
+      }
+
+      const { error: rolesError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', adminId);
+
+      if (rolesError) {
+        throw new DataAccessError('Failed to delete user roles', 'deleteAdminAccount', { error: rolesError, adminId });
+      }
+
+      const { error: usersError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', adminId);
+
+      if (usersError) {
+        throw new DataAccessError('Failed to delete user', 'deleteAdminAccount', { error: usersError, adminId });
+      }
+    } catch (error) {
+      if (error instanceof DataAccessError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to delete admin account', 'deleteAdminAccount', { error, adminId });
+    }
+  }
+
+  async deleteDriverAccount(driverId: string): Promise<void> {
+    try {
+      const { error } = await supabase.rpc('delete_driver_account', {
+        p_driver_id: driverId,
+      });
+
+      if (error) {
+        throw new DataAccessError(
+          error.message || 'Failed to delete driver account',
+          'deleteDriverAccount',
+          { error, driverId }
+        );
+      }
+    } catch (error) {
+      if (error instanceof DataAccessError) {
+        throw error;
+      }
+      throw new DataAccessError('Failed to delete driver account', 'deleteDriverAccount', { error, driverId });
+    }
+  }
+
   async getUserById(id: string): Promise<User | null> {
     try {
       // Fetch user

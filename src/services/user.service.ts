@@ -1,7 +1,7 @@
 // src/services/user.service.ts
 
 import { dataAccess } from '../lib';
-import { User, UserRole } from '../types/index';
+import { User, UserRole, isDriverUser, isCustomerUser, isAdminUser } from '../types/index';
 import { handleAsyncOperationWithRethrow, handleError } from '../utils/errorHandler';
 
 /**
@@ -150,16 +150,25 @@ export class UserService {
   }
 
   /**
-   * Delete a user by id (admin only)
-   * Note: This is a placeholder - actual deletion should be handled through AuthService
+   * Delete a user by id (admin only).
+   * Dispatches to the appropriate data-access delete based on user role (driver, customer, admin).
    */
   static async deleteUser(id: string): Promise<void> {
     return handleAsyncOperationWithRethrow(
       async () => {
-        // In Supabase, user deletion should be handled through AuthService
-        // This method is kept for compatibility but may need to be implemented
-        // based on your deletion requirements (soft delete vs hard delete)
-        throw new Error('User deletion should be handled through AuthService');
+        const user = await dataAccess.users.getUserById(id);
+        if (!user) {
+          throw new Error('User not found');
+        }
+        if (isDriverUser(user)) {
+          await dataAccess.users.deleteDriverAccount(id);
+        } else if (isCustomerUser(user)) {
+          await dataAccess.users.deleteCustomerAccount(id);
+        } else if (isAdminUser(user)) {
+          await dataAccess.users.deleteAdminAccount(id);
+        } else {
+          throw new Error('Unknown user role');
+        }
       },
       {
         context: { operation: 'deleteUser', id },

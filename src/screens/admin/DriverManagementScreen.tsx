@@ -390,10 +390,13 @@ const DriverManagementScreen: React.FC = () => {
                 Alert.alert('Success', 'Driver deleted successfully');
               }
               
-              // Close modal and reset form
+              // Close modals and reset; refresh list from Supabase
+              setSelectedDriver(null);
+              setShowDriverModal(false);
               setEditingDriver(null);
               setShowAddDriverModal(false);
               resetAddDriverForm();
+              await fetchAllUsers(currentUser?.id);
             } catch (error) {
               Alert.alert('Error', 'Failed to delete driver. Please try again.');
             }
@@ -401,7 +404,7 @@ const DriverManagementScreen: React.FC = () => {
         },
       ]
     );
-  }, [editingDriver, deleteUser, currentUser, logout, resetAddDriverForm]);
+  }, [editingDriver, deleteUser, currentUser, logout, resetAddDriverForm, fetchAllUsers]);
 
   const handleFormChange = useCallback((field: string, value: string) => {
     setAddDriverForm(prev => ({ ...prev, [field]: value }));
@@ -478,7 +481,7 @@ const DriverManagementScreen: React.FC = () => {
                 Driver Management
               </Typography>
               <Typography variant="body" style={styles.subtitle}>
-                Manage driver accounts and approvals
+                Manage driver accounts
               </Typography>
             </View>
           </View>

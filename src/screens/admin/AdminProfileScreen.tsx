@@ -22,6 +22,7 @@ import { UI_CONFIG } from '../../constants/config';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { getErrorMessage } from '../../utils/errors';
+import { AuthService } from '../../services/auth.service';
 
 type AdminProfileScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Profile'>;
 
@@ -169,6 +170,7 @@ const AdminProfileScreen: React.FC = () => {
   const navigation = useNavigation<AdminProfileScreenNavigationProp>();
   const { user, updateUser, logout, isLoading } = useAuthStore();
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const [isDeleting, setIsDeleting] = React.useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
 
@@ -410,6 +412,33 @@ const AdminProfileScreen: React.FC = () => {
     );
   };
 
+  const handleDeleteAccountPress = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete this account? The action cannot be reversed and all your data (profile, bank accounts, expenses) will be deleted permanently.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            if (!user) return;
+            setIsDeleting(true);
+            try {
+              const result = await AuthService.deleteAdminAccount(user.id);
+              if (result.success) {
+                return;
+              }
+              Alert.alert('Error', result.error ?? 'Failed to delete account.');
+            } finally {
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleCancelEdit = () => {
     if (state.isDirty) {
       Alert.alert(
@@ -571,7 +600,21 @@ const AdminProfileScreen: React.FC = () => {
                 AccessibilityInfo.announceForAccessibility('Edit profile mode activated');
               }} 
               variant="primary"
+              disabled={isDeleting}
             />
+            <TouchableOpacity
+              style={[styles.actionButton, styles.deleteAccountButton]}
+              onPress={handleDeleteAccountPress}
+              activeOpacity={0.8}
+              disabled={isDeleting}
+              accessibilityLabel={isDeleting ? 'Deleting account' : 'Delete account'}
+              accessibilityRole="button"
+            >
+              <Ionicons name="trash-outline" size={22} color={UI_CONFIG.colors.error} />
+              <Typography variant="body" style={styles.deleteAccountButtonText}>
+                {isDeleting ? 'Deleting...' : 'Delete Account'}
+              </Typography>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -664,6 +707,27 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: -8,
     marginBottom: 16,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: UI_CONFIG.colors.border,
+    marginTop: 12,
+  },
+  deleteAccountButton: {
+    borderColor: UI_CONFIG.colors.error,
+    backgroundColor: `${UI_CONFIG.colors.error}10`,
+  },
+  deleteAccountButtonText: {
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600',
+    color: UI_CONFIG.colors.error,
   },
   errorCard: {
     marginHorizontal: 16,

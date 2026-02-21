@@ -53,6 +53,10 @@ export interface IUserDataAccess {
   subscribeToAllUsersUpdates(callback: CollectionSubscriptionCallback<User>): Unsubscribe;
   /** Permanently delete a customer account and all related data (bookings, customer row, roles, user). */
   deleteCustomerAccount(customerId: string): Promise<void>;
+  /** Permanently delete an admin account and all related data (expenses, bank accounts, admin row, roles, user). */
+  deleteAdminAccount(adminId: string): Promise<void>;
+  /** Permanently delete a driver account (unassign from bookings, then drivers, user_roles, users). Caller must be admin. */
+  deleteDriverAccount(driverId: string): Promise<void>;
 }
 
 /**
