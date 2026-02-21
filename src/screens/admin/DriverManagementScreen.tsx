@@ -33,7 +33,7 @@ type EnrichedDriver = DriverUser & { totalEarnings: number; completedOrders: num
 
 const DriverManagementScreen: React.FC = () => {
   const navigation = useNavigation<DriverManagementScreenNavigationProp>();
-  const { users, fetchAllUsers, updateUser, addUser, deleteUser, isLoading } = useUserStore();
+  const { users, fetchAllUsers, updateUser, deleteUser, isLoading } = useUserStore();
   const { user: currentUser, logout } = useAuthStore();
   const { bookings, fetchAllBookings } = useBookingStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -378,9 +378,9 @@ const DriverManagementScreen: React.FC = () => {
               // Delete the driver
               await deleteUser(driverId);
               
-              // Check if the deleted driver is currently logged in
-              if (currentUser && (currentUser.id === driverId || currentUser.email?.toLowerCase() === driverEmail?.toLowerCase())) {
-                // Logout the deleted driver
+              const deletedSelf = currentUser && (currentUser.id === driverId || currentUser.email?.toLowerCase() === driverEmail?.toLowerCase());
+
+              if (deletedSelf) {
                 await logout();
                 Alert.alert(
                   'Driver Deleted',
@@ -388,15 +388,16 @@ const DriverManagementScreen: React.FC = () => {
                 );
               } else {
                 Alert.alert('Success', 'Driver deleted successfully');
+                if (currentUser?.id) {
+                  await fetchAllUsers(currentUser.id);
+                }
               }
-              
-              // Close modals and reset; refresh list from Supabase
+
               setSelectedDriver(null);
               setShowDriverModal(false);
               setEditingDriver(null);
               setShowAddDriverModal(false);
               resetAddDriverForm();
-              await fetchAllUsers(currentUser?.id);
             } catch (error) {
               Alert.alert('Error', 'Failed to delete driver. Please try again.');
             }

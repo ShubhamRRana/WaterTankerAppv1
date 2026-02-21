@@ -580,7 +580,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
 
   async deleteCustomerAccount(customerId: string): Promise<void> {
     try {
-      // Delete in order: bookings (FK to customer), then customers, user_roles, users
+      // Delete in order: bookings (FK to customer), then customers, then only the customer role (so admin/driver for same email remain)
       const { error: bookingsError } = await supabase
         .from('bookings')
         .delete()
@@ -599,22 +599,32 @@ class SupabaseUserDataAccess implements IUserDataAccess {
         throw new DataAccessError('Failed to delete customer profile', 'deleteCustomerAccount', { error: customersError, customerId });
       }
 
+      // Remove only the customer role so the same user can still have admin/driver
       const { error: rolesError } = await supabase
         .from('user_roles')
         .delete()
-        .eq('user_id', customerId);
+        .eq('user_id', customerId)
+        .eq('role', 'customer');
 
       if (rolesError) {
         throw new DataAccessError('Failed to delete user roles', 'deleteCustomerAccount', { error: rolesError, customerId });
       }
 
-      const { error: usersError } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', customerId);
+      // Delete user row only if no roles remain (user had only customer)
+      const { data: remainingRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', customerId);
 
-      if (usersError) {
-        throw new DataAccessError('Failed to delete user', 'deleteCustomerAccount', { error: usersError, customerId });
+      if (remainingRoles?.length === 0) {
+        const { error: usersError } = await supabase
+          .from('users')
+          .delete()
+          .eq('id', customerId);
+
+        if (usersError) {
+          throw new DataAccessError('Failed to delete user', 'deleteCustomerAccount', { error: usersError, customerId });
+        }
       }
     } catch (error) {
       if (error instanceof DataAccessError) {
@@ -626,7 +636,7 @@ class SupabaseUserDataAccess implements IUserDataAccess {
 
   async deleteAdminAccount(adminId: string): Promise<void> {
     try {
-      // Delete in order: expenses, bank_accounts, clear driver refs, admins, user_roles, users
+      // Delete in order: expenses, bank_accounts, admins, then only the admin role (so customer/driver for same email remain)
       const { error: expensesError } = await supabase
         .from('expenses')
         .delete()
@@ -654,22 +664,32 @@ class SupabaseUserDataAccess implements IUserDataAccess {
         throw new DataAccessError('Failed to delete admin profile', 'deleteAdminAccount', { error: adminsError, adminId });
       }
 
+      // Remove only the admin role so the same user can still have customer/driver
       const { error: rolesError } = await supabase
         .from('user_roles')
         .delete()
-        .eq('user_id', adminId);
+        .eq('user_id', adminId)
+        .eq('role', 'admin');
 
       if (rolesError) {
         throw new DataAccessError('Failed to delete user roles', 'deleteAdminAccount', { error: rolesError, adminId });
       }
 
-      const { error: usersError } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', adminId);
+      // Delete user row only if no roles remain (user had only admin)
+      const { data: remainingRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', adminId);
 
-      if (usersError) {
-        throw new DataAccessError('Failed to delete user', 'deleteAdminAccount', { error: usersError, adminId });
+      if (remainingRoles?.length === 0) {
+        const { error: usersError } = await supabase
+          .from('users')
+          .delete()
+          .eq('id', adminId);
+
+        if (usersError) {
+          throw new DataAccessError('Failed to delete user', 'deleteAdminAccount', { error: usersError, adminId });
+        }
       }
     } catch (error) {
       if (error instanceof DataAccessError) {
