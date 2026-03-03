@@ -30,7 +30,13 @@ interface Props {
   route: RegisterScreenRouteProp;
 }
 
+const ALLOWED_REGISTER_ROLES: UserRole[] = ['admin', 'driver'];
+
 const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
+  const preferredRole = route?.params?.preferredRole;
+  const role: UserRole | null =
+    preferredRole && ALLOWED_REGISTER_ROLES.includes(preferredRole) ? preferredRole : null;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -39,7 +45,6 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
   const [businessName, setBusinessName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const role: UserRole = route?.params?.preferredRole ?? 'driver';
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;
@@ -49,8 +54,14 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     businessName?: string;
   }>({});
   const [isButtonPressed, setIsButtonPressed] = useState(false);
-  
+
   const { register, isLoading } = useAuthStore();
+
+  // Validate role after hooks; redirect if invalid so hooks are always called in the same order
+  if (role === null) {
+    navigation.replace('RoleEntry');
+    return null;
+  }
 
   // Real-time validation handlers
   const handleNameChange = (text: string) => {
