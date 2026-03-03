@@ -18,14 +18,6 @@ afterEach(() => {
 });
 
 describe('UserService', () => {
-  const mockCustomerUser: Omit<User, 'id' | 'createdAt'> = {
-    email: 'customer@test.com',
-    password: 'hashed-password',
-    name: 'Test Customer',
-    phone: '1234567890',
-    role: 'customer',
-  };
-
   const mockDriverUser: Omit<User, 'id' | 'createdAt'> = {
     email: 'driver@test.com',
     password: 'hashed-password',
@@ -47,7 +39,7 @@ describe('UserService', () => {
   describe('getUsersTableIdByAuthId', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
+        ...mockAdminUser,
         id: 'user-1',
         createdAt: new Date(),
       } as User);
@@ -77,7 +69,7 @@ describe('UserService', () => {
   describe('getAllUsers', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
+        ...mockAdminUser,
         id: 'user-1',
         createdAt: new Date(),
       } as User);
@@ -106,12 +98,12 @@ describe('UserService', () => {
   describe('getUsersByRole', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
+        ...mockAdminUser,
         id: 'customer-1',
         createdAt: new Date(),
       } as User);
       await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
+        ...mockAdminUser,
         id: 'customer-2',
         email: 'customer2@test.com',
         createdAt: new Date(),
@@ -155,7 +147,7 @@ describe('UserService', () => {
   describe('getUserById', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
+        ...mockAdminUser,
         id: 'user-1',
         createdAt: new Date(),
       } as User);
@@ -184,12 +176,12 @@ describe('UserService', () => {
 
   describe('createUser', () => {
     it('should create a new user with generated id', async () => {
-      const user = await UserService.createUser(mockCustomerUser);
+      const user = await UserService.createUser(mockAdminUser);
       
       expect(user.id).toBeTruthy();
       expect(typeof user.id).toBe('string');
-      expect(user.email).toBe(mockCustomerUser.email);
-      expect(user.role).toBe(mockCustomerUser.role);
+      expect(user.email).toBe(mockAdminUser.email);
+      expect(user.role).toBe(mockAdminUser.role);
       expect(user.createdAt).toBeInstanceOf(Date);
       
       const savedUser = await LocalStorageService.getUserById(user.id);
@@ -207,7 +199,7 @@ describe('UserService', () => {
     it('should throw error when LocalStorageService fails', async () => {
       jest.spyOn(LocalStorageService, 'saveUserToCollection').mockRejectedValue(new Error('Save error'));
       
-      await expect(UserService.createUser(mockCustomerUser)).rejects.toThrow('Save error');
+      await expect(UserService.createUser(mockAdminUser)).rejects.toThrow('Save error');
     });
   });
 
@@ -215,7 +207,7 @@ describe('UserService', () => {
     let userId: string;
 
     beforeEach(async () => {
-      const user = await UserService.createUser(mockCustomerUser);
+      const user = await UserService.createUser(mockAdminUser);
       userId = user.id;
     });
 
@@ -259,7 +251,7 @@ describe('UserService', () => {
     let userId: string;
 
     beforeEach(async () => {
-      const user = await UserService.createUser(mockCustomerUser);
+      const user = await UserService.createUser(mockAdminUser);
       userId = user.id;
     });
 

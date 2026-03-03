@@ -15,7 +15,7 @@
 
 import { SupabaseDataAccess } from '../../lib/supabaseDataAccess';
 import { AuthService } from '../../services/auth.service';
-import { User, Booking, Vehicle, CustomerUser, DriverUser, AdminUser, Address } from '../../types/index';
+import { User, Booking, Vehicle, DriverUser, AdminUser, Address } from '../../types/index';
 import { supabase } from '../../lib/supabaseClient';
 import { SubscriptionManager } from '../../utils/subscriptionManager';
 
@@ -311,26 +311,26 @@ describe('Supabase Integration Tests', () => {
 
   describe('CRUD Operations - Users', () => {
     it('should create a customer user with all related data', async () => {
-      const customerUser: CustomerUser = {
+      const adminUser: AdminUser = {
         id: 'customer-1',
         email: 'customer@test.com',
         password: 'hashed-password',
         name: 'Test Customer',
         phone: '1234567890',
-        role: 'customer',
-        savedAddresses: [],
+        role: 'admin',
+        businessName: undefined,
         createdAt: new Date(),
       };
 
-      await dataAccess.users.saveUser(customerUser);
+      await dataAccess.users.saveUser(adminUser);
 
       // Verify user was created
       const savedUser = await dataAccess.users.getUserById('customer-1');
       expect(savedUser).toBeTruthy();
       expect(savedUser?.email).toBe('customer@test.com');
-      expect(savedUser?.role).toBe('customer');
-      if (savedUser && 'savedAddresses' in savedUser) {
-        expect(savedUser.savedAddresses).toEqual([]);
+      expect(savedUser?.role).toBe('admin');
+      if (savedUser && 'businessName' in savedUser) {
+        expect(savedUser.businessName).toBeUndefined();
       }
     });
 
@@ -386,18 +386,18 @@ describe('Supabase Integration Tests', () => {
     });
 
     it('should update user profile', async () => {
-      const customerUser: CustomerUser = {
+      const adminUser: AdminUser = {
         id: 'customer-1',
         email: 'customer@test.com',
         password: 'hashed-password',
         name: 'Test Customer',
         phone: '1234567890',
-        role: 'customer',
-        savedAddresses: [],
+        role: 'admin',
+        businessName: undefined,
         createdAt: new Date(),
       };
 
-      await dataAccess.users.saveUser(customerUser);
+      await dataAccess.users.saveUser(adminUser);
       
       await dataAccess.users.updateUserProfile('customer-1', {
         name: 'Updated Customer',
@@ -410,14 +410,14 @@ describe('Supabase Integration Tests', () => {
     });
 
     it('should get all users', async () => {
-      const customerUser: CustomerUser = {
+      const adminUser: AdminUser = {
         id: 'customer-1',
         email: 'customer@test.com',
         password: 'hashed-password',
         name: 'Test Customer',
         phone: '1234567890',
-        role: 'customer',
-        savedAddresses: [],
+        role: 'admin',
+        businessName: undefined,
         createdAt: new Date(),
       };
 
@@ -439,7 +439,7 @@ describe('Supabase Integration Tests', () => {
         createdAt: new Date(),
       };
 
-      await dataAccess.users.saveUser(customerUser);
+      await dataAccess.users.saveUser(adminUser);
       await dataAccess.users.saveUser(driverUser);
 
       const users = await dataAccess.users.getUsers();
@@ -447,18 +447,18 @@ describe('Supabase Integration Tests', () => {
     });
 
     it('should remove user', async () => {
-      const customerUser: CustomerUser = {
+      const adminUser: AdminUser = {
         id: 'customer-1',
         email: 'customer@test.com',
         password: 'hashed-password',
         name: 'Test Customer',
         phone: '1234567890',
-        role: 'customer',
-        savedAddresses: [],
+        role: 'admin',
+        businessName: undefined,
         createdAt: new Date(),
       };
 
-      await dataAccess.users.saveUser(customerUser);
+      await dataAccess.users.saveUser(adminUser);
       
       (supabase.auth.getSession as jest.Mock).mockResolvedValue({
         data: {
@@ -503,40 +503,39 @@ describe('Supabase Integration Tests', () => {
         },
       ];
 
-      const customerUser: CustomerUser = {
+      const adminUser: AdminUser = {
         id: 'customer-1',
         email: 'customer@test.com',
         password: 'hashed-password',
         name: 'Test Customer',
         phone: '1234567890',
-        role: 'customer',
-        savedAddresses: addresses,
+        role: 'admin',
+        businessName: 'Test Business',
         createdAt: new Date(),
       };
 
-      await dataAccess.users.saveUser(customerUser);
+      await dataAccess.users.saveUser(adminUser);
 
       const savedUser = await dataAccess.users.getUserById('customer-1');
       expect(savedUser).toBeTruthy();
-      if (savedUser && 'savedAddresses' in savedUser) {
-        expect(savedUser.savedAddresses.length).toBe(2);
-        expect(savedUser.savedAddresses[0].address).toBe('123 Main St, City, State 12345');
+      if (savedUser && 'businessName' in savedUser) {
+        expect(savedUser.businessName).toBe('Test Business');
       }
     });
 
     it('should handle multi-role user creation', async () => {
       // Create user with customer role first
-      const customerUser: CustomerUser = {
+      const adminUser: AdminUser = {
         id: 'multi-role-1',
         email: 'multirole@test.com',
         password: 'hashed-password',
         name: 'Multi Role User',
         phone: '1234567890',
-        role: 'customer',
-        savedAddresses: [],
+        role: 'admin',
+        businessName: undefined,
         createdAt: new Date(),
       };
-      await dataAccess.users.saveUser(customerUser);
+      await dataAccess.users.saveUser(adminUser);
 
       // Add admin role to same user
       const adminUser: AdminUser = {
@@ -1051,18 +1050,18 @@ describe('Supabase Integration Tests', () => {
 
   describe('Real-time Subscriptions - Users', () => {
     it('should subscribe to user updates', async () => {
-      const customerUser: CustomerUser = {
+      const adminUser: AdminUser = {
         id: 'customer-1',
         email: 'customer@test.com',
         password: 'hashed-password',
         name: 'Test Customer',
         phone: '1234567890',
-        role: 'customer',
-        savedAddresses: [],
+        role: 'admin',
+        businessName: undefined,
         createdAt: new Date(),
       };
 
-      await dataAccess.users.saveUser(customerUser);
+      await dataAccess.users.saveUser(adminUser);
 
       const updateCallback = jest.fn();
       const unsubscribe = dataAccess.users.subscribeToUserUpdates('customer-1', updateCallback);
@@ -1080,21 +1079,21 @@ describe('Supabase Integration Tests', () => {
     });
 
     it('should subscribe to all users updates', async () => {
-      const customerUser: CustomerUser = {
+      const adminUser: AdminUser = {
         id: 'customer-1',
         email: 'customer@test.com',
         password: 'hashed-password',
         name: 'Test Customer',
         phone: '1234567890',
-        role: 'customer',
-        savedAddresses: [],
+        role: 'admin',
+        businessName: undefined,
         createdAt: new Date(),
       };
 
       const collectionCallback = jest.fn();
       const unsubscribe = dataAccess.users.subscribeToAllUsersUpdates(collectionCallback);
 
-      await dataAccess.users.saveUser(customerUser);
+      await dataAccess.users.saveUser(adminUser);
 
       // Wait for subscription callback
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -1357,7 +1356,7 @@ describe('Supabase Integration Tests', () => {
 
       expect(result.success).toBe(true);
       expect(result.user).toBeTruthy();
-      expect(result.user?.role).toBe('customer');
+      expect(result.user?.role).toBe('admin');
       expect(supabase.auth.signUp).toHaveBeenCalled();
     });
 
@@ -1377,7 +1376,7 @@ describe('Supabase Integration Tests', () => {
 
     it('should login with email and password (single role)', async () => {
       // Setup user with single role
-      mockUserRoles.push({ user_id: 'test-user-id', role: 'customer' });
+      mockUserRoles.push({ user_id: 'test-user-id', role: 'admin' });
       mockUsers.push({
         id: 'test-user-id',
         email: 'test@example.com',
@@ -1393,7 +1392,7 @@ describe('Supabase Integration Tests', () => {
 
       expect(result.success).toBe(true);
       expect(result.user).toBeTruthy();
-      expect(result.user?.role).toBe('customer');
+      expect(result.user?.role).toBe('admin');
       expect(result.requiresRoleSelection).toBeUndefined();
       expect(supabase.auth.signInWithPassword).toHaveBeenCalled();
     });
@@ -1401,7 +1400,7 @@ describe('Supabase Integration Tests', () => {
     it('should login with preferred role (multi-role user)', async () => {
       // Setup user with multiple roles
       mockUserRoles.push(
-        { user_id: 'test-user-id', role: 'customer' },
+        { user_id: 'test-user-id', role: 'admin' },
         { user_id: 'test-user-id', role: 'admin' }
       );
       mockUsers.push({
@@ -1430,7 +1429,7 @@ describe('Supabase Integration Tests', () => {
     it('should require role selection for multi-role user without preferred role', async () => {
       // Setup user with multiple roles
       mockUserRoles.push(
-        { user_id: 'test-user-id', role: 'customer' },
+        { user_id: 'test-user-id', role: 'admin' },
         { user_id: 'test-user-id', role: 'admin' }
       );
       mockUsers.push({
@@ -1452,7 +1451,7 @@ describe('Supabase Integration Tests', () => {
 
       expect(result.success).toBe(true);
       expect(result.requiresRoleSelection).toBe(true);
-      expect(result.availableRoles).toContain('customer');
+      expect(result.availableRoles).toContain('admin');
       expect(result.availableRoles).toContain('admin');
     });
 
@@ -1470,7 +1469,7 @@ describe('Supabase Integration Tests', () => {
 
       // Setup user with multiple roles
       mockUserRoles.push(
-        { user_id: 'test-user-id', role: 'customer' },
+        { user_id: 'test-user-id', role: 'admin' },
         { user_id: 'test-user-id', role: 'admin' }
       );
       mockUsers.push({
@@ -1509,7 +1508,7 @@ describe('Supabase Integration Tests', () => {
 
     it('should get current user data', async () => {
       // Setup user
-      mockUserRoles.push({ user_id: 'test-user-id', role: 'customer' });
+      mockUserRoles.push({ user_id: 'test-user-id', role: 'admin' });
       mockUsers.push({
         id: 'test-user-id',
         email: 'test@example.com',
@@ -1578,7 +1577,7 @@ describe('Supabase Integration Tests', () => {
     });
 
     it('should handle login with invalid preferred role', async () => {
-      mockUserRoles.push({ user_id: 'test-user-id', role: 'customer' });
+      mockUserRoles.push({ user_id: 'test-user-id', role: 'admin' });
       mockUsers.push({
         id: 'test-user-id',
         email: 'test@example.com',
@@ -1624,7 +1623,7 @@ describe('Supabase Integration Tests', () => {
         error: null,
       });
 
-      mockUserRoles.push({ user_id: 'test-user-id', role: 'customer' });
+      mockUserRoles.push({ user_id: 'test-user-id', role: 'admin' });
       mockUsers.push({
         id: 'test-user-id',
         email: 'test@example.com',
@@ -1645,17 +1644,17 @@ describe('Supabase Integration Tests', () => {
   describe('End-to-End Integration Scenarios', () => {
     it('should complete full booking flow with real-time updates', async () => {
       // 1. Create customer
-      const customerUser: CustomerUser = {
+      const adminUser: AdminUser = {
         id: 'customer-1',
         email: 'customer@test.com',
         password: 'hashed-password',
         name: 'Test Customer',
         phone: '1234567890',
-        role: 'customer',
-        savedAddresses: [],
+        role: 'admin',
+        businessName: undefined,
         createdAt: new Date(),
       };
-      await dataAccess.users.saveUser(customerUser);
+      await dataAccess.users.saveUser(adminUser);
 
       // 2. Create driver
       const driverUser: DriverUser = {
@@ -1733,15 +1732,15 @@ describe('Supabase Integration Tests', () => {
     });
 
     it('should handle multi-role user registration and login', async () => {
-      // 1. Register as customer
-      const customerResult = await AuthService.register(
+      // 1. Register as driver (admin-created)
+      const driverResult = await AuthService.register(
         'multirole@test.com',
         'password123',
         'Multi Role User',
-        'customer',
-        { phone: '1234567890' }
+        'driver',
+        { phone: '1234567890', createdByAdmin: true }
       );
-      expect(customerResult.success).toBe(true);
+      expect(driverResult.success).toBe(true);
 
       // 2. Add admin role to same user
       const adminResult = await AuthService.register(
@@ -1840,30 +1839,30 @@ describe('Supabase Integration Tests', () => {
           password: 'hashed-password',
           name: 'User 1',
           phone: '1111111111',
-          role: 'customer',
-          savedAddresses: [],
+          role: 'admin',
+          businessName: undefined,
           createdAt: new Date(),
-        } as CustomerUser),
+        } as AdminUser),
         dataAccess.users.saveUser({
           id: 'user-2',
           email: 'user2@test.com',
           password: 'hashed-password',
           name: 'User 2',
           phone: '2222222222',
-          role: 'customer',
-          savedAddresses: [],
+          role: 'admin',
+          businessName: undefined,
           createdAt: new Date(),
-        } as CustomerUser),
+        } as AdminUser),
         dataAccess.users.saveUser({
           id: 'user-3',
           email: 'user3@test.com',
           password: 'hashed-password',
           name: 'User 3',
           phone: '3333333333',
-          role: 'customer',
-          savedAddresses: [],
+          role: 'admin',
+          businessName: undefined,
           createdAt: new Date(),
-        } as CustomerUser),
+        } as AdminUser),
       ];
 
       await Promise.all(userPromises);
@@ -1874,17 +1873,17 @@ describe('Supabase Integration Tests', () => {
 
     it('should handle data consistency across operations', async () => {
       // Create customer
-      const customerUser: CustomerUser = {
+      const adminUser: AdminUser = {
         id: 'customer-1',
         email: 'customer@test.com',
         password: 'hashed-password',
         name: 'Test Customer',
         phone: '1234567890',
-        role: 'customer',
-        savedAddresses: [],
+        role: 'admin',
+        businessName: undefined,
         createdAt: new Date(),
       };
-      await dataAccess.users.saveUser(customerUser);
+      await dataAccess.users.saveUser(adminUser);
 
       // Create booking
       const booking: Booking = {

@@ -39,7 +39,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
   const [businessName, setBusinessName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const role: UserRole = route?.params?.preferredRole ?? 'customer';
+  const role: UserRole = route?.params?.preferredRole ?? 'driver';
   const [errors, setErrors] = useState<{
     email?: string;
     password?: string;

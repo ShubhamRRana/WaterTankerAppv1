@@ -1,6 +1,6 @@
 # Water Tanker Booking App
 
-A comprehensive mobile application for on-demand water tanker delivery services. Built with React Native (Expo) and TypeScript, featuring a Supabase backend with real-time capabilities. The app supports multi-role authentication for customers, drivers, and administrators, each with role-specific features and interfaces.
+A comprehensive mobile application for on-demand water tanker delivery services. Built with React Native (Expo) and TypeScript, featuring a Supabase backend with real-time capabilities. This app supports **admin and driver** roles only; customer booking is handled by a separate customer mobile app that shares the same backend.
 
 ## Table of Contents
 
@@ -17,15 +17,6 @@ A comprehensive mobile application for on-demand water tanker delivery services.
 - [Roadmap](#roadmap)
 
 ## Features
-
-### Customer Features
-- **Booking Management**: Create, view, and track water tanker bookings
-- **Address Management**: Save and manage multiple delivery addresses
-- **Real-time Tracking**: Track booking status updates in real-time
-- **Order History**: View past and current orders
-- **Price Calculation**: Automatic distance-based pricing with Indian numbering format
-- **Scheduled Deliveries**: Schedule deliveries for future dates
-- **Delete Account**: Permanently delete account from the Profile screen (with confirmation); removes all customer data and bookings, then logs out
 
 ### Driver Features
 - **Order Management**: Accept/reject available bookings

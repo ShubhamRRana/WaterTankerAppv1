@@ -1,5 +1,7 @@
 # Customer-only profile — inventory & spec
 
+> **Note:** This document describes the **separate customer mobile app**. Customer UI and flows have been removed from this codebase; this app is admin and driver only. Use this doc when working on or porting the standalone customer app.
+
 ## Purpose
 Provide a single-document reference that describes everything implemented today for the Customer role so we can extract a standalone customer mobile app from the existing codebase.
 

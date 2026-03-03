@@ -8,7 +8,7 @@
  */
 
 import { SupabaseDataAccess } from '../../lib/supabaseDataAccess';
-import { User, Booking, Vehicle, CustomerUser, DriverUser, AdminUser, Address } from '../../types/index';
+import { User, Booking, Vehicle, DriverUser, AdminUser, Address } from '../../types/index';
 import { NotFoundError, DataAccessError } from '../../utils/errors';
 import { supabase } from '../../lib/supabaseClient';
 
@@ -87,23 +87,14 @@ describe('SupabaseDataAccess', () => {
   });
 
   describe('User Data Access', () => {
-    const mockCustomerUser: CustomerUser = {
-      id: 'customer-1',
-      email: 'customer@example.com',
-      password: 'hashed-password',
-      name: 'Test Customer',
-      phone: '1234567890',
-      role: 'customer',
-      savedAddresses: [
-        {
-          id: 'addr-1',
-          address: '123 Main St, City, State 12345',
-          latitude: 40.7128,
-          longitude: -74.0060,
-        },
-      ],
-      createdAt: new Date('2024-01-01'),
-    };
+    const mockSavedAddresses: Address[] = [
+      {
+        id: 'addr-1',
+        address: '123 Main St, City, State 12345',
+        latitude: 40.7128,
+        longitude: -74.0060,
+      },
+    ];
 
     const mockDriverUser: DriverUser = {
       id: 'driver-1',
@@ -136,23 +127,22 @@ describe('SupabaseDataAccess', () => {
 
     describe('getCurrentUser', () => {
       it('should return current user when session exists', async () => {
-        const mockUserRow = {
-          id: 'customer-1',
-          email: 'customer@example.com',
+        const mockAdminRow = {
+          user_id: 'admin-1',
+          business_name: 'Test Business',
+          created_at: '2024-01-01T00:00:00Z',
+          updated_at: '2024-01-01T00:00:00Z',
+        };
+        const mockUserRowAdmin = {
+          id: 'admin-1',
+          email: 'admin@example.com',
           password_hash: 'hashed-password',
-          name: 'Test Customer',
-          phone: '1234567890',
+          name: 'Test Admin',
+          phone: '5555555555',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
         };
-
-        const mockRoleRow = [{ user_id: 'customer-1', role: 'customer', created_at: '2024-01-01T00:00:00Z' }];
-        const mockCustomerRow = {
-          user_id: 'customer-1',
-          saved_addresses: mockCustomerUser.savedAddresses,
-          created_at: '2024-01-01T00:00:00Z',
-          updated_at: '2024-01-01T00:00:00Z',
-        };
+        const mockRoleRowAdmin = [{ user_id: 'admin-1', role: 'admin', created_at: '2024-01-01T00:00:00Z' }];
 
         let callCount = 0;
         (supabase.from as jest.Mock).mockImplementation((table) => {
@@ -160,22 +150,27 @@ describe('SupabaseDataAccess', () => {
           callCount++;
           
           if (table === 'users' && callCount === 1) {
-            builder.single = jest.fn().mockResolvedValue({ data: mockUserRow, error: null });
+            builder.single = jest.fn().mockResolvedValue({ data: mockUserRowAdmin, error: null });
           } else if (table === 'user_roles' && callCount === 2) {
-            builder.eq = jest.fn().mockResolvedValue({ data: mockRoleRow, error: null });
-          } else if (table === 'customers' && callCount === 3) {
-            builder.single = jest.fn().mockResolvedValue({ data: mockCustomerRow, error: null });
+            builder.eq = jest.fn().mockResolvedValue({ data: mockRoleRowAdmin, error: null });
+          } else if (table === 'admins' && callCount === 3) {
+            builder.single = jest.fn().mockResolvedValue({ data: mockAdminRow, error: null });
           }
           
           return builder;
         });
 
+        (supabase.auth.getSession as jest.Mock).mockResolvedValue({
+          data: { session: { user: { id: 'admin-1' } } },
+          error: null,
+        });
+
         const result = await dataAccess.users.getCurrentUser();
 
         expect(result).toBeTruthy();
-        expect(result?.id).toBe('customer-1');
-        expect(result?.email).toBe('customer@example.com');
-        expect(result?.role).toBe('customer');
+        expect(result?.id).toBe('admin-1');
+        expect(result?.email).toBe('admin@example.com');
+        expect(result?.role).toBe('admin');
       });
 
       it('should return null when no session exists', async () => {
@@ -191,20 +186,6 @@ describe('SupabaseDataAccess', () => {
     });
 
     describe('saveUser', () => {
-      it('should save customer user correctly', async () => {
-        const upsertMock = jest.fn().mockResolvedValue({ data: null, error: null });
-        
-        (supabase.from as jest.Mock).mockReturnValue({
-          upsert: upsertMock,
-        });
-
-        await dataAccess.users.saveUser(mockCustomerUser);
-
-        expect(supabase.from).toHaveBeenCalledWith('users');
-        expect(supabase.from).toHaveBeenCalledWith('user_roles');
-        expect(supabase.from).toHaveBeenCalledWith('customers');
-      });
-
       it('should save driver user correctly', async () => {
         const upsertMock = jest.fn().mockResolvedValue({ data: null, error: null });
         
@@ -238,12 +219,12 @@ describe('SupabaseDataAccess', () => {
           upsert: jest.fn().mockResolvedValue({ data: null, error: { message: 'Database error' } }),
         });
 
-        await expect(dataAccess.users.saveUser(mockCustomerUser)).rejects.toThrow(DataAccessError);
+        await expect(dataAccess.users.saveUser(mockDriverUser)).rejects.toThrow(DataAccessError);
       });
     });
 
     describe('getUserById', () => {
-      it('should retrieve customer user by ID', async () => {
+      it('should return null for customer role (app does not support customer)', async () => {
         const mockUserRow = {
           id: 'customer-1',
           email: 'customer@example.com',
@@ -253,11 +234,10 @@ describe('SupabaseDataAccess', () => {
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
         };
-
         const mockRoleRow = [{ user_id: 'customer-1', role: 'customer', created_at: '2024-01-01T00:00:00Z' }];
         const mockCustomerRow = {
           user_id: 'customer-1',
-          saved_addresses: mockCustomerUser.savedAddresses,
+          saved_addresses: mockSavedAddresses,
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
         };
@@ -280,16 +260,8 @@ describe('SupabaseDataAccess', () => {
           return builder;
         });
 
-        (supabase.from as jest.Mock).mockReturnValueOnce({
-          select: jest.fn().mockReturnThis(),
-          eq: jest.fn().mockResolvedValue({ data: mockRoleRow, error: null }),
-        });
-
         const result = await dataAccess.users.getUserById('customer-1');
-
-        expect(result).toBeTruthy();
-        expect(result?.id).toBe('customer-1');
-        expect(result?.role).toBe('customer');
+        expect(result).toBeNull();
       });
 
       it('should return null for non-existent user', async () => {

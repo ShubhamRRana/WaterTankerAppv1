@@ -22,7 +22,7 @@ import { AuthStackParamList } from '../../types/index';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { AuthService } from '../../services/auth.service';
-import { Typography, DriverIcon, AdminIcon, CustomerIcon } from '../../components/common';
+import { Typography, DriverIcon, AdminIcon } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
@@ -216,8 +216,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
       color: UI_CONFIG.colors.textSecondary,
     };
 
-    const IconComponent = 
-      preferredRole === 'customer' ? CustomerIcon :
+    const IconComponent =
       preferredRole === 'driver' ? DriverIcon :
       preferredRole === 'admin' ? AdminIcon :
       null;

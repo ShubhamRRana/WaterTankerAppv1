@@ -2,7 +2,7 @@ import React, { memo, useMemo, useCallback, useState, useEffect, useRef } from '
 import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, Button } from '../common';
-import { Booking, BookingStatus, isCustomerUser } from '../../types';
+import { Booking, BookingStatus } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 import { OrderTab } from './OrdersFilter';
@@ -77,15 +77,8 @@ const OrdersList: React.FC<OrdersListProps> = ({
             const customer = customerMap.get(customerId);
             let address: string | null = null;
             
-            if (customer && isCustomerUser(customer) && customer.savedAddresses && customer.savedAddresses.length > 0) {
-              const order = orders.find(o => o.customerId === customerId);
-              const deliveryAddress = order?.deliveryAddress.address;
-              
-              const defaultAddress = customer.savedAddresses.find(addr => addr.isDefault) || customer.savedAddresses[0];
-              if (defaultAddress && defaultAddress.address !== deliveryAddress) {
-                address = defaultAddress.address;
-              }
-            }
+            // Customer profile addresses not used in this app (admin/driver only)
+            address = null;
             
             // Cache the result (even if null)
             addressCacheRef.current.set(customerId, address);

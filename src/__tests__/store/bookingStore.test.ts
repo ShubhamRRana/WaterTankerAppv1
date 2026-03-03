@@ -165,32 +165,6 @@ describe('useBookingStore', () => {
     });
   });
 
-  describe('fetchCustomerBookings', () => {
-    it('should fetch customer bookings successfully', async () => {
-      const bookings = [mockBooking];
-      (BookingService.getBookingsByCustomer as jest.Mock).mockResolvedValue(bookings);
-
-      await useBookingStore.getState().fetchCustomerBookings('customer-1');
-
-      const state = useBookingStore.getState();
-      expect(state.bookings).toEqual(bookings);
-      expect(state.isLoading).toBe(false);
-      expect(BookingService.getBookingsByCustomer).toHaveBeenCalledWith('customer-1');
-    });
-
-    it('should handle fetch errors', async () => {
-      (BookingService.getBookingsByCustomer as jest.Mock).mockRejectedValue(new Error('Fetch error'));
-
-      await expect(
-        useBookingStore.getState().fetchCustomerBookings('customer-1')
-      ).rejects.toThrow('Fetch error');
-
-      const state = useBookingStore.getState();
-      expect(state.isLoading).toBe(false);
-      expect(state.error).toBe('Fetch error');
-    });
-  });
-
   describe('fetchAvailableBookings', () => {
     it('should fetch available bookings successfully', async () => {
       const bookings = [mockBooking];

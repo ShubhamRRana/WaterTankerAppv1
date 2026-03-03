@@ -22,7 +22,6 @@ import {
 import { SubscriptionManager } from '../utils/subscriptionManager';
 import {
   User,
-  CustomerUser,
   DriverUser,
   AdminUser,
   Booking,
@@ -30,7 +29,6 @@ import {
   Address,
   BankAccount,
   Expense,
-  isCustomerUser,
   isDriverUser,
   isAdminUser,
 } from '../types/index';
@@ -194,17 +192,9 @@ function mapUserFromDb(
   };
 
   switch (role) {
-    case 'customer': {
-      if (!customerData) {
-        return null;
-      }
-      const customer: CustomerUser = {
-        ...baseUser,
-        role: 'customer',
-        savedAddresses: (customerData.saved_addresses as Address[]) || [],
-      };
-      return customer;
-    }
+    case 'customer':
+      // This app does not support customer role; backend may still have customer data
+      return null;
 
     case 'driver': {
       if (!driverData) {
@@ -273,14 +263,7 @@ async function mapUserToDb(user: User): Promise<{
   let driverRow: Partial<DriverRow> | undefined;
   let adminRow: Partial<AdminRow> | undefined;
 
-  if (isCustomerUser(user)) {
-    customerRow = {
-      user_id: user.id,
-      saved_addresses: user.savedAddresses || [],
-      created_at: serializeDate(user.createdAt) || new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-  } else if (isDriverUser(user)) {
+  if (isDriverUser(user)) {
     driverRow = {
       user_id: user.id,
       vehicle_number: user.vehicleNumber || '',

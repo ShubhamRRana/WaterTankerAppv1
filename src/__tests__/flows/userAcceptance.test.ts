@@ -14,7 +14,7 @@ import { SupabaseDataAccess } from '../../lib/supabaseDataAccess';
 import { AuthService } from '../../services/auth.service';
 import { BookingService } from '../../services/booking.service';
 import { PaymentService } from '../../services/payment.service';
-import { User, Booking, Vehicle, CustomerUser, DriverUser, AdminUser, Address } from '../../types/index';
+import { User, Booking, Vehicle, DriverUser, AdminUser, Address } from '../../types/index';
 import { supabase } from '../../lib/supabaseClient';
 
 // Mock Supabase client for testing

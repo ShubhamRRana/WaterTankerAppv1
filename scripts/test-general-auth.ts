@@ -42,25 +42,25 @@ async function testMultiRoleUserSelection() {
     const loginResult = await AuthService.login('multirole@watertanker.app', 'multi123');
     
     if (loginResult.requiresRoleSelection && loginResult.availableRoles) {
-      // Check if both roles are available
-      const hasCustomer = loginResult.availableRoles.includes('customer');
+      // Check if both roles are available (this app supports admin and driver only)
+      const hasAdmin = loginResult.availableRoles.includes('admin');
       const hasDriver = loginResult.availableRoles.includes('driver');
       
-      if (hasCustomer && hasDriver) {
-        // Test selecting customer role
-        const customerResult = await AuthService.loginWithRole('multirole@watertanker.app', 'customer');
-        if (customerResult.success && customerResult.user?.role === 'customer') {
+      if (hasAdmin && hasDriver) {
+        // Test selecting admin role
+        const roleResult = await AuthService.loginWithRole('multirole@watertanker.app', 'admin');
+        if (roleResult.success && roleResult.user?.role === 'admin') {
           logTest(
             'Multi-role users can select role after login',
             true,
-            'User can login and select customer role successfully'
+            'User can login and select admin role successfully'
           );
         } else {
           logTest(
             'Multi-role users can select role after login',
             false,
-            'Failed to login with customer role',
-            customerResult.error
+            'Failed to login with admin role',
+            roleResult.error
           );
         }
       } else {

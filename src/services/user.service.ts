@@ -1,7 +1,7 @@
 // src/services/user.service.ts
 
 import { dataAccess } from '../lib';
-import { User, UserRole, isDriverUser, isCustomerUser, isAdminUser } from '../types/index';
+import { User, UserRole, isDriverUser, isAdminUser } from '../types/index';
 import { handleAsyncOperationWithRethrow, handleError } from '../utils/errorHandler';
 
 /**
@@ -162,8 +162,6 @@ export class UserService {
         }
         if (isDriverUser(user)) {
           await dataAccess.users.deleteDriverAccount(id);
-        } else if (isCustomerUser(user)) {
-          await dataAccess.users.deleteCustomerAccount(id);
         } else if (isAdminUser(user)) {
           await dataAccess.users.deleteAdminAccount(id);
         } else {

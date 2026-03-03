@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Typography, DriverIcon, AdminIcon, CustomerIcon } from '../../components/common';
+import { Typography, DriverIcon, AdminIcon } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList, UserRole } from '../../types';
@@ -17,7 +17,6 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
   const [isButtonPressed, setIsButtonPressed] = useState(false);
 
   const roles: Array<{ key: UserRole; title: string; subtitle: string }> = [
-    { key: 'customer', title: 'Customer', subtitle: 'Book tankers and manage orders' },
     { key: 'admin', title: 'Admin', subtitle: 'Manage platform operations' },
     { key: 'driver', title: 'Driver', subtitle: 'Accept jobs and deliver' },
   ];
@@ -27,14 +26,14 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('Login', { preferredRole: selectedRole });
   };
 
-  // Generate non-overlapping positions for watermarks (10 customer, 10 admin, 10 driver = 30 total)
+  // Generate non-overlapping positions for watermarks (10 admin, 10 driver = 20 total)
   const watermarkPositions = useMemo(() => {
     const screenWidth = Dimensions.get('window').width;
     const screenHeight = Dimensions.get('window').height;
     const iconSize = 50;
     const minSpacing = 70; // Minimum spacing between icons to prevent overlap
     const positions: Array<{ top: number; left: number }> = [];
-    const watermarkCount = 30;
+    const watermarkCount = 20;
     const maxAttempts = 100; // Maximum attempts to find a non-overlapping position
     
     // Helper function to check if a position overlaps with existing positions
@@ -84,7 +83,7 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         {watermarkPositions.map((position, index) => {
-          const IconComponent = index < 10 ? CustomerIcon : index < 20 ? AdminIcon : DriverIcon;
+          const IconComponent = index < 10 ? AdminIcon : DriverIcon;
           return (
             <View
               key={index}
@@ -130,11 +129,6 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
                   {role.key === 'admin' && (
                     <View style={styles.iconContainer}>
                       <AdminIcon size={32} color={selectedRole === role.key ? UI_CONFIG.colors.accent : UI_CONFIG.colors.text} />
-                    </View>
-                  )}
-                  {role.key === 'customer' && (
-                    <View style={styles.iconContainer}>
-                      <CustomerIcon size={32} color={selectedRole === role.key ? UI_CONFIG.colors.accent : UI_CONFIG.colors.text} />
                     </View>
                   )}
                 </View>

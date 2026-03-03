@@ -72,28 +72,18 @@ async function fetchUserWithRole(userId: string, role?: UserRole, retryCount: nu
       }
     }
 
-    // Fetch role-specific data
-    let customerData = null;
+    // Fetch role-specific data (this app supports admin and driver only)
     let driverData = null;
     let adminData = null;
 
     const selectedRole = role || roles[0].role;
 
+    // Customer role not supported in this app
     if (selectedRole === 'customer') {
-      const { data, error: customerError } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-      
-      // If customer data not found and this is the first attempt, retry once
-      if (customerError && retryCount === 0) {
-        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
-        return fetchUserWithRole(userId, role, 1);
-      }
-      
-      customerData = data;
-    } else if (selectedRole === 'driver') {
+      return null;
+    }
+
+    if (selectedRole === 'driver') {
       const { data, error: driverError } = await supabase
         .from('drivers')
         .select('*')
@@ -133,13 +123,7 @@ async function fetchUserWithRole(userId: string, role?: UserRole, retryCount: nu
       createdAt: deserializeDate(userRow.created_at) || new Date(),
     };
 
-    if (selectedRole === 'customer' && customerData) {
-      return {
-        ...baseUser,
-        role: 'customer',
-        savedAddresses: (customerData.saved_addresses as any) || [],
-      } as AppUser;
-    } else if (selectedRole === 'driver' && driverData) {
+    if (selectedRole === 'driver' && driverData) {
       return {
         ...baseUser,
         role: 'driver',
@@ -201,7 +185,8 @@ async function getUserRoles(userId: string): Promise<UserRole[]> {
       return [];
     }
 
-    return roles.map(r => r.role as UserRole);
+    // This app supports admin and driver only; filter out customer role
+    return roles.map(r => r.role).filter((r): r is UserRole => r === 'driver' || r === 'admin');
   } catch (error) {
     handleError(error, {
       context: { operation: 'getUserRoles', userId },
@@ -293,6 +278,14 @@ export class AuthService {
         return {
           success: false,
           error: `Too many registration attempts. Please try again after ${new Date(rateLimitCheck.resetTime).toLocaleTimeString()}`
+        };
+      }
+
+      // This app does not support customer registration (customer app is separate)
+      if (role === 'customer') {
+        return {
+          success: false,
+          error: 'Customer registration is not available in this app. Please use the customer app.'
         };
       }
 
@@ -528,30 +521,7 @@ export class AuthService {
       }
 
       // Create role-specific data (only if it doesn't exist)
-      if (role === 'customer') {
-        const { data: existingCustomer } = await supabase
-          .from('customers')
-          .select('*')
-          .eq('user_id', userId)
-          .single();
-
-        if (!existingCustomer) {
-          const { error: customerError } = await supabase
-            .from('customers')
-            .insert({
-              user_id: userId,
-              saved_addresses: [],
-            });
-
-          if (customerError) {
-            securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, customerError.message);
-            return {
-              success: false,
-              error: customerError.message || 'Failed to create customer profile'
-            };
-          }
-        }
-      } else if (role === 'driver') {
+      if (role === 'driver') {
         const driverData = additionalData as Partial<DriverUser>;
         // Use UPSERT to handle case where trigger may have already created the record
         // This ensures all fields (especially created_by_admin) are set correctly

@@ -1,9 +1,9 @@
 // Core types for the Water Tanker Booking App
 
 /**
- * User role types in the system
+ * User role types in the system (admin and driver only; customer app is separate)
  */
-export type UserRole = 'customer' | 'driver' | 'admin';
+export type UserRole = 'driver' | 'admin';
 
 /**
  * Address information for deliveries and user saved addresses
@@ -27,14 +27,6 @@ interface BaseUser {
   name: string;
   phone?: string; // Optional: kept for contact purposes
   createdAt: Date;
-}
-
-/**
- * Customer-specific user properties
- */
-export interface CustomerUser extends BaseUser {
-  role: 'customer';
-  savedAddresses?: Address[];
 }
 
 /**
@@ -64,10 +56,10 @@ export interface AdminUser extends BaseUser {
 }
 
 /**
- * Discriminated union type for all user roles
- * Use type guards (isCustomerUser, isDriverUser, isAdminUser) to narrow the type
+ * Discriminated union type for all user roles (admin and driver only)
+ * Use type guards (isDriverUser, isAdminUser) to narrow the type
  */
-export type User = CustomerUser | DriverUser | AdminUser;
+export type User = DriverUser | AdminUser;
 
 /**
  * Booking status values
@@ -207,8 +199,6 @@ export interface AuthStackParamList {
     | undefined
     | { preferredRole?: UserRole };
 }
-
-// Customer navigation types moved to CustomerNavigator.tsx
 
 export interface DriverTabParamList {
   Orders: undefined;
@@ -398,15 +388,6 @@ export interface ChartData {
 // ============================================================================
 
 /**
- * Type guard to check if a user is a CustomerUser
- * @param user - The user to check
- * @returns True if the user is a CustomerUser
- */
-export function isCustomerUser(user: User): user is CustomerUser {
-  return user.role === 'customer';
-}
-
-/**
  * Type guard to check if a user is a DriverUser
  * @param user - The user to check
  * @returns True if the user is a DriverUser
@@ -427,9 +408,7 @@ export function isAdminUser(user: User): user is AdminUser {
 /**
  * Utility type to extract user type by role
  */
-export type UserByRole<T extends UserRole> = T extends 'customer'
-  ? CustomerUser
-  : T extends 'driver'
+export type UserByRole<T extends UserRole> = T extends 'driver'
   ? DriverUser
   : T extends 'admin'
   ? AdminUser

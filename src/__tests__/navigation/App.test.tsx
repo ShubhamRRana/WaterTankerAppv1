@@ -48,7 +48,7 @@ jest.mock('../../store/authStore', () => ({
 import React from 'react';
 import { render, waitFor } from '@testing-library/react-native';
 import App from '../../../App';
-import { CustomerUser, DriverUser, AdminUser } from '../../types';
+import { DriverUser, AdminUser } from '../../types';
 
 // Mock expo-font
 jest.mock('expo-font', () => ({
@@ -76,12 +76,6 @@ jest.mock('../../navigation/AuthNavigator', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
   return () => <View testID="AuthNavigator"><Text>AuthNavigator</Text></View>;
-});
-
-jest.mock('../../navigation/CustomerNavigator', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return () => <View testID="CustomerNavigator"><Text>CustomerNavigator</Text></View>;
 });
 
 jest.mock('../../navigation/DriverNavigator', () => {
@@ -127,19 +121,6 @@ describe('App Navigation Logic', () => {
     it('should return Auth route when user is null', () => {
       const route = null ? 'Customer' : 'Auth';
       expect(route).toBe('Auth');
-    });
-
-    it('should return Customer route when user is customer', () => {
-      const customerUser: CustomerUser = {
-        id: '1',
-        email: 'customer@test.com',
-        password: 'hashed',
-        name: 'Test Customer',
-        role: 'customer',
-        createdAt: new Date(),
-      };
-      const route = customerUser.role === 'customer' ? 'Customer' : 'Auth';
-      expect(route).toBe('Customer');
     });
 
     it('should return Driver route when user is driver', () => {

@@ -20,7 +20,6 @@ interface BookingState {
   // Actions
   createBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
   updateBookingStatus: (bookingId: string, status: BookingStatus, additionalData?: Partial<Booking>) => Promise<void>;
-  fetchCustomerBookings: (customerId: string) => Promise<void>;
   fetchAvailableBookings: (options?: { limit?: number; offset?: number }) => Promise<void>;
   fetchDriverBookings: (driverId: string, options?: { status?: BookingStatus[]; limit?: number; offset?: number }) => Promise<void>;
   fetchAllBookings: () => Promise<void>;
@@ -99,22 +98,6 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         userFacing: false,
       });
       const errorMessage = getErrorMessage(error, 'Failed to update booking status');
-      set({ isLoading: false, error: errorMessage });
-      throw error;
-    }
-  },
-
-  fetchCustomerBookings: async (customerId) => {
-    set({ isLoading: true, error: null });
-    try {
-      const bookings = await BookingService.getBookingsByCustomer(customerId);
-      set({ bookings, isLoading: false });
-    } catch (error) {
-      handleError(error, {
-        context: { operation: 'fetchCustomerBookings', customerId },
-        userFacing: false,
-      });
-      const errorMessage = getErrorMessage(error, 'Failed to fetch customer bookings');
       set({ isLoading: false, error: errorMessage });
       throw error;
     }

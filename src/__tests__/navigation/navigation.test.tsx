@@ -47,7 +47,6 @@ jest.mock('@react-navigation/bottom-tabs', () => {
 import React from 'react';
 import { render } from '@testing-library/react-native';
 import AuthNavigator from '../../navigation/AuthNavigator';
-import CustomerNavigator from '../../navigation/CustomerNavigator';
 import DriverNavigator from '../../navigation/DriverNavigator';
 import AdminNavigator from '../../navigation/AdminNavigator';
 
@@ -68,48 +67,6 @@ jest.mock('../../screens/auth/RoleEntryScreen', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
   return () => <View testID="RoleEntryScreen"><Text>RoleEntryScreen</Text></View>;
-});
-
-jest.mock('../../screens/customer/CustomerHomeScreen', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return () => <View testID="CustomerHomeScreen"><Text>CustomerHomeScreen</Text></View>;
-});
-
-jest.mock('../../screens/customer/BookingScreen', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return () => <View testID="BookingScreen"><Text>BookingScreen</Text></View>;
-});
-
-jest.mock('../../screens/customer/OrderTrackingScreen', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return () => <View testID="OrderTrackingScreen"><Text>OrderTrackingScreen</Text></View>;
-});
-
-jest.mock('../../screens/customer/OrderHistoryScreen', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return () => <View testID="OrderHistoryScreen"><Text>OrderHistoryScreen</Text></View>;
-});
-
-jest.mock('../../screens/customer/ProfileScreen', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return () => <View testID="ProfileScreen"><Text>ProfileScreen</Text></View>;
-});
-
-jest.mock('../../screens/customer/SavedAddressesScreen', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return () => <View testID="SavedAddressesScreen"><Text>SavedAddressesScreen</Text></View>;
-});
-
-jest.mock('../../screens/customer/PastOrdersScreen', () => {
-  const React = require('react');
-  const { View, Text } = require('react-native');
-  return () => <View testID="PastOrdersScreen"><Text>PastOrdersScreen</Text></View>;
 });
 
 jest.mock('../../screens/driver/OrdersScreen', () => {
@@ -191,20 +148,6 @@ describe('Navigation Configuration', () => {
     });
   });
 
-  describe('CustomerNavigator', () => {
-    it('should render without crashing', () => {
-      const { getByTestId } = render(<CustomerNavigator />);
-      // Should render the StackNavigator
-      expect(getByTestId('StackNavigator')).toBeTruthy();
-    });
-
-    it('should have all required screens registered', () => {
-      const { getByTestId } = render(<CustomerNavigator />);
-      // Should render the navigator
-      expect(getByTestId('StackNavigator')).toBeTruthy();
-    });
-  });
-
   describe('DriverNavigator', () => {
     it('should render without crashing', () => {
       const { getByTestId } = render(<DriverNavigator />);
@@ -237,12 +180,6 @@ describe('Navigation Configuration', () => {
     it('should export AuthStackParamList type', () => {
       // Type check - if this compiles, the type is properly exported
       const testParams: { RoleEntry: undefined } = { RoleEntry: undefined };
-      expect(testParams).toBeDefined();
-    });
-
-    it('should export CustomerStackParamList type', () => {
-      // Type check - if this compiles, the type is properly exported
-      const testParams: { Home: undefined } = { Home: undefined };
       expect(testParams).toBeDefined();
     });
 

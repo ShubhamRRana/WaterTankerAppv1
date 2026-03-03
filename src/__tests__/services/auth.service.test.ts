@@ -26,14 +26,6 @@ afterEach(() => {
 });
 
 describe('AuthService', () => {
-  const mockCustomerUser: Omit<User, 'id' | 'createdAt'> = {
-    email: 'customer@test.com',
-    password: 'password123',
-    name: 'Test Customer',
-    phone: '1234567890',
-    role: 'customer',
-  };
-
   const mockDriverUser: Omit<DriverUser, 'id' | 'createdAt'> = {
     email: 'driver@test.com',
     password: 'password123',
@@ -56,20 +48,17 @@ describe('AuthService', () => {
   };
 
   describe('register', () => {
-    it('should successfully register a new customer', async () => {
+    it('should reject customer registration', async () => {
       const result = await AuthService.register(
         'newcustomer@test.com',
         'password123',
         'New Customer',
-        'customer',
+        'customer' as UserRole,
         { phone: '1234567890' }
       );
 
-      expect(result.success).toBe(true);
-      expect(result.user).toBeDefined();
-      expect(result.user?.email).toBe('newcustomer@test.com');
-      expect(result.user?.role).toBe('customer');
-      expect(result.user?.savedAddresses).toEqual([]);
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Customer registration');
     });
 
     it('should successfully register a new admin-created driver', async () => {
@@ -109,7 +98,8 @@ describe('AuthService', () => {
         'invalid-email',
         'password123',
         'Test User',
-        'customer'
+        'admin',
+        { phone: '1234567890' }
       );
 
       expect(result.success).toBe(false);
@@ -132,7 +122,8 @@ describe('AuthService', () => {
         'test@example.com',
         'password123',
         'Test User',
-        'customer'
+        'admin',
+        { phone: '1234567890' }
       );
 
       expect(result.success).toBe(false);
@@ -142,16 +133,17 @@ describe('AuthService', () => {
     it('should reject registration when user already exists with same email and role', async () => {
       // Create existing user
       await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
+        ...mockAdminUser,
         id: 'existing-user',
         createdAt: new Date(),
       } as User);
 
       const result = await AuthService.register(
-        'customer@test.com',
+        'admin@test.com',
         'password123',
         'Test User',
-        'customer'
+        'admin',
+        { phone: '1234567890' }
       );
 
       expect(result.success).toBe(false);
@@ -159,16 +151,16 @@ describe('AuthService', () => {
     });
 
     it('should allow registration with same email but different role', async () => {
-      // Create existing customer
+      // Create existing admin
       await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
-        id: 'customer-1',
+        ...mockAdminUser,
+        id: 'admin-1',
         createdAt: new Date(),
       } as User);
 
       // Register as driver (admin-created)
       const result = await AuthService.register(
-        'customer@test.com',
+        'admin@test.com',
         'password123',
         'Test User',
         'driver',
@@ -187,7 +179,7 @@ describe('AuthService', () => {
         '  TEST@EXAMPLE.COM  ',
         'password123',
         '  Test User  ',
-        'customer',
+        'admin',
         { phone: '1234567890' }
       );
 
@@ -202,7 +194,8 @@ describe('AuthService', () => {
         'test@example.com',
         'password123',
         'Test User',
-        'customer'
+        'admin',
+        { phone: '1234567890' }
       );
 
       expect(result.success).toBe(false);
@@ -250,19 +243,19 @@ describe('AuthService', () => {
   describe('login', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
-        id: 'customer-1',
+        ...mockAdminUser,
+        id: 'admin-1',
         createdAt: new Date(),
       } as User);
     });
 
     it('should successfully login with valid credentials', async () => {
-      const result = await AuthService.login('customer@test.com', 'password123');
+      const result = await AuthService.login('admin@test.com', 'password123');
 
       expect(result.success).toBe(true);
       expect(result.user).toBeDefined();
-      expect(result.user?.email).toBe('customer@test.com');
-      expect(result.user?.role).toBe('customer');
+      expect(result.user?.email).toBe('admin@test.com');
+      expect(result.user?.role).toBe('admin');
       expect(result.requiresRoleSelection).toBeUndefined();
     });
 
@@ -285,7 +278,7 @@ describe('AuthService', () => {
         resetTime: Date.now() + 900000,
       });
 
-      const result = await AuthService.login('customer@test.com', 'password123');
+      const result = await AuthService.login('admin@test.com', 'password123');
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('Too many login attempts');
@@ -299,32 +292,32 @@ describe('AuthService', () => {
     });
 
     it('should reject login with incorrect password', async () => {
-      const result = await AuthService.login('customer@test.com', 'wrongpassword');
+      const result = await AuthService.login('admin@test.com', 'wrongpassword');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Invalid password');
     });
 
     it('should require role selection when user has multiple accounts', async () => {
-      // Create multiple accounts with same email
+      // Create multiple accounts with same email (admin and driver)
       await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
-        id: 'customer-1',
+        ...mockAdminUser,
+        id: 'admin-1',
         createdAt: new Date(),
       } as User);
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
         id: 'driver-1',
-        email: 'customer@test.com',
+        email: 'admin@test.com',
         password: 'password123',
         createdAt: new Date(),
       } as DriverUser);
 
-      const result = await AuthService.login('customer@test.com', 'password123');
+      const result = await AuthService.login('admin@test.com', 'password123');
 
       expect(result.success).toBe(true);
       expect(result.requiresRoleSelection).toBe(true);
-      expect(result.availableRoles).toContain('customer');
+      expect(result.availableRoles).toContain('admin');
       expect(result.availableRoles).toContain('driver');
       expect(result.user).toBeUndefined();
     });
@@ -347,7 +340,7 @@ describe('AuthService', () => {
     it('should handle errors during login', async () => {
       jest.spyOn(LocalStorageService, 'getUsers').mockRejectedValue(new Error('Database error'));
 
-      const result = await AuthService.login('customer@test.com', 'password123');
+      const result = await AuthService.login('admin@test.com', 'password123');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Database error');
@@ -356,7 +349,7 @@ describe('AuthService', () => {
     it('should sanitize email input', async () => {
       const sanitizeEmailSpy = jest.spyOn(SanitizationUtils, 'sanitizeEmail');
 
-      await AuthService.login('  CUSTOMER@TEST.COM  ', 'password123');
+      await AuthService.login('  ADMIN@TEST.COM  ', 'password123');
 
       expect(sanitizeEmailSpy).toHaveBeenCalled();
     });
@@ -365,29 +358,29 @@ describe('AuthService', () => {
   describe('loginWithRole', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
-        id: 'customer-1',
+        ...mockAdminUser,
+        id: 'admin-1',
         createdAt: new Date(),
       } as User);
       await LocalStorageService.saveUserToCollection({
         ...mockDriverUser,
         id: 'driver-1',
-        email: 'customer@test.com',
+        email: 'admin@test.com',
         password: 'password123',
         createdAt: new Date(),
       } as DriverUser);
     });
 
     it('should successfully login with selected role', async () => {
-      const result = await AuthService.loginWithRole('customer@test.com', 'customer');
+      const result = await AuthService.loginWithRole('admin@test.com', 'admin');
 
       expect(result.success).toBe(true);
       expect(result.user).toBeDefined();
-      expect(result.user?.role).toBe('customer');
+      expect(result.user?.role).toBe('admin');
     });
 
     it('should reject login when user not found with selected role', async () => {
-      const result = await AuthService.loginWithRole('customer@test.com', 'admin');
+      const result = await AuthService.loginWithRole('admin@test.com', 'driver');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('User not found with selected role');
@@ -411,7 +404,7 @@ describe('AuthService', () => {
     it('should handle errors during role-based login', async () => {
       jest.spyOn(LocalStorageService, 'getUsers').mockRejectedValue(new Error('Database error'));
 
-      const result = await AuthService.loginWithRole('customer@test.com', 'customer');
+      const result = await AuthService.loginWithRole('admin@test.com', 'admin');
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Database error');
@@ -421,8 +414,8 @@ describe('AuthService', () => {
   describe('logout', () => {
     beforeEach(async () => {
       await LocalStorageService.saveUser({
-        ...mockCustomerUser,
-        id: 'customer-1',
+        ...mockAdminUser,
+        id: 'admin-1',
         createdAt: new Date(),
       } as User);
     });
@@ -452,8 +445,8 @@ describe('AuthService', () => {
   describe('getCurrentUserData', () => {
     beforeEach(async () => {
       const userData = {
-        ...mockCustomerUser,
-        id: 'customer-1',
+        ...mockAdminUser,
+        id: 'admin-1',
         createdAt: new Date(),
       } as User;
       await LocalStorageService.saveUser(userData);
@@ -464,11 +457,11 @@ describe('AuthService', () => {
       const user = await AuthService.getCurrentUserData();
 
       expect(user).toBeDefined();
-      expect(user?.email).toBe('customer@test.com');
+      expect(user?.email).toBe('admin@test.com');
     });
 
     it('should return user by id when provided', async () => {
-      const user = await AuthService.getCurrentUserData('customer-1');
+      const user = await AuthService.getCurrentUserData('admin-1');
 
       expect(user).toBeDefined();
       expect(user?.id).toBe('customer-1');
@@ -502,11 +495,11 @@ describe('AuthService', () => {
 
     beforeEach(async () => {
       const user = await LocalStorageService.saveUserToCollection({
-        ...mockCustomerUser,
-        id: 'customer-1',
+        ...mockAdminUser,
+        id: 'admin-1',
         createdAt: new Date(),
       } as User);
-      userId = 'customer-1';
+      userId = 'admin-1';
     });
 
     it('should successfully update user profile', async () => {
@@ -522,7 +515,7 @@ describe('AuthService', () => {
 
     it('should update current session when updating logged-in user', async () => {
       await LocalStorageService.saveUser({
-        ...mockCustomerUser,
+        ...mockAdminUser,
         id: userId,
         createdAt: new Date(),
       } as User);
@@ -546,11 +539,11 @@ describe('AuthService', () => {
 
     it('should not allow updating role', async () => {
       await AuthService.updateUserProfile(userId, {
-        role: 'admin',
+        role: 'driver',
       } as Partial<User>);
 
       const user = await LocalStorageService.getUserById(userId);
-      expect(user?.role).toBe('customer');
+      expect(user?.role).toBe('admin');
     });
 
     it('should throw error when user not found', async () => {

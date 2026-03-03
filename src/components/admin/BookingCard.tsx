@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card } from '../common';
-import { Booking, BookingStatus, isCustomerUser } from '../../types';
+import { Booking, BookingStatus } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 import { UserService } from '../../services/user.service';
@@ -28,26 +28,10 @@ const BookingCard: React.FC<BookingCardProps> = ({
 }) => {
   const [customerProfileAddress, setCustomerProfileAddress] = useState<string | null>(null);
 
+  // Customer profile addresses are not used in this app (admin/driver only)
   useEffect(() => {
-    const fetchCustomerAddress = async () => {
-      try {
-        const customer = await UserService.getUserById(booking.customerId);
-        if (customer && isCustomerUser(customer) && customer.savedAddresses && customer.savedAddresses.length > 0) {
-          const defaultAddress = customer.savedAddresses.find(addr => addr.isDefault) || customer.savedAddresses[0];
-          if (defaultAddress && defaultAddress.address !== booking.deliveryAddress.address) {
-            setCustomerProfileAddress(defaultAddress.address);
-          }
-        }
-      } catch (error) {
-        // Profile address is optional, but log for debugging
-        errorLogger.low('Failed to fetch customer profile address', error, { 
-          bookingId: booking.id, 
-          customerId: booking.customerId 
-        });
-      }
-    };
-    fetchCustomerAddress();
-  }, [booking.customerId, booking.deliveryAddress.address]);
+    setCustomerProfileAddress(null);
+  }, []);
 
   const statusColor = useMemo(() => getStatusColor(booking.status), [booking.status, getStatusColor]);
   const statusIcon = useMemo(() => getStatusIcon(booking.status), [booking.status, getStatusIcon]);
