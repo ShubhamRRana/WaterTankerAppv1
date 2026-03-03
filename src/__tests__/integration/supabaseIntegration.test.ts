@@ -1345,7 +1345,7 @@ describe('Supabase Integration Tests', () => {
       (supabase.auth.signOut as jest.Mock).mockResolvedValue({ error: null });
     });
 
-    it('should register a new customer user', async () => {
+    it('should reject customer registration', async () => {
       const result = await AuthService.register(
         'newcustomer@test.com',
         'password123',
@@ -1354,10 +1354,9 @@ describe('Supabase Integration Tests', () => {
         { phone: '1234567890' }
       );
 
-      expect(result.success).toBe(true);
-      expect(result.user).toBeTruthy();
-      expect(result.user?.role).toBe('admin');
-      expect(supabase.auth.signUp).toHaveBeenCalled();
+      expect(result.success).toBe(false);
+      expect(result.error).toBeDefined();
+      expect(result.error).toContain('Customer registration');
     });
 
     it('should register a new admin user', async () => {

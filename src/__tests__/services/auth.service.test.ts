@@ -464,7 +464,7 @@ describe('AuthService', () => {
       const user = await AuthService.getCurrentUserData('admin-1');
 
       expect(user).toBeDefined();
-      expect(user?.id).toBe('customer-1');
+      expect(user?.id).toBe('admin-1');
     });
 
     it('should return null when no user in session', async () => {
