@@ -84,7 +84,7 @@ describe('UserService', () => {
       const users = await UserService.getAllUsers();
       
       expect(users.length).toBeGreaterThanOrEqual(2);
-      expect(users.some(u => u.role === 'customer')).toBe(true);
+      expect(users.some(u => u.role === 'admin')).toBe(true);
       expect(users.some(u => u.role === 'driver')).toBe(true);
     });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -57,9 +57,14 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const { register, isLoading } = useAuthStore();
 
-  // Validate role after hooks; redirect if invalid so hooks are always called in the same order
+  // Redirect when role is invalid; run in useEffect to avoid side effects during render and keep hook order consistent
+  useEffect(() => {
+    if (role === null) {
+      navigation.replace('RoleEntry');
+    }
+  }, [role, navigation]);
+
   if (role === null) {
-    navigation.replace('RoleEntry');
     return null;
   }
 
