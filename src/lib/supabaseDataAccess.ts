@@ -1316,8 +1316,15 @@ class SupabaseVehicleDataAccess implements IVehicleDataAccess {
       if (error) {
         throw error;
       }
-    } catch (error) {
-      throw new DataAccessError('Failed to save vehicle', 'saveVehicle', { error });
+    } catch (error: unknown) {
+      const msg = error && typeof error === 'object' && 'message' in error
+        ? String((error as { message?: string }).message)
+        : '';
+      throw new DataAccessError(
+        msg ? `Failed to save vehicle: ${msg}` : 'Failed to save vehicle',
+        'saveVehicle',
+        { error }
+      );
     }
   }
 

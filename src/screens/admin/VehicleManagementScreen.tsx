@@ -23,6 +23,7 @@ import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
 import { formatDateOnly } from '../../utils/dateUtils';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
+import { getErrorMessage } from '../../utils/errors';
 
 type VehicleManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Vehicles'>;
 
@@ -389,7 +390,10 @@ const VehicleManagementScreen: React.FC = () => {
       setEditingVehicle(null);
       setShowAddVehicleModal(false);
     } catch (error) {
-      Alert.alert('Error', isEditMode ? 'Failed to update vehicle. Please try again.' : 'Failed to add vehicle. Please try again.');
+      const fallback = isEditMode
+        ? 'Failed to update vehicle. Please try again.'
+        : 'Failed to add vehicle. Please try again.';
+      Alert.alert('Error', getErrorMessage(error, fallback));
     } finally {
       setIsSubmitting(false);
     }
