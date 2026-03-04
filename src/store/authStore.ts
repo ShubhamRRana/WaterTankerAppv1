@@ -99,6 +99,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           }
           throw userError;
         }
+        if (userData === null) {
+          await supabase.auth.signOut();
+        }
         set({
           user: userData,
           isAuthenticated: !!userData,

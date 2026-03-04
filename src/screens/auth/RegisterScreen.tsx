@@ -33,9 +33,11 @@ interface Props {
 const ALLOWED_REGISTER_ROLES: UserRole[] = ['admin', 'driver'];
 
 const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
-  const preferredRole = route?.params?.preferredRole;
+  const rawRole = route?.params?.preferredRole;
   const role: UserRole | null =
-    preferredRole && ALLOWED_REGISTER_ROLES.includes(preferredRole) ? preferredRole : null;
+    rawRole != null && ALLOWED_REGISTER_ROLES.includes(rawRole as UserRole)
+      ? (rawRole as UserRole)
+      : null;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

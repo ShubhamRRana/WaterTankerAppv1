@@ -48,12 +48,15 @@ const App: React.FC = () => {
   // Helper function to determine initial route based on user
   const getInitialRouteName = (user: User | null): keyof RootStackParamList => {
     if (!user) return 'Auth';
-    
+
     switch (user.role) {
       case 'driver':
         return 'Driver';
       case 'admin':
         return 'Admin';
+      case 'customer':
+        // This app does not support customer role; reject at auth and show Auth screen
+        return 'Auth';
       default:
         return 'Auth';
     }

@@ -193,8 +193,12 @@ function mapUserFromDb(
 
   switch (role) {
     case 'customer':
-      // This app does not support customer role; backend may still have customer data
-      return null;
+      // This app does not support customer role; fail explicitly so callers don't treat as "user not found"
+      throw new DataAccessError(
+        "User role 'customer' is not supported by this app. Use the customer app to sign in.",
+        'mapUserFromDb',
+        { userId: userRow.id, role: 'customer' }
+      );
 
     case 'driver': {
       if (!driverData) {
@@ -243,6 +247,15 @@ async function mapUserToDb(user: User): Promise<{
   driverRow?: Partial<DriverRow>;
   adminRow?: Partial<AdminRow>;
 }> {
+  // Reject customer at runtime so upserts never attempt to write unsupported role
+  if ((user as { role: string }).role === 'customer') {
+    throw new DataAccessError(
+      'Cannot write customer user: this app does not support the customer role.',
+      'mapUserToDb',
+      { userId: user.id }
+    );
+  }
+
   const userRow: Partial<UserRow> = {
     id: user.id,
     email: user.email,
