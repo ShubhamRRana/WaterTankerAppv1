@@ -107,7 +107,7 @@ const DriverManagementScreen: React.FC = () => {
   const loadDrivers = async () => {
     try {
       await Promise.all([
-        fetchAllUsers(currentUser?.id),
+        fetchAllUsers(currentUser?.id), // Only drivers created by this admin
         fetchAllBookings(),
       ]);
     } catch (error) {
@@ -119,7 +119,7 @@ const DriverManagementScreen: React.FC = () => {
     setRefreshing(true);
     try {
       await Promise.all([
-        fetchAllUsers(currentUser?.id),
+        fetchAllUsers(currentUser?.id), // Only drivers created by this admin
         fetchAllBookings(),
       ]);
     } catch (error) {
@@ -388,9 +388,7 @@ const DriverManagementScreen: React.FC = () => {
                 );
               } else {
                 Alert.alert('Success', 'Driver deleted successfully');
-                if (currentUser?.id) {
-                  await fetchAllUsers(currentUser.id);
-                }
+                await fetchAllUsers(currentUser?.id);
               }
 
               setSelectedDriver(null);

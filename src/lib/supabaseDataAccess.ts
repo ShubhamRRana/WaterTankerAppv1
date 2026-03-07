@@ -194,12 +194,8 @@ function mapUserFromDb(
 
   switch (role) {
     case 'customer':
-      // This app does not support customer role; fail explicitly so callers don't treat as "user not found"
-      throw new DataAccessError(
-        "User role 'customer' is not supported by this app. Use the customer app to sign in.",
-        'mapUserFromDb',
-        { userId: userRow.id, role: 'customer' }
-      );
+      // This app does not support customer role; skip so getUsers() can return admin/driver list without throwing
+      return null;
 
     case 'driver': {
       if (!driverData) {
