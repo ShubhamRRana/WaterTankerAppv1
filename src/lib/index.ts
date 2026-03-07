@@ -13,6 +13,6 @@ import { SupabaseDataAccess } from './supabaseDataAccess';
 import type { IDataAccessLayer } from './dataAccess.interface';
 export const dataAccess: IDataAccessLayer = new SupabaseDataAccess();
 export { supabase } from './supabaseClient';
-export { SubscriptionManager, subscriptionManager, createManagedSubscription } from './subscriptionManager';
+export { LocalSubscriptionRegistry, subscriptionManager, createManagedSubscription } from './subscriptionManager';
 export type { SubscriptionCallback, CollectionSubscriptionCallback, Unsubscribe } from './dataAccess.interface';
 

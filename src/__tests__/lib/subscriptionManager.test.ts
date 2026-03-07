@@ -1,15 +1,15 @@
 /**
- * Subscription Manager Tests
+ * LocalSubscriptionRegistry (lib) tests
  */
 
-import { SubscriptionManager, createManagedSubscription, subscriptionManager } from '../../lib/subscriptionManager';
+import { LocalSubscriptionRegistry, createManagedSubscription, subscriptionManager } from '../../lib/subscriptionManager';
 import { Unsubscribe } from '../../lib/dataAccess.interface';
 
-describe('SubscriptionManager', () => {
-  let manager: SubscriptionManager;
+describe('LocalSubscriptionRegistry', () => {
+  let manager: LocalSubscriptionRegistry;
 
   beforeEach(() => {
-    manager = new SubscriptionManager();
+    manager = new LocalSubscriptionRegistry();
   });
 
   describe('register', () => {

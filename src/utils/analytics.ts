@@ -5,6 +5,8 @@
  * Tracks user actions, performance metrics, errors, and business events.
  */
 
+import { generateShortId } from './idUtils';
+
 export interface AnalyticsEvent {
   name: string;
   properties?: Record<string, unknown>;
@@ -57,7 +59,7 @@ class AnalyticsManager {
    * Generate a unique session ID
    */
   private generateSessionId(): string {
-    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `session_${Date.now()}_${generateShortId()}`;
   }
 
   /**

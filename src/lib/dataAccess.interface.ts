@@ -36,6 +36,10 @@ export interface PaginationOptions {
  */
 export interface BookingQueryOptions extends PaginationOptions {
   status?: string[];
+  /** ISO date string; filter by delivered_at >= startDate */
+  startDate?: string;
+  /** ISO date string; filter by delivered_at <= endDate */
+  endDate?: string;
 }
 
 /**

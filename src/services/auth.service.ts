@@ -913,13 +913,14 @@ export class AuthService {
    * ```
    */
   static async logout(): Promise<void> {
+    let userId = 'unknown';
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id || 'unknown';
-      
+      userId = session?.user?.id || 'unknown';
+
       // Sign out from Supabase Auth
       await supabase.auth.signOut();
-      
+
       // Log logout event
       securityLogger.log(
         SecurityEventType.LOGOUT,
@@ -1055,6 +1056,7 @@ export class AuthService {
    * Permanently delete the current customer account and all related data (bookings, profile, then sign out).
    * Only allowed when the current user is a customer and the id matches the current user.
    *
+   * @deprecated This app is driver/admin only. Kept for data-access API and possible future customer app integration.
    * @returns Promise resolving to { success, error? }
    */
   static async deleteCustomerAccount(customerId: string): Promise<{ success: boolean; error?: string }> {

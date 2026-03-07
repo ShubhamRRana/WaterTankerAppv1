@@ -1,9 +1,9 @@
 /**
- * Subscription Manager
- * 
- * Manages real-time subscriptions for data updates.
- * Currently provides infrastructure for LocalStorage (no-op),
- * but ready for Supabase Realtime integration.
+ * Local subscription registry (lib layer).
+ *
+ * Tracks and manages generic subscription lifecycle (register/unregister).
+ * Use for local/abstract subscription tracking. For Supabase Realtime channels,
+ * use RealtimeSubscriptionManager from utils/subscriptionManager.
  */
 
 import { Unsubscribe } from './dataAccess.interface';
@@ -19,10 +19,9 @@ interface SubscriptionMetadata {
 }
 
 /**
- * Subscription Manager class
- * Tracks and manages all active subscriptions
+ * Local registry for subscription lifecycle tracking (not Supabase Realtime).
  */
-export class SubscriptionManager {
+export class LocalSubscriptionRegistry {
   private subscriptions: Map<string, SubscriptionMetadata> = new Map();
   private subscriptionCounter = 0;
 
@@ -115,10 +114,8 @@ export class SubscriptionManager {
   }
 }
 
-/**
- * Global subscription manager instance
- */
-export const subscriptionManager = new SubscriptionManager();
+/** Global instance for managed subscriptions (lib layer). */
+export const subscriptionManager = new LocalSubscriptionRegistry();
 
 /**
  * Helper function to create a managed subscription

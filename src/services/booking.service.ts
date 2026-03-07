@@ -227,22 +227,13 @@ export class BookingService {
   ): Promise<Booking[]> {
     return handleAsyncOperationWithRethrow(
       async () => {
-        // Get all bookings for driver and filter client-side
-        const allBookings = await dataAccess.bookings.getBookingsByDriver(driverId);
-        
-        // Filter by status (default to delivered for earnings)
         const statusFilter = options?.status || ['delivered'];
-        let filtered = allBookings.filter(b => statusFilter.includes(b.status));
-        
-        // Filter by date range if provided
-        if (options?.startDate) {
-          filtered = filtered.filter(b => b.deliveredAt && b.deliveredAt >= options.startDate!);
-        }
-        if (options?.endDate) {
-          filtered = filtered.filter(b => b.deliveredAt && b.deliveredAt <= options.endDate!);
-        }
-        
-        return filtered;
+        const queryOptions: Parameters<typeof dataAccess.bookings.getBookingsByDriver>[1] = {
+          status: statusFilter,
+          startDate: options?.startDate?.toISOString(),
+          endDate: options?.endDate?.toISOString(),
+        };
+        return dataAccess.bookings.getBookingsByDriver(driverId, queryOptions);
       },
       {
         context: { operation: 'getBookingsForEarnings', driverId, options },

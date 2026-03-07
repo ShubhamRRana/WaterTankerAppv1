@@ -20,6 +20,7 @@ import {
   BookingQueryOptions,
 } from './dataAccess.interface';
 import { SubscriptionManager } from '../utils/subscriptionManager';
+import { generateId as generateUUID } from '../utils/idUtils';
 import {
   User,
   DriverUser,
@@ -1207,6 +1208,14 @@ class SupabaseBookingDataAccess implements IBookingDataAccess {
         query = query.in('status', options.status);
       }
 
+      // Apply date range on delivered_at (e.g. for earnings)
+      if (options?.startDate) {
+        query = query.gte('delivered_at', options.startDate);
+      }
+      if (options?.endDate) {
+        query = query.lte('delivered_at', options.endDate);
+      }
+
       // Apply sorting
       const sortBy = options?.sortBy || 'created_at';
       const sortOrder = options?.sortOrder || 'desc';
@@ -1841,14 +1850,7 @@ export class SupabaseDataAccess implements IDataAccessLayer {
   }
 
   generateId(): string {
-    // Use UUID v4 (Supabase uses UUIDs)
-    // For compatibility, we can use a simple UUID generator
-    // In production, you might want to use a library like 'uuid'
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-      const r = (Math.random() * 16) | 0;
-      const v = c === 'x' ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
+    return generateUUID();
   }
 
   async initialize(): Promise<void> {

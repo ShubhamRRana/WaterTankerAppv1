@@ -16,5 +16,5 @@ export * from './dateUtils';
 export * from './dateSerialization';
 export { analytics, trackScreenView, trackUserAction, trackError, trackPerformance, trackBusinessEvent } from './analytics';
 export type { AnalyticsEvent, PerformanceMetric, ErrorEvent, BusinessEvent } from './analytics';
-export { SubscriptionManager } from './subscriptionManager';
+export { RealtimeSubscriptionManager, SubscriptionManager } from './subscriptionManager';
 export type { SubscriptionConfig, RealtimePayload, SubscriptionMetrics } from './subscriptionManager';

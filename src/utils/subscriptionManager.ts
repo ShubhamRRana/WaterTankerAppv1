@@ -1,8 +1,8 @@
 /**
- * Subscription Manager
- * 
- * Manages real-time subscriptions for database changes using Supabase Realtime.
- * Includes performance monitoring and metrics collection.
+ * Realtime subscription manager (utils layer).
+ *
+ * Manages Supabase Realtime channel subscriptions with metrics.
+ * For generic subscription lifecycle tracking, use LocalSubscriptionRegistry from lib/subscriptionManager.
  */
 
 import { supabase } from '../lib/supabaseClient';
@@ -40,11 +40,9 @@ export interface SubscriptionMetrics {
 }
 
 /**
- * Subscription Manager for real-time database subscriptions
- * Uses Supabase Realtime channels for database change notifications
- * Includes performance monitoring and metrics collection
+ * Supabase Realtime subscription manager (static API with metrics).
  */
-export class SubscriptionManager {
+export class RealtimeSubscriptionManager {
   private static channels: Map<string, RealtimeChannel> = new Map();
   private static metrics: Map<string, SubscriptionMetrics> = new Map();
 
@@ -294,4 +292,7 @@ export class SubscriptionManager {
     this.metrics.clear();
   }
 }
+
+/** @deprecated Use RealtimeSubscriptionManager. Kept for backward compatibility. */
+export { RealtimeSubscriptionManager as SubscriptionManager };
 

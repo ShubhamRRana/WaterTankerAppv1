@@ -45,21 +45,12 @@ const App: React.FC = () => {
     });
   }, [initializeAuth]);
 
-  // Helper function to determine initial route based on user
+  // Helper function to determine initial route based on user (this app supports driver and admin only)
   const getInitialRouteName = (user: User | null): keyof RootStackParamList => {
     if (!user) return 'Auth';
-
-    switch (user.role) {
-      case 'driver':
-        return 'Driver';
-      case 'admin':
-        return 'Admin';
-      case 'customer':
-        // This app does not support customer role; reject at auth and show Auth screen
-        return 'Auth';
-      default:
-        return 'Auth';
-    }
+    if (user.role === 'driver') return 'Driver';
+    if (user.role === 'admin') return 'Admin';
+    return 'Auth';
   };
 
   // Navigate when user state changes

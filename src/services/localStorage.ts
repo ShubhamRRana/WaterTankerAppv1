@@ -8,6 +8,7 @@ import {
   serializeVehicleDates,
   deserializeVehicleDates,
 } from '../utils/dateSerialization';
+import { generateId as generateUUID } from '../utils/idUtils';
 
 /**
  * @deprecated This service is deprecated and will be removed in a future version.
@@ -514,9 +515,9 @@ export class LocalStorageService {
     await this.setItem('bank_accounts_collection', serialized);
   }
 
-  // Generate unique IDs
+  // Generate unique IDs (crypto.randomUUID when available)
   static generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+    return generateUUID();
   }
 
   // Initialize with sample data for development

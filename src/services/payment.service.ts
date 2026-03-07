@@ -4,6 +4,7 @@
 import { dataAccess } from '../lib/index';
 import { handleError } from '../utils/errorHandler';
 import { getErrorMessage } from '../utils/errors';
+import { generateShortId } from '../utils/idUtils';
 
 export interface PaymentResult {
   success: boolean;
@@ -28,7 +29,7 @@ export class PaymentService {
 
       // For COD, we just mark the payment as pending in the booking
       // The actual payment happens when the driver delivers
-      const paymentId = `cod_${bookingId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const paymentId = `cod_${bookingId}_${Date.now()}_${generateShortId()}`;
       
       await dataAccess.bookings.updateBooking(bookingId, {
         paymentStatus: 'pending',
@@ -65,7 +66,7 @@ export class PaymentService {
         };
       }
 
-      const paymentId = `cod_confirmed_${bookingId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const paymentId = `cod_confirmed_${bookingId}_${Date.now()}_${generateShortId()}`;
       
       await dataAccess.bookings.updateBooking(bookingId, {
         paymentStatus: 'completed',
