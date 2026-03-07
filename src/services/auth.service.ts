@@ -26,13 +26,16 @@ export interface AuthResult {
   requiresRoleSelection?: boolean;
 }
 
+/** Role from DB may include 'customer'; app only supports driver | admin */
+type RoleFilter = UserRole | 'customer';
+
 /**
  * Helper: Fetch user from Supabase with specific role
  * @param userId - The user ID to fetch (must be the current/new user_id, not a cached one)
- * @param role - Optional role to filter by
+ * @param role - Optional role to filter by (pass 'customer' to check customer; returns null as app does not support customer)
  * @param retryCount - Internal retry counter for handling race conditions
  */
-async function fetchUserWithRole(userId: string, role?: UserRole, retryCount: number = 0): Promise<AppUser | null> {
+async function fetchUserWithRole(userId: string, role?: RoleFilter, retryCount: number = 0): Promise<AppUser | null> {
   try {
     // Fetch user
     const { data: userRow, error: userError } = await supabase
@@ -173,7 +176,7 @@ async function getUserRoles(userId: string): Promise<UserRole[]> {
 
     if (!roles || roles.length === 0) {
       // Check if user exists in users table
-      const { data: userExists, error: userCheckError } = await supabase
+      const { data: userExists, error: _userCheckError } = await supabase
         .from('users')
         .select('id')
         .eq('id', userId)
@@ -253,7 +256,7 @@ export class AuthService {
     email: string,
     password: string,
     name: string,
-    role: UserRole,
+    role: UserRole | 'customer',
     additionalData?: Partial<AppUser>
   ): Promise<AuthResult> {
     try {
@@ -310,7 +313,7 @@ export class AuthService {
       rateLimiter.record('register', sanitizedEmail);
 
       // Check if user already exists in users table
-      const { data: existingUser, error: userCheckError } = await supabase
+      const { data: existingUser, error: _userCheckError } = await supabase
         .from('users')
         .select('id')
         .eq('email', sanitizedEmail.toLowerCase())
@@ -345,7 +348,7 @@ export class AuthService {
         }
 
         // User exists and password is correct - check if they already have this role
-        const { data: existingRole, error: roleCheckError } = await supabase
+        const { data: existingRole, error: _roleCheckError } = await supabase
           .from('user_roles')
           .select('*')
           .eq('user_id', existingUser.id)
@@ -431,7 +434,7 @@ export class AuthService {
           userId = signInData.user.id;
 
           // Check if user already has this role
-          const { data: existingRole, error: roleCheckError } = await supabase
+          const { data: existingRole, error: _roleCheckError } = await supabase
             .from('user_roles')
             .select('*')
             .eq('user_id', userId)
@@ -495,7 +498,6 @@ export class AuthService {
           // Skip to role-specific data creation (will be handled below)
         } else if (authError || !authData.user) {
           const errorMessage = authError ? (authError as any).message : 'Registration failed';
-          const errorStatus = authError ? (authError as any).status : undefined;
           securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, errorMessage);
           return {
             success: false,
@@ -794,8 +796,7 @@ export class AuthService {
         return {
           success: true,
           requiresRoleSelection: true,
-          availableRoles: validRoles,
-          user: undefined
+          availableRoles: validRoles
         };
       }
     } catch (error) {
@@ -838,9 +839,6 @@ export class AuthService {
    */
   static async loginWithRole(email: string, role: UserRole): Promise<AuthResult> {
     try {
-      // Sanitize email input
-      const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
-      
       // Get current session
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -1067,7 +1065,7 @@ export class AuthService {
       }
 
       const currentUser = await fetchUserWithRole(customerId, 'customer');
-      if (!currentUser || currentUser.role !== 'customer') {
+      if (!currentUser) {
         return { success: false, error: 'Only customer accounts can be deleted from here.' };
       }
 
@@ -1131,7 +1129,7 @@ export class AuthService {
     } else {
       // Reset all login rate limits by getting all active limits and resetting login ones
       const activeLimits = rateLimiter.getActiveLimits();
-      activeLimits.forEach((entry, key) => {
+      activeLimits.forEach((_entry, key) => {
         if (key.startsWith('login:')) {
           const email = key.replace('login:', '');
           rateLimiter.reset('login', email);

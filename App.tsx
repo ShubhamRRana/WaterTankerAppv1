@@ -30,7 +30,7 @@ export type RootStackParamList = {
 const Stack = createStackNavigator<RootStackParamList>();
 
 const App: React.FC = () => {
-  const { user, initializeAuth, isLoading } = useAuthStore();
+  const { user, initializeAuth } = useAuthStore();
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
 
   // Load custom fonts
@@ -40,7 +40,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Initialize the auth system and load any existing user
-    initializeAuth().catch((error) => {
+    initializeAuth().catch((_error) => {
       // Error handled by error boundary
     });
   }, [initializeAuth]);

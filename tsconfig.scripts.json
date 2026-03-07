@@ -1,5 +1,10 @@
 {
   "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "module": "Node16",
+    "moduleResolution": "node16"
+  },
   "include": [
     "scripts/**/*.ts"
   ],

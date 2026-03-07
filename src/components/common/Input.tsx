@@ -17,8 +17,8 @@ import Typography from './Typography';
 interface InputProps extends TextInputProps {
   /** Optional label text displayed above the input */
   label?: string;
-  /** Error message to display below the input */
-  error?: string;
+  /** Error message to display below the input (undefined when no error) */
+  error?: string | undefined;
   /** Additional styles for the container */
   containerStyle?: StyleProp<ViewStyle>;
 }

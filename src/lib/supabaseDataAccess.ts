@@ -171,7 +171,7 @@ async function getCurrentUserId(): Promise<string | null> {
 function mapUserFromDb(
   userRow: UserRow,
   roles: UserRoleRow[],
-  customerData?: CustomerRow | null,
+  _customerData?: CustomerRow | null,
   driverData?: DriverRow | null,
   adminData?: AdminRow | null,
   selectedRole?: 'customer' | 'driver' | 'admin'
