@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
 import { Typography, Card, Button, LoadingSpinner, Input, AdminMenuDrawer } from '../../components/common';
+import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { BankAccount } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
@@ -221,7 +222,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
                 Upload Bank Account QR Code *
               </Typography>
               <Typography variant="caption" style={styles.imageHint}>
-                Select a QR code image from your gallery
+                You can upload your GPay/PhonePe/Paytm QR code image here
               </Typography>
               
               {(formData.qrCodeImageUri || (formData.qrCodeImageUrl && typeof formData.qrCodeImageUrl === 'string' && formData.qrCodeImageUrl.trim() !== '')) ? (
@@ -535,7 +536,7 @@ const AddBankAccountScreen: React.FC = () => {
     }
   };
 
-  const handleMenuNavigate = (route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile' | 'BankAccounts') => {
+  const handleMenuNavigate = (route: AdminRoute) => {
     if (route === 'BankAccounts') {
       setMenuVisible(false);
       return;
