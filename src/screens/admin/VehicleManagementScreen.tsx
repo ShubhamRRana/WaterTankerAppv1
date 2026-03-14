@@ -17,7 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useVehicleStore } from '../../store/vehicleStore';
 import { useAuthStore } from '../../store/authStore';
-import { Typography, Card, Button, LoadingSpinner, Input, AdminMenuDrawer } from '../../components/common';
+import { Typography, Card, Button, LoadingSpinner, Input, DatePickerInput, AdminMenuDrawer } from '../../components/common';
 import { Vehicle } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
@@ -115,14 +115,13 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
               </View>
 
               <View style={styles.formField}>
-                <Input
+                <DatePickerInput
                   label="Insurance Expiry Date (DD/MM/YYYY) *"
                   value={formData.insuranceExpiryDate}
                   onChangeText={(text) => onFormChange('insuranceExpiryDate', text)}
-                  placeholder="e.g., 31/12/2026"
+                  placeholder="Select insurance expiry date"
                   error={formErrors.insuranceExpiryDate}
-                  keyboardType="numbers-and-punctuation"
-                  maxLength={10}
+                  minimumDate={new Date()}
                 />
               </View>
 
@@ -188,14 +187,13 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
               </View>
 
               <View style={styles.formField}>
-                <Input
+                <DatePickerInput
                   label="Insurance Expiry Date (DD/MM/YYYY) *"
                   value={formData.insuranceExpiryDate}
                   onChangeText={(text) => onFormChange('insuranceExpiryDate', text)}
-                  placeholder="e.g., 31/12/2026"
+                  placeholder="Select insurance expiry date"
                   error={formErrors.insuranceExpiryDate}
-                  keyboardType="numbers-and-punctuation"
-                  maxLength={10}
+                  minimumDate={new Date()}
                 />
               </View>
 

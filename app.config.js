@@ -28,5 +28,6 @@ export default {
     android: {
       package: "com.watertanker.app"
     },
+    plugins: ["@react-native-community/datetimepicker"],
   },
 };

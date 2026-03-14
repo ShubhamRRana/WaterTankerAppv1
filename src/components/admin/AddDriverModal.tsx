@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
-import { Typography, Card, Button, Input } from '../common';
+import { Typography, Card, Button, Input, DatePickerInput } from '../common';
 import { UI_CONFIG } from '../../constants/config';
 
 export interface AddDriverModalProps {
@@ -177,14 +177,13 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
           </View>
 
           <View style={styles.formField}>
-            <Input
+            <DatePickerInput
               label="License Expiry (DD/MM/YYYY) *"
               value={formData.licenseExpiry}
               onChangeText={(text) => onFormChange('licenseExpiry', text)}
-              placeholder="e.g., 31/12/2026"
+              placeholder="Select expiry date"
               error={formErrors.licenseExpiry}
-              keyboardType="numbers-and-punctuation"
-              maxLength={10}
+              minimumDate={new Date()}
             />
           </View>
         </Card>
@@ -310,14 +309,13 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
             </View>
 
             <View style={styles.formField}>
-              <Input
+              <DatePickerInput
                 label="License Expiry (DD/MM/YYYY) *"
                 value={formData.licenseExpiry}
                 onChangeText={(text) => onFormChange('licenseExpiry', text)}
-                placeholder="e.g., 31/12/2026"
+                placeholder="Select expiry date"
                 error={formErrors.licenseExpiry}
-                keyboardType="numbers-and-punctuation"
-                maxLength={10}
+                minimumDate={new Date()}
               />
             </View>
           </Card>

@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
-import { Typography, Card, Button, Input, AdminMenuDrawer } from '../../components/common';
+import { Typography, Card, Button, Input, DatePickerInput, AdminMenuDrawer } from '../../components/common';
 import { ExpenseType, Expense } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { ValidationUtils, SanitizationUtils, PricingUtils } from '../../utils';
@@ -274,20 +274,6 @@ const ExpenseScreen: React.FC = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to pick image';
       Alert.alert('Error', errorMessage);
-    }
-  };
-
-  // Format date input to automatically add slashes
-  const formatDateInput = (text: string) => {
-    const sanitized = SanitizationUtils.sanitizeDateString(text);
-    const numbers = sanitized.replace(/\D/g, '');
-    
-    if (numbers.length <= 2) {
-      return numbers;
-    } else if (numbers.length <= 4) {
-      return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
-    } else {
-      return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
     }
   };
 
@@ -594,14 +580,13 @@ const ExpenseScreen: React.FC = () => {
             </View>
 
             <View style={styles.formField}>
-              <Input
+              <DatePickerInput
                 label="Expense Date (DD/MM/YYYY) *"
                 value={formData.expenseDate}
-                onChangeText={(value) => handleFormChange('expenseDate', formatDateInput(value))}
-                placeholder="DD/MM/YYYY"
+                onChangeText={(value) => handleFormChange('expenseDate', value)}
+                placeholder="Select expense date"
                 {...(formErrors.expenseDate ? { error: formErrors.expenseDate } : {})}
-                keyboardType="numbers-and-punctuation"
-                maxLength={10}
+                maximumDate={new Date()}
               />
             </View>
 
