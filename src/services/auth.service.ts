@@ -320,6 +320,7 @@ export class AuthService {
         .maybeSingle();
 
       let userId: string;
+      let driverCreatedViaEdgeFunction = false;
 
       if (existingUser) {
         // User already exists - verify password by attempting to sign in
@@ -400,6 +401,42 @@ export class AuthService {
             error: updateError.message || 'Failed to update user profile'
           };
         }
+      } else if (role === 'driver' && (additionalData as Partial<DriverUser>)?.createdByAdmin) {
+        // Admin creating a new driver: use Edge Function so no confirmation email is sent (avoids "email rate limit exceeded")
+        const driverData = additionalData as Partial<DriverUser>;
+        const licenseExpiryIso = driverData?.licenseExpiry instanceof Date
+          ? driverData.licenseExpiry.toISOString().split('T')[0]
+          : undefined;
+        const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-create-driver', {
+          body: {
+            email: sanitizedEmail,
+            password,
+            name: sanitizedName,
+            phone: sanitizedPhone ?? '',
+            licenseNumber: driverData?.licenseNumber ?? '',
+            licenseExpiry: licenseExpiryIso,
+            emergencyContactName: driverData?.emergencyContactName ?? null,
+            emergencyContactPhone: driverData?.emergencyContactPhone ?? null,
+            vehicleNumber: driverData?.vehicleNumber ?? '',
+          },
+        });
+        if (fnError) {
+          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, fnError.message || 'Edge function failed');
+          return {
+            success: false,
+            error: (fnData as { error?: string })?.error || fnError.message || 'Failed to create driver. Deploy the admin-create-driver Edge Function to avoid email rate limits.',
+          };
+        }
+        const fnResult = fnData as { success?: boolean; user_id?: string; error?: string };
+        if (!fnResult?.success || !fnResult.user_id) {
+          return {
+            success: false,
+            error: fnResult?.error || 'Driver creation failed',
+          };
+        }
+        userId = fnResult.user_id;
+        driverCreatedViaEdgeFunction = true;
+        await new Promise(resolve => setTimeout(resolve, 300));
       } else {
         // User doesn't exist in users table - try to create in Supabase Auth first
         // But if email already exists in Supabase Auth, try to sign in instead
@@ -524,35 +561,38 @@ export class AuthService {
 
       // Create role-specific data (only if it doesn't exist)
       if (role === 'driver') {
-        const driverData = additionalData as Partial<DriverUser>;
-        // Use UPSERT to handle case where trigger may have already created the record
-        // This ensures all fields (especially created_by_admin) are set correctly
-        const { error: driverError } = await supabase
-          .from('drivers')
-          .upsert({
-            user_id: userId,
-            vehicle_number: driverData?.vehicleNumber || '',
-            license_number: driverData?.licenseNumber || '',
-            license_expiry: driverData?.licenseExpiry?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
-            driver_license_image_url: driverData?.driverLicenseImage || '',
-            vehicle_registration_image_url: driverData?.vehicleRegistrationImage || '',
-            total_earnings: driverData?.totalEarnings ?? 0,
-            completed_orders: driverData?.completedOrders ?? 0,
-            created_by_admin: driverData?.createdByAdmin ?? false,
-            created_by_admin_id: driverData?.createdByAdminId || null,
-            emergency_contact_name: driverData?.emergencyContactName || null,
-            emergency_contact_phone: driverData?.emergencyContactPhone || null,
-            updated_at: new Date().toISOString(),
-          }, {
-            onConflict: 'user_id'
-          });
+        // Skip client-side upsert when driver was created by Edge Function (it already inserted the row; client would hit RLS)
+        if (!driverCreatedViaEdgeFunction) {
+          const driverData = additionalData as Partial<DriverUser>;
+          // Use UPSERT to handle case where trigger may have already created the record
+          // This ensures all fields (especially created_by_admin) are set correctly
+          const { error: driverError } = await supabase
+            .from('drivers')
+            .upsert({
+              user_id: userId,
+              vehicle_number: driverData?.vehicleNumber || '',
+              license_number: driverData?.licenseNumber || '',
+              license_expiry: driverData?.licenseExpiry?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0],
+              driver_license_image_url: driverData?.driverLicenseImage || '',
+              vehicle_registration_image_url: driverData?.vehicleRegistrationImage || '',
+              total_earnings: driverData?.totalEarnings ?? 0,
+              completed_orders: driverData?.completedOrders ?? 0,
+              created_by_admin: driverData?.createdByAdmin ?? false,
+              created_by_admin_id: driverData?.createdByAdminId || null,
+              emergency_contact_name: driverData?.emergencyContactName || null,
+              emergency_contact_phone: driverData?.emergencyContactPhone || null,
+              updated_at: new Date().toISOString(),
+            }, {
+              onConflict: 'user_id'
+            });
 
-        if (driverError) {
-          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, driverError.message);
-          return {
-            success: false,
-            error: driverError.message || 'Failed to create/update driver profile'
-          };
+          if (driverError) {
+            securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, driverError.message);
+            return {
+              success: false,
+              error: driverError.message || 'Failed to create/update driver profile'
+            };
+          }
         }
       } else if (role === 'admin') {
         const adminData = additionalData as Partial<AdminUser>;
