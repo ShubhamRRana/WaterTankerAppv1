@@ -114,7 +114,7 @@ const AllBookingsScreen: React.FC = () => {
   const getStatusColor = useCallback((status: BookingStatus) => {
     switch (status) {
       case 'pending': return UI_CONFIG.colors.warning;
-      case 'accepted': return UI_CONFIG.colors.primary;
+      case 'accepted': return UI_CONFIG.colors.accent;
       case 'in_transit': return UI_CONFIG.colors.secondary;
       case 'delivered': return UI_CONFIG.colors.success;
       case 'cancelled': return UI_CONFIG.colors.error;
@@ -203,7 +203,7 @@ const AllBookingsScreen: React.FC = () => {
       <Ionicons 
         name={filter.icon as any} 
         size={16} 
-        color={statusFilter === filter.key ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.primary} 
+        color={statusFilter === filter.key ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.accent}
       />
       <Typography 
         variant="caption" 
@@ -410,13 +410,13 @@ const styles = StyleSheet.create({
     marginRight: UI_CONFIG.spacing.sm,
   },
   filterButtonActive: {
-    backgroundColor: UI_CONFIG.colors.primary,
-    borderColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
+    borderColor: UI_CONFIG.colors.accent,
   },
   filterButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
     marginLeft: 6,
   },
   filterButtonTextActive: {

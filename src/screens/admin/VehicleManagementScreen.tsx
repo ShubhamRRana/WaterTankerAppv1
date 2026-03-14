@@ -938,7 +938,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
@@ -954,7 +954,7 @@ const styles = StyleSheet.create({
     marginBottom: UI_CONFIG.spacing.md,
   },
   addVehicleButton: {
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
     marginBottom: UI_CONFIG.spacing.md,
   },
   cancelButton: {

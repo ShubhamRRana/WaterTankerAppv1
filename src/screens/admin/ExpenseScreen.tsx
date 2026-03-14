@@ -638,7 +638,7 @@ const ExpenseScreen: React.FC = () => {
                   disabled={isSubmitting}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="camera-outline" size={48} color={UI_CONFIG.colors.primary} />
+                  <Ionicons name="camera-outline" size={48} color={UI_CONFIG.colors.accent} />
                   <Typography variant="body" style={styles.imagePickerText}>
                     Tap to select receipt photo
                   </Typography>
@@ -932,7 +932,7 @@ const ExpenseScreen: React.FC = () => {
                         All
                       </Typography>
                       {summaryFilter === 'all' && (
-                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.primary} />
+                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.accent} />
                       )}
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -956,7 +956,7 @@ const ExpenseScreen: React.FC = () => {
                         Diesel
                       </Typography>
                       {summaryFilter === 'diesel' && (
-                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.primary} />
+                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.accent} />
                       )}
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -980,7 +980,7 @@ const ExpenseScreen: React.FC = () => {
                         Maintenance
                       </Typography>
                       {summaryFilter === 'maintenance' && (
-                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.primary} />
+                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.accent} />
                       )}
                     </TouchableOpacity>
                   </View>
@@ -1142,8 +1142,8 @@ const styles = StyleSheet.create({
     borderColor: UI_CONFIG.colors.border,
   },
   typeButtonActive: {
-    backgroundColor: UI_CONFIG.colors.primary,
-    borderColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
+    borderColor: UI_CONFIG.colors.accent,
   },
   typeButtonText: {
     marginTop: 8,
@@ -1192,8 +1192,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   viewModeButtonActive: {
-    backgroundColor: UI_CONFIG.colors.primary,
-    borderColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
+    borderColor: UI_CONFIG.colors.accent,
   },
   viewModeButtonText: {
     color: UI_CONFIG.colors.text,
@@ -1241,7 +1241,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -1298,8 +1298,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterButtonActive: {
-    backgroundColor: UI_CONFIG.colors.primary,
-    borderColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
+    borderColor: UI_CONFIG.colors.accent,
   },
   filterButtonText: {
     color: UI_CONFIG.colors.text,
@@ -1454,7 +1454,7 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
     marginBottom: 4,
   },
   summaryLabel: {
@@ -1516,7 +1516,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   dropdownOptionTextActive: {
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
     fontWeight: '600',
   },
 });

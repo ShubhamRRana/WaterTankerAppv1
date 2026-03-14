@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
     textAlign: 'center',
     width: '100%',
   },
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '500',
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
   },
   dailyRevenue: {
     flex: 1,

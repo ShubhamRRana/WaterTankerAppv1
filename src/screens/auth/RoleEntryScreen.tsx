@@ -243,16 +243,16 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textSecondary,
   },
   roleDescriptionSelected: {
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accentMuted,
   },
   button: {
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
     borderRadius: 8,
     paddingHorizontal: 27,
     paddingVertical: 11,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.primary,
+    borderColor: UI_CONFIG.colors.accent,
     shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 6,
@@ -291,14 +291,14 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: UI_CONFIG.colors.primary,
+    borderColor: UI_CONFIG.colors.accent,
   },
   buttonSecondaryDisabled: {
     borderColor: UI_CONFIG.colors.disabled,
     opacity: 0.5,
   },
   buttonSecondaryText: {
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
     fontSize: 18,
     fontWeight: '600',
   },

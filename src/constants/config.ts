@@ -65,28 +65,38 @@ export const UI_CONFIG = {
     fallback: ['System'],
   },
   colors: {
-    // Brand colors
-    primary: '#3e5c76', // Medium Blue - for buttons, links, interactive elements (30%)
-    secondary: '#2d4a5f', // Darker Blue - for secondary actions
-    accent: '#fca311', // Gold - for highlights, emphasis (10%)
-    // Background and surfaces (60% - Light Cream)
-    background: '#f0ebd8', // Light Cream/Beige - main backgrounds
-    surface: '#f5f0e0', // Warm Beige - for cards, inputs on cream background (blends with background)
-    surfaceLight: '#f8f6f0', // Lighter cream - for subtle backgrounds
-    // Text colors
-    text: '#0d1321', // Deep Navy - primary text on light backgrounds
-    textSecondary: '#5a5a5a', // Medium gray - secondary text
-    textLight: '#FFFFFF', // White text for dark backgrounds
-    // Border colors
-    border: '#d4c9b0', // Light beige border
-    borderLight: '#e8e0d0', // Lighter border
-    // Status colors (adjusted to work with new palette)
-    success: '#2d8659', // Green - adjusted for cream background
-    warning: '#d68910', // Orange - adjusted for cream background
-    error: '#c0392b', // Red - adjusted for cream background
-    // Additional utility colors
-    disabled: '#b0b0b0', // Gray for disabled states
-    shadow: '#d4c9b0', // Shadow color for cream backgrounds
+    // Backgrounds
+    primary: '#1a1d24',
+    background: '#1a1d24',
+    surface: '#252a33',
+    surfaceLight: '#2f3540',
+    secondary: '#3d4552',
+
+    // Accent (gold)
+    accent: '#ffc300',
+    accentMuted: '#a08b4a',
+
+    // Text
+    text: '#f0f2f5',
+    textSecondary: '#9ca3af',
+    textLight: '#ffffff',
+
+    // Borders
+    border: '#3d4552',
+    borderLight: '#4a5568',
+
+    // Status
+    success: '#34d399',
+    warning: '#f59e0b',
+    error: '#ef4444',
+    disabled: '#6b7280',
+    shadow: '#000000',
+
+    // Overlays
+    overlaySubtle: 'rgba(255, 255, 255, 0.06)',
+    overlayLight: 'rgba(255, 255, 255, 0.2)',
+    overlayMedium: 'rgba(255, 255, 255, 0.3)',
+    overlayDark: 'rgba(0, 0, 0, 0.6)',
   },
   spacing: {
     xs: 4,
@@ -94,12 +104,13 @@ export const UI_CONFIG = {
     md: 16,
     lg: 24,
     xl: 32,
+    xxl: 40,
   },
   borderRadius: {
     sm: 4,
-    md: 8,
-    lg: 12,
-    xl: 16,
+    md: 10,
+    lg: 14,
+    xl: 20,
   },
   fontSize: {
     xs: 12,

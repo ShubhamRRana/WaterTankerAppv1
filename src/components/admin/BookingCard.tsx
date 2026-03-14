@@ -89,7 +89,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
         
         {customerProfileAddress && (
           <View style={styles.detailRow}>
-            <Ionicons name="home-outline" size={16} color={UI_CONFIG.colors.primary} />
+            <Ionicons name="home-outline" size={16} color={UI_CONFIG.colors.accent} />
             <Typography variant="body" style={styles.detailText}>
               Profile: {customerProfileAddress}
             </Typography>

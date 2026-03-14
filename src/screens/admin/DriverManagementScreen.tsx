@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
     marginRight: UI_CONFIG.spacing.sm,
   },
   filterButtonActive: {
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
   },
   filterButtonText: {
     fontSize: 14,
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,

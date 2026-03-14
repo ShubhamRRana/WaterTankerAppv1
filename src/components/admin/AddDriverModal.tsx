@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     marginTop: UI_CONFIG.spacing.lg,
   },
   addDriverButton: {
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
     marginBottom: UI_CONFIG.spacing.md,
   },
   cancelButton: {

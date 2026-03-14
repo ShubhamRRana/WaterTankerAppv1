@@ -107,7 +107,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
   const getStatusColor = useCallback((status: BookingStatus): string => {
     switch (status) {
       case 'pending': return UI_CONFIG.colors.warning;
-      case 'accepted': return UI_CONFIG.colors.primary;
+      case 'accepted': return UI_CONFIG.colors.accent;
       case 'in_transit': return UI_CONFIG.colors.success;
       case 'delivered': return UI_CONFIG.colors.success;
       case 'cancelled': return UI_CONFIG.colors.error;
@@ -203,7 +203,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
           activeOpacity={0.7}
           style={styles.addressContainer}
         >
-          <Ionicons name="location" size={14} color={UI_CONFIG.colors.primary} />
+          <Ionicons name="location" size={14} color={UI_CONFIG.colors.accent} />
           <Typography variant="caption" style={styles.orderAddress}>
             {order.deliveryAddress.address}
           </Typography>
@@ -456,11 +456,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.primary,
+    borderColor: UI_CONFIG.colors.accent,
   },
   orderAddress: {
     fontSize: 12,
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
     marginLeft: 6,
   },
   profileAddressContainer: {
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
   },
   retryButtonText: {
     color: UI_CONFIG.colors.textLight,

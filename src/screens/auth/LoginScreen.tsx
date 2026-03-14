@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -15,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from '../../constants/config';
+import { ERROR_MESSAGES } from '../../constants/config';
 import { handleError } from '../../utils/errorHandler';
 import { getErrorMessage } from '../../utils/errors';
 import { AuthStackParamList } from '../../types/index';
@@ -261,6 +260,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
               onChangeText={handleEmailChange}
               keyboardType="email-address"
               autoCapitalize="none"
+              placeholderTextColor={UI_CONFIG.colors.textSecondary}
             />
             {errors.email && <Typography variant="caption" style={styles.errorText}>{errors.email}</Typography>}
           </View>
@@ -273,6 +273,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
                 value={password}
                 onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
+                placeholderTextColor={UI_CONFIG.colors.textSecondary}
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
@@ -389,14 +390,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   button: {
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
     borderRadius: 8,
     paddingHorizontal: 27,
     paddingVertical: 11,
     alignItems: 'center',
     marginTop: 8,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.primary,
+    borderColor: UI_CONFIG.colors.accent,
     shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 6,
@@ -436,7 +437,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     fontSize: 16,
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
     fontWeight: '600',
   },
   watermarkContainer: {

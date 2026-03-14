@@ -77,7 +77,7 @@ const App: React.FC = () => {
   // Loading component for lazy-loaded navigators
   const NavigatorLoadingFallback = () => (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: UI_CONFIG.colors.background }}>
-      <ActivityIndicator size="large" color={UI_CONFIG.colors.primary} />
+      <ActivityIndicator size="large" color={UI_CONFIG.colors.accent} />
     </View>
   );
 
@@ -85,7 +85,7 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <SafeAreaProvider>
         <NavigationContainer ref={navigationRef}>
-          <StatusBar style="auto" />
+          <StatusBar style="light" />
           <Suspense fallback={<NavigatorLoadingFallback />}>
             <Stack.Navigator
               initialRouteName={getInitialRouteName(user)}

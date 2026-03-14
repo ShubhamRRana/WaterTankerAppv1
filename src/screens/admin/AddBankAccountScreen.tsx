@@ -145,7 +145,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
                     disabled={isSubmitting}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="image-outline" size={48} color={UI_CONFIG.colors.primary} />
+                    <Ionicons name="image-outline" size={48} color={UI_CONFIG.colors.accent} />
                     <Typography variant="body" style={styles.imagePickerText}>
                       Tap to select QR code image
                     </Typography>
@@ -249,7 +249,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
                   disabled={isSubmitting}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="image-outline" size={48} color={UI_CONFIG.colors.primary} />
+                  <Ionicons name="image-outline" size={48} color={UI_CONFIG.colors.accent} />
                   <Typography variant="body" style={styles.imagePickerText}>
                     Tap to select QR code image
                   </Typography>
@@ -570,7 +570,7 @@ const AddBankAccountScreen: React.FC = () => {
                 onPress={() => handleSetDefault(account.id)}
                 activeOpacity={0.7}
               >
-                <Ionicons name="star-outline" size={20} color={UI_CONFIG.colors.primary} />
+                <Ionicons name="star-outline" size={20} color={UI_CONFIG.colors.accent} />
               </TouchableOpacity>
             )}
             <TouchableOpacity
@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
     marginBottom: UI_CONFIG.spacing.md,
     padding: UI_CONFIG.spacing.md,
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: UI_CONFIG.colors.border,
   },
   accountCardContent: {
     width: '100%',
@@ -779,7 +779,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   defaultBadge: {
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
@@ -828,11 +828,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -898,8 +898,8 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.surface,
   },
   checkboxChecked: {
-    backgroundColor: UI_CONFIG.colors.primary,
-    borderColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
+    borderColor: UI_CONFIG.colors.accent,
   },
   checkboxLabel: {
     color: UI_CONFIG.colors.text,
@@ -940,7 +940,7 @@ const styles = StyleSheet.create({
   },
   imagePickerText: {
     marginTop: 12,
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
     fontWeight: '500',
   },
   imagePreviewContainer: {

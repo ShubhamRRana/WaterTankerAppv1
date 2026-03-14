@@ -106,7 +106,7 @@ const CollectPaymentScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={[styles.container, styles.centerContent]}>
-          <ActivityIndicator size="large" color={UI_CONFIG.colors.primary} />
+          <ActivityIndicator size="large" color={UI_CONFIG.colors.accent} />
           <Typography variant="body" style={styles.loadingText}>
             Loading booking details...
           </Typography>
@@ -170,7 +170,7 @@ const CollectPaymentScreen: React.FC = () => {
                   </Typography>
                   {loadingQRCode ? (
                     <View style={styles.qrCodeLoadingContainer}>
-                      <ActivityIndicator size="large" color={UI_CONFIG.colors.primary} />
+                      <ActivityIndicator size="large" color={UI_CONFIG.colors.accent} />
                       <Typography variant="body" style={styles.qrCodeLoadingText}>
                         Loading QR code...
                       </Typography>
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   amount: {
     fontSize: 25,
     fontWeight: '700',
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
   },
   buttonContainer: {
     paddingBottom: 20,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.success,
   },
   backButton: {
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
   },
   qrCodeSection: {
     marginTop: 32,

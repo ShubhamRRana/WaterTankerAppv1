@@ -69,7 +69,7 @@ const Button: React.FC<ButtonProps> = ({
   ], [variant, size, disabled]);
 
   const indicatorColor = useMemo(() => 
-    variant === 'primary' || variant === 'secondary' ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.primary,
+    variant === 'primary' || variant === 'secondary' ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.accent,
     [variant]
   );
 
@@ -97,9 +97,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.primary,
+    borderColor: UI_CONFIG.colors.accent,
     shadowColor: UI_CONFIG.colors.shadow,
     shadowOffset: {
       width: 6,
@@ -111,17 +111,17 @@ const styles = StyleSheet.create({
   },
   // Variants
   primary: {
-    backgroundColor: UI_CONFIG.colors.primary,
-    borderColor: UI_CONFIG.colors.primary,
+    backgroundColor: UI_CONFIG.colors.accent,
+    borderColor: UI_CONFIG.colors.accent,
   },
   secondary: {
     backgroundColor: UI_CONFIG.colors.secondary,
     borderColor: UI_CONFIG.colors.secondary,
   },
   outline: {
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.primary,
+    borderColor: UI_CONFIG.colors.accent,
   },
   // Sizes
   small: {
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textLight,
   },
   outlineText: {
-    color: UI_CONFIG.colors.primary,
+    color: UI_CONFIG.colors.accent,
   },
   smallText: {
     fontSize: 18,

@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.surface,
   },
   textInputError: {
-    borderColor: '#EF4444',
+    borderColor: UI_CONFIG.colors.error,
     borderWidth: 1.5,
   },
   passwordInputContainer: {
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   errorText: {
-    color: '#EF4444',
+    color: UI_CONFIG.colors.error,
     fontSize: 12,
     marginTop: 4,
   },
