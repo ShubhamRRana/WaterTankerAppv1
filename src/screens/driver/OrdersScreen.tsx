@@ -425,7 +425,6 @@ const OrdersScreen: React.FC = () => {
         onClose={handleAmountModalClose}
         onSubmit={handleAmountSubmit}
         isSubmitting={isSubmittingAmount}
-        orderId={pendingOrderId || undefined}
         customerName={pendingOrderId ? bookings.find(b => b.id === pendingOrderId)?.customerName : undefined}
         vehicleCapacity={pendingOrderId ? bookings.find(b => b.id === pendingOrderId)?.tankerSize : undefined}
       />

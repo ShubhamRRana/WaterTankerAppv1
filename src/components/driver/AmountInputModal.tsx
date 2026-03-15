@@ -18,7 +18,6 @@ interface AmountInputModalProps {
   onClose: () => void;
   onSubmit: (amount: number) => void;
   isSubmitting?: boolean;
-  orderId?: string;
   customerName?: string;
   vehicleCapacity?: number;
 }
@@ -28,7 +27,6 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
   onClose,
   onSubmit,
   isSubmitting = false,
-  orderId,
   customerName,
   vehicleCapacity,
 }) => {
@@ -98,12 +96,6 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
               <Typography variant="h3" style={styles.sectionTitle}>
                 Order Information
               </Typography>
-              {orderId && (
-                <View style={styles.infoRow}>
-                  <Typography variant="body" style={styles.infoLabel}>Order ID:</Typography>
-                  <Typography variant="body" style={styles.infoValue}>{orderId}</Typography>
-                </View>
-              )}
               {customerName && (
                 <View style={styles.infoRow}>
                   <Typography variant="body" style={styles.infoLabel}>Customer:</Typography>

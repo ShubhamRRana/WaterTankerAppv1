@@ -19,7 +19,6 @@ import { Typography, Card, Button, LoadingSpinner, Input, AdminMenuDrawer } from
 import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { BankAccount } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
-import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { BankAccountService, StorageService } from '../../services';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { getErrorMessage } from '../../utils/errors';
