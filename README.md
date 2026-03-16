@@ -557,21 +557,17 @@ Then choose your platform:
 WaterTankerAppv1/
 ├── src/
 │   ├── components/          # Reusable UI components
-│   │   ├── admin/          # Admin-specific components
-│   │   ├── customer/       # Customer-specific components
-│   │   ├── driver/         # Driver-specific components
-│   │   ├── auth/           # Authentication components
-│   │   └── common/         # Shared components
+│   │   ├── admin/           # Admin-specific components
+│   │   ├── driver/          # Driver-specific components
+│   │   └── common/          # Shared components (used across admin/driver flows)
 │   │
-│   ├── screens/            # Screen components
-│   │   ├── admin/         # Admin screens
-│   │   ├── customer/      # Customer screens
-│   │   ├── driver/        # Driver screens
-│   │   └── auth/           # Authentication screens
+│   ├── screens/             # Screen components
+│   │   ├── admin/           # Admin screens
+│   │   ├── driver/          # Driver screens
+│   │   └── auth/            # Authentication and role selection screens
 │   │
-│   ├── navigation/        # Navigation configuration
+│   ├── navigation/          # Navigation configuration
 │   │   ├── AuthNavigator.tsx
-│   │   ├── CustomerNavigator.tsx
 │   │   ├── DriverNavigator.tsx
 │   │   └── AdminNavigator.tsx
 │   │
