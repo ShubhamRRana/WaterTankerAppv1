@@ -101,7 +101,7 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
         })}
         <ScrollView contentContainerStyle={styles.scrollContainer} style={styles.contentOverlay}>
           <View style={styles.header}>
-            <Typography variant="h1" style={styles.title}>Choose Your Role</Typography>
+            <Typography variant="h1" style={styles.title}>Welcome to TankerHub</Typography>
             <Typography variant="body" style={styles.subtitle}>Select how you want to use the app</Typography>
           </View>
 
@@ -186,6 +186,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+    fontFamily: 'PlayfairDisplay-Regular',
     color: UI_CONFIG.colors.text,
     marginBottom: 8,
     textAlign: 'center',

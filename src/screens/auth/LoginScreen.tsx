@@ -49,7 +49,15 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     if (sanitized) {
       const validation = ValidationUtils.validateEmail(sanitized);
       if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, email: validation.error }));
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          if (validation.error) {
+            newErrors.email = validation.error;
+          } else {
+            delete newErrors.email;
+          }
+          return newErrors;
+        });
       } else {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -72,7 +80,15 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     if (text) {
       const validation = ValidationUtils.validatePassword(text);
       if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, password: validation.error }));
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          if (validation.error) {
+            newErrors.password = validation.error;
+          } else {
+            delete newErrors.password;
+          }
+          return newErrors;
+        });
       } else {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -99,8 +115,8 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
 
     if (!emailValidation.isValid || !passwordValidation.isValid) {
       setErrors({
-        email: emailValidation.error,
-        password: passwordValidation.error,
+        ...(emailValidation.error ? { email: emailValidation.error } : {}),
+        ...(passwordValidation.error ? { password: passwordValidation.error } : {}),
       });
       return;
     }
@@ -145,7 +161,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
       handleError(error, {
         context: { operation: 'login', email: sanitizedEmail, preferredRole },
         userFacing: true,
-        alertMessage: isRoleMismatch ? ERROR_MESSAGES.auth.roleMismatch : undefined,
+        ...(isRoleMismatch ? { alertMessage: ERROR_MESSAGES.auth.roleMismatch } : {}),
       });
     }
   };
@@ -247,8 +263,8 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
         ))}
         <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <Typography variant="h1" style={styles.title}>Welcome Back</Typography>
-          <Typography variant="body" style={styles.subtitle}>Sign in to your account</Typography>
+          <Typography variant="h1" style={styles.title}>Sign in to your account</Typography>
+          {/* <Typography variant="body" style={styles.subtitle}>Sign in to your account</Typography> */}
         </View>
 
         <View style={styles.form}>
@@ -305,7 +321,15 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
         {route?.params?.preferredRole !== 'driver' && (
           <View style={styles.footer}>
             <Typography variant="body" style={styles.footerText}>Don't have an account? </Typography>
-            <TouchableOpacity onPress={() => navigation.navigate('Register', { preferredRole: route?.params?.preferredRole })}>
+            <TouchableOpacity
+              onPress={() => {
+                const preferredRole = route?.params?.preferredRole;
+                navigation.navigate(
+                  'Register',
+                  preferredRole ? { preferredRole } : undefined
+                );
+              }}
+            >
               <Typography variant="body" style={styles.linkText}>Sign Up</Typography>
             </TouchableOpacity>
           </View>
@@ -339,6 +363,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
+    fontFamily: 'PlayfairDisplay-Regular',
     color: UI_CONFIG.colors.text,
     marginBottom: 8,
   },
