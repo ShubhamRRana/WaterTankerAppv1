@@ -316,21 +316,8 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
               {isLoading ? 'Signing In...' : 'Sign In'}
             </Typography>
           </TouchableOpacity>
-
-          {route?.params?.preferredRole !== 'driver' && (
-            <View style={styles.forgotPasswordContainer}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('ResetPassword')}
-                accessibilityRole="button"
-              >
-                <Typography variant="body" style={styles.forgotPasswordText}>
-                  Forgot password
-                </Typography>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
-
+        
         {route?.params?.preferredRole !== 'driver' && (
           <View style={styles.footer}>
             <Typography variant="body" style={styles.footerText}>Don't have an account? </Typography>
@@ -348,6 +335,12 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         )}
       </ScrollView>
+
+      <View pointerEvents="none" style={styles.bottomNoticeContainer}>
+        <Typography variant="caption" style={styles.bottomNoticeText}>
+          Forgot password feature is not available yet. Do not forget your password.
+        </Typography>
+      </View>
     </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -367,6 +360,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
+    paddingBottom: 130,
     zIndex: 1,
   },
   header: {
@@ -478,15 +472,6 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.accent,
     fontWeight: '600',
   },
-  forgotPasswordContainer: {
-    marginTop: 12,
-    alignItems: 'center',
-  },
-  forgotPasswordText: {
-    fontSize: 16,
-    color: UI_CONFIG.colors.accent,
-    fontWeight: '600',
-  },
   watermarkContainer: {
     position: 'absolute',
     justifyContent: 'center',
@@ -494,6 +479,19 @@ const styles = StyleSheet.create({
     opacity: 0.06,
     zIndex: 0,
     pointerEvents: 'none',
+  },
+  bottomNoticeContainer: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+    bottom: 18,
+    zIndex: 5,
+    alignItems: 'center',
+  },
+  bottomNoticeText: {
+    textAlign: 'center',
+    color: UI_CONFIG.colors.textSecondary,
+    lineHeight: 18,
   },
 });
 

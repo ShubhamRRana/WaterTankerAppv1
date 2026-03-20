@@ -195,7 +195,6 @@ export interface AuthStackParamList {
   RoleEntry: undefined;
   Login: { preferredRole?: UserRole } | undefined;
   Register: { preferredRole?: UserRole } | undefined;
-  ResetPassword: undefined;
   [key: string]:
     | undefined
     | { preferredRole?: UserRole };
