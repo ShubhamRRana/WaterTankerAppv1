@@ -316,6 +316,19 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
               {isLoading ? 'Signing In...' : 'Sign In'}
             </Typography>
           </TouchableOpacity>
+
+          {route?.params?.preferredRole !== 'driver' && (
+            <View style={styles.forgotPasswordContainer}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('ResetPassword')}
+                accessibilityRole="button"
+              >
+                <Typography variant="body" style={styles.forgotPasswordText}>
+                  Forgot password
+                </Typography>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {route?.params?.preferredRole !== 'driver' && (
@@ -461,6 +474,15 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textSecondary,
   },
   linkText: {
+    fontSize: 16,
+    color: UI_CONFIG.colors.accent,
+    fontWeight: '600',
+  },
+  forgotPasswordContainer: {
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  forgotPasswordText: {
     fontSize: 16,
     color: UI_CONFIG.colors.accent,
     fontWeight: '600',
