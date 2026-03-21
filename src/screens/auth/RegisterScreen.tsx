@@ -81,7 +81,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     if (sanitized.trim()) {
       const validation = ValidationUtils.validateName(sanitized.trim());
       if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, name: validation.error }));
+        setErrors(prev => ({ ...prev, name: validation.error ?? '' }));
       } else {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -105,7 +105,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     if (sanitized) {
       const validation = ValidationUtils.validateEmail(sanitized);
       if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, email: validation.error }));
+        setErrors(prev => ({ ...prev, email: validation.error ?? '' }));
       } else {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -128,7 +128,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     if (text) {
       const validation = ValidationUtils.validatePassword(text);
       if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, password: validation.error }));
+        setErrors(prev => ({ ...prev, password: validation.error ?? '' }));
       } else {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -148,7 +148,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     if (confirmPassword) {
       const confirmValidation = ValidationUtils.validateConfirmPassword(text, confirmPassword);
       if (!confirmValidation.isValid) {
-        setErrors(prev => ({ ...prev, confirmPassword: confirmValidation.error }));
+        setErrors(prev => ({ ...prev, confirmPassword: confirmValidation.error ?? '' }));
       } else {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -165,7 +165,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     if (text) {
       const validation = ValidationUtils.validateConfirmPassword(password, text);
       if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, confirmPassword: validation.error }));
+        setErrors(prev => ({ ...prev, confirmPassword: validation.error ?? '' }));
       } else {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -192,7 +192,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     // Always validate phone as required
     const validation = ValidationUtils.validatePhone(limited);
     if (!validation.isValid) {
-      setErrors(prev => ({ ...prev, phone: validation.error }));
+      setErrors(prev => ({ ...prev, phone: validation.error ?? '' }));
     } else {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -213,7 +213,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     if (sanitized.trim()) {
       const validation = ValidationUtils.validateBusinessName(sanitized.trim());
       if (!validation.isValid) {
-        setErrors(prev => ({ ...prev, businessName: validation.error }));
+        setErrors(prev => ({ ...prev, businessName: validation.error ?? '' }));
       } else {
         setErrors(prev => {
           const newErrors = { ...prev };
