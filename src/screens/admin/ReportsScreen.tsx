@@ -145,7 +145,6 @@ const ReportsScreen: React.FC = () => {
 
   const handleMenuNavigate = (route: AdminRoute) => {
     if (route === 'Reports') {
-      // Already on Reports, just close menu
       return;
     }
     navigation.navigate(route);

@@ -187,6 +187,19 @@ export interface Expense {
   updatedAt: Date;
 }
 
+/**
+ * Society-logged external tanker trip (customer app); admin can list all via RLS.
+ */
+export interface SocietyTrip {
+  id: string;
+  customerId: string;
+  agencyName: string;
+  scheduledAt: Date;
+  tankerSizeLiters: number;
+  photoUrl: string;
+  createdAt: Date;
+}
+
 // Navigation types
 /**
  * Authentication stack navigation parameters

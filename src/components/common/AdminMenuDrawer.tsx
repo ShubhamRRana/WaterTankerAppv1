@@ -1,7 +1,15 @@
 import React from 'react';
 import MenuDrawer, { MenuItem } from './MenuDrawer';
 
-export type AdminRoute = 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile' | 'BankAccounts' | 'Expenses';
+export type AdminRoute =
+  | 'Bookings'
+  | 'Drivers'
+  | 'Vehicles'
+  | 'Reports'
+  | 'TripDetails'
+  | 'Profile'
+  | 'BankAccounts'
+  | 'Expenses';
 
 interface AdminMenuDrawerProps {
   visible: boolean;
@@ -52,6 +60,15 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
       route: 'Reports',
       onPress: () => {
         onNavigate('Reports');
+        onClose();
+      },
+    },
+    {
+      label: 'Trip details',
+      icon: 'map-outline',
+      route: 'TripDetails',
+      onPress: () => {
+        onNavigate('TripDetails');
         onClose();
       },
     },

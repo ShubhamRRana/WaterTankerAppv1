@@ -11,3 +11,4 @@ export { VehicleService } from './vehicle.service';
 export { BankAccountService } from './bankAccount.service';
 export { ExpenseService } from './expense.service';
 export { StorageService } from './storage.service';
+export { SocietyTripService } from './societyTrip.service';

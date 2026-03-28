@@ -23,6 +23,7 @@ import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
 import { formatDateOnly } from '../../utils/dateUtils';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
+import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { getErrorMessage } from '../../utils/errors';
 
 type VehicleManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Vehicles'>;
@@ -491,9 +492,8 @@ const VehicleManagementScreen: React.FC = () => {
     }
   };
 
-  const handleMenuNavigate = (route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile') => {
+  const handleMenuNavigate = (route: AdminRoute) => {
     if (route === 'Vehicles') {
-      // Already on Vehicles, just close menu
       return;
     }
     navigation.navigate(route);

@@ -22,6 +22,7 @@ import StatusUpdateModal from '../../components/admin/StatusUpdateModal';
 import { Booking, BookingStatus } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
+import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 
 type AllBookingsScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Bookings'>;
 
@@ -152,7 +153,7 @@ const AllBookingsScreen: React.FC = () => {
     }
   };
 
-  const handleMenuNavigate = (route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile') => {
+  const handleMenuNavigate = (route: AdminRoute) => {
     if (route === 'Bookings') {
       // Already on Bookings, just close menu
       return;

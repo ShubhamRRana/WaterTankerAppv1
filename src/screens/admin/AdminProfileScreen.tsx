@@ -20,6 +20,7 @@ import { useAuthStore } from '../../store/authStore';
 import { User, isAdminUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
+import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { getErrorMessage } from '../../utils/errors';
 import { AuthService } from '../../services/auth.service';
@@ -502,14 +503,16 @@ const AdminProfileScreen: React.FC = () => {
     }
   }, [state.formErrors]);
 
-  const handleMenuNavigate = useCallback((route: 'Bookings' | 'Drivers' | 'Vehicles' | 'Reports' | 'Profile') => {
-    if (route === 'Profile') {
-      // Already on Profile, just close menu
-      dispatch({ type: 'SET_MENU_VISIBLE', payload: false });
-      return;
-    }
-    navigation.navigate(route);
-  }, [navigation]);
+  const handleMenuNavigate = useCallback(
+    (route: AdminRoute) => {
+      if (route === 'Profile') {
+        dispatch({ type: 'SET_MENU_VISIBLE', payload: false });
+        return;
+      }
+      navigation.navigate(route);
+    },
+    [navigation],
+  );
 
   const handleImageLoadStart = () => {
     dispatch({ type: 'SET_IMAGE_LOADING', payload: true });
