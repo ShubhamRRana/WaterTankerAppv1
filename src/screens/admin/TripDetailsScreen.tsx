@@ -51,7 +51,11 @@ const TripDetailsScreen: React.FC = () => {
   const [userLabels, setUserLabels] = useState<Map<string, { name: string; phone: string | null }>>(
     new Map(),
   );
+  const [customerAddressLines, setCustomerAddressLines] = useState<Map<string, string | null>>(
+    new Map(),
+  );
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
 
@@ -68,17 +72,15 @@ const TripDetailsScreen: React.FC = () => {
   const [monthOptionWidth, setMonthOptionWidth] = useState(0);
   const [yearOptionWidth, setYearOptionWidth] = useState(0);
 
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = useMemo(
+    () => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    [],
+  );
 
-  const getAvailableYears = () => {
+  const availableYears = useMemo(() => {
     const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let i = 0; i < 5; i++) {
-      years.push(currentYear - i);
-    }
-    return years;
-  };
-  const availableYears = getAvailableYears();
+    return Array.from({ length: 5 }, (_, i) => currentYear - i);
+  }, []);
 
   const loadTrips = useCallback(async () => {
     const { from, to } = getScheduledRange(periodType, selectedYear, selectedMonth);
@@ -90,14 +92,27 @@ const TripDetailsScreen: React.FC = () => {
     const ids = [...new Set(list.map((t) => t.customerId))];
     const labels = await SocietyTripService.getUserDisplayByIds(ids);
     setUserLabels(labels);
+    try {
+      const addressLines = await SocietyTripService.getCustomerAddressLineByUserIds(ids);
+      setCustomerAddressLines(addressLines);
+    } catch (e) {
+      errorLogger.medium('Failed to load society customer addresses (admin)', e);
+      setCustomerAddressLines(new Map());
+    }
+    setLoadError(false);
   }, [periodType, selectedYear, selectedMonth]);
 
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
+    setLoadError(false);
     loadTrips()
       .catch((e) => {
         errorLogger.medium('Failed to load society trips (admin)', e);
+        if (!cancelled) {
+          setLoadError(true);
+          Alert.alert('Error', 'Could not load trip details. Pull down to try again.');
+        }
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -174,6 +189,8 @@ const TripDetailsScreen: React.FC = () => {
     return allLiters.map((liters) => ({ liters, count: counts.get(liters) ?? 0 }));
   }, [displayTrips]);
 
+  const emptyBecauseFilter = rawTrips.length > 0 && displayTrips.length === 0;
+
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -198,14 +215,105 @@ const TripDetailsScreen: React.FC = () => {
     navigation.navigate(route);
   };
 
-  const openPhoto = (url: string) => {
+  const openPhoto = useCallback((url: string) => {
     Linking.openURL(url).catch(() => {
       Alert.alert('Error', 'Could not open photo.');
     });
-  };
+  }, []);
 
-  const renderHeader = () => (
-    <>
+  const societyDisplayName = useCallback(
+    (customerId: string) => {
+      if (!userLabels.has(customerId)) return 'Profile pending sync';
+      const n = userLabels.get(customerId)?.name?.trim();
+      if (!n) return 'Society';
+      return n;
+    },
+    [userLabels],
+  );
+
+  const renderTripItem = useCallback(
+    ({ item }: { item: SocietyTrip }) => {
+      const label = userLabels.get(item.customerId);
+      const addr = customerAddressLines.get(item.customerId);
+      const isAppBooking = item.source === 'booking';
+      return (
+        <Card style={styles.tripCard}>
+          <View style={styles.tripRow}>
+            {isAppBooking ? (
+              <View style={[styles.thumbWrap, styles.thumbBookingPlaceholder]}>
+                <Ionicons name="calendar-outline" size={28} color={UI_CONFIG.colors.textSecondary} />
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={() => openPhoto(item.photoUrl)}
+                activeOpacity={0.85}
+                style={styles.thumbWrap}
+              >
+                <Image source={{ uri: item.photoUrl }} style={styles.thumb} resizeMode="cover" />
+                <View style={styles.thumbHint}>
+                  <Ionicons name="expand-outline" size={14} color={UI_CONFIG.colors.textLight} />
+                </View>
+              </TouchableOpacity>
+            )}
+            <View style={styles.tripInfo}>
+              <Typography variant="body" style={styles.agencyName} numberOfLines={2}>
+                {item.agencyName}
+              </Typography>
+              <Typography variant="caption" style={styles.meta}>
+                {societyDisplayName(item.customerId)}
+                {label?.phone ? ` · ${label.phone}` : ''}
+              </Typography>
+              {addr ? (
+                <Typography variant="caption" style={styles.meta} numberOfLines={2}>
+                  {addr}
+                </Typography>
+              ) : null}
+              <Typography variant="caption" style={styles.meta}>
+                {formatDateTime(item.scheduledAt)}
+              </Typography>
+              <Typography variant="caption" style={styles.meta}>
+                {item.tankerSizeLiters}L tanker
+              </Typography>
+            </View>
+          </View>
+        </Card>
+      );
+    },
+    [userLabels, customerAddressLines, societyDisplayName, openPhoto],
+  );
+
+  const listEmpty = useMemo(
+    () => (
+      <Card style={styles.emptyState}>
+        <Ionicons name="car-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
+        <Typography variant="body" style={styles.emptyTitle}>
+          {emptyBecauseFilter ? 'No trips for this society' : 'No trips in this period'}
+        </Typography>
+        <Typography variant="caption" style={styles.emptySubtext}>
+          {emptyBecauseFilter
+            ? 'Clear the society filter or pick another society.'
+            : 'Try another month or year, or pull to refresh.'}
+        </Typography>
+      </Card>
+    ),
+    [emptyBecauseFilter],
+  );
+
+  if (isLoading && rawTrips.length === 0) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.loadingContainer}>
+          <LoadingSpinner />
+          <Typography variant="body" style={styles.loadingText}>
+            Loading trip details…
+          </Typography>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <TouchableOpacity
@@ -221,6 +329,7 @@ const TripDetailsScreen: React.FC = () => {
             </Typography>
             <Typography variant="body" style={styles.subtitle}>
               {displayTrips.length} {displayTrips.length === 1 ? 'trip' : 'trips'} in view
+              {loadError ? ' · Could not refresh' : ''}
             </Typography>
           </View>
         </View>
@@ -259,6 +368,7 @@ const TripDetailsScreen: React.FC = () => {
           </TouchableOpacity>
           {periodTypeOptionWidth > 0 && (
             <Animated.View
+              pointerEvents="none"
               style={[
                 styles.glassGlider,
                 {
@@ -305,6 +415,7 @@ const TripDetailsScreen: React.FC = () => {
               ))}
               {monthOptionWidth > 0 && (
                 <Animated.View
+                  pointerEvents="none"
                   style={[
                     styles.glassGlider,
                     {
@@ -353,6 +464,7 @@ const TripDetailsScreen: React.FC = () => {
               ))}
               {yearOptionWidth > 0 && (
                 <Animated.View
+                  pointerEvents="none"
                   style={[
                     styles.glassGlider,
                     {
@@ -374,8 +486,10 @@ const TripDetailsScreen: React.FC = () => {
           </Typography>
           <ScrollView
             horizontal
+            nestedScrollEnabled
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.societyChipsRow}
+            keyboardShouldPersistTaps="handled"
           >
             <TouchableOpacity
               style={[styles.societyChip, societyFilter === 'all' && styles.societyChipActive]}
@@ -424,79 +538,21 @@ const TripDetailsScreen: React.FC = () => {
           </View>
         ))}
       </Card>
-    </>
-  );
 
-  if (isLoading && rawTrips.length === 0) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.loadingContainer}>
-          <LoadingSpinner />
-          <Typography variant="body" style={styles.loadingText}>
-            Loading trip details…
-          </Typography>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  return (
-    <SafeAreaView style={styles.safeArea}>
       <FlatList
         style={styles.listFlex}
         data={displayTrips}
         keyExtractor={(item) => item.id}
-        ListHeaderComponent={renderHeader}
+        renderItem={renderTripItem}
+        nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={
-          displayTrips.length === 0 ? styles.emptyList : styles.listContent
+          displayTrips.length === 0 ? styles.emptyListContent : styles.listContent
         }
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={UI_CONFIG.colors.accent} />
         }
-        ListEmptyComponent={
-          <Card style={styles.emptyState}>
-            <Ionicons name="car-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
-            <Typography variant="body" style={styles.emptyTitle}>
-              No trips in this period
-            </Typography>
-            <Typography variant="caption" style={styles.emptySubtext}>
-              Try another month or year, or clear the society filter.
-            </Typography>
-          </Card>
-        }
-        renderItem={({ item }) => (
-          <Card style={styles.tripCard}>
-            <View style={styles.tripRow}>
-              <TouchableOpacity
-                onPress={() => openPhoto(item.photoUrl)}
-                activeOpacity={0.85}
-                style={styles.thumbWrap}
-              >
-                <Image source={{ uri: item.photoUrl }} style={styles.thumb} resizeMode="cover" />
-                <View style={styles.thumbHint}>
-                  <Ionicons name="expand-outline" size={14} color={UI_CONFIG.colors.textLight} />
-                </View>
-              </TouchableOpacity>
-              <View style={styles.tripInfo}>
-                <Typography variant="body" style={styles.agencyName} numberOfLines={2}>
-                  {item.agencyName}
-                </Typography>
-                <Typography variant="caption" style={styles.meta}>
-                  {userLabels.get(item.customerId)?.name ?? 'Society'}{' '}
-                  {userLabels.get(item.customerId)?.phone
-                    ? `· ${userLabels.get(item.customerId)!.phone}`
-                    : ''}
-                </Typography>
-                <Typography variant="caption" style={styles.meta}>
-                  {formatDateTime(item.scheduledAt)}
-                </Typography>
-                <Typography variant="caption" style={styles.meta}>
-                  {item.tankerSizeLiters}L tanker
-                </Typography>
-              </View>
-            </View>
-          </Card>
-        )}
+        ListEmptyComponent={listEmpty}
       />
 
       <AdminMenuDrawer
@@ -684,12 +740,13 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.textSecondary,
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 16,
     paddingBottom: 32,
   },
-  emptyList: {
+  emptyListContent: {
     flexGrow: 1,
     padding: 24,
+    justifyContent: 'center',
   },
   tripCard: {
     marginBottom: 12,
@@ -702,6 +759,14 @@ const styles = StyleSheet.create({
   thumbWrap: {
     position: 'relative',
     marginRight: 14,
+  },
+  thumbBookingPlaceholder: {
+    width: 88,
+    height: 88,
+    borderRadius: 10,
+    backgroundColor: UI_CONFIG.colors.surfaceLight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   thumb: {
     width: 88,
@@ -733,7 +798,7 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: 40,
-    marginHorizontal: 16,
+    marginHorizontal: 0,
   },
   emptyTitle: {
     marginTop: 16,

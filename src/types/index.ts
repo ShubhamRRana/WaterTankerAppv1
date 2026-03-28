@@ -189,6 +189,7 @@ export interface Expense {
 
 /**
  * Society-logged external tanker trip (customer app); admin can list all via RLS.
+ * `booking` rows come from the app `bookings` table (customer profile orders), not `society_trips`.
  */
 export interface SocietyTrip {
   id: string;
@@ -198,6 +199,7 @@ export interface SocietyTrip {
   tankerSizeLiters: number;
   photoUrl: string;
   createdAt: Date;
+  source?: 'society_trip' | 'booking';
 }
 
 // Navigation types
