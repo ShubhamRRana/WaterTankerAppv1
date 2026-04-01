@@ -61,7 +61,7 @@ async function fetchUserWithRole(userId: string, role?: RoleFilter, retryCount: 
     if (rolesError || !roles || roles.length === 0) {
       // Retry once if roles are not found (might be a race condition after registration)
       if (retryCount === 0) {
-        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+        await new Promise<void>(resolve => setTimeout(() => resolve(), 100)); // Small delay
         return fetchUserWithRole(userId, role, 1);
       }
       return null;
@@ -95,7 +95,7 @@ async function fetchUserWithRole(userId: string, role?: RoleFilter, retryCount: 
       
       // If driver data not found and this is the first attempt, retry once
       if (driverError && retryCount === 0) {
-        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+        await new Promise<void>(resolve => setTimeout(() => resolve(), 100)); // Small delay
         return fetchUserWithRole(userId, role, 1);
       }
       
@@ -109,7 +109,7 @@ async function fetchUserWithRole(userId: string, role?: RoleFilter, retryCount: 
       
       // If admin data not found and this is the first attempt, retry once
       if (adminError && retryCount === 0) {
-        await new Promise(resolve => setTimeout(resolve, 100)); // Small delay
+        await new Promise<void>(resolve => setTimeout(() => resolve(), 100)); // Small delay
         return fetchUserWithRole(userId, role, 1);
       }
       
@@ -436,7 +436,7 @@ export class AuthService {
         }
         userId = fnResult.user_id;
         driverCreatedViaEdgeFunction = true;
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise<void>(resolve => setTimeout(() => resolve(), 300));
       } else {
         // User doesn't exist in users table - try to create in Supabase Auth first
         // But if email already exists in Supabase Auth, try to sign in instead
@@ -547,7 +547,7 @@ export class AuthService {
           userId = authData.user.id;
 
           // Trigger may not have run yet; give it a moment then verify the row exists.
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
           const { data: userRow } = await supabase.from('users').select('id').eq('id', userId).maybeSingle();
           if (!userRow) {
             securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, 'User profile not created by trigger');
@@ -621,7 +621,7 @@ export class AuthService {
       }
 
       // Small delay to ensure database writes are committed
-      await new Promise(resolve => setTimeout(resolve, 50));
+      await new Promise<void>(resolve => setTimeout(() => resolve(), 50));
 
       // Fetch the created user using the newly generated userId
       // Ensure we're using the userId from authData, not from any cached session
@@ -877,7 +877,7 @@ export class AuthService {
    * }
    * ```
    */
-  static async loginWithRole(email: string, role: UserRole): Promise<AuthResult> {
+  static async loginWithRole(_email: string, role: UserRole): Promise<AuthResult> {
     try {
       // Get current session
       const { data: { session } } = await supabase.auth.getSession();
