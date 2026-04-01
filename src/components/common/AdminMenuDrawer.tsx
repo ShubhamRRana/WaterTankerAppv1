@@ -6,7 +6,6 @@ export type AdminRoute =
   | 'Drivers'
   | 'Vehicles'
   | 'Reports'
-  | 'TripDetails'
   | 'Profile'
   | 'BankAccounts'
   | 'Expenses';
@@ -60,15 +59,6 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
       route: 'Reports',
       onPress: () => {
         onNavigate('Reports');
-        onClose();
-      },
-    },
-    {
-      label: 'Trip details',
-      icon: 'map-outline',
-      route: 'TripDetails',
-      onPress: () => {
-        onNavigate('TripDetails');
         onClose();
       },
     },
