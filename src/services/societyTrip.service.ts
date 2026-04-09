@@ -46,14 +46,20 @@ function mapRow(row: SocietyTripRow): SocietyTrip {
 }
 
 export class SocietyTripService {
-  static async listTripsForAdmin(adminId: string): Promise<SocietyTrip[]> {
+  static async listTripsForAdmin(adminId: string, businessName?: string): Promise<SocietyTrip[]> {
     try {
+      const normalizedBusinessName = typeof businessName === 'string' ? businessName.trim() : '';
+      const orParts = [
+        `agency_admin_id.eq.${adminId}`,
+        ...(normalizedBusinessName ? [`agency_name.eq.${JSON.stringify(normalizedBusinessName)}`] : []),
+      ];
+
       const { data, error } = await supabase
         .from('society_trips')
         .select(
           'id, customer_id, agency_name, agency_admin_id, scheduled_at, tanker_size_liters, tanker_amount, photo_urls, created_at',
         )
-        .eq('agency_admin_id', adminId)
+        .or(orParts.join(','))
         .order('scheduled_at', { ascending: false });
 
       if (error) {
@@ -64,7 +70,7 @@ export class SocietyTripService {
       return rows.map(mapRow);
     } catch (error) {
       handleError(error, {
-        context: { operation: 'listSocietyTripsForAdmin', adminId },
+        context: { operation: 'listSocietyTripsForAdmin', adminId, businessName },
         userFacing: false,
       });
       throw error;
