@@ -3,6 +3,7 @@ import MenuDrawer, { MenuItem } from './MenuDrawer';
 
 export type AdminRoute =
   | 'Bookings'
+  | 'TripDetails'
   | 'Drivers'
   | 'Vehicles'
   | 'Reports'
@@ -32,6 +33,15 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
       route: 'Bookings',
       onPress: () => {
         onNavigate('Bookings');
+        onClose();
+      },
+    },
+    {
+      label: 'Trip details',
+      icon: 'car-outline',
+      route: 'TripDetails',
+      onPress: () => {
+        onNavigate('TripDetails');
         onClose();
       },
     },
