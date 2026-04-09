@@ -75,11 +75,8 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
     new Map(),
   );
 
-  const [paymentCompletion, setPaymentCompletion] = useState<{
-    state: 'idle' | 'loading' | 'ready' | 'error';
-    totalSocieties: number;
-    completedSocieties: number;
-  }>({ state: 'idle', totalSocieties: 0, completedSocieties: 0 });
+  const [paymentPeriodLoad, setPaymentPeriodLoad] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [completedAtByCustomerId, setCompletedAtByCustomerId] = useState<Map<string, Date>>(() => new Map());
 
   const periodTypeGliderAnim = useRef(new Animated.Value(0)).current;
   const monthGliderAnim = useRef(new Animated.Value(0)).current;
@@ -252,41 +249,84 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadPaymentCompletion() {
-      if (!canLoad) return;
+    async function loadPaymentPeriodCompletions() {
+      if (!canLoad) {
+        setPaymentPeriodLoad('idle');
+        setCompletedAtByCustomerId(new Map());
+        return;
+      }
 
       if (periodType !== 'month') {
-        setPaymentCompletion({ state: 'idle', totalSocieties: 0, completedSocieties: 0 });
+        setPaymentPeriodLoad('idle');
+        setCompletedAtByCustomerId(new Map());
         return;
       }
 
-      const customerIds = [...new Set(userFilteredTrips.map((t) => t.customerId))];
+      const customerIds = [...new Set(filteredTrips.map((t) => t.customerId))];
       if (customerIds.length === 0) {
-        setPaymentCompletion({ state: 'ready', totalSocieties: 0, completedSocieties: 0 });
+        setPaymentPeriodLoad('ready');
+        setCompletedAtByCustomerId(new Map());
         return;
       }
 
-      setPaymentCompletion((p) => ({ ...p, state: 'loading', totalSocieties: customerIds.length }));
+      setPaymentPeriodLoad('loading');
       try {
-        const completed = await SocietyPaymentPeriodsService.listCompletedCustomerIdsForPeriod(monthPeriodKey, customerIds);
+        const map = await SocietyPaymentPeriodsService.listCompletedAtByCustomerForPeriod(monthPeriodKey, customerIds);
         if (cancelled) return;
-        setPaymentCompletion({
-          state: 'ready',
-          totalSocieties: customerIds.length,
-          completedSocieties: completed.size,
-        });
+        setCompletedAtByCustomerId(map);
+        setPaymentPeriodLoad('ready');
       } catch {
         if (cancelled) return;
-        setPaymentCompletion({ state: 'error', totalSocieties: customerIds.length, completedSocieties: 0 });
+        setCompletedAtByCustomerId(new Map());
+        setPaymentPeriodLoad('error');
       }
     }
 
-    loadPaymentCompletion();
+    loadPaymentPeriodCompletions();
 
     return () => {
       cancelled = true;
     };
-  }, [canLoad, monthPeriodKey, periodType, userFilteredTrips]);
+  }, [canLoad, monthPeriodKey, periodType, filteredTrips]);
+
+  const maxTripCreatedAtByCustomerId = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const t of filteredTrips) {
+      const ts = t.createdAt.getTime();
+      const prev = m.get(t.customerId);
+      if (prev === undefined || ts > prev) m.set(t.customerId, ts);
+    }
+    return m;
+  }, [filteredTrips]);
+
+  const paymentSettledByCustomerId = useMemo(() => {
+    const out = new Map<string, boolean>();
+    if (periodType !== 'month') {
+      for (const id of availableSocietyUserIds) out.set(id, false);
+      return out;
+    }
+    for (const id of availableSocietyUserIds) {
+      const completedAt = completedAtByCustomerId.get(id);
+      const maxTs = maxTripCreatedAtByCustomerId.get(id);
+      if (!completedAt || maxTs === undefined) {
+        out.set(id, false);
+      } else {
+        out.set(id, maxTs <= completedAt.getTime());
+      }
+    }
+    return out;
+  }, [periodType, availableSocietyUserIds, completedAtByCustomerId, maxTripCreatedAtByCustomerId]);
+
+  const paymentModalStats = useMemo(() => {
+    if (periodType !== 'month') return { totalSocieties: 0, completedSocieties: 0 };
+    const ids =
+      selectedSocietyUserId === 'All' ? availableSocietyUserIds : [selectedSocietyUserId];
+    let completed = 0;
+    for (const id of ids) {
+      if (paymentSettledByCustomerId.get(id)) completed += 1;
+    }
+    return { totalSocieties: ids.length, completedSocieties: completed };
+  }, [periodType, selectedSocietyUserId, availableSocietyUserIds, paymentSettledByCustomerId]);
 
   const tripsByTankerSize = useMemo(() => {
     const bucket = new Map<number, { count: number; amountSum: number; tripsWithAmount: number }>();
@@ -493,6 +533,11 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                   ? 'All society users'
                   : societyUserLabelById(selectedSocietyUserId)}
               </Typography>
+              {periodType === 'month' &&
+              selectedSocietyUserId !== 'All' &&
+              paymentSettledByCustomerId.get(selectedSocietyUserId) ? (
+                <Ionicons name="checkmark-circle" size={20} color={UI_CONFIG.colors.success} style={styles.societyUserPaidIcon} />
+              ) : null}
               <Ionicons name="chevron-down" size={20} color={UI_CONFIG.colors.text} />
             </TouchableOpacity>
           </View>
@@ -513,6 +558,8 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                 <ScrollView style={styles.dropdownScroll} showsVerticalScrollIndicator={false}>
                   {['All', ...availableSocietyUserIds].map((id) => {
                     const active = selectedSocietyUserId === id;
+                    const showPaid =
+                      periodType === 'month' && id !== 'All' && paymentSettledByCustomerId.get(id) === true;
                     return (
                       <TouchableOpacity
                         key={id}
@@ -522,14 +569,25 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                           setSocietyUserDropdownVisible(false);
                         }}
                         activeOpacity={0.7}
+                        accessibilityState={{ selected: active }}
                       >
-                        <Typography
-                          variant="body"
-                          style={[styles.dropdownOptionText, active && styles.dropdownOptionTextActive]}
-                          numberOfLines={1}
-                        >
-                          {id === 'All' ? 'All society users' : societyUserLabelById(id)}
-                        </Typography>
+                        <View style={styles.dropdownOptionLabelRow}>
+                          {showPaid ? (
+                            <Ionicons
+                              name="checkmark-circle"
+                              size={18}
+                              color={UI_CONFIG.colors.success}
+                              style={styles.dropdownPaidIcon}
+                            />
+                          ) : null}
+                          <Typography
+                            variant="body"
+                            style={[styles.dropdownOptionText, active && styles.dropdownOptionTextActive]}
+                            numberOfLines={1}
+                          >
+                            {id === 'All' ? 'All society users' : societyUserLabelById(id)}
+                          </Typography>
+                        </View>
                         {active ? <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.accent} /> : null}
                       </TouchableOpacity>
                     );
@@ -703,17 +761,17 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                   {periodType === 'month' ? `Payment status for ${periodLabel}` : `Period: ${periodLabel}`}
                   {selectedSocietyUserId === 'All' ? '' : ` • Society user: ${societyUserLabelById(selectedSocietyUserId)}`}
                   {periodType === 'month' ? (
-                    paymentCompletion.state === 'ready' ? (
-                      paymentCompletion.totalSocieties === 0 ? (
+                    paymentPeriodLoad === 'ready' ? (
+                      paymentModalStats.totalSocieties === 0 ? (
                         ' • No societies in this month'
-                      ) : paymentCompletion.completedSocieties === paymentCompletion.totalSocieties ? (
+                      ) : paymentModalStats.completedSocieties === paymentModalStats.totalSocieties ? (
                         ' • Payment completed'
                       ) : (
-                        ` • Pending (${paymentCompletion.completedSocieties}/${paymentCompletion.totalSocieties} societies paid • ${userFilteredTrips.length} trips)`
+                        ` • Pending (${paymentModalStats.completedSocieties}/${paymentModalStats.totalSocieties} societies paid • ${userFilteredTrips.length} trips)`
                       )
-                    ) : paymentCompletion.state === 'loading' ? (
+                    ) : paymentPeriodLoad === 'loading' ? (
                       ' • Checking…'
-                    ) : paymentCompletion.state === 'error' ? (
+                    ) : paymentPeriodLoad === 'error' ? (
                       ' • Status unavailable'
                     ) : (
                       ''
@@ -944,6 +1002,9 @@ const styles = StyleSheet.create({
     color: UI_CONFIG.colors.text,
     fontWeight: '600',
   },
+  societyUserPaidIcon: {
+    marginRight: 6,
+  },
   dropdownOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -978,9 +1039,19 @@ const styles = StyleSheet.create({
   dropdownOptionActive: {
     backgroundColor: UI_CONFIG.colors.background,
   },
+  dropdownOptionLabelRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 10,
+    minWidth: 0,
+  },
+  dropdownPaidIcon: {
+    marginRight: 8,
+  },
   dropdownOptionText: {
     flex: 1,
-    marginRight: 10,
+    marginRight: 0,
     color: UI_CONFIG.colors.text,
     fontWeight: '500',
   },
