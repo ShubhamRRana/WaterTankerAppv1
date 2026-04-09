@@ -23,6 +23,8 @@ import { Typography, LoadingSpinner, AdminMenuDrawer } from '../../components/co
 import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { BOOKING_CONFIG, UI_CONFIG } from '../../constants/config';
 import { SocietyTrip, SocietyTripService } from '../../services/societyTrip.service';
+import { SocietyPaymentPeriodsService } from '../../services/societyPaymentPeriods.service';
+import { SocietyTripUsersService } from '../../services/societyTripUsers.service';
 import { formatDateTime } from '../../utils/dateUtils';
 
 type TripDetailsNavigationProp = StackNavigationProp<AdminStackParamList, 'TripDetails'>;
@@ -67,6 +69,17 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
   const [periodType, setPeriodType] = useState<'month' | 'year'>('month');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedSocietyUserId, setSelectedSocietyUserId] = useState<string>('All');
+  const [societyUserDropdownVisible, setSocietyUserDropdownVisible] = useState(false);
+  const [societyUsersById, setSocietyUsersById] = useState<Map<string, { id: string; name: string; phone: string | null }>>(
+    new Map(),
+  );
+
+  const [paymentCompletion, setPaymentCompletion] = useState<{
+    state: 'idle' | 'loading' | 'ready' | 'error';
+    totalSocieties: number;
+    completedSocieties: number;
+  }>({ state: 'idle', totalSocieties: 0, completedSocieties: 0 });
 
   const periodTypeGliderAnim = useRef(new Animated.Value(0)).current;
   const monthGliderAnim = useRef(new Animated.Value(0)).current;
@@ -179,9 +192,105 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
     [trips, periodType, selectedYear, selectedMonth],
   );
 
+  const availableSocietyUserIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const t of filteredTrips) {
+      if (t.customerId) ids.add(t.customerId);
+    }
+    return [...ids].sort((a, b) => a.localeCompare(b));
+  }, [filteredTrips]);
+
+  useEffect(() => {
+    if (selectedSocietyUserId === 'All') return;
+    if (!availableSocietyUserIds.includes(selectedSocietyUserId)) setSelectedSocietyUserId('All');
+  }, [availableSocietyUserIds, selectedSocietyUserId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSocietyUsers() {
+      const ids = [...new Set(filteredTrips.map((t) => t.customerId))];
+      if (ids.length === 0) {
+        setSocietyUsersById(new Map());
+        return;
+      }
+      try {
+        const map = await SocietyTripUsersService.getUsersLiteByIds(ids);
+        if (cancelled) return;
+        setSocietyUsersById(map);
+      } catch {
+        if (cancelled) return;
+        setSocietyUsersById(new Map());
+      }
+    }
+    loadSocietyUsers();
+    return () => {
+      cancelled = true;
+    };
+  }, [filteredTrips]);
+
+  const userFilteredTrips = useMemo(() => {
+    if (selectedSocietyUserId === 'All') return filteredTrips;
+    return filteredTrips.filter((t) => t.customerId === selectedSocietyUserId);
+  }, [filteredTrips, selectedSocietyUserId]);
+
+  const societyUserLabelById = useCallback(
+    (id: string) => {
+      const u = societyUsersById.get(id);
+      if (u) return u.phone ? `${u.name} • ${u.phone}` : u.name;
+      return id.length > 8 ? `${id.slice(0, 8)}…` : id;
+    },
+    [societyUsersById],
+  );
+
+  const monthPeriodKey = useMemo(() => `m:${selectedYear}-${selectedMonth}`, [selectedYear, selectedMonth]);
+
+  const periodLabel = useMemo(() => {
+    if (periodType === 'year') return `${selectedYear}`;
+    return `${months[selectedMonth]} ${selectedYear}`;
+  }, [months, periodType, selectedMonth, selectedYear]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPaymentCompletion() {
+      if (!canLoad) return;
+
+      if (periodType !== 'month') {
+        setPaymentCompletion({ state: 'idle', totalSocieties: 0, completedSocieties: 0 });
+        return;
+      }
+
+      const customerIds = [...new Set(userFilteredTrips.map((t) => t.customerId))];
+      if (customerIds.length === 0) {
+        setPaymentCompletion({ state: 'ready', totalSocieties: 0, completedSocieties: 0 });
+        return;
+      }
+
+      setPaymentCompletion((p) => ({ ...p, state: 'loading', totalSocieties: customerIds.length }));
+      try {
+        const completed = await SocietyPaymentPeriodsService.listCompletedCustomerIdsForPeriod(monthPeriodKey, customerIds);
+        if (cancelled) return;
+        setPaymentCompletion({
+          state: 'ready',
+          totalSocieties: customerIds.length,
+          completedSocieties: completed.size,
+        });
+      } catch {
+        if (cancelled) return;
+        setPaymentCompletion({ state: 'error', totalSocieties: customerIds.length, completedSocieties: 0 });
+      }
+    }
+
+    loadPaymentCompletion();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canLoad, monthPeriodKey, periodType, userFilteredTrips]);
+
   const tripsByTankerSize = useMemo(() => {
     const bucket = new Map<number, { count: number; amountSum: number; tripsWithAmount: number }>();
-    for (const t of filteredTrips) {
+    for (const t of userFilteredTrips) {
       const prev = bucket.get(t.tankerSizeLiters) ?? { count: 0, amountSum: 0, tripsWithAmount: 0 };
       prev.count += 1;
       if (t.tankerAmount != null && Number.isFinite(t.tankerAmount)) {
@@ -201,26 +310,28 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
         tripsWithAmount: b?.tripsWithAmount ?? 0,
       };
     });
-  }, [filteredTrips]);
+  }, [userFilteredTrips]);
 
   const anyTripHasAmount = useMemo(
-    () => filteredTrips.some((t) => t.tankerAmount != null && Number.isFinite(t.tankerAmount)),
-    [filteredTrips],
+    () => userFilteredTrips.some((t) => t.tankerAmount != null && Number.isFinite(t.tankerAmount)),
+    [userFilteredTrips],
   );
 
   const grandTotalAmount = useMemo(
     () =>
-      filteredTrips.reduce((sum, t) => {
+      userFilteredTrips.reduce((sum, t) => {
         if (t.tankerAmount != null && Number.isFinite(t.tankerAmount)) return sum + t.tankerAmount;
         return sum;
       }, 0),
-    [filteredTrips],
+    [userFilteredTrips],
   );
 
   const subtitle = useMemo(() => {
     if (!canLoad) return 'Sign in as an admin to view trips';
-    return `${filteredTrips.length} ${filteredTrips.length === 1 ? 'trip' : 'trips'} in this period`;
-  }, [canLoad, filteredTrips.length]);
+    const userSuffix =
+      selectedSocietyUserId === 'All' ? '' : ` • ${societyUserLabelById(selectedSocietyUserId)}`;
+    return `${userFilteredTrips.length} ${userFilteredTrips.length === 1 ? 'trip' : 'trips'} in this period${userSuffix}`;
+  }, [canLoad, societyUserLabelById, selectedSocietyUserId, userFilteredTrips.length]);
 
   if (isLoading && trips.length === 0) {
     return (
@@ -369,6 +480,64 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <View style={styles.summaryCardWrap}>
+          <View style={styles.societyUserFilterContainer}>
+            <TouchableOpacity
+              style={styles.societyUserFilterButton}
+              onPress={() => setSocietyUserDropdownVisible(true)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Select society user"
+            >
+              <Typography variant="body" style={styles.societyUserFilterButtonText} numberOfLines={1}>
+                {selectedSocietyUserId === 'All'
+                  ? 'All society users'
+                  : societyUserLabelById(selectedSocietyUserId)}
+              </Typography>
+              <Ionicons name="chevron-down" size={20} color={UI_CONFIG.colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <Modal
+            visible={societyUserDropdownVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setSocietyUserDropdownVisible(false)}
+            statusBarTranslucent
+          >
+            <TouchableOpacity
+              style={styles.dropdownOverlay}
+              activeOpacity={1}
+              onPress={() => setSocietyUserDropdownVisible(false)}
+            >
+              <View style={styles.dropdownContent}>
+                <ScrollView style={styles.dropdownScroll} showsVerticalScrollIndicator={false}>
+                  {['All', ...availableSocietyUserIds].map((id) => {
+                    const active = selectedSocietyUserId === id;
+                    return (
+                      <TouchableOpacity
+                        key={id}
+                        style={[styles.dropdownOption, active && styles.dropdownOptionActive]}
+                        onPress={() => {
+                          setSelectedSocietyUserId(id);
+                          setSocietyUserDropdownVisible(false);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Typography
+                          variant="body"
+                          style={[styles.dropdownOptionText, active && styles.dropdownOptionTextActive]}
+                          numberOfLines={1}
+                        >
+                          {id === 'All' ? 'All society users' : societyUserLabelById(id)}
+                        </Typography>
+                        {active ? <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.accent} /> : null}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            </TouchableOpacity>
+          </Modal>
           <Card
             padding="medium"
             style={styles.summaryCard}
@@ -387,9 +556,9 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
         </View>
 
         <FlatList
-          data={filteredTrips}
+          data={userFilteredTrips}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={filteredTrips.length === 0 ? styles.emptyList : styles.listContent}
+          contentContainerStyle={userFilteredTrips.length === 0 ? styles.emptyList : styles.listContent}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -401,7 +570,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
             <View style={styles.emptyState}>
               <Ionicons name="car-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
               <Typography variant="body" style={styles.emptyTitle}>
-                {trips.length === 0 ? 'No trips yet' : 'No trips in this period'}
+                {trips.length === 0 ? 'No trips yet' : 'No trips for this society user in this period'}
               </Typography>
               <Typography variant="caption" style={styles.emptySubtext}>
                 {trips.length === 0
@@ -526,9 +695,34 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
           />
           <View style={styles.breakdownModalSheet}>
             <View style={styles.breakdownModalHeader}>
-              <Typography variant="h2" style={styles.breakdownModalTitle}>
-                Trips by tanker size
-              </Typography>
+              <View style={styles.breakdownModalTitleWrap}>
+                <Typography variant="h2" style={styles.breakdownModalTitle}>
+                  Trips by tanker size
+                </Typography>
+                <Typography variant="caption" style={styles.breakdownModalSubtitle}>
+                  {periodType === 'month' ? `Payment status for ${periodLabel}` : `Period: ${periodLabel}`}
+                  {selectedSocietyUserId === 'All' ? '' : ` • Society user: ${societyUserLabelById(selectedSocietyUserId)}`}
+                  {periodType === 'month' ? (
+                    paymentCompletion.state === 'ready' ? (
+                      paymentCompletion.totalSocieties === 0 ? (
+                        ' • No societies in this month'
+                      ) : paymentCompletion.completedSocieties === paymentCompletion.totalSocieties ? (
+                        ' • Payment completed'
+                      ) : (
+                        ` • Pending (${paymentCompletion.completedSocieties}/${paymentCompletion.totalSocieties} societies paid • ${userFilteredTrips.length} trips)`
+                      )
+                    ) : paymentCompletion.state === 'loading' ? (
+                      ' • Checking…'
+                    ) : paymentCompletion.state === 'error' ? (
+                      ' • Status unavailable'
+                    ) : (
+                      ''
+                    )
+                  ) : (
+                    ''
+                  )}
+                </Typography>
+              </View>
               <TouchableOpacity
                 onPress={() => setTankerBreakdownVisible(false)}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -539,7 +733,11 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.breakdownModalScroll} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={styles.breakdownModalScroll}
+              contentContainerStyle={styles.breakdownModalScrollContent}
+              showsVerticalScrollIndicator={false}
+            >
               {tripsByTankerSize.map(({ liters, count, amountSum, tripsWithAmount }) => (
                 <View key={liters} style={styles.summaryRow}>
                   <View style={styles.summaryColLeft}>
@@ -560,7 +758,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                 </View>
               ))}
 
-              {filteredTrips.length > 0 ? (
+              {userFilteredTrips.length > 0 ? (
                 <View style={[styles.summaryRow, styles.summaryTotalRow]}>
                   <View style={styles.summaryColLeft}>
                     <Typography variant="body" style={[styles.summaryCellLeft, styles.summaryTotalStrong]}>
@@ -574,7 +772,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                   </View>
                   <View style={styles.summaryColRight}>
                     <Typography variant="caption" style={styles.summaryCellRight}>
-                      {filteredTrips.length} {filteredTrips.length === 1 ? 'trip' : 'trips'}
+                      {userFilteredTrips.length} {userFilteredTrips.length === 1 ? 'trip' : 'trips'}
                     </Typography>
                   </View>
                 </View>
@@ -726,6 +924,70 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 8,
   },
+  societyUserFilterContainer: {
+    marginBottom: 10,
+  },
+  societyUserFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderWidth: 1,
+    borderColor: UI_CONFIG.colors.border,
+  },
+  societyUserFilterButtonText: {
+    flex: 1,
+    marginRight: 10,
+    color: UI_CONFIG.colors.text,
+    fontWeight: '600',
+  },
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  dropdownContent: {
+    backgroundColor: UI_CONFIG.colors.surface,
+    borderRadius: 12,
+    padding: 8,
+    width: '100%',
+    maxWidth: 420,
+    maxHeight: 420,
+    shadowColor: UI_CONFIG.colors.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  dropdownScroll: {
+    width: '100%',
+  },
+  dropdownOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  dropdownOptionActive: {
+    backgroundColor: UI_CONFIG.colors.background,
+  },
+  dropdownOptionText: {
+    flex: 1,
+    marginRight: 10,
+    color: UI_CONFIG.colors.text,
+    fontWeight: '500',
+  },
+  dropdownOptionTextActive: {
+    color: UI_CONFIG.colors.accent,
+    fontWeight: '600',
+  },
   summaryCard: {
     paddingVertical: 12,
     paddingHorizontal: 14,
@@ -859,30 +1121,41 @@ const styles = StyleSheet.create({
     backgroundColor: UI_CONFIG.colors.surface,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
-    paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 12,
     maxHeight: '85%',
   },
   breakdownModalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
     paddingRight: 4,
   },
-  breakdownModalTitle: {
+  breakdownModalTitleWrap: {
     flex: 1,
+    minWidth: 0,
+    marginRight: 12,
+  },
+  breakdownModalTitle: {
     color: UI_CONFIG.colors.text,
     fontWeight: '700',
-    marginRight: 12,
+  },
+  breakdownModalSubtitle: {
+    color: UI_CONFIG.colors.textSecondary,
+    marginTop: 4,
   },
   breakdownModalScroll: {
     maxHeight: 480,
   },
+  breakdownModalScrollContent: {
+    paddingBottom: 16,
+  },
   summaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: UI_CONFIG.colors.border,
   },
