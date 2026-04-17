@@ -15,7 +15,7 @@ export type DriverTabParamList = {
 
 export type DriverStackParamList = {
   DriverTabs: undefined;
-  CollectPayment: { orderId: string };
+  CollectPayment: { orderId: string; autoOpenDeliveryModal?: boolean };
 };
 
 const Tab = createBottomTabNavigator<DriverTabParamList>();

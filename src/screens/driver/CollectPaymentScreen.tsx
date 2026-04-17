@@ -20,6 +20,7 @@ const CollectPaymentScreen: React.FC = () => {
   const route = useRoute<CollectPaymentScreenRouteProp>();
   const { updateBookingStatus, getBookingById } = useBookingStore();
   const orderId = route.params.orderId;
+  const autoOpenDeliveryModal = route.params?.autoOpenDeliveryModal;
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
@@ -28,10 +29,22 @@ const CollectPaymentScreen: React.FC = () => {
   const [loadingQRCode, setLoadingQRCode] = useState(false);
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [isSubmittingDelivery, setIsSubmittingDelivery] = useState(false);
+  const [hasAutoOpenedModal, setHasAutoOpenedModal] = useState(false);
 
   useEffect(() => {
     loadBooking();
   }, [orderId]);
+
+  useEffect(() => {
+    if (!autoOpenDeliveryModal) return;
+    if (hasAutoOpenedModal) return;
+    if (loading) return;
+    if (error) return;
+    if (!booking) return;
+
+    setHasAutoOpenedModal(true);
+    setShowDeliveryModal(true);
+  }, [autoOpenDeliveryModal, hasAutoOpenedModal, loading, error, booking]);
 
   const loadBooking = async () => {
     if (!orderId) {
@@ -94,7 +107,26 @@ const CollectPaymentScreen: React.FC = () => {
       return;
     }
 
-    setShowDeliveryModal(true);
+    // If delivery details are not saved yet, collect them first.
+    if (!booking?.deliveredAmount || !booking?.deliveredTankerLiters) {
+      setShowDeliveryModal(true);
+      return;
+    }
+
+    try {
+      setIsSubmittingDelivery(true);
+      await updateBookingStatus(orderId, 'delivered', {
+        deliveredAt: new Date(),
+      });
+      Alert.alert('Success', 'Delivery completed successfully!');
+      navigation.goBack();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to complete delivery. Please try again.';
+      Alert.alert('Error', message);
+    } finally {
+      setIsSubmittingDelivery(false);
+    }
   };
 
   const handleSubmitDelivery = async (amount: number, deliveredLiters: number) => {
@@ -102,8 +134,9 @@ const CollectPaymentScreen: React.FC = () => {
 
     try {
       setIsSubmittingDelivery(true);
-      await updateBookingStatus(orderId, 'delivered', {
-        deliveredAt: new Date(),
+      // Only save the delivery details here.
+      // Delivery completion (status = delivered) happens when driver taps "Payment Collected".
+      await updateBookingStatus(orderId, booking?.status ?? 'in_transit', {
         deliveredAmount: amount,
         deliveredTankerLiters: deliveredLiters,
         // Keep legacy fields in sync for existing UI/reports.
@@ -112,13 +145,27 @@ const CollectPaymentScreen: React.FC = () => {
         distanceCharge: 0,
         tankerSize: deliveredLiters,
       });
-      Alert.alert('Success', 'Delivery completed successfully!');
-      navigation.goBack();
+      setBooking((prev) =>
+        prev
+          ? {
+              ...prev,
+              deliveredAmount: amount,
+              deliveredTankerLiters: deliveredLiters,
+              totalPrice: amount,
+              basePrice: amount,
+              distanceCharge: 0,
+              tankerSize: deliveredLiters,
+            }
+          : prev
+      );
+      Alert.alert('Saved', 'Delivery amount saved. Now collect payment and tap “Payment Collected”.');
+      setShowDeliveryModal(false);
     } catch (error) {
-      Alert.alert('Error', 'Failed to complete delivery. Please try again.');
+      const message =
+        error instanceof Error ? error.message : 'Failed to complete delivery. Please try again.';
+      Alert.alert('Error', message);
     } finally {
       setIsSubmittingDelivery(false);
-      setShowDeliveryModal(false);
     }
   };
 

@@ -192,7 +192,7 @@ export interface DriverTabParamList {
 
 export interface DriverStackParamList {
   DriverTabs: undefined;
-  CollectPayment: { orderId: string };
+  CollectPayment: { orderId: string; autoOpenDeliveryModal?: boolean };
 }
 
 // AdminStackParamList is now exported from AdminNavigator.tsx

@@ -287,7 +287,7 @@ const OrdersScreen: React.FC = () => {
 
   const handleCollectPayment = useCallback((orderId: string) => {
     try {
-      navigation.navigate('CollectPayment', { orderId });
+      navigation.navigate('CollectPayment', { orderId, autoOpenDeliveryModal: true });
     } catch (error) {
             Alert.alert('Error', 'Failed to open payment screen. Please try again.');
     }
