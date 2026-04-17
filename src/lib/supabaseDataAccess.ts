@@ -105,6 +105,7 @@ interface BookingRow {
   driver_name: string | null;
   driver_phone: string | null;
   status: string;
+  vehicle_id?: string | null;
   tanker_size: number;
   quantity: number | null;
   base_price: number;
@@ -121,6 +122,8 @@ interface BookingRow {
   updated_at: string;
   accepted_at: string | null;
   delivered_at: string | null;
+  delivered_tanker_liters?: number | null;
+  delivered_amount?: number | null;
 }
 
 interface VehicleRow {
@@ -333,6 +336,7 @@ function mapBookingFromDb(row: BookingRow): Booking {
     ...(row.driver_name && { driverName: row.driver_name }),
     ...(row.driver_phone && { driverPhone: row.driver_phone }),
     status: row.status as Booking['status'],
+    ...(row.vehicle_id && { vehicleId: row.vehicle_id }),
     tankerSize: row.tanker_size,
     ...(row.quantity !== null && row.quantity !== undefined && { quantity: row.quantity }),
     basePrice: Number(row.base_price),
@@ -349,6 +353,8 @@ function mapBookingFromDb(row: BookingRow): Booking {
     updatedAt: deserialized.updatedAt,
     ...(deserialized.acceptedAt && { acceptedAt: deserialized.acceptedAt }),
     ...(deserialized.deliveredAt && { deliveredAt: deserialized.deliveredAt }),
+    ...(row.delivered_tanker_liters != null && { deliveredTankerLiters: row.delivered_tanker_liters }),
+    ...(row.delivered_amount != null && { deliveredAmount: Number(row.delivered_amount) }),
   };
 }
 
@@ -367,6 +373,7 @@ function mapBookingToDb(booking: Booking): Partial<BookingRow> {
     driver_name: booking.driverName || null,
     driver_phone: booking.driverPhone || null,
     status: booking.status,
+    vehicle_id: booking.vehicleId || null,
     tanker_size: booking.tankerSize,
     quantity: booking.quantity || 1,
     base_price: booking.basePrice,
@@ -383,6 +390,8 @@ function mapBookingToDb(booking: Booking): Partial<BookingRow> {
     updated_at: serializeDate(booking.updatedAt) || new Date().toISOString(),
     accepted_at: serializeDate(booking.acceptedAt),
     delivered_at: serializeDate(booking.deliveredAt),
+    delivered_tanker_liters: booking.deliveredTankerLiters ?? null,
+    delivered_amount: booking.deliveredAmount ?? null,
   };
 }
 

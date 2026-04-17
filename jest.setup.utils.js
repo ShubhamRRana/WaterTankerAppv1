@@ -4,6 +4,15 @@
 // Define __DEV__ for tests (used in config.ts)
 global.__DEV__ = false;
 
+process.env.EXPO_PUBLIC_SUPABASE_URL ||= 'http://localhost:54321';
+process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||= 'test-anon-key';
+
+// Mock expo-constants for node test environment (prevents ESM parsing issues).
+jest.mock('expo-constants', () => ({
+  expoConfig: { extra: {} },
+  default: { expoConfig: { extra: {} } },
+}));
+
 // Mock AsyncStorage for tests that use it (like localStorageDataAccess)
 jest.mock('@react-native-async-storage/async-storage', () => {
   const storage = {};

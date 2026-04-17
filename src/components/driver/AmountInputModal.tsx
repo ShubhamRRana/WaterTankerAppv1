@@ -16,7 +16,7 @@ import { ValidationUtils, SanitizationUtils } from '../../utils';
 interface AmountInputModalProps {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (amount: number) => void;
+  onSubmit: (amount: number, deliveredLiters: number) => void;
   isSubmitting?: boolean;
   customerName?: string;
   vehicleCapacity?: number;
@@ -31,6 +31,7 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
   vehicleCapacity,
 }) => {
   const [amount, setAmount] = useState('');
+  const [liters, setLiters] = useState('');
   const [error, setError] = useState<string>('');
 
   const handleAmountChange = (text: string) => {
@@ -56,11 +57,19 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
       return;
     }
 
-    onSubmit(amountNum);
+    const litersText = liters.trim() || (vehicleCapacity != null ? String(vehicleCapacity) : '');
+    const litersNum = parseInt(litersText, 10);
+    if (!Number.isFinite(litersNum) || litersNum <= 0) {
+      setError('Delivered liters must be a positive number');
+      return;
+    }
+
+    onSubmit(amountNum, litersNum);
   };
 
   const handleClose = () => {
     setAmount('');
+    setLiters('');
     setError('');
     onClose();
   };
@@ -112,12 +121,23 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
 
             <Card style={styles.inputCard}>
               <Typography variant="h3" style={styles.sectionTitle}>
-                Enter Amount
+                Enter Delivery Details
               </Typography>
               <Typography variant="body" style={styles.description}>
-                Please enter the delivery amount in rupees. This amount will be reflected in the booking and reports.
+                Enter the delivered liters and the final amount collected. These values will be reflected in the booking and reports.
               </Typography>
               <View style={styles.inputContainer}>
+                <Input
+                  label="Delivered Liters (L) *"
+                  value={liters}
+                  onChangeText={(text) => {
+                    const sanitized = SanitizationUtils.sanitizeNumber(text);
+                    setLiters(sanitized);
+                    if (error) setError('');
+                  }}
+                  placeholder={vehicleCapacity != null ? `${vehicleCapacity}` : 'Enter liters'}
+                  keyboardType="numeric"
+                />
                 <Input
                   label="Amount (₹) *"
                   value={amount}
@@ -133,7 +153,7 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
 
           <View style={styles.footer}>
             <Button
-              title={isSubmitting ? "Accepting Order..." : "Accept Order"}
+              title={isSubmitting ? "Saving..." : "Save & Complete"}
               onPress={handleSubmit}
               disabled={isSubmitting || !amount.trim()}
               style={styles.submitButton}

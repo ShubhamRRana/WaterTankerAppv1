@@ -10,6 +10,7 @@ import { Alert } from 'react-native';
 import { DriverStackParamList } from '../../navigation/DriverNavigator';
 import { Booking } from '../../types';
 import { BankAccountService } from '../../services';
+import AmountInputModal from '../../components/driver/AmountInputModal';
 
 type CollectPaymentScreenRouteProp = RouteProp<DriverStackParamList, 'CollectPayment'>;
 type CollectPaymentScreenNavigationProp = StackNavigationProp<DriverStackParamList, 'CollectPayment'>;
@@ -25,6 +26,8 @@ const CollectPaymentScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [qrCodeImageUrl, setQrCodeImageUrl] = useState<string | null>(null);
   const [loadingQRCode, setLoadingQRCode] = useState(false);
+  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
+  const [isSubmittingDelivery, setIsSubmittingDelivery] = useState(false);
 
   useEffect(() => {
     loadBooking();
@@ -91,14 +94,31 @@ const CollectPaymentScreen: React.FC = () => {
       return;
     }
 
+    setShowDeliveryModal(true);
+  };
+
+  const handleSubmitDelivery = async (amount: number, deliveredLiters: number) => {
+    if (!orderId) return;
+
     try {
+      setIsSubmittingDelivery(true);
       await updateBookingStatus(orderId, 'delivered', {
         deliveredAt: new Date(),
+        deliveredAmount: amount,
+        deliveredTankerLiters: deliveredLiters,
+        // Keep legacy fields in sync for existing UI/reports.
+        totalPrice: amount,
+        basePrice: amount,
+        distanceCharge: 0,
+        tankerSize: deliveredLiters,
       });
       Alert.alert('Success', 'Delivery completed successfully!');
       navigation.goBack();
     } catch (error) {
       Alert.alert('Error', 'Failed to complete delivery. Please try again.');
+    } finally {
+      setIsSubmittingDelivery(false);
+      setShowDeliveryModal(false);
     }
   };
 
@@ -206,6 +226,15 @@ const CollectPaymentScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+
+      <AmountInputModal
+        visible={showDeliveryModal}
+        onClose={() => setShowDeliveryModal(false)}
+        onSubmit={handleSubmitDelivery}
+        isSubmitting={isSubmittingDelivery}
+        customerName={booking?.customerName}
+        vehicleCapacity={booking?.tankerSize}
+      />
     </SafeAreaView>
   );
 };

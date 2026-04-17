@@ -81,6 +81,8 @@ export interface Booking {
   driverName?: string;
   driverPhone?: string;
   status: BookingStatus;
+  /** Selected agency vehicle for this booking (primary identifier for capacity). */
+  vehicleId?: string;
   tankerSize: number; // in liters
   quantity?: number; // number of tankers (defaults to 1 if not provided)
   basePrice: number;
@@ -97,27 +99,10 @@ export interface Booking {
   updatedAt: Date;
   acceptedAt?: Date;
   deliveredAt?: Date;
-}
-
-/**
- * Tanker size configuration with pricing
- */
-export interface TankerSize {
-  id: string;
-  size: number; // in liters
-  basePrice: number;
-  isActive: boolean;
-  displayName: string; // e.g., "1000 Liters", "Small Tanker"
-}
-
-/**
- * Pricing configuration for distance-based charges
- */
-export interface Pricing {
-  pricePerKm: number;
-  minimumCharge: number;
-  updatedAt: Date;
-  updatedBy: string; // admin id
+  /** Delivery-time liters captured by driver (authoritative). */
+  deliveredTankerLiters?: number;
+  /** Delivery-time final amount captured by driver (authoritative). */
+  deliveredAmount?: number;
 }
 
 /**
@@ -232,7 +217,8 @@ export interface RegisterForm {
 }
 
 export interface BookingForm {
-  tankerSize: number;
+  /** Vehicle selected for the chosen agency. */
+  vehicleId: string;
   deliveryAddress: Address;
   scheduledFor?: Date;
   specialInstructions?: string;

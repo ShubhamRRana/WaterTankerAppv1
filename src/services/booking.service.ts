@@ -31,8 +31,19 @@ export class BookingService {
     return handleAsyncOperationWithRethrow(
       async () => {
         const id = dataAccess.generateId();
+
+        // Derive tanker size from selected vehicle capacity when not explicitly provided.
+        let tankerSize = bookingData.tankerSize;
+        if ((!tankerSize || tankerSize <= 0) && bookingData.vehicleId) {
+          const vehicle = await dataAccess.vehicles.getVehicleById(bookingData.vehicleId);
+          if (vehicle) {
+            tankerSize = vehicle.vehicleCapacity;
+          }
+        }
+
         const newBooking: Booking = {
           ...bookingData,
+          tankerSize,
           id,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -93,10 +104,10 @@ export class BookingService {
                 status: ['delivered'],
               });
 
-              const monthlyEarnings = monthlyDeliveredBookings.reduce(
-                (sum, booking) => sum + (booking.totalPrice || 0),
-                0
-              );
+              const monthlyEarnings = monthlyDeliveredBookings.reduce((sum, booking) => {
+                const amount = booking.deliveredAmount ?? booking.totalPrice ?? 0;
+                return sum + amount;
+              }, 0);
               const monthlyCompleted = monthlyDeliveredBookings.length;
 
               await dataAccess.users.updateUserProfile(driverId, {

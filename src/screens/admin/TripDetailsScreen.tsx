@@ -21,7 +21,7 @@ import { useAuthStore } from '../../store/authStore';
 import Card from '../../components/common/Card';
 import { Typography, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
 import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
-import { BOOKING_CONFIG, UI_CONFIG } from '../../constants/config';
+import { UI_CONFIG } from '../../constants/config';
 import { SocietyTrip, SocietyTripService } from '../../services/societyTrip.service';
 import { SocietyPaymentPeriodsService } from '../../services/societyPaymentPeriods.service';
 import { SocietyTripUsersService } from '../../services/societyTripUsers.service';
@@ -339,8 +339,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
       }
       bucket.set(t.tankerSizeLiters, prev);
     }
-    const defaultSizes = BOOKING_CONFIG.defaultTankerSizes.map((d) => d.size);
-    const allLiters = [...new Set([...defaultSizes, ...bucket.keys()])].sort((a, b) => a - b);
+    const allLiters = [...new Set(bucket.keys())].sort((a, b) => a - b);
     return allLiters.map((liters) => {
       const b = bucket.get(liters);
       return {

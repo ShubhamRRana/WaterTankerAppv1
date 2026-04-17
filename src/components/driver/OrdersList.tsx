@@ -185,13 +185,13 @@ const OrdersList: React.FC<OrdersListProps> = ({
           <View style={styles.orderDetail}>
             <Ionicons name="water-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.orderDetailText}>
-              {order.tankerSize}L Tanker
+              {(order.deliveredTankerLiters ?? order.tankerSize)}L Tanker
             </Typography>
           </View>
           <View style={styles.orderDetail}>
             <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
             <Typography variant="caption" style={styles.orderDetailText}>
-              {PricingUtils.formatPrice(order.totalPrice)}
+              {PricingUtils.formatPrice(order.deliveredAmount ?? order.totalPrice)}
             </Typography>
           </View>
         </View>

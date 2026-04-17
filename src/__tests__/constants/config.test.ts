@@ -8,7 +8,7 @@ import {
   API_CONFIG,
   STORAGE_CONFIG,
   BOOKING_CONFIG,
-  PRICING_CONFIG,
+  CURRENCY_CONFIG,
   LOCATION_CONFIG,
   UI_CONFIG,
   VALIDATION_CONFIG,
@@ -73,8 +73,6 @@ describe('Configuration Constants', () => {
       const collections = STORAGE_CONFIG.collections;
       expect(collections).toHaveProperty('users');
       expect(collections).toHaveProperty('bookings');
-      expect(collections).toHaveProperty('tankerSizes');
-      expect(collections).toHaveProperty('pricing');
       expect(collections).toHaveProperty('driverApplications');
       expect(collections).toHaveProperty('notifications');
     });
@@ -92,7 +90,6 @@ describe('Configuration Constants', () => {
       expect(BOOKING_CONFIG).toHaveProperty('maxAdvanceBookingDays');
       expect(BOOKING_CONFIG).toHaveProperty('minAdvanceBookingHours');
       expect(BOOKING_CONFIG).toHaveProperty('businessHours');
-      expect(BOOKING_CONFIG).toHaveProperty('defaultTankerSizes');
     });
 
     it('should have valid max advance booking days', () => {
@@ -112,47 +109,22 @@ describe('Configuration Constants', () => {
       expect(BOOKING_CONFIG.businessHours.end).toBeLessThanOrEqual(24);
     });
 
-    it('should have default tanker sizes array', () => {
-      expect(Array.isArray(BOOKING_CONFIG.defaultTankerSizes)).toBe(true);
-      expect(BOOKING_CONFIG.defaultTankerSizes.length).toBeGreaterThan(0);
-    });
-
-    it('should have valid tanker size objects', () => {
-      BOOKING_CONFIG.defaultTankerSizes.forEach(tanker => {
-        expect(tanker).toHaveProperty('size');
-        expect(tanker).toHaveProperty('basePrice');
-        expect(tanker).toHaveProperty('displayName');
-        expect(tanker.size).toBeGreaterThan(0);
-        expect(tanker.basePrice).toBeGreaterThanOrEqual(0);
-        expect(typeof tanker.displayName).toBe('string');
-      });
-    });
   });
 
-  describe('PRICING_CONFIG', () => {
+  describe('CURRENCY_CONFIG', () => {
     it('should have all required properties', () => {
-      expect(PRICING_CONFIG).toHaveProperty('defaultPricePerKm');
-      expect(PRICING_CONFIG).toHaveProperty('defaultMinimumCharge');
-      expect(PRICING_CONFIG).toHaveProperty('currency');
-      expect(PRICING_CONFIG).toHaveProperty('currencySymbol');
-    });
-
-    it('should have positive price per km', () => {
-      expect(PRICING_CONFIG.defaultPricePerKm).toBeGreaterThan(0);
-    });
-
-    it('should have positive minimum charge', () => {
-      expect(PRICING_CONFIG.defaultMinimumCharge).toBeGreaterThanOrEqual(0);
+      expect(CURRENCY_CONFIG).toHaveProperty('currency');
+      expect(CURRENCY_CONFIG).toHaveProperty('currencySymbol');
     });
 
     it('should have valid currency code', () => {
-      expect(PRICING_CONFIG.currency).toBe('INR');
-      expect(typeof PRICING_CONFIG.currency).toBe('string');
+      expect(CURRENCY_CONFIG.currency).toBe('INR');
+      expect(typeof CURRENCY_CONFIG.currency).toBe('string');
     });
 
     it('should have currency symbol', () => {
-      expect(PRICING_CONFIG.currencySymbol).toBeTruthy();
-      expect(typeof PRICING_CONFIG.currencySymbol).toBe('string');
+      expect(CURRENCY_CONFIG.currencySymbol).toBeTruthy();
+      expect(typeof CURRENCY_CONFIG.currencySymbol).toBe('string');
     });
   });
 
@@ -214,7 +186,8 @@ describe('Configuration Constants', () => {
     it('should have valid color format (hex codes)', () => {
       Object.entries(UI_CONFIG.colors).forEach(([key, value]) => {
         if (typeof value === 'string') {
-          expect(value).toMatch(/^#[0-9A-Fa-f]{6}$|^[a-zA-Z]+$/);
+          // Allow hex, named colors, and rgba() for overlays.
+          expect(value).toMatch(/^#[0-9A-Fa-f]{6}$|^[a-zA-Z]+$|^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*(0|0?\.\d+|1(\.0+)?)\s*\)$/);
         }
       });
     });

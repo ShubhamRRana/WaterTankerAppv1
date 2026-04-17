@@ -18,8 +18,6 @@ export const STORAGE_CONFIG = {
   collections: {
     users: 'users_collection',
     bookings: 'bookings',
-    tankerSizes: 'tankerSizes',
-    pricing: 'pricing',
     driverApplications: 'driverApplications',
     notifications: 'notifications',
   },
@@ -33,16 +31,10 @@ export const BOOKING_CONFIG = {
     start: 6, // 6 AM
     end: 22, // 10 PM
   },
-  defaultTankerSizes: [
-    { size: 10000, basePrice: 600, displayName: '10000 Liters' },
-    { size: 15000, basePrice: 900, displayName: '15000 Liters' },
-  ],
 };
 
-// Pricing Configuration
-export const PRICING_CONFIG = {
-  defaultPricePerKm: 5, // ₹5 per km
-  defaultMinimumCharge: 50, // ₹50 minimum charge
+// Currency Configuration
+export const CURRENCY_CONFIG = {
   currency: 'INR',
   currencySymbol: '₹',
 };
@@ -204,6 +196,7 @@ export const SUCCESS_MESSAGES = {
   auth: {
     loginSuccess: 'Login successful!',
     registerSuccess: 'Registration successful!',
+    registerConfirmEmail: 'Check your email and confirm your address before signing in.',
     logoutSuccess: 'Logged out successfully!',
   },
   booking: {

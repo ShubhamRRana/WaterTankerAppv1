@@ -281,8 +281,12 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     setErrors({});
 
     try {
-      await register(sanitizedEmail, password, sanitizedName, role, sanitizedPhone, sanitizedBusinessName.trim() || undefined);
-      Alert.alert('Success', SUCCESS_MESSAGES.auth.registerSuccess);
+      const outcome = await register(sanitizedEmail, password, sanitizedName, role, sanitizedPhone, sanitizedBusinessName.trim() || undefined);
+      if (outcome?.requiresEmailConfirmation) {
+        Alert.alert('Confirm your email', SUCCESS_MESSAGES.auth.registerConfirmEmail);
+      } else {
+        Alert.alert('Success', SUCCESS_MESSAGES.auth.registerSuccess);
+      }
     } catch (error) {
       handleError(error, {
         context: { operation: 'register', email: sanitizedEmail, role },

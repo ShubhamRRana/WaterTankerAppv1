@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 import { User as AppUser, UserRole, DriverUser, AdminUser } from '../types/index';
 import { ERROR_MESSAGES } from '../constants/config';
@@ -24,10 +25,27 @@ export interface AuthResult {
   availableRoles?: UserRole[];
   /** Whether user needs to select a role */
   requiresRoleSelection?: boolean;
+  /** signUp succeeded but email must be confirmed before a session exists (Supabase "Confirm email") */
+  requiresEmailConfirmation?: boolean;
 }
 
 /** Role from DB may include 'customer'; app only supports driver | admin */
 type RoleFilter = UserRole | 'customer';
+
+/** Prefer JSON `error` from edge function body; supabase-js often omits it from `data` on non-2xx. */
+async function edgeFunctionErrorDetail(fnData: unknown, fnError: unknown): Promise<string | undefined> {
+  const fromData = (fnData as { error?: string } | null)?.error;
+  if (fromData) return fromData;
+  if (fnError instanceof FunctionsHttpError && fnError.context) {
+    try {
+      const body = (await fnError.context.json()) as { error?: string };
+      if (body?.error) return body.error;
+    } catch {
+      /* ignore parse errors */
+    }
+  }
+  return undefined;
+}
 
 /**
  * Helper: Fetch user from Supabase with specific role
@@ -421,10 +439,11 @@ export class AuthService {
           },
         });
         if (fnError) {
-          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, fnError.message || 'Edge function failed');
+          const detail = await edgeFunctionErrorDetail(fnData, fnError);
+          securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, detail || fnError.message || 'Edge function failed');
           return {
             success: false,
-            error: (fnData as { error?: string })?.error || fnError.message || 'Failed to create driver. Deploy the admin-create-driver Edge Function to avoid email rate limits.',
+            error: detail || fnError.message || 'Failed to create driver. Deploy the admin-create-driver Edge Function to avoid email rate limits.',
           };
         }
         const fnResult = fnData as { success?: boolean; user_id?: string; error?: string };
@@ -440,6 +459,10 @@ export class AuthService {
       } else {
         // User doesn't exist in users table - try to create in Supabase Auth first
         // But if email already exists in Supabase Auth, try to sign in instead
+        const adminBusiness =
+          role === 'admin' && (additionalData as Partial<AdminUser>)?.businessName
+            ? String((additionalData as Partial<AdminUser>).businessName).trim()
+            : '';
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: sanitizedEmail,
           password: password,
@@ -448,6 +471,7 @@ export class AuthService {
               name: sanitizedName,
               role: role,
               phone: sanitizedPhone,
+              ...(adminBusiness ? { businessName: adminBusiness } : {}),
             }
           }
         });
@@ -542,12 +566,20 @@ export class AuthService {
           };
         } else {
           // New user successfully created in Supabase Auth.
-          // Rows in public.users and public.user_roles are created by the database trigger
-          // (migration 015) so we avoid RLS issues when the client has no session yet (e.g. confirm email).
+          // Rows in public.users and public.user_roles (and admins when role=admin) are created by the database trigger
+          // (migrations 015, 026) so we avoid RLS issues when the client has no session yet (e.g. confirm email).
           userId = authData.user.id;
 
-          // Trigger may not have run yet; give it a moment then verify the row exists.
           await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
+
+          if (!authData.session && role === 'admin') {
+            securityLogger.logRegistrationAttempt(sanitizedEmail, role, true, undefined, userId);
+            return {
+              success: true,
+              requiresEmailConfirmation: true,
+            };
+          }
+
           const { data: userRow } = await supabase.from('users').select('id').eq('id', userId).maybeSingle();
           if (!userRow) {
             securityLogger.logRegistrationAttempt(sanitizedEmail, role, false, 'User profile not created by trigger');

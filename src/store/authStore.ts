@@ -36,7 +36,7 @@ interface AuthState {
     role: UserRole,
     phone: string,
     businessName?: string
-  ) => Promise<void>;
+  ) => Promise<{ requiresEmailConfirmation?: boolean }>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<User>) => Promise<void>;
   setUser: (user: User | null) => void;
@@ -247,16 +247,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         (additionalData as Partial<AdminUser>).businessName = businessName;
       }
       const result = await AuthService.register(email, password, name, role, additionalData);
+      if (result.requiresEmailConfirmation) {
+        set({ isLoading: false });
+        return { requiresEmailConfirmation: true };
+      }
       if (result.success && result.user) {
         set({
           user: result.user,
           isAuthenticated: true,
           isLoading: false,
         });
-      } else {
-        set({ isLoading: false });
-        throw new Error(result.error || 'Registration failed');
+        return {};
       }
+      set({ isLoading: false });
+      throw new Error(result.error || 'Registration failed');
     } catch (error) {
       handleError(error, {
         context: { operation: 'register', email, role },

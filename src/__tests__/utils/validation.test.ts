@@ -394,7 +394,7 @@ describe('ValidationUtils', () => {
     it('should reject invalid date format', () => {
       const result = ValidationUtils.validateDateString('2024-01-01');
       expect(result.isValid).toBe(false);
-      expect(result.error).toContain('DD-MM-YYYY');
+      expect(result.error).toContain('DD/MM/YYYY');
     });
 
     it('should reject non-existent date', () => {

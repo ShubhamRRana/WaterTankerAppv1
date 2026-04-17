@@ -42,8 +42,10 @@ module.exports = {
       testMatch: [
         '<rootDir>/src/__tests__/**/*.test.{ts,tsx}',
         '<rootDir>/src/**/*.test.{ts,tsx}',
-        '!<rootDir>/src/__tests__/utils/**',
-        '!<rootDir>/src/__tests__/lib/**',
+      ],
+      testPathIgnorePatterns: [
+        '<rootDir>/src/__tests__/utils/',
+        '<rootDir>/src/__tests__/lib/',
       ],
       moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
       moduleNameMapper: {
