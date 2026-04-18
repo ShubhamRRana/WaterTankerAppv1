@@ -11,10 +11,14 @@ import { Typography, Card, LoadingSpinner } from '../../components/common';
 import { UI_CONFIG } from '../../constants/config';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
-import { DriverDashboardStats, Booking } from '../../types';
-import { PricingUtils } from '../../utils/pricing';
+import { Booking, DriverDashboardStats, isDriverUser } from '../../types';
 import { errorLogger } from '../../utils/errorLogger';
 
+/** Delivered bookings scoped to the driver's agency (booking.agency_id = admin who created the driver). */
+function bookingsForDriverAgency(bookings: Booking[], agencyId: string | undefined): Booking[] {
+  if (!agencyId) return bookings;
+  return bookings.filter((b) => b.agencyId === agencyId);
+}
 
 const DriverEarningsScreen: React.FC = () => {
   const { user } = useAuthStore();
@@ -25,13 +29,11 @@ const DriverEarningsScreen: React.FC = () => {
   const calculateEarningsStats = useCallback(async () => {
     if (!user?.id) {
       setEarningsStats({
-        totalEarnings: 0,
-        completedOrders: 0,
         pendingOrders: 0,
         activeOrders: 0,
-        todayEarnings: 0,
-        weeklyEarnings: 0,
-        monthlyEarnings: 0,
+        todayCompletedOrders: 0,
+        weeklyCompletedOrders: 0,
+        monthlyCompletedOrders: 0,
         averageRating: 0,
         totalRatings: 0,
         isOnline: true,
@@ -40,53 +42,54 @@ const DriverEarningsScreen: React.FC = () => {
       return;
     }
 
+    const agencyId = isDriverUser(user) ? user.createdByAdminId : undefined;
+
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekStart = new Date(today);
     weekStart.setDate(today.getDate() - today.getDay());
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Fetch earnings with date filtering - optimized server-side queries
-    const [todayBookings, weeklyBookings, monthlyBookings, totalBookings] = await Promise.all([
+    const [todayBookings, weeklyBookings, monthlyBookings] = await Promise.all([
       fetchDriverBookingsForEarnings(user.id, { startDate: today }),
       fetchDriverBookingsForEarnings(user.id, { startDate: weekStart }),
       fetchDriverBookingsForEarnings(user.id, { startDate: monthStart }),
-      fetchDriverBookingsForEarnings(user.id), // All completed bookings
     ]);
 
-    // Fetch order counts (lightweight queries with limits)
+    const scopedToday = bookingsForDriverAgency(todayBookings, agencyId);
+    const scopedWeek = bookingsForDriverAgency(weeklyBookings, agencyId);
+    const scopedMonth = bookingsForDriverAgency(monthlyBookings, agencyId);
+
     await Promise.all([
       fetchDriverBookings(user.id, { status: ['pending'], limit: 100 }),
       fetchDriverBookings(user.id, { status: ['accepted', 'in_transit'], limit: 100 }),
     ]);
 
-    // Get counts from store after fetching
     const { bookings } = useBookingStore.getState();
-    const pendingCount = bookings.filter(b => b.status === 'pending' && b.driverId === user.id).length;
-    const activeCount = bookings.filter(b => 
-      (b.status === 'accepted' || b.status === 'in_transit') && b.driverId === user.id
+    const matchesAgency = (b: Booking) =>
+      !agencyId || b.agencyId === agencyId;
+    const pendingCount = bookings.filter(
+      (b) => b.status === 'pending' && b.driverId === user.id && matchesAgency(b)
+    ).length;
+    const activeCount = bookings.filter(
+      (b) =>
+        (b.status === 'accepted' || b.status === 'in_transit') &&
+        b.driverId === user.id &&
+        matchesAgency(b)
     ).length;
 
-    // Calculate earnings from pre-filtered results
-    const todayEarnings = todayBookings.reduce((sum, booking) => sum + booking.totalPrice, 0);
-    const weeklyEarnings = weeklyBookings.reduce((sum, booking) => sum + booking.totalPrice, 0);
-    const monthlyEarnings = monthlyBookings.reduce((sum, booking) => sum + booking.totalPrice, 0);
-    const totalEarnings = totalBookings.reduce((sum, booking) => sum + booking.totalPrice, 0);
-
     setEarningsStats({
-      totalEarnings,
-      completedOrders: totalBookings.length,
       pendingOrders: pendingCount,
       activeOrders: activeCount,
-      todayEarnings,
-      weeklyEarnings,
-      monthlyEarnings,
-      averageRating: 4.8, // Mock rating
-      totalRatings: totalBookings.length,
+      todayCompletedOrders: scopedToday.length,
+      weeklyCompletedOrders: scopedWeek.length,
+      monthlyCompletedOrders: scopedMonth.length,
+      averageRating: 4.8,
+      totalRatings: scopedMonth.length,
       isOnline: true,
       lastActiveAt: new Date(),
     });
-  }, [user?.id, fetchDriverBookingsForEarnings, fetchDriverBookings]);
+  }, [user, fetchDriverBookingsForEarnings, fetchDriverBookings]);
 
   const loadDriverData = useCallback(async () => {
     if (!user?.id) return;
@@ -95,7 +98,7 @@ const DriverEarningsScreen: React.FC = () => {
       // Calculate earnings with optimized date-filtered queries
       await calculateEarningsStats();
     } catch (error) {
-      errorLogger.medium('Failed to load driver earnings data', error, { userId: user.id });
+      errorLogger.medium('Failed to load driver completed orders data', error, { userId: user.id });
     }
   }, [user?.id, calculateEarningsStats]);
 
@@ -114,25 +117,18 @@ const DriverEarningsScreen: React.FC = () => {
     }, [user?.id, loadDriverData])
   );
 
-  // Note: Removed the useEffect that recalculated on bookings change
-  // Earnings are now calculated on-demand with optimized queries
-
   const onRefresh = async () => {
     setRefreshing(true);
     await loadDriverData();
     setRefreshing(false);
   };
 
-  const formatCurrency = useCallback((amount: number) => {
-    return PricingUtils.formatPrice(amount);
-  }, []);
-
   if (isLoading && !earningsStats) {
     return (
       <View style={styles.loadingContainer}>
         <LoadingSpinner />
         <Typography variant="body" style={styles.loadingText}>
-          Loading earnings data...
+          Loading completed orders...
         </Typography>
       </View>
     );
@@ -145,19 +141,16 @@ const DriverEarningsScreen: React.FC = () => {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {/* Header */}
       <View style={styles.header}>
         <Typography variant="h1" style={styles.headerTitle}>
-          Earnings
+          Completed orders
         </Typography>
         <Typography variant="body" style={styles.headerSubtitle}>
-          Track your delivery earnings
+          Deliveries completed for your agency
         </Typography>
       </View>
 
-      {/* Earnings Cards */}
       <View style={styles.earningsContainer}>
-        {/* Today's Earnings */}
         <Card style={styles.earningsCard}>
           <View style={styles.earningsCardHeader}>
             <Ionicons name="sunny-outline" size={24} color={UI_CONFIG.colors.warning} />
@@ -166,33 +159,31 @@ const DriverEarningsScreen: React.FC = () => {
             </Typography>
           </View>
           <Typography variant="h1" style={styles.earningsCardAmount}>
-            {formatCurrency(earningsStats?.todayEarnings || 0)}
+            {earningsStats?.todayCompletedOrders ?? 0}
           </Typography>
         </Card>
 
-        {/* This Week's Earnings */}
         <Card style={styles.earningsCard}>
           <View style={styles.earningsCardHeader}>
             <Ionicons name="calendar-outline" size={24} color={UI_CONFIG.colors.accent} />
             <Typography variant="h3" style={styles.earningsCardTitle}>
-              This Week
+              This week
             </Typography>
           </View>
           <Typography variant="h1" style={styles.earningsCardAmount}>
-            {formatCurrency(earningsStats?.weeklyEarnings || 0)}
+            {earningsStats?.weeklyCompletedOrders ?? 0}
           </Typography>
         </Card>
 
-        {/* This Month's Earnings */}
         <Card style={styles.earningsCard}>
           <View style={styles.earningsCardHeader}>
             <Ionicons name="calendar-number-outline" size={24} color={UI_CONFIG.colors.success} />
             <Typography variant="h3" style={styles.earningsCardTitle}>
-              This Month
+              This month
             </Typography>
           </View>
           <Typography variant="h1" style={styles.earningsCardAmount}>
-            {formatCurrency(earningsStats?.monthlyEarnings || 0)}
+            {earningsStats?.monthlyCompletedOrders ?? 0}
           </Typography>
         </Card>
       </View>

@@ -155,7 +155,7 @@ describe('Navigation Configuration', () => {
       expect(getByTestId('StackNavigator')).toBeTruthy();
     });
 
-    it('should have tab navigator with Orders and Earnings tabs', () => {
+    it('should have tab navigator with two Orders-related tabs', () => {
       const { getByTestId } = render(<DriverNavigator />);
       // Should render the navigator
       expect(getByTestId('StackNavigator')).toBeTruthy();

@@ -294,13 +294,11 @@ export interface DriverEarnings {
 
 // Driver Dashboard specific types
 export interface DriverDashboardStats {
-  totalEarnings: number;
-  completedOrders: number;
   pendingOrders: number;
   activeOrders: number;
-  todayEarnings: number;
-  weeklyEarnings: number;
-  monthlyEarnings: number;
+  todayCompletedOrders: number;
+  weeklyCompletedOrders: number;
+  monthlyCompletedOrders: number;
   averageRating: number;
   totalRatings: number;
   isOnline: boolean;

@@ -56,9 +56,9 @@ const DriverTabs: React.FC = () => {
         name="Earnings" 
         component={DriverEarningsScreen}
         options={{ 
-          tabBarLabel: 'Earnings',
+          tabBarLabel: 'Total Orders',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cash-outline" size={size} color={color} />
+            <Ionicons name="checkmark-done-outline" size={size} color={color} />
           ),
         }}
       />
