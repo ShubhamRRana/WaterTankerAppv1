@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useRef, useReducer, useCallback } from 'react';
+import React, { useEffect, useState, useReducer, useCallback, useMemo } from 'react';
 import { 
   View, 
   StyleSheet, 
   ScrollView, 
   Alert, 
   TouchableOpacity,
-  Animated,
   AccessibilityInfo,
 } from 'react-native';
 import { KeyboardAvoidingView, Platform } from 'react-native';
@@ -16,6 +15,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Typography, Button, Card, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
 import ProfileHeader from '../../components/admin/ProfileHeader';
 import EditProfileForm from '../../components/admin/EditProfileForm';
+import AppearanceSettingsSection from '../../components/settings/AppearanceSettingsSection';
 import { useAuthStore } from '../../store/authStore';
 import { User, isAdminUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
@@ -24,6 +24,8 @@ import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { getErrorMessage } from '../../utils/errors';
 import { AuthService } from '../../services/auth.service';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type AdminProfileScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Profile'>;
 
@@ -169,12 +171,11 @@ const useDebounce = <T,>(value: T, delay: number): T => {
 
 const AdminProfileScreen: React.FC = () => {
   const navigation = useNavigation<AdminProfileScreenNavigationProp>();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user, updateUser, logout, isLoading } = useAuthStore();
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [isDeleting, setIsDeleting] = React.useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.95)).current;
-
   // Debounced form values for validation
   const debouncedBusinessName = useDebounce(state.editForm.businessName, 500);
   const debouncedName = useDebounce(state.editForm.name, 500);
@@ -235,7 +236,7 @@ const AdminProfileScreen: React.FC = () => {
     if (debouncedName.trim()) {
       const nameValidation = ValidationUtils.validateName(debouncedName.trim());
       if (!nameValidation.isValid) {
-        errors.name = nameValidation.error;
+        errors.name = nameValidation.error ?? 'Invalid name';
       } else {
         delete errors.name;
       }
@@ -245,7 +246,7 @@ const AdminProfileScreen: React.FC = () => {
     if (debouncedEmail.trim()) {
       const emailValidation = ValidationUtils.validateEmail(debouncedEmail.trim());
       if (!emailValidation.isValid) {
-        errors.email = emailValidation.error;
+        errors.email = emailValidation.error ?? 'Invalid email';
       } else {
         delete errors.email;
       }
@@ -254,7 +255,7 @@ const AdminProfileScreen: React.FC = () => {
     // Validate phone (required)
     const phoneValidation = ValidationUtils.validatePhone(debouncedPhone.trim());
     if (!phoneValidation.isValid) {
-      errors.phone = phoneValidation.error;
+      errors.phone = phoneValidation.error ?? 'Invalid phone';
     } else {
       delete errors.phone;
     }
@@ -263,7 +264,7 @@ const AdminProfileScreen: React.FC = () => {
     if (debouncedPassword) {
       const passwordValidation = ValidationUtils.validatePassword(debouncedPassword);
       if (!passwordValidation.isValid) {
-        errors.password = passwordValidation.error;
+        errors.password = passwordValidation.error ?? 'Invalid password';
       } else {
         delete errors.password;
       }
@@ -296,19 +297,19 @@ const AdminProfileScreen: React.FC = () => {
     // Validate name
     const nameValidation = ValidationUtils.validateName(state.editForm.name.trim());
     if (!nameValidation.isValid) {
-      errors.name = nameValidation.error;
+      errors.name = nameValidation.error ?? 'Invalid name';
     }
 
     // Validate email
     const emailValidation = ValidationUtils.validateEmail(state.editForm.email.trim());
     if (!emailValidation.isValid) {
-      errors.email = emailValidation.error;
+      errors.email = emailValidation.error ?? 'Invalid email';
     }
 
     // Validate phone (required)
     const phoneValidation = ValidationUtils.validatePhone(state.editForm.phone.trim());
     if (!phoneValidation.isValid) {
-      errors.phone = phoneValidation.error;
+      errors.phone = phoneValidation.error ?? 'Invalid phone';
     }
 
     // Validate password if provided
@@ -318,7 +319,7 @@ const AdminProfileScreen: React.FC = () => {
       } else {
         const passwordValidation = ValidationUtils.validatePassword(state.editForm.password);
         if (!passwordValidation.isValid) {
-          errors.password = passwordValidation.error;
+          errors.password = passwordValidation.error ?? 'Invalid password';
         }
       }
 
@@ -514,25 +515,9 @@ const AdminProfileScreen: React.FC = () => {
     [navigation],
   );
 
-  const handleImageLoadStart = () => {
-    dispatch({ type: 'SET_IMAGE_LOADING', payload: true });
-    dispatch({ type: 'SET_IMAGE_ERROR', payload: false });
-  };
-
-  const handleImageLoad = () => {
-    dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
-    dispatch({ type: 'SET_IMAGE_ERROR', payload: false });
-  };
-
-  const handleImageError = () => {
-    dispatch({ type: 'SET_IMAGE_ERROR', payload: true });
-    dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
-  };
-
   const handleRetryImage = () => {
     dispatch({ type: 'SET_IMAGE_ERROR', payload: false });
     dispatch({ type: 'SET_IMAGE_LOADING', payload: true });
-    // Force re-render by updating a dummy state
     setTimeout(() => {
       dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
     }, 100);
@@ -577,7 +562,7 @@ const AdminProfileScreen: React.FC = () => {
               accessibilityHint="Opens the navigation menu"
               accessibilityRole="button"
             >
-              <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+              <Ionicons name="menu" size={24} color={colors.text} />
             </TouchableOpacity>
             <View style={styles.headerTextContainer}>
               <Typography variant="h2" style={styles.headerTitle}>Profile</Typography>
@@ -586,12 +571,19 @@ const AdminProfileScreen: React.FC = () => {
         </View>
 
         {isAdminUser(user) && (
-          <ProfileHeader
-            user={user}
-            imageError={state.imageError}
-            imageLoading={state.imageLoading}
-            onRetryImage={handleRetryImage}
-          />
+          <>
+            <ProfileHeader
+              user={user}
+              imageError={state.imageError}
+              imageLoading={state.imageLoading}
+              onRetryImage={handleRetryImage}
+            />
+            {!state.isEditing && (
+              <View style={styles.appearanceWrap}>
+                <AppearanceSettingsSection />
+              </View>
+            )}
+          </>
         )}
         {!state.isEditing && (
           <View style={styles.editButtonContainer}>
@@ -613,7 +605,7 @@ const AdminProfileScreen: React.FC = () => {
               accessibilityLabel={isDeleting ? 'Deleting account' : 'Delete account'}
               accessibilityRole="button"
             >
-              <Ionicons name="trash-outline" size={22} color={UI_CONFIG.colors.error} />
+              <Ionicons name="trash-outline" size={22} color={colors.error} />
               <Typography variant="body" style={styles.deleteAccountButtonText}>
                 {isDeleting ? 'Deleting...' : 'Delete Account'}
               </Typography>
@@ -624,7 +616,7 @@ const AdminProfileScreen: React.FC = () => {
         {state.networkError && (
           <Card style={styles.errorCard}>
             <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle" size={20} color={UI_CONFIG.colors.error} />
+              <Ionicons name="alert-circle" size={20} color={colors.error} />
               <Typography variant="body" style={styles.networkErrorText}>
                 {state.networkError}
               </Typography>
@@ -661,24 +653,29 @@ const AdminProfileScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   contentContainer: {
     paddingBottom: 32,
   },
+  appearanceWrap: {
+    paddingHorizontal: UI_CONFIG.spacing.md,
+    marginTop: UI_CONFIG.spacing.sm,
+  },
   header: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
   },
   headerContent: {
     flexDirection: 'row',
@@ -694,7 +691,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   loadingContainer: {
     flex: 1,
@@ -704,7 +701,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   editButtonContainer: {
     marginHorizontal: 16,
@@ -715,30 +712,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 2,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
     marginTop: 12,
   },
   deleteAccountButton: {
-    borderColor: UI_CONFIG.colors.error,
-    backgroundColor: `${UI_CONFIG.colors.error}10`,
+    borderColor: colors.error,
+    backgroundColor: `${colors.error}10`,
   },
   deleteAccountButtonText: {
     marginLeft: 8,
     fontSize: 16,
     fontWeight: '600',
-    color: UI_CONFIG.colors.error,
+    color: colors.error,
   },
   errorCard: {
     marginHorizontal: 16,
     marginTop: 8,
     padding: 12,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderLeftWidth: 4,
-    borderLeftColor: UI_CONFIG.colors.error,
+    borderLeftColor: colors.error,
   },
   errorContainer: {
     flexDirection: 'row',
@@ -746,10 +743,11 @@ const styles = StyleSheet.create({
   },
   networkErrorText: {
     marginLeft: 8,
-    color: UI_CONFIG.colors.error,
+    color: colors.error,
     flex: 1,
   },
 });
+}
 
 export default AdminProfileScreen;
 

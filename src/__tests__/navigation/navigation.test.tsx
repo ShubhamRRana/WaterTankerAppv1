@@ -44,8 +44,7 @@ jest.mock('@react-navigation/bottom-tabs', () => {
   };
 });
 
-import React from 'react';
-import { render } from '@testing-library/react-native';
+import { renderWithProviders as render } from '../renderWithProviders';
 import AuthNavigator from '../../navigation/AuthNavigator';
 import DriverNavigator from '../../navigation/DriverNavigator';
 import AdminNavigator from '../../navigation/AdminNavigator';
@@ -87,6 +86,12 @@ jest.mock('../../screens/driver/CollectPaymentScreen', () => {
   return () => <View testID="CollectPaymentScreen"><Text>CollectPaymentScreen</Text></View>;
 });
 
+jest.mock('../../screens/driver/DriverSettingsScreen', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return () => <View testID="DriverSettingsScreen"><Text>DriverSettingsScreen</Text></View>;
+});
+
 jest.mock('../../screens/admin/AdminProfileScreen', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
@@ -117,33 +122,38 @@ jest.mock('../../screens/admin/ReportsScreen', () => {
   return () => <View testID="ReportsScreen"><Text>ReportsScreen</Text></View>;
 });
 
+jest.mock('../../screens/admin/AddBankAccountScreen', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return () => <View testID="AddBankAccountScreen"><Text>AddBankAccountScreen</Text></View>;
+});
+
+jest.mock('../../screens/admin/ExpenseScreen', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return () => <View testID="ExpenseScreen"><Text>ExpenseScreen</Text></View>;
+});
+
+jest.mock('../../screens/admin/TripDetailsScreen', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return () => <View testID="TripDetailsScreen"><Text>TripDetailsScreen</Text></View>;
+});
+
 jest.mock('../../components/common/ErrorBoundary', () => {
   const React = require('react');
   return ({ children }: { children: React.ReactNode }) => <>{children}</>;
 });
 
-jest.mock('../../constants/config', () => ({
-  UI_CONFIG: {
-    colors: {
-      accent: '#fca311',
-      textSecondary: '#5a5a5a',
-      surface: '#f5f0e0',
-      border: '#d4c9b0',
-    },
-  },
-}));
-
 describe('Navigation Configuration', () => {
   describe('AuthNavigator', () => {
     it('should render without crashing', () => {
       const { getByTestId } = render(<AuthNavigator />);
-      // Should render the StackNavigator
       expect(getByTestId('StackNavigator')).toBeTruthy();
     });
 
     it('should have all required screens registered', () => {
       const { getByTestId } = render(<AuthNavigator />);
-      // Should render the navigator
       expect(getByTestId('StackNavigator')).toBeTruthy();
     });
   });
@@ -151,13 +161,11 @@ describe('Navigation Configuration', () => {
   describe('DriverNavigator', () => {
     it('should render without crashing', () => {
       const { getByTestId } = render(<DriverNavigator />);
-      // Should render the StackNavigator
       expect(getByTestId('StackNavigator')).toBeTruthy();
     });
 
     it('should have tab navigator with two Orders-related tabs', () => {
       const { getByTestId } = render(<DriverNavigator />);
-      // Should render the navigator
       expect(getByTestId('StackNavigator')).toBeTruthy();
     });
   });
@@ -165,41 +173,34 @@ describe('Navigation Configuration', () => {
   describe('AdminNavigator', () => {
     it('should render without crashing', () => {
       const { getByTestId } = render(<AdminNavigator />);
-      // Should render the StackNavigator
       expect(getByTestId('StackNavigator')).toBeTruthy();
     });
 
     it('should have all required screens registered', () => {
       const { getByTestId } = render(<AdminNavigator />);
-      // Should render the navigator
       expect(getByTestId('StackNavigator')).toBeTruthy();
     });
   });
 
   describe('Navigation Type Definitions', () => {
     it('should export AuthStackParamList type', () => {
-      // Type check - if this compiles, the type is properly exported
       const testParams: { RoleEntry: undefined } = { RoleEntry: undefined };
       expect(testParams).toBeDefined();
     });
 
     it('should export DriverTabParamList type', () => {
-      // Type check - if this compiles, the type is properly exported
       const testParams: { Orders: undefined } = { Orders: undefined };
       expect(testParams).toBeDefined();
     });
 
     it('should export DriverStackParamList type', () => {
-      // Type check - if this compiles, the type is properly exported
       const testParams: { DriverTabs: undefined } = { DriverTabs: undefined };
       expect(testParams).toBeDefined();
     });
 
     it('should export AdminStackParamList type', () => {
-      // Type check - if this compiles, the type is properly exported
       const testParams: { Bookings: undefined } = { Bookings: undefined };
       expect(testParams).toBeDefined();
     });
   });
 });
-

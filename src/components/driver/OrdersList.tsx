@@ -3,12 +3,13 @@ import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 're
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, Button } from '../common';
 import { Booking, BookingStatus } from '../../types';
-import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 import { OrderTab } from './OrdersFilter';
 import { UserService } from '../../services/user.service';
 import { errorLogger } from '../../utils/errorLogger';
 import { formatDateTime } from '../../utils/dateUtils';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 interface OrdersListProps {
   orders: Booking[];
@@ -35,6 +36,9 @@ const OrdersList: React.FC<OrdersListProps> = ({
   onCollectPayment,
   onDismissError,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   // Cache for customer addresses to avoid repeated API calls
   const addressCacheRef = useRef<Map<string, string | null>>(new Map());
   const loadingAddressesRef = useRef<Set<string>>(new Set());
@@ -74,7 +78,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
             // Use cached value
             newAddressMap.set(customerId, addressCacheRef.current.get(customerId) ?? null);
           } else {
-            const customer = customerMap.get(customerId);
+            void customerMap.get(customerId);
             let address: string | null = null;
             
             // Customer profile addresses not used in this app (admin/driver only)
@@ -106,14 +110,14 @@ const OrdersList: React.FC<OrdersListProps> = ({
 
   const getStatusColor = useCallback((status: BookingStatus): string => {
     switch (status) {
-      case 'pending': return UI_CONFIG.colors.warning;
-      case 'accepted': return UI_CONFIG.colors.accent;
-      case 'in_transit': return UI_CONFIG.colors.success;
-      case 'delivered': return UI_CONFIG.colors.success;
-      case 'cancelled': return UI_CONFIG.colors.error;
-      default: return UI_CONFIG.colors.textSecondary;
+      case 'pending': return colors.warning;
+      case 'accepted': return colors.accent;
+      case 'in_transit': return colors.success;
+      case 'delivered': return colors.success;
+      case 'cancelled': return colors.error;
+      default: return colors.textSecondary;
     }
-  }, []);
+  }, [colors]);
 
   const getStatusText = useCallback((status: BookingStatus): string => {
     switch (status) {
@@ -156,7 +160,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
     onAcceptOrder,
     onStartDelivery,
     onCollectPayment,
-    customerId,
+    customerId: _customerId,
     initialAddress
   }) => {
     // Get address from the batch-fetched map (passed via initialAddress prop)
@@ -183,13 +187,13 @@ const OrdersList: React.FC<OrdersListProps> = ({
 
         <View style={styles.orderDetails}>
           <View style={styles.orderDetail}>
-            <Ionicons name="water-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+            <Ionicons name="water-outline" size={16} color={colors.textSecondary} />
             <Typography variant="caption" style={styles.orderDetailText}>
               {(order.deliveredTankerLiters ?? order.tankerSize)}L Tanker
             </Typography>
           </View>
           <View style={styles.orderDetail}>
-            <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+            <Ionicons name="cash-outline" size={16} color={colors.textSecondary} />
             <Typography variant="caption" style={styles.orderDetailText}>
               {PricingUtils.formatPrice(order.deliveredAmount ?? order.totalPrice)}
             </Typography>
@@ -203,7 +207,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
           activeOpacity={0.7}
           style={styles.addressContainer}
         >
-          <Ionicons name="location" size={14} color={UI_CONFIG.colors.accent} />
+          <Ionicons name="location" size={14} color={colors.accent} />
           <Typography variant="caption" style={styles.orderAddress}>
             {order.deliveryAddress.address}
           </Typography>
@@ -211,7 +215,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
 
         {customerProfileAddress && (
           <View style={styles.profileAddressContainer}>
-            <Ionicons name="home" size={14} color={UI_CONFIG.colors.secondary} />
+            <Ionicons name="home" size={14} color={colors.secondary} />
             <Typography variant="caption" style={styles.profileAddress}>
               Profile: {customerProfileAddress}
             </Typography>
@@ -224,7 +228,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
 
         {order.status === 'delivered' && formattedDeliveredDate && (
           <View style={styles.deliveredInfo}>
-            <Ionicons name="checkmark-circle" size={16} color={UI_CONFIG.colors.success} />
+            <Ionicons name="checkmark-circle" size={16} color={colors.success} />
             <Typography variant="caption" style={styles.deliveredText}>
               Delivered: {formattedDeliveredDate}
             </Typography>
@@ -322,7 +326,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
       <Ionicons 
         name="alert-circle" 
         size={48} 
-        color={UI_CONFIG.colors.error} 
+        color={colors.error} 
       />
       <Typography variant="body" style={styles.errorText}>
         {error || 'Something went wrong'}
@@ -354,7 +358,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
       <Ionicons 
         name={activeTab === 'available' ? 'list-outline' : 'checkmark-circle-outline'} 
         size={48} 
-        color={UI_CONFIG.colors.textSecondary} 
+        color={colors.textSecondary} 
       />
       <Typography variant="body" style={styles.emptyText}>
         {activeTab === 'available' && 'No available orders'}
@@ -394,7 +398,8 @@ const OrdersList: React.FC<OrdersListProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   scrollView: {
     flex: 1,
   },
@@ -416,12 +421,12 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: 16,
     fontWeight: '600',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 4,
   },
   orderId: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -431,7 +436,7 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
-    color: UI_CONFIG.colors.textLight,
+    color: colors.textLight,
   },
   orderDetails: {
     flexDirection: 'row',
@@ -444,45 +449,45 @@ const styles = StyleSheet.create({
   },
   orderDetailText: {
     fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     marginLeft: 4,
   },
   addressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: UI_CONFIG.colors.surfaceLight,
+    backgroundColor: colors.surfaceLight,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.accent,
+    borderColor: colors.accent,
   },
   orderAddress: {
     fontSize: 12,
-    color: UI_CONFIG.colors.accent,
+    color: colors.accent,
     marginLeft: 6,
   },
   profileAddressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: UI_CONFIG.colors.surfaceLight,
+    backgroundColor: colors.surfaceLight,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.secondary,
+    borderColor: colors.secondary,
   },
   profileAddress: {
     fontSize: 12,
-    color: UI_CONFIG.colors.secondary,
+    color: colors.secondary,
     marginLeft: 6,
     fontStyle: 'italic',
   },
   orderTime: {
     fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   deliveredInfo: {
@@ -491,11 +496,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: UI_CONFIG.colors.border,
+    borderTopColor: colors.border,
   },
   deliveredText: {
     fontSize: 12,
-    color: UI_CONFIG.colors.success,
+    color: colors.success,
     marginLeft: 6,
     fontWeight: '500',
   },
@@ -503,7 +508,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   completeButton: {
-    backgroundColor: UI_CONFIG.colors.success,
+    backgroundColor: colors.success,
   },
   emptyCard: {
     alignItems: 'center',
@@ -512,14 +517,14 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: 16,
     marginBottom: 8,
     fontWeight: '500',
   },
   emptySubtext: {
     fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -530,7 +535,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: UI_CONFIG.colors.error,
+    color: colors.error,
     marginTop: 16,
     marginBottom: 8,
     fontWeight: '600',
@@ -538,7 +543,7 @@ const styles = StyleSheet.create({
   },
   errorSubtext: {
     fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
@@ -547,24 +552,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     marginBottom: 12,
   },
   dismissButtonText: {
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   retryButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
   },
   retryButtonText: {
-    color: UI_CONFIG.colors.textLight,
+    color: colors.onAccent,
     fontWeight: '600',
   },
 });
+}
 
 export default memo(OrdersList);
 

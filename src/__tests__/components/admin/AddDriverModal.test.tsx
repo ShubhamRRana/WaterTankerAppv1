@@ -3,50 +3,10 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
 import { Platform } from 'react-native';
 import AddDriverModal from '../../../components/admin/AddDriverModal';
-
-// Mock UI_CONFIG
-jest.mock('../../../constants/config', () => ({
-  UI_CONFIG: {
-    colors: {
-      text: '#000000',
-      textSecondary: '#666666',
-      error: '#EF4444',
-      primary: '#3B82F6',
-      background: '#FFFFFF',
-      surface: '#F5F5F5',
-      border: '#E5E7EB',
-    },
-    spacing: {
-      xs: 4,
-      sm: 8,
-      md: 16,
-      lg: 24,
-      xl: 32,
-    },
-    fontSize: {
-      xs: 12,
-      sm: 14,
-      md: 16,
-      lg: 18,
-      xl: 20,
-      xxl: 24,
-    },
-    borderRadius: {
-      sm: 4,
-      md: 8,
-      lg: 12,
-      xl: 16,
-    },
-    fonts: {
-      primary: 'System',
-      bold: 'System',
-      fallback: ['System'],
-    },
-  },
-}));
+import { renderWithProviders as render } from '../../renderWithProviders';
 
 // Mock Platform using jest.spyOn to avoid loading native modules
 // This is done in beforeEach/afterEach to allow per-test platform changes
@@ -105,7 +65,7 @@ describe('AddDriverModal', () => {
 
   describe('Form Fields', () => {
     it('should render all form fields', () => {
-      const { getByPlaceholderText } = render(<AddDriverModal {...defaultProps} />);
+      const { getByPlaceholderText, getByText } = render(<AddDriverModal {...defaultProps} />);
       
       expect(getByPlaceholderText("Enter driver's full name")).toBeTruthy();
       expect(getByPlaceholderText('Enter email address')).toBeTruthy();
@@ -115,7 +75,7 @@ describe('AddDriverModal', () => {
       expect(getByPlaceholderText('Enter emergency contact name')).toBeTruthy();
       expect(getByPlaceholderText('Enter 10-digit emergency contact number')).toBeTruthy();
       expect(getByPlaceholderText("Enter driver's license number")).toBeTruthy();
-      expect(getByPlaceholderText('e.g., 31/12/2026')).toBeTruthy();
+      expect(getByText('Select expiry date')).toBeTruthy();
     });
 
     it('should display form field values', () => {
@@ -378,11 +338,10 @@ describe('AddDriverModal', () => {
       expect(emergencyPhoneInput.props.maxLength).toBe(10);
     });
 
-    it('should set maxLength for license expiry field', () => {
-      const { getByPlaceholderText } = render(<AddDriverModal {...defaultProps} />);
-      
-      const licenseExpiryInput = getByPlaceholderText('e.g., 31/12/2026');
-      expect(licenseExpiryInput.props.maxLength).toBe(10);
+    it('should render license expiry via date picker affordance', () => {
+      const { getByText } = render(<AddDriverModal {...defaultProps} />);
+
+      expect(getByText('Select expiry date')).toBeTruthy();
     });
 
     it('should use secureTextEntry for password fields', () => {

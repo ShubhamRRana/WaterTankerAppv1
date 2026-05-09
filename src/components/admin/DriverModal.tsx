@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,9 +8,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Typography, Card, Button } from '../common';
+import { Typography, Card } from '../common';
 import { User, DriverUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 import { PricingUtils } from '../../utils/pricing';
 import { formatDateOnly } from '../../utils/dateUtils';
 
@@ -24,7 +26,10 @@ const DriverModal: React.FC<DriverModalProps> = ({
   visible,
   onClose,
   driver,
-}) => (
+}) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return (
   <Modal
     visible={visible}
     animationType="slide"
@@ -41,7 +46,7 @@ const DriverModal: React.FC<DriverModalProps> = ({
           style={styles.closeButton}
           onPress={onClose}
         >
-          <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
+          <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -131,12 +136,14 @@ const DriverModal: React.FC<DriverModalProps> = ({
       )}
     </SafeAreaView>
   </Modal>
-);
+  );
+};
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -146,12 +153,12 @@ const styles = StyleSheet.create({
     paddingTop: UI_CONFIG.spacing.lg,
     paddingBottom: UI_CONFIG.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   closeButton: {
     padding: UI_CONFIG.spacing.sm,
@@ -166,7 +173,7 @@ const styles = StyleSheet.create({
   detailSectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: UI_CONFIG.spacing.md,
   },
   detailItem: {
@@ -175,21 +182,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: UI_CONFIG.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.background,
+    borderBottomColor: colors.background,
   },
   detailLabel: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   detailValue: {
     fontSize: 16,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     textAlign: 'right',
     flex: 1,
     marginLeft: UI_CONFIG.spacing.md,
   },
 });
+}
+
 
 export default DriverModal;
 

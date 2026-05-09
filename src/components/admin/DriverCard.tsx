@@ -10,6 +10,8 @@ import { DriverUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 import { formatDateOnly } from '../../utils/dateUtils';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export interface DriverCardProps {
   driver: DriverUser;
@@ -22,10 +24,13 @@ const DriverCard: React.FC<DriverCardProps> = ({
   onPress,
   onEdit,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const formattedLicenseExpiry = useMemo(() => {
     return driver.licenseExpiry ? formatDateOnly(driver.licenseExpiry) : 'Expiry not provided';
   }, [driver.licenseExpiry]);
-  
+
   const formattedEarnings = useMemo(() => {
     return PricingUtils.formatPrice(driver.totalEarnings || 0);
   }, [driver.totalEarnings]);
@@ -58,31 +63,31 @@ const DriverCard: React.FC<DriverCardProps> = ({
           }}
           activeOpacity={0.7}
         >
-          <Ionicons name="pencil-outline" size={20} color={UI_CONFIG.colors.success} />
+          <Ionicons name="pencil-outline" size={20} color={colors.success} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.driverDetails}>
         <View style={styles.detailRow}>
-          <Ionicons name="card-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+          <Ionicons name="card-outline" size={16} color={colors.textSecondary} />
           <Typography variant="caption" style={styles.detailText}>
             {driver.licenseNumber || 'Not provided'}
           </Typography>
         </View>
         <View style={styles.detailRow}>
-          <Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+          <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
           <Typography variant="caption" style={styles.detailText}>
             {formattedLicenseExpiry}
           </Typography>
         </View>
         <View style={styles.detailRow}>
-          <Ionicons name="call-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+          <Ionicons name="call-outline" size={16} color={colors.textSecondary} />
           <Typography variant="caption" style={styles.detailText}>
             {emergencyContact}
           </Typography>
         </View>
         <View style={styles.detailRow}>
-          <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+          <Ionicons name="cash-outline" size={16} color={colors.textSecondary} />
           <Typography variant="caption" style={styles.detailText}>
             {formattedEarnings} earned
           </Typography>
@@ -94,53 +99,54 @@ const DriverCard: React.FC<DriverCardProps> = ({
   );
 };
 
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
+    driverCard: {
+      marginBottom: UI_CONFIG.spacing.md,
+    },
+    driverCardContent: {
+      padding: UI_CONFIG.spacing.md,
+    },
+    driverHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: UI_CONFIG.spacing.md,
+    },
+    editButton: {
+      padding: 8,
+      borderWidth: 1.5,
+      borderColor: colors.success,
+      borderRadius: 8,
+      backgroundColor: 'transparent',
+    },
+    driverInfo: {
+      flex: 1,
+    },
+    driverName: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 2,
+    },
+    driverPhone: {
+      fontSize: 14,
+      color: colors.textSecondary,
+    },
+    driverDetails: {
+      marginBottom: UI_CONFIG.spacing.md,
+    },
+    detailRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: UI_CONFIG.spacing.xs,
+    },
+    detailText: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      marginLeft: UI_CONFIG.spacing.sm,
+    },
+  });
+}
+
 export default memo(DriverCard);
-
-const styles = StyleSheet.create({
-  driverCard: {
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  driverCardContent: {
-    padding: UI_CONFIG.spacing.md,
-  },
-  driverHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  editButton: {
-    padding: 8,
-    borderWidth: 1.5,
-    borderColor: UI_CONFIG.colors.success,
-    borderRadius: 8,
-    backgroundColor: 'transparent',
-  },
-  driverInfo: {
-    flex: 1,
-  },
-  driverName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
-    marginBottom: 2,
-  },
-  driverPhone: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  driverDetails: {
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: UI_CONFIG.spacing.xs,
-  },
-  detailText: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
-    marginLeft: UI_CONFIG.spacing.sm,
-  },
-});
-

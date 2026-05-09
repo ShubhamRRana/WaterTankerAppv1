@@ -21,6 +21,8 @@ import AddDriverModal from '../../components/admin/AddDriverModal';
 import DriverModal from '../../components/admin/DriverModal';
 import DriverCard from '../../components/admin/DriverCard';
 import { UI_CONFIG } from '../../constants/config';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 import { User, DriverUser, isDriverUser } from '../../types';
 import { ValidationUtils } from '../../utils/validation';
 import { SanitizationUtils } from '../../utils/sanitization';
@@ -32,6 +34,8 @@ type DriverManagementScreenNavigationProp = StackNavigationProp<AdminStackParamL
 type EnrichedDriver = DriverUser & { totalEarnings: number; completedOrders: number };
 
 const DriverManagementScreen: React.FC = () => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<DriverManagementScreenNavigationProp>();
   const { users, fetchAllUsers, updateUser, deleteUser, isLoading } = useUserStore();
   const { user: currentUser, logout } = useAuthStore();
@@ -473,7 +477,7 @@ const DriverManagementScreen: React.FC = () => {
               onPress={() => setMenuVisible(true)}
               activeOpacity={0.7}
             >
-              <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+              <Ionicons name="menu" size={24} color={colors.text} />
             </TouchableOpacity>
             <View style={styles.headerTextContainer}>
               <Typography variant="h2" style={styles.title}>
@@ -491,13 +495,13 @@ const DriverManagementScreen: React.FC = () => {
         {/* Search */}
         <View style={styles.filterSection}>
           <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={20} color={UI_CONFIG.colors.textSecondary} />
+            <Ionicons name="search-outline" size={20} color={colors.textSecondary} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search drivers..."
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor={UI_CONFIG.colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
         </View>
@@ -510,7 +514,7 @@ const DriverManagementScreen: React.FC = () => {
           
           {filteredDrivers.length === 0 ? (
             <Card style={styles.emptyState}>
-              <Ionicons name="car-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
+              <Ionicons name="car-outline" size={48} color={colors.textSecondary} />
               <Typography variant="body" style={styles.emptyText}>
                 {searchQuery 
                   ? 'No drivers found matching your criteria'
@@ -543,7 +547,7 @@ const DriverManagementScreen: React.FC = () => {
         onPress={() => setShowAddDriverModal(true)}
         activeOpacity={0.8}
       >
-        <Ionicons name="add" size={24} color={UI_CONFIG.colors.textLight} />
+        <Ionicons name="add" size={24} color={colors.textLight} />
       </TouchableOpacity>
 
       <DriverModal 
@@ -574,14 +578,15 @@ const DriverManagementScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -590,14 +595,14 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: UI_CONFIG.spacing.md,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   header: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
   },
   headerContent: {
     flexDirection: 'row',
@@ -613,12 +618,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   statsSection: {
     padding: UI_CONFIG.spacing.lg,
@@ -637,12 +642,12 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 0,
   },
@@ -654,7 +659,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 8,
     paddingHorizontal: UI_CONFIG.spacing.md,
     paddingVertical: UI_CONFIG.spacing.sm,
@@ -664,7 +669,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: UI_CONFIG.spacing.sm,
     fontSize: 16,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   filterScroll: {
     marginBottom: UI_CONFIG.spacing.sm,
@@ -673,19 +678,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: UI_CONFIG.spacing.md,
     paddingVertical: UI_CONFIG.spacing.sm,
     borderRadius: 20,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     marginRight: UI_CONFIG.spacing.sm,
   },
   filterButtonActive: {
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
   },
   filterButtonText: {
     fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   filterButtonTextActive: {
-    color: UI_CONFIG.colors.textLight,
+    color: colors.textLight,
   },
   driversSection: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
@@ -694,7 +699,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: UI_CONFIG.spacing.md,
   },
   emptyState: {
@@ -703,7 +708,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: UI_CONFIG.spacing.md,
     textAlign: 'center',
   },
@@ -714,11 +719,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: UI_CONFIG.colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -727,5 +732,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4.65,
   },
 });
+}
+
 
 export default DriverManagementScreen;

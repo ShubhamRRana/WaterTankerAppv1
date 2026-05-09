@@ -9,9 +9,9 @@ import { Typography, Card } from '../common';
 import { Booking, BookingStatus } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
-import { UserService } from '../../services/user.service';
-import { errorLogger } from '../../utils/errorLogger';
 import { formatDateTime } from '../../utils/dateUtils';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export interface BookingCardProps {
   booking: Booking;
@@ -26,12 +26,12 @@ const BookingCard: React.FC<BookingCardProps> = ({
   getStatusColor,
   getStatusIcon,
 }) => {
-  const [customerProfileAddress, setCustomerProfileAddress] = useState<string | null>(null);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
-  // Customer profile addresses are not used in this app (admin/driver only)
-  useEffect(() => {
-    setCustomerProfileAddress(null);
-  }, []);
+  const [customerProfileAddress] = useState<string | null>(null);
+
+  useEffect(() => {}, []);
 
   const statusColor = useMemo(() => getStatusColor(booking.status), [booking.status, getStatusColor]);
   const statusIcon = useMemo(() => getStatusIcon(booking.status), [booking.status, getStatusIcon]);
@@ -47,7 +47,7 @@ const BookingCard: React.FC<BookingCardProps> = ({
 
   return (
   <Card style={styles.bookingCard}>
-    <TouchableOpacity 
+    <TouchableOpacity
       onPress={() => onPress(booking)}
       activeOpacity={0.7}
     >
@@ -61,10 +61,10 @@ const BookingCard: React.FC<BookingCardProps> = ({
           </Typography>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-          <Ionicons 
-            name={statusIcon as any} 
-            size={16} 
-            color={UI_CONFIG.colors.textLight} 
+          <Ionicons
+            name={statusIcon as keyof typeof Ionicons.glyphMap}
+            size={16}
+            color={colors.textLight}
           />
           <Typography variant="caption" style={styles.statusText}>
             {statusText}
@@ -74,44 +74,44 @@ const BookingCard: React.FC<BookingCardProps> = ({
 
       <View style={styles.bookingDetails}>
         <View style={styles.detailRow}>
-          <Ionicons name="water-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+          <Ionicons name="water-outline" size={16} color={colors.textSecondary} />
           <Typography variant="body" style={styles.detailText}>
             {booking.tankerSize}L Tanker
           </Typography>
         </View>
-        
+
         <View style={styles.detailRow}>
-          <Ionicons name="location-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+          <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
           <Typography variant="body" style={styles.detailText}>
             {booking.deliveryAddress.address}
           </Typography>
         </View>
-        
+
         {customerProfileAddress && (
           <View style={styles.detailRow}>
-            <Ionicons name="home-outline" size={16} color={UI_CONFIG.colors.accent} />
+            <Ionicons name="home-outline" size={16} color={colors.accent} />
             <Typography variant="body" style={styles.detailText}>
               Profile: {customerProfileAddress}
             </Typography>
           </View>
         )}
-        
+
         <View style={styles.detailRow}>
-          <Ionicons name="cash-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+          <Ionicons name="cash-outline" size={16} color={colors.textSecondary} />
           <Typography variant="body" style={styles.detailText}>
             {PricingUtils.formatPrice(booking.totalPrice)}
           </Typography>
         </View>
-        
+
         <View style={styles.detailRow}>
-          <Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+          <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
           <Typography variant="body" style={styles.detailText}>
             {formattedDate}
           </Typography>
         </View>
         {booking.status === 'delivered' && formattedDeliveredDate && (
           <View style={styles.detailRow}>
-            <Ionicons name="checkmark-circle" size={16} color={UI_CONFIG.colors.success} />
+            <Ionicons name="checkmark-circle" size={16} color={colors.success} />
             <Typography variant="body" style={styles.detailText}>
               Delivered: {formattedDeliveredDate}
             </Typography>
@@ -131,67 +131,68 @@ const BookingCard: React.FC<BookingCardProps> = ({
   );
 };
 
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
+    bookingCard: {
+      marginBottom: UI_CONFIG.spacing.md,
+      padding: UI_CONFIG.spacing.md,
+    },
+    bookingHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      marginBottom: UI_CONFIG.spacing.md,
+    },
+    bookingInfo: {
+      flex: 1,
+    },
+    customerName: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 2,
+    },
+    bookingId: {
+      fontSize: 12,
+      color: colors.textSecondary,
+    },
+    statusBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: UI_CONFIG.spacing.sm,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    statusText: {
+      fontSize: 12,
+      fontWeight: '600',
+      color: colors.textLight,
+      marginLeft: 4,
+    },
+    bookingDetails: {
+      marginBottom: UI_CONFIG.spacing.sm,
+    },
+    detailRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: UI_CONFIG.spacing.xs,
+    },
+    detailText: {
+      fontSize: 14,
+      color: colors.text,
+      marginLeft: UI_CONFIG.spacing.sm,
+    },
+    driverInfo: {
+      paddingTop: UI_CONFIG.spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: colors.background,
+    },
+    driverLabel: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+  });
+}
+
 export default memo(BookingCard);
-
-const styles = StyleSheet.create({
-  bookingCard: {
-    marginBottom: UI_CONFIG.spacing.md,
-    padding: UI_CONFIG.spacing.md,
-  },
-  bookingHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: UI_CONFIG.spacing.md,
-  },
-  bookingInfo: {
-    flex: 1,
-  },
-  customerName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.text,
-    marginBottom: 2,
-  },
-  bookingId: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: UI_CONFIG.spacing.sm,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.textLight,
-    marginLeft: 4,
-  },
-  bookingDetails: {
-    marginBottom: UI_CONFIG.spacing.sm,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: UI_CONFIG.spacing.xs,
-  },
-  detailText: {
-    fontSize: 14,
-    color: UI_CONFIG.colors.text,
-    marginLeft: UI_CONFIG.spacing.sm,
-  },
-  driverInfo: {
-    paddingTop: UI_CONFIG.spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: UI_CONFIG.colors.background,
-  },
-  driverLabel: {
-    fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
-    fontWeight: '500',
-  },
-});
-

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -20,11 +20,13 @@ import { useAuthStore } from '../../store/authStore';
 import { Typography, Card, Button, LoadingSpinner, Input, DatePickerInput, AdminMenuDrawer } from '../../components/common';
 import { Vehicle } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
-import { PricingUtils, ValidationUtils, SanitizationUtils } from '../../utils';
+import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { formatDateOnly } from '../../utils/dateUtils';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { getErrorMessage } from '../../utils/errors';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type VehicleManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Vehicles'>;
 
@@ -57,7 +59,11 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
   onReset,
   onDelete,
   isEditMode = false,
-}) => (
+}) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  return (
   <Modal
     visible={visible}
     animationType="slide"
@@ -77,7 +83,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
             disabled={isSubmitting}
             activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={24} color={isSubmitting ? UI_CONFIG.colors.textSecondary : UI_CONFIG.colors.error} />
+            <Ionicons name="trash-outline" size={24} color={isSubmitting ? colors.textSecondary : colors.error} />
           </TouchableOpacity>
         )}
       </View>
@@ -232,10 +238,13 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
       )}
     </SafeAreaView>
   </Modal>
-);
+  );
+};
 
 const VehicleManagementScreen: React.FC = () => {
   const navigation = useNavigation<VehicleManagementScreenNavigationProp>();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { vehicles, fetchAllVehicles, updateVehicle, addVehicle, deleteVehicle, isLoading } = useVehicleStore();
   const { user: currentUser, logout } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -328,9 +337,9 @@ const VehicleManagementScreen: React.FC = () => {
         return;
       }
 
-      const day = parseInt(expiryMatch[1], 10);
-      const month = parseInt(expiryMatch[2], 10) - 1;
-      const year = parseInt(expiryMatch[3], 10);
+      const day = parseInt(expiryMatch[1]!, 10);
+      const month = parseInt(expiryMatch[2]!, 10) - 1;
+      const year = parseInt(expiryMatch[3]!, 10);
       const insuranceExpiryDate = new Date(year, month, day);
 
       if (!currentUser || currentUser.role !== 'admin') {
@@ -535,19 +544,19 @@ const VehicleManagementScreen: React.FC = () => {
             }}
             activeOpacity={0.7}
           >
-            <Ionicons name="pencil-outline" size={20} color={UI_CONFIG.colors.success} />
+            <Ionicons name="pencil-outline" size={20} color={colors.success} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.vehicleDetails}>
           <View style={styles.detailRow}>
-            <Ionicons name="calendar-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+            <Ionicons name="calendar-outline" size={16} color={colors.textSecondary} />
             <Typography variant="caption" style={styles.detailText}>
               Insurance Expiry: {formatDateOnly(vehicle.insuranceExpiryDate)}
             </Typography>
           </View>
           <View style={styles.detailRow}>
-            <Ionicons name="water-outline" size={16} color={UI_CONFIG.colors.textSecondary} />
+            <Ionicons name="water-outline" size={16} color={colors.textSecondary} />
             <Typography variant="caption" style={styles.detailText}>
               Capacity: {vehicle.vehicleCapacity} Liters
             </Typography>
@@ -576,7 +585,7 @@ const VehicleManagementScreen: React.FC = () => {
               setShowVehicleModal(false);
             }}
           >
-            <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
+            <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -650,7 +659,7 @@ const VehicleManagementScreen: React.FC = () => {
               onPress={() => setMenuVisible(true)}
               activeOpacity={0.7}
             >
-              <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+              <Ionicons name="menu" size={24} color={colors.text} />
             </TouchableOpacity>
             <View style={styles.headerTextContainer}>
               <Typography variant="h2" style={styles.title}>
@@ -666,13 +675,13 @@ const VehicleManagementScreen: React.FC = () => {
         {/* Search */}
         <View style={styles.filterSection}>
           <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={20} color={UI_CONFIG.colors.textSecondary} />
+            <Ionicons name="search-outline" size={20} color={colors.textSecondary} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search vehicles..."
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor={UI_CONFIG.colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
             />
           </View>
         </View>
@@ -685,7 +694,7 @@ const VehicleManagementScreen: React.FC = () => {
           
           {filteredVehicles.length === 0 ? (
             <Card style={styles.emptyState}>
-              <Ionicons name="car-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
+              <Ionicons name="car-outline" size={48} color={colors.textSecondary} />
               <Typography variant="body" style={styles.emptyText}>
                 {searchQuery 
                   ? 'No vehicles found matching your criteria'
@@ -707,7 +716,7 @@ const VehicleManagementScreen: React.FC = () => {
         onPress={() => setShowAddVehicleModal(true)}
         activeOpacity={0.8}
       >
-        <Ionicons name="add" size={24} color={UI_CONFIG.colors.textLight} />
+        <Ionicons name="add" size={24} color={colors.textLight} />
       </TouchableOpacity>
 
       <VehicleModal />
@@ -734,14 +743,15 @@ const VehicleManagementScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -750,14 +760,14 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: UI_CONFIG.spacing.md,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   header: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
   },
   headerContent: {
     flexDirection: 'row',
@@ -773,12 +783,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   filterSection: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
@@ -788,7 +798,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 8,
     paddingHorizontal: UI_CONFIG.spacing.md,
     paddingVertical: UI_CONFIG.spacing.sm,
@@ -798,7 +808,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: UI_CONFIG.spacing.sm,
     fontSize: 16,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   vehiclesSection: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
@@ -807,7 +817,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: UI_CONFIG.spacing.md,
   },
   vehicleCard: {
@@ -825,7 +835,7 @@ const styles = StyleSheet.create({
   editButton: {
     padding: 8,
     borderWidth: 1.5,
-    borderColor: UI_CONFIG.colors.success,
+    borderColor: colors.success,
     borderRadius: 8,
     backgroundColor: 'transparent',
   },
@@ -835,12 +845,12 @@ const styles = StyleSheet.create({
   vehicleNumber: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 2,
   },
   vehicleInsurance: {
     fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   vehicleDetails: {
     marginBottom: UI_CONFIG.spacing.md,
@@ -852,7 +862,7 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     marginLeft: UI_CONFIG.spacing.sm,
   },
   emptyState: {
@@ -861,13 +871,13 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     marginTop: UI_CONFIG.spacing.md,
     textAlign: 'center',
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -877,12 +887,12 @@ const styles = StyleSheet.create({
     paddingTop: UI_CONFIG.spacing.lg,
     paddingBottom: UI_CONFIG.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   closeButton: {
     padding: UI_CONFIG.spacing.sm,
@@ -903,7 +913,7 @@ const styles = StyleSheet.create({
   detailSectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: UI_CONFIG.spacing.md,
   },
   detailItem: {
@@ -912,16 +922,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: UI_CONFIG.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.background,
+    borderBottomColor: colors.background,
   },
   detailLabel: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   detailValue: {
     fontSize: 16,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     textAlign: 'right',
     flex: 1,
     marginLeft: UI_CONFIG.spacing.md,
@@ -936,11 +946,11 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
-    shadowColor: UI_CONFIG.colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -952,15 +962,17 @@ const styles = StyleSheet.create({
     marginBottom: UI_CONFIG.spacing.md,
   },
   addVehicleButton: {
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
     marginBottom: UI_CONFIG.spacing.md,
   },
   cancelButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.textSecondary,
+    borderColor: colors.textSecondary,
   },
 });
+}
+
 
 export default VehicleManagementScreen;
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   Platform,
@@ -12,6 +12,8 @@ import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/dat
 import { Ionicons } from '@expo/vector-icons';
 import { UI_CONFIG } from '../../constants/config';
 import Typography from './Typography';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 interface DatePickerInputProps {
   label?: string;
@@ -66,8 +68,13 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   maximumDate,
   disabled = false,
 }) => {
+  const { colors, resolvedScheme } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const [showPicker, setShowPicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  const pickerThemeVariant = resolvedScheme === 'dark' ? 'dark' : 'light';
 
   useEffect(() => {
     const parsed = parseDateString(value);
@@ -112,7 +119,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
         >
           {value || placeholder}
         </Typography>
-        <Ionicons name="calendar-outline" size={20} color={UI_CONFIG.colors.textSecondary} />
+        <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
       </TouchableOpacity>
 
       {error && <Typography variant="caption" style={styles.errorText}>{error}</Typography>}
@@ -123,6 +130,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
           mode="date"
           display="default"
           onChange={handleDateChange}
+          themeVariant={pickerThemeVariant}
           {...pickerDateProps}
         />
       )}
@@ -141,6 +149,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
                 mode="date"
                 display="spinner"
                 onChange={handleDateChange}
+                themeVariant={pickerThemeVariant}
                 {...pickerDateProps}
               />
             </View>
@@ -151,67 +160,69 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: UI_CONFIG.fontSize.md,
-    fontWeight: '600',
-    color: UI_CONFIG.colors.text,
-    marginBottom: 8,
-  },
-  inputContainer: {
-    backgroundColor: UI_CONFIG.colors.surface,
-    borderRadius: UI_CONFIG.borderRadius.lg,
-    padding: UI_CONFIG.spacing.md,
-    borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  inputError: {
-    borderColor: UI_CONFIG.colors.error,
-  },
-  disabledInput: {
-    opacity: 0.6,
-  },
-  valueText: {
-    color: UI_CONFIG.colors.text,
-    flex: 1,
-    marginRight: 8,
-  },
-  placeholderText: {
-    color: UI_CONFIG.colors.textSecondary,
-    flex: 1,
-    marginRight: 8,
-  },
-  errorText: {
-    color: UI_CONFIG.colors.error,
-    fontSize: UI_CONFIG.fontSize.sm,
-    marginTop: 4,
-  },
-  modalBackdrop: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
-  },
-  modalContent: {
-    backgroundColor: UI_CONFIG.colors.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 20,
-  },
-  modalHeader: {
-    alignItems: 'flex-end',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  modalActionText: {
-    fontWeight: '600',
-    color: UI_CONFIG.colors.accent,
-  },
-});
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
+    container: {
+      marginBottom: 16,
+    },
+    label: {
+      fontSize: UI_CONFIG.fontSize.md,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    inputContainer: {
+      backgroundColor: colors.surface,
+      borderRadius: UI_CONFIG.borderRadius.lg,
+      padding: UI_CONFIG.spacing.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    inputError: {
+      borderColor: colors.error,
+    },
+    disabledInput: {
+      opacity: 0.6,
+    },
+    valueText: {
+      color: colors.text,
+      flex: 1,
+      marginRight: 8,
+    },
+    placeholderText: {
+      color: colors.textSecondary,
+      flex: 1,
+      marginRight: 8,
+    },
+    errorText: {
+      color: colors.error,
+      fontSize: UI_CONFIG.fontSize.sm,
+      marginTop: 4,
+    },
+    modalBackdrop: {
+      flex: 1,
+      justifyContent: 'flex-end',
+      backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    },
+    modalContent: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: 16,
+      borderTopRightRadius: 16,
+      paddingBottom: 20,
+    },
+    modalHeader: {
+      alignItems: 'flex-end',
+      paddingHorizontal: 16,
+      paddingTop: 12,
+    },
+    modalActionText: {
+      fontWeight: '600',
+      color: colors.accent,
+    },
+  });
+}
 
 export default DatePickerInput;

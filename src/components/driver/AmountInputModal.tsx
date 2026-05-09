@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,7 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, Button, Input } from '../common';
-import { UI_CONFIG } from '../../constants/config';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 
 interface AmountInputModalProps {
@@ -30,6 +31,9 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
   customerName,
   vehicleCapacity,
 }) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const [amount, setAmount] = useState('');
   const [liters, setLiters] = useState('');
   const [error, setError] = useState<string>('');
@@ -94,7 +98,7 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
             <Ionicons
               name="close"
               size={24}
-              color={UI_CONFIG.colors.text}
+              color={colors.text}
               onPress={handleClose}
               style={styles.closeIcon}
             />
@@ -172,10 +176,11 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -183,14 +188,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
   },
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     flex: 1,
   },
   closeIcon: {
@@ -209,7 +214,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 12,
   },
   infoRow: {
@@ -218,21 +223,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.background,
+    borderBottomColor: colors.background,
   },
   infoLabel: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   infoValue: {
     fontSize: 16,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     fontWeight: '600',
   },
   description: {
     fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 16,
     lineHeight: 20,
   },
@@ -241,20 +246,22 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 20,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: UI_CONFIG.colors.border,
+    borderTopColor: colors.border,
   },
   submitButton: {
-    backgroundColor: UI_CONFIG.colors.success,
+    backgroundColor: colors.success,
     marginBottom: 12,
   },
   cancelButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.textSecondary,
+    borderColor: colors.textSecondary,
   },
 });
+}
+
 
 export default AmountInputModal;
 

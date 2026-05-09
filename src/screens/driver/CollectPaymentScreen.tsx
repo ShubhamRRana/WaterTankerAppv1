@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, StyleSheet, ActivityIndicator, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Typography, Button } from '../../components/common';
-import { UI_CONFIG } from '../../constants/config';
 import { useBookingStore } from '../../store/bookingStore';
 import { Alert } from 'react-native';
 import { DriverStackParamList } from '../../navigation/DriverNavigator';
 import { Booking } from '../../types';
 import { BankAccountService } from '../../services';
 import AmountInputModal from '../../components/driver/AmountInputModal';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type CollectPaymentScreenRouteProp = RouteProp<DriverStackParamList, 'CollectPayment'>;
 type CollectPaymentScreenNavigationProp = StackNavigationProp<DriverStackParamList, 'CollectPayment'>;
@@ -30,6 +31,9 @@ const CollectPaymentScreen: React.FC = () => {
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [isSubmittingDelivery, setIsSubmittingDelivery] = useState(false);
   const [hasAutoOpenedModal, setHasAutoOpenedModal] = useState(false);
+
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
     loadBooking();
@@ -173,7 +177,7 @@ const CollectPaymentScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={[styles.container, styles.centerContent]}>
-          <ActivityIndicator size="large" color={UI_CONFIG.colors.accent} />
+          <ActivityIndicator size="large" color={colors.accent} />
           <Typography variant="body" style={styles.loadingText}>
             Loading booking details...
           </Typography>
@@ -237,7 +241,7 @@ const CollectPaymentScreen: React.FC = () => {
                   </Typography>
                   {loadingQRCode ? (
                     <View style={styles.qrCodeLoadingContainer}>
-                      <ActivityIndicator size="large" color={UI_CONFIG.colors.accent} />
+                      <ActivityIndicator size="large" color={colors.accent} />
                       <Typography variant="body" style={styles.qrCodeLoadingText}>
                         Loading QR code...
                       </Typography>
@@ -286,10 +290,11 @@ const CollectPaymentScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   scrollView: {
     flex: 1,
@@ -313,23 +318,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 16,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 24,
   },
   loadingText: {
     marginTop: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   errorText: {
-    color: UI_CONFIG.colors.error,
+    color: colors.error,
     marginBottom: 24,
   },
   paymentInfo: {
@@ -339,23 +344,23 @@ const styles = StyleSheet.create({
   },
   amountLabel: {
     fontSize: 15,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     marginBottom: 8,
   },
   amount: {
     fontSize: 25,
     fontWeight: '700',
-    color: UI_CONFIG.colors.accent,
+    color: colors.accent,
   },
   buttonContainer: {
     paddingBottom: 20,
     paddingTop: 10,
   },
   okButton: {
-    backgroundColor: UI_CONFIG.colors.success,
+    backgroundColor: colors.success,
   },
   backButton: {
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
   },
   qrCodeSection: {
     marginTop: 32,
@@ -365,12 +370,12 @@ const styles = StyleSheet.create({
   qrCodeTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 16,
     textAlign: 'center',
   },
   qrCodeContainer: {
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -391,20 +396,22 @@ const styles = StyleSheet.create({
   },
   qrCodeLoadingText: {
     marginTop: 12,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   qrCodeErrorContainer: {
     padding: 24,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     width: '100%',
     maxWidth: 300,
   },
   qrCodeErrorText: {
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
 });
+}
+
 
 export default CollectPaymentScreen;
 

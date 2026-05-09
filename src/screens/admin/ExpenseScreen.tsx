@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -20,6 +20,8 @@ import { useAuthStore } from '../../store/authStore';
 import { Typography, Card, Button, Input, DatePickerInput, AdminMenuDrawer } from '../../components/common';
 import { ExpenseType, Expense } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 import { ValidationUtils, SanitizationUtils, PricingUtils } from '../../utils';
 import { ExpenseService, StorageService } from '../../services';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
@@ -31,6 +33,8 @@ type ExpenseScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Exp
 type ViewMode = 'add' | 'manage';
 
 const ExpenseScreen: React.FC = () => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<ExpenseScreenNavigationProp>();
   const { user, logout } = useAuthStore();
   const [menuVisible, setMenuVisible] = useState(false);
@@ -420,7 +424,7 @@ const ExpenseScreen: React.FC = () => {
           onPress={() => setMenuVisible(true)}
           activeOpacity={0.7}
         >
-          <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+          <Ionicons name="menu" size={24} color={colors.text} />
         </TouchableOpacity>
         <Typography variant="h1" style={styles.headerTitle}>
           Expenses
@@ -431,7 +435,7 @@ const ExpenseScreen: React.FC = () => {
             onPress={handleDownloadExcel}
             activeOpacity={0.7}
           >
-            <Ionicons name="download-outline" size={24} color={UI_CONFIG.colors.text} />
+            <Ionicons name="download-outline" size={24} color={colors.text} />
           </TouchableOpacity>
         )}
         {viewMode === 'add' && <View style={styles.headerRight} />}
@@ -506,7 +510,7 @@ const ExpenseScreen: React.FC = () => {
                 <Ionicons
                   name={selectedExpenseType === 'diesel' ? 'car' : 'car-outline'}
                   size={32}
-                  color={selectedExpenseType === 'diesel' ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.text}
+                  color={selectedExpenseType === 'diesel' ? colors.textLight : colors.text}
                 />
                 <Typography
                   variant="body"
@@ -530,7 +534,7 @@ const ExpenseScreen: React.FC = () => {
                 <Ionicons
                   name={selectedExpenseType === 'maintenance' ? 'construct' : 'construct-outline'}
                   size={32}
-                  color={selectedExpenseType === 'maintenance' ? UI_CONFIG.colors.textLight : UI_CONFIG.colors.text}
+                  color={selectedExpenseType === 'maintenance' ? colors.textLight : colors.text}
                 />
                 <Typography
                   variant="body"
@@ -613,7 +617,7 @@ const ExpenseScreen: React.FC = () => {
                     }}
                     disabled={isSubmitting}
                   >
-                    <Ionicons name="close-circle" size={24} color={UI_CONFIG.colors.error} />
+                    <Ionicons name="close-circle" size={24} color={colors.error} />
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -623,7 +627,7 @@ const ExpenseScreen: React.FC = () => {
                   disabled={isSubmitting}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="camera-outline" size={48} color={UI_CONFIG.colors.accent} />
+                  <Ionicons name="camera-outline" size={48} color={colors.accent} />
                   <Typography variant="body" style={styles.imagePickerText}>
                     Tap to select receipt photo
                   </Typography>
@@ -879,7 +883,7 @@ const ExpenseScreen: React.FC = () => {
                   <Typography variant="body" style={styles.summaryFilterButtonText}>
                     {summaryFilter === 'all' ? 'All' : summaryFilter === 'diesel' ? 'Diesel' : 'Maintenance'}
                   </Typography>
-                  <Ionicons name="chevron-down" size={20} color={UI_CONFIG.colors.text} />
+                  <Ionicons name="chevron-down" size={20} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
@@ -917,7 +921,7 @@ const ExpenseScreen: React.FC = () => {
                         All
                       </Typography>
                       {summaryFilter === 'all' && (
-                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.accent} />
+                        <Ionicons name="checkmark" size={20} color={colors.accent} />
                       )}
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -941,7 +945,7 @@ const ExpenseScreen: React.FC = () => {
                         Diesel
                       </Typography>
                       {summaryFilter === 'diesel' && (
-                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.accent} />
+                        <Ionicons name="checkmark" size={20} color={colors.accent} />
                       )}
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -965,7 +969,7 @@ const ExpenseScreen: React.FC = () => {
                         Maintenance
                       </Typography>
                       {summaryFilter === 'maintenance' && (
-                        <Ionicons name="checkmark" size={20} color={UI_CONFIG.colors.accent} />
+                        <Ionicons name="checkmark" size={20} color={colors.accent} />
                       )}
                     </TouchableOpacity>
                   </View>
@@ -982,7 +986,7 @@ const ExpenseScreen: React.FC = () => {
             </Card>
           ) : filteredExpenses.length === 0 ? (
             <Card style={styles.emptyState}>
-              <Ionicons name="receipt-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
+              <Ionicons name="receipt-outline" size={48} color={colors.textSecondary} />
               <Typography variant="body" style={styles.emptyText}>
                 {summaryFilter !== 'all'
                   ? `No ${summaryFilter} expenses found for ${periodType === 'month' ? months[selectedMonth] + ' ' + selectedYear : selectedYear}`
@@ -1007,7 +1011,7 @@ const ExpenseScreen: React.FC = () => {
                         <Ionicons
                           name={expense.expenseType === 'diesel' ? 'car' : 'construct'}
                           size={20}
-                          color={UI_CONFIG.colors.textLight}
+                          color={colors.textLight}
                         />
                         <Typography variant="caption" style={styles.expenseTypeText}>
                           {expense.expenseType === 'diesel' ? 'Diesel' : 'Maintenance'}
@@ -1022,7 +1026,7 @@ const ExpenseScreen: React.FC = () => {
                       onPress={() => handleDeleteExpense(expense.id)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="trash-outline" size={20} color={UI_CONFIG.colors.error} />
+                      <Ionicons name="trash-outline" size={20} color={colors.error} />
                     </TouchableOpacity>
                   </View>
                   {expense.description && (
@@ -1066,10 +1070,11 @@ const ExpenseScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -1077,9 +1082,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
   },
   menuButton: {
     padding: 8,
@@ -1122,21 +1127,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     borderRadius: 12,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
     borderWidth: 2,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
   },
   typeButtonActive: {
-    backgroundColor: UI_CONFIG.colors.accent,
-    borderColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   typeButtonText: {
     marginTop: 8,
     textAlign: 'center',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   typeButtonTextActive: {
-    color: UI_CONFIG.colors.textLight,
+    color: colors.textLight,
     fontWeight: '600',
   },
   formCard: {
@@ -1147,7 +1152,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   errorText: {
-    color: UI_CONFIG.colors.error,
+    color: colors.error,
     marginTop: 4,
   },
   submitContainer: {
@@ -1160,9 +1165,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
     gap: 12,
   },
   viewModeButton: {
@@ -1170,22 +1175,22 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   viewModeButtonActive: {
-    backgroundColor: UI_CONFIG.colors.accent,
-    borderColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   viewModeButtonText: {
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     fontWeight: '500',
   },
   viewModeButtonTextActive: {
-    color: UI_CONFIG.colors.textLight,
+    color: colors.textLight,
     fontWeight: '600',
   },
   emptyState: {
@@ -1196,18 +1201,18 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     textAlign: 'center',
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   emptyText: {
     marginTop: 16,
     textAlign: 'center',
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   emptySubtext: {
     marginTop: 8,
     textAlign: 'center',
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   expenseCard: {
     marginBottom: 12,
@@ -1226,7 +1231,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -1234,7 +1239,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   expenseTypeText: {
-    color: UI_CONFIG.colors.textLight,
+    color: colors.textLight,
     fontWeight: '600',
     textTransform: 'capitalize',
   },
@@ -1242,16 +1247,16 @@ const styles = StyleSheet.create({
     fontSize: 22
     ,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   deleteButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   expenseDescription: {
     marginBottom: 8,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   expenseCardFooter: {
     flexDirection: 'row',
@@ -1259,10 +1264,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: UI_CONFIG.colors.border,
+    borderTopColor: colors.border,
   },
   expenseDate: {
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   filterContainer: {
     flexDirection: 'row',
@@ -1277,45 +1282,45 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
     gap: 8,
   },
   filterButtonActive: {
-    backgroundColor: UI_CONFIG.colors.accent,
-    borderColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   filterButtonText: {
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     fontWeight: '500',
   },
   filterButtonTextActive: {
-    color: UI_CONFIG.colors.textLight,
+    color: colors.textLight,
     fontWeight: '600',
   },
   imageLabel: {
     marginBottom: 8,
     fontWeight: '500',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   imageHint: {
     marginBottom: 12,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   imagePickerButton: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
     borderRadius: 12,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
     borderWidth: 2,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
     borderStyle: 'dashed',
   },
   imagePickerText: {
     marginTop: 8,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   imagePreviewContainer: {
@@ -1333,7 +1338,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 20,
     padding: 4,
   },
@@ -1366,7 +1371,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     alignSelf: 'center',
-    shadowColor: UI_CONFIG.colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1389,10 +1394,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     letterSpacing: 0.3,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   glassRadioLabelActive: {
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   glassGlider: {
     position: 'absolute',
@@ -1401,8 +1406,8 @@ const styles = StyleSheet.create({
     left: 0,
     borderRadius: 16,
     zIndex: 1,
-    backgroundColor: UI_CONFIG.colors.accent,
-    shadowColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
+    shadowColor: colors.accent,
     shadowOffset: {
       width: 0,
       height: 0,
@@ -1419,7 +1424,7 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -1439,12 +1444,12 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.accent,
+    color: colors.accent,
     marginBottom: 4,
   },
   summaryLabel: {
     fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   summaryFilterContainer: {
@@ -1457,12 +1462,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
   },
   summaryFilterButtonText: {
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     fontWeight: '500',
   },
   dropdownOverlay: {
@@ -1472,11 +1477,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dropdownContent: {
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 8,
     minWidth: 200,
-    shadowColor: UI_CONFIG.colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1494,16 +1499,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   dropdownOptionActive: {
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   dropdownOptionText: {
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     fontWeight: '500',
   },
   dropdownOptionTextActive: {
-    color: UI_CONFIG.colors.accent,
+    color: colors.accent,
     fontWeight: '600',
   },
 });
+}
+
 
 export default ExpenseScreen;

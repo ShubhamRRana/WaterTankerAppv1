@@ -8,12 +8,13 @@ import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 // import { Typography } from '../../components/common';
 import { Booking } from '../../types';
-import { UI_CONFIG } from '../../constants/config';
 import { DriverStackParamList, DriverTabParamList } from '../../navigation/DriverNavigator';
 import { getErrorMessage } from '../../utils/errors';
 import OrdersHeader from '../../components/driver/OrdersHeader';
 import OrdersFilter, { OrderTab } from '../../components/driver/OrdersFilter';
 import OrdersList from '../../components/driver/OrdersList';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type OrdersScreenNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<DriverTabParamList, 'Orders'>,
@@ -22,6 +23,8 @@ type OrdersScreenNavigationProp = CompositeNavigationProp<
 
 const OrdersScreen: React.FC = () => {
   const navigation = useNavigation<OrdersScreenNavigationProp>();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user, logout } = useAuthStore();
   const { bookings, isLoading, error, fetchAvailableBookings, fetchDriverBookings, updateBookingStatus, clearError } = useBookingStore();
   
@@ -358,7 +361,8 @@ const OrdersScreen: React.FC = () => {
       <View style={styles.container}>
         <OrdersHeader 
           userName={user?.name} 
-          onLogout={handleLogout} 
+          onLogout={handleLogout}
+          onOpenSettings={() => navigation.navigate('Settings')}
         />
         
         <OrdersFilter 
@@ -386,16 +390,18 @@ const OrdersScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
-  },
-});
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+  });
+}
 
 export default OrdersScreen;
 

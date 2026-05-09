@@ -20,6 +20,7 @@ import {
   FEATURE_FLAGS,
   DEV_CONFIG,
 } from '../../constants/config';
+import { darkPalette, lightPalette } from '../../theme/palettes';
 
 describe('Configuration Constants', () => {
   describe('APP_CONFIG', () => {
@@ -156,10 +157,13 @@ describe('Configuration Constants', () => {
   describe('UI_CONFIG', () => {
     it('should have all required properties', () => {
       expect(UI_CONFIG).toHaveProperty('fonts');
-      expect(UI_CONFIG).toHaveProperty('colors');
       expect(UI_CONFIG).toHaveProperty('spacing');
       expect(UI_CONFIG).toHaveProperty('borderRadius');
       expect(UI_CONFIG).toHaveProperty('fontSize');
+    });
+
+    it('should not embed colors (colors live in theme palettes)', () => {
+      expect(UI_CONFIG).not.toHaveProperty('colors');
     });
 
     it('should have valid font configuration', () => {
@@ -167,29 +171,6 @@ describe('Configuration Constants', () => {
       expect(UI_CONFIG.fonts).toHaveProperty('bold');
       expect(UI_CONFIG.fonts).toHaveProperty('fallback');
       expect(Array.isArray(UI_CONFIG.fonts.fallback)).toBe(true);
-    });
-
-    it('should have all required color properties', () => {
-      const colors = UI_CONFIG.colors;
-      expect(colors).toHaveProperty('primary');
-      expect(colors).toHaveProperty('secondary');
-      expect(colors).toHaveProperty('accent');
-      expect(colors).toHaveProperty('background');
-      expect(colors).toHaveProperty('surface');
-      expect(colors).toHaveProperty('text');
-      expect(colors).toHaveProperty('textSecondary');
-      expect(colors).toHaveProperty('success');
-      expect(colors).toHaveProperty('warning');
-      expect(colors).toHaveProperty('error');
-    });
-
-    it('should have valid color format (hex codes)', () => {
-      Object.entries(UI_CONFIG.colors).forEach(([key, value]) => {
-        if (typeof value === 'string') {
-          // Allow hex, named colors, and rgba() for overlays.
-          expect(value).toMatch(/^#[0-9A-Fa-f]{6}$|^[a-zA-Z]+$|^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*(0|0?\.\d+|1(\.0+)?)\s*\)$/);
-        }
-      });
     });
 
     it('should have valid spacing values', () => {
@@ -225,6 +206,40 @@ describe('Configuration Constants', () => {
       expect(fontSize).toHaveProperty('xxl');
       Object.values(fontSize).forEach(value => {
         expect(value).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('Theme palettes (darkPalette / lightPalette)', () => {
+    it('should expose the same keys for dark and light', () => {
+      expect(Object.keys(darkPalette).sort()).toEqual(Object.keys(lightPalette).sort());
+    });
+
+    it('should include semantic tokens used across the UI', () => {
+      expect(darkPalette).toMatchObject({
+        primary: expect.any(String),
+        background: expect.any(String),
+        surface: expect.any(String),
+        secondary: expect.any(String),
+        accent: expect.any(String),
+        text: expect.any(String),
+        textSecondary: expect.any(String),
+        onAccent: expect.any(String),
+        onSecondary: expect.any(String),
+        success: expect.any(String),
+        warning: expect.any(String),
+        error: expect.any(String),
+      });
+    });
+
+    it('should use valid color strings in palettes', () => {
+      const re =
+        /^#[0-9A-Fa-f]{6}$|^[a-zA-Z]+$|^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*(0|0?\.\d+|1(\.0+)?)\s*\)$/;
+      Object.values(darkPalette).forEach((value) => {
+        expect(value).toMatch(re);
+      });
+      Object.values(lightPalette).forEach((value) => {
+        expect(value).toMatch(re);
       });
     });
   });

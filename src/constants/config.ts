@@ -49,46 +49,12 @@ export const LOCATION_CONFIG = {
   averageSpeed: 30, // km/h for delivery time calculation
 };
 
-// UI Configuration
+// UI Configuration (colors use `useTheme().colors` from src/theme)
 export const UI_CONFIG = {
   fonts: {
     primary: 'System',
     bold: 'System',
     fallback: ['System'],
-  },
-  colors: {
-    // Backgrounds
-    primary: '#1a1d24',
-    background: '#1a1d24',
-    surface: '#252a33',
-    surfaceLight: '#2f3540',
-    secondary: '#3d4552',
-
-    // Accent (gold)
-    accent: '#ffc300',
-    accentMuted: '#a08b4a',
-
-    // Text
-    text: '#f0f2f5',
-    textSecondary: '#9ca3af',
-    textLight: '#ffffff',
-
-    // Borders
-    border: '#3d4552',
-    borderLight: '#4a5568',
-
-    // Status
-    success: '#34d399',
-    warning: '#f59e0b',
-    error: '#ef4444',
-    disabled: '#6b7280',
-    shadow: '#000000',
-
-    // Overlays
-    overlaySubtle: 'rgba(255, 255, 255, 0.06)',
-    overlayLight: 'rgba(255, 255, 255, 0.2)',
-    overlayMedium: 'rgba(255, 255, 255, 0.3)',
-    overlayDark: 'rgba(0, 0, 0, 0.6)',
   },
   spacing: {
     xs: 4,

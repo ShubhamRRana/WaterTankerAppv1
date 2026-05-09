@@ -4,45 +4,10 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
+import { renderWithProviders as render } from '../../renderWithProviders';
 import { TextInput } from 'react-native';
 import EditProfileForm from '../../../components/admin/EditProfileForm';
-
-// Mock the UI_CONFIG
-jest.mock('../../../constants/config', () => ({
-  UI_CONFIG: {
-    colors: {
-      text: '#000000',
-      textSecondary: '#666666',
-      error: '#EF4444',
-      warning: '#F59E0B',
-      border: '#E5E7EB',
-      surface: '#FFFFFF',
-      primary: '#3B82F6',
-    },
-    borderRadius: {
-      sm: 4,
-      md: 8,
-      lg: 12,
-      xl: 16,
-    },
-    spacing: {
-      xs: 4,
-      sm: 8,
-      md: 16,
-      lg: 24,
-      xl: 32,
-    },
-    fontSize: {
-      xs: 12,
-      sm: 14,
-      md: 16,
-      lg: 18,
-      xl: 20,
-      xxl: 24,
-    },
-  },
-}));
 
 describe('EditProfileForm', () => {
   const mockFormData = {

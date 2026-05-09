@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -19,6 +19,8 @@ import { Typography, Card, Button, LoadingSpinner, Input, AdminMenuDrawer } from
 import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { BankAccount } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 import { BankAccountService, StorageService } from '../../services';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { getErrorMessage } from '../../utils/errors';
@@ -57,7 +59,10 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
   onReset,
   onDelete,
   isEditMode = false,
-}) => (
+}) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return (
   <Modal
     visible={visible}
     animationType="slide"
@@ -77,7 +82,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
             disabled={isSubmitting}
             activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={24} color={isSubmitting ? UI_CONFIG.colors.textSecondary : UI_CONFIG.colors.error} />
+            <Ionicons name="trash-outline" size={24} color={isSubmitting ? colors.textSecondary : colors.error} />
           </TouchableOpacity>
         )}
         <TouchableOpacity
@@ -86,7 +91,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
           disabled={isSubmitting}
           activeOpacity={0.7}
         >
-          <Ionicons name="close" size={24} color={UI_CONFIG.colors.text} />
+          <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -135,7 +140,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
                       }}
                       disabled={isSubmitting}
                     >
-                      <Ionicons name="close-circle" size={24} color={UI_CONFIG.colors.error} />
+                      <Ionicons name="close-circle" size={24} color={colors.error} />
                     </TouchableOpacity>
                   </View>
                 ) : (
@@ -145,7 +150,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
                     disabled={isSubmitting}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="image-outline" size={48} color={UI_CONFIG.colors.accent} />
+                    <Ionicons name="image-outline" size={48} color={colors.accent} />
                     <Typography variant="body" style={styles.imagePickerText}>
                       Tap to select QR code image
                     </Typography>
@@ -167,7 +172,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
                 >
                   <View style={[styles.checkbox, formData.isDefault && styles.checkboxChecked]}>
                     {formData.isDefault && (
-                      <Ionicons name="checkmark" size={16} color={UI_CONFIG.colors.textLight} />
+                      <Ionicons name="checkmark" size={16} color={colors.textLight} />
                     )}
                   </View>
                   <Typography variant="body" style={styles.checkboxLabel}>
@@ -239,7 +244,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
                     }}
                     disabled={isSubmitting}
                   >
-                    <Ionicons name="close-circle" size={24} color={UI_CONFIG.colors.error} />
+                    <Ionicons name="close-circle" size={24} color={colors.error} />
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -249,7 +254,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
                   disabled={isSubmitting}
                   activeOpacity={0.7}
                 >
-                  <Ionicons name="image-outline" size={48} color={UI_CONFIG.colors.accent} />
+                  <Ionicons name="image-outline" size={48} color={colors.accent} />
                   <Typography variant="body" style={styles.imagePickerText}>
                     Tap to select QR code image
                   </Typography>
@@ -271,7 +276,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
               >
                 <View style={[styles.checkbox, formData.isDefault && styles.checkboxChecked]}>
                   {formData.isDefault && (
-                    <Ionicons name="checkmark" size={16} color={UI_CONFIG.colors.textLight} />
+                    <Ionicons name="checkmark" size={16} color={colors.textLight} />
                   )}
                 </View>
                 <Typography variant="body" style={styles.checkboxLabel}>
@@ -304,9 +309,12 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
       )}
     </SafeAreaView>
   </Modal>
-);
+  );
+};
 
 const AddBankAccountScreen: React.FC = () => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<AddBankAccountScreenNavigationProp>();
   const { user, logout } = useAuthStore();
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
@@ -570,7 +578,7 @@ const AddBankAccountScreen: React.FC = () => {
                 onPress={() => handleSetDefault(account.id)}
                 activeOpacity={0.7}
               >
-                <Ionicons name="star-outline" size={20} color={UI_CONFIG.colors.accent} />
+                <Ionicons name="star-outline" size={20} color={colors.accent} />
               </TouchableOpacity>
             )}
             <TouchableOpacity
@@ -578,7 +586,7 @@ const AddBankAccountScreen: React.FC = () => {
               onPress={() => handleEditAccount(account)}
               activeOpacity={0.7}
             >
-              <Ionicons name="pencil-outline" size={20} color={UI_CONFIG.colors.success} />
+              <Ionicons name="pencil-outline" size={20} color={colors.success} />
             </TouchableOpacity>
           </View>
         </View>
@@ -609,7 +617,7 @@ const AddBankAccountScreen: React.FC = () => {
             onPress={() => setMenuVisible(true)}
             activeOpacity={0.7}
           >
-            <Ionicons name="menu" size={24} color={UI_CONFIG.colors.text} />
+            <Ionicons name="menu" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerTextContainer}>
             <Typography variant="h2" style={styles.headerTitle}>Bank Accounts</Typography>
@@ -632,7 +640,7 @@ const AddBankAccountScreen: React.FC = () => {
           
           {bankAccounts.length === 0 ? (
             <Card style={styles.emptyState}>
-              <Ionicons name="card-outline" size={48} color={UI_CONFIG.colors.textSecondary} />
+              <Ionicons name="card-outline" size={48} color={colors.textSecondary} />
               <Typography variant="body" style={styles.emptyText}>
                 No bank accounts added yet
               </Typography>
@@ -657,7 +665,7 @@ const AddBankAccountScreen: React.FC = () => {
         }}
         activeOpacity={0.8}
       >
-        <Ionicons name="add" size={24} color={UI_CONFIG.colors.textLight} />
+        <Ionicons name="add" size={24} color={colors.textLight} />
       </TouchableOpacity>
 
       <AddBankAccountModal 
@@ -687,14 +695,15 @@ const AddBankAccountScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   contentContainer: {
     paddingBottom: 100,
@@ -702,9 +711,9 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
   },
   headerContent: {
     flexDirection: 'row',
@@ -720,7 +729,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   loadingContainer: {
     flex: 1,
@@ -730,21 +739,21 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   accountsSection: {
     padding: UI_CONFIG.spacing.md,
   },
   sectionTitle: {
     marginBottom: UI_CONFIG.spacing.md,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     fontWeight: '600',
   },
   accountCard: {
     marginBottom: UI_CONFIG.spacing.md,
     padding: UI_CONFIG.spacing.md,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
   },
   accountCardContent: {
     width: '100%',
@@ -769,32 +778,32 @@ const styles = StyleSheet.create({
   },
   accountBankName: {
     fontWeight: '600',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     fontSize: 18,
     lineHeight: 24,
   },
   accountSubtitle: {
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontSize: 12,
     marginBottom: 8,
   },
   defaultBadge: {
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
   },
   defaultBadgeText: {
-    color: UI_CONFIG.colors.textLight,
+    color: colors.textLight,
     fontSize: 10,
     fontWeight: '600',
   },
   accountHolderName: {
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 4,
   },
   accountDetails: {
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontSize: 12,
     marginBottom: 2,
   },
@@ -812,12 +821,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     marginTop: UI_CONFIG.spacing.md,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   emptySubtext: {
     marginTop: UI_CONFIG.spacing.sm,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
     fontSize: 12,
   },
@@ -828,18 +837,18 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
-    shadowColor: UI_CONFIG.colors.shadow,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -847,14 +856,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: UI_CONFIG.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
-    backgroundColor: UI_CONFIG.colors.surface,
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
   modalTitle: {
     flex: 1,
     fontSize: 20,
     fontWeight: '600',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   headerDeleteButton: {
     padding: 8,
@@ -875,7 +884,7 @@ const styles = StyleSheet.create({
   },
   detailSectionTitle: {
     marginBottom: UI_CONFIG.spacing.md,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     fontWeight: '600',
   },
   formField: {
@@ -890,19 +899,19 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderWidth: 2,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
     borderRadius: 4,
     marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
   },
   checkboxChecked: {
-    backgroundColor: UI_CONFIG.colors.accent,
-    borderColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   checkboxLabel: {
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     flex: 1,
   },
   modalActions: {
@@ -919,28 +928,28 @@ const styles = StyleSheet.create({
   },
   imageLabel: {
     marginBottom: 8,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     fontWeight: '500',
   },
   imageHint: {
     marginBottom: 12,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontSize: 12,
   },
   imagePickerButton: {
     borderWidth: 2,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
     borderStyle: 'dashed',
     borderRadius: 12,
     padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     minHeight: 200,
   },
   imagePickerText: {
     marginTop: 12,
-    color: UI_CONFIG.colors.accent,
+    color: colors.accent,
     fontWeight: '500',
   },
   imagePreviewContainer: {
@@ -951,13 +960,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 300,
     borderRadius: 12,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
   },
   qrCodeImage: {
     width: 180,
     height: 180,
     borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
   },
   qrCodeContainer: {
     marginTop: 12,
@@ -967,15 +976,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 4,
   },
   errorText: {
-    color: UI_CONFIG.colors.error,
+    color: colors.error,
     marginTop: 4,
   },
 });
+}
+
 
 export default AddBankAccountScreen;
 

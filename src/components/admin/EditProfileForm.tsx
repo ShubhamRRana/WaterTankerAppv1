@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,7 +8,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import Card from '../common/Card';
 import { Typography, Button } from '../common';
-import { UI_CONFIG } from '../../constants/config';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 interface FormState {
   businessName: string;
@@ -62,15 +63,18 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
   const passwordInputRef = useRef<TextInput>(null);
   const confirmPasswordInputRef = useRef<TextInput>(null);
 
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const getCharacterCount = (text: string, maxLength: number) => {
     return `${text.length}/${maxLength}`;
   };
 
   const getCharacterCountColor = (text: string, maxLength: number) => {
     const percentage = (text.length / maxLength) * 100;
-    if (percentage >= 90) return UI_CONFIG.colors.error;
-    if (percentage >= 75) return UI_CONFIG.colors.warning;
-    return UI_CONFIG.colors.textSecondary;
+    if (percentage >= 90) return colors.error;
+    if (percentage >= 75) return colors.warning;
+    return colors.textSecondary;
   };
 
   return (
@@ -96,7 +100,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           value={formData.businessName}
           onChangeText={(t) => onFieldChange('businessName', t)}
           placeholder="Enter business name"
-          placeholderTextColor={UI_CONFIG.colors.textSecondary}
+          placeholderTextColor={colors.textSecondary}
           accessibilityLabel="Business name input"
           accessibilityHint="Enter your business name. Maximum 100 characters."
           maxLength={100}
@@ -130,7 +134,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           value={formData.name}
           onChangeText={(t) => onFieldChange('name', t)}
           placeholder="Enter full name"
-          placeholderTextColor={UI_CONFIG.colors.textSecondary}
+          placeholderTextColor={colors.textSecondary}
           accessibilityLabel="Full name input"
           accessibilityHint="Enter your full name. Maximum 50 characters."
           maxLength={50}
@@ -164,7 +168,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           value={formData.email}
           onChangeText={(t) => onFieldChange('email', t)}
           placeholder="Enter email address"
-          placeholderTextColor={UI_CONFIG.colors.textSecondary}
+          placeholderTextColor={colors.textSecondary}
           keyboardType="email-address"
           autoCapitalize="none"
           accessibilityLabel="Email address input"
@@ -198,7 +202,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           value={formData.phone}
           onChangeText={(t) => onFieldChange('phone', t)}
           placeholder="Enter phone number"
-          placeholderTextColor={UI_CONFIG.colors.textSecondary}
+          placeholderTextColor={colors.textSecondary}
           keyboardType="phone-pad"
           maxLength={10}
           accessibilityLabel="Phone number input"
@@ -225,7 +229,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             value={formData.password}
             onChangeText={(t) => onFieldChange('password', t)}
             placeholder="Leave blank to keep current"
-            placeholderTextColor={UI_CONFIG.colors.textSecondary}
+            placeholderTextColor={colors.textSecondary}
             secureTextEntry={!showPassword}
             accessibilityLabel="Password input"
             accessibilityHint="Enter new password or leave blank to keep current. Minimum 6 characters."
@@ -242,7 +246,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             <Ionicons
               name={showPassword ? 'eye-off-outline' : 'eye-outline'}
               size={24}
-              color={UI_CONFIG.colors.textSecondary}
+              color={colors.textSecondary}
             />
           </TouchableOpacity>
         </View>
@@ -265,7 +269,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             value={formData.confirmPassword}
             onChangeText={(t) => onFieldChange('confirmPassword', t)}
             placeholder="Confirm new password"
-            placeholderTextColor={UI_CONFIG.colors.textSecondary}
+            placeholderTextColor={colors.textSecondary}
             secureTextEntry={!showConfirmPassword}
             accessibilityLabel="Confirm password input"
             accessibilityHint="Confirm your new password. Must match the password above."
@@ -282,7 +286,7 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             <Ionicons
               name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
               size={24}
-              color={UI_CONFIG.colors.textSecondary}
+              color={colors.textSecondary}
             />
           </TouchableOpacity>
         </View>
@@ -314,7 +318,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   editCard: {
     marginHorizontal: 16,
     padding: 20,
@@ -322,7 +327,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 16,
   },
   inputContainer: {
@@ -337,41 +342,41 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    color: UI_CONFIG.colors.text,
-    backgroundColor: UI_CONFIG.colors.surface,
+    color: colors.text,
+    backgroundColor: colors.surface,
   },
   textInputError: {
-    borderColor: UI_CONFIG.colors.error,
+    borderColor: colors.error,
     borderWidth: 1.5,
   },
   passwordInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
+    borderColor: colors.border,
     borderRadius: 8,
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
   },
   passwordInput: {
     flex: 1,
     padding: 12,
     fontSize: 16,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   eyeIcon: {
     padding: 12,
   },
   errorText: {
-    color: UI_CONFIG.colors.error,
+    color: colors.error,
     fontSize: 12,
     marginTop: 4,
   },
@@ -388,6 +393,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
 });
+}
+
 
 export default EditProfileForm;
 

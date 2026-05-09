@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
 import { Typography, Card, Button, Input, DatePickerInput } from '../common';
 import { UI_CONFIG } from '../../constants/config';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 export interface AddDriverModalProps {
   visible: boolean;
@@ -47,7 +49,10 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
   onReset,
   onDelete,
   isEditMode = false,
-}) => (
+}) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return (
   <Modal
     visible={visible}
     animationType="slide"
@@ -67,7 +72,7 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
             disabled={isSubmitting}
             activeOpacity={0.7}
           >
-            <Ionicons name="trash-outline" size={24} color={isSubmitting ? UI_CONFIG.colors.textSecondary : UI_CONFIG.colors.error} />
+            <Ionicons name="trash-outline" size={24} color={isSubmitting ? colors.textSecondary : colors.error} />
           </TouchableOpacity>
         )}
       </View>
@@ -342,12 +347,14 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
       )}
     </SafeAreaView>
   </Modal>
-);
+  );
+};
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -357,12 +364,12 @@ const styles = StyleSheet.create({
     paddingTop: UI_CONFIG.spacing.lg,
     paddingBottom: UI_CONFIG.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
   },
   modalTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   headerDeleteButton: {
     padding: UI_CONFIG.spacing.sm,
@@ -380,7 +387,7 @@ const styles = StyleSheet.create({
   detailSectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: UI_CONFIG.spacing.md,
   },
   formField: {
@@ -390,15 +397,17 @@ const styles = StyleSheet.create({
     marginTop: UI_CONFIG.spacing.lg,
   },
   addDriverButton: {
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
     marginBottom: UI_CONFIG.spacing.md,
   },
   cancelButton: {
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.textSecondary,
+    borderColor: colors.textSecondary,
   },
 });
+}
+
 
 export default AddDriverModal;
 

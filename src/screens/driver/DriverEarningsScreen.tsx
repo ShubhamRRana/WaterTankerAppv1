@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -8,11 +8,12 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, LoadingSpinner } from '../../components/common';
-import { UI_CONFIG } from '../../constants/config';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { Booking, DriverDashboardStats, isDriverUser } from '../../types';
 import { errorLogger } from '../../utils/errorLogger';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 /** Delivered bookings scoped to the driver's agency (booking.agency_id = admin who created the driver). */
 function bookingsForDriverAgency(bookings: Booking[], agencyId: string | undefined): Booking[] {
@@ -21,6 +22,8 @@ function bookingsForDriverAgency(bookings: Booking[], agencyId: string | undefin
 }
 
 const DriverEarningsScreen: React.FC = () => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuthStore();
   const { isLoading, fetchDriverBookings, fetchDriverBookingsForEarnings } = useBookingStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -138,7 +141,12 @@ const DriverEarningsScreen: React.FC = () => {
     <ScrollView 
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.accent}
+          colors={[colors.accent]}
+        />
       }
     >
       <View style={styles.header}>
@@ -153,7 +161,7 @@ const DriverEarningsScreen: React.FC = () => {
       <View style={styles.earningsContainer}>
         <Card style={styles.earningsCard}>
           <View style={styles.earningsCardHeader}>
-            <Ionicons name="sunny-outline" size={24} color={UI_CONFIG.colors.warning} />
+            <Ionicons name="sunny-outline" size={24} color={colors.warning} />
             <Typography variant="h3" style={styles.earningsCardTitle}>
               Today
             </Typography>
@@ -165,7 +173,7 @@ const DriverEarningsScreen: React.FC = () => {
 
         <Card style={styles.earningsCard}>
           <View style={styles.earningsCardHeader}>
-            <Ionicons name="calendar-outline" size={24} color={UI_CONFIG.colors.accent} />
+            <Ionicons name="calendar-outline" size={24} color={colors.accent} />
             <Typography variant="h3" style={styles.earningsCardTitle}>
               This week
             </Typography>
@@ -177,7 +185,7 @@ const DriverEarningsScreen: React.FC = () => {
 
         <Card style={styles.earningsCard}>
           <View style={styles.earningsCardHeader}>
-            <Ionicons name="calendar-number-outline" size={24} color={UI_CONFIG.colors.success} />
+            <Ionicons name="calendar-number-outline" size={24} color={colors.success} />
             <Typography variant="h3" style={styles.earningsCardTitle}>
               This month
             </Typography>
@@ -191,58 +199,60 @@ const DriverEarningsScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  loadingText: {
-    marginTop: 16,
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  header: {
-    padding: 24,
-    paddingTop: 60,
-    paddingBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
-  },
-  headerTitle: {
-    color: UI_CONFIG.colors.text,
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    color: UI_CONFIG.colors.textSecondary,
-  },
-  earningsContainer: {
-    padding: 24,
-    gap: 16,
-  },
-  earningsCard: {
-    padding: 20,
-    marginBottom: 0,
-  },
-  earningsCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
-  },
-  earningsCardTitle: {
-    color: UI_CONFIG.colors.text,
-    fontWeight: '600',
-  },
-  earningsCardAmount: {
-    color: UI_CONFIG.colors.text,
-    fontWeight: '700',
-  },
-});
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    loadingContainer: {
+      flex: 1,
+      backgroundColor: colors.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+    },
+    loadingText: {
+      marginTop: 16,
+      color: colors.textSecondary,
+    },
+    header: {
+      padding: 24,
+      paddingTop: 60,
+      paddingBottom: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerTitle: {
+      color: colors.text,
+      marginBottom: 4,
+    },
+    headerSubtitle: {
+      color: colors.textSecondary,
+    },
+    earningsContainer: {
+      padding: 24,
+      gap: 16,
+    },
+    earningsCard: {
+      padding: 20,
+      marginBottom: 0,
+    },
+    earningsCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 12,
+      gap: 8,
+    },
+    earningsCardTitle: {
+      color: colors.text,
+      fontWeight: '600',
+    },
+    earningsCardAmount: {
+      color: colors.text,
+      fontWeight: '700',
+    },
+  });
+}
 
 export default DriverEarningsScreen;

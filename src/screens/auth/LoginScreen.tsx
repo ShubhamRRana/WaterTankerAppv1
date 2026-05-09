@@ -22,7 +22,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { AuthService } from '../../services/auth.service';
 import { Typography, DriverIcon, AdminIcon } from '../../components/common';
-import { UI_CONFIG } from '../../constants/config';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 type LoginScreenRouteProp = RouteProp<AuthStackParamList, 'Login'>;
@@ -40,6 +41,8 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   const [isButtonPressed, setIsButtonPressed] = useState(false);
   
   const { login, loginWithCredentialsAndRole, isLoading } = useAuthStore();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // Real-time validation handlers
   const handleEmailChange = (text: string) => {
@@ -228,7 +231,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     
     const iconProps = {
       size: 50,
-      color: UI_CONFIG.colors.textSecondary,
+      color: colors.textSecondary,
     };
 
     const IconComponent =
@@ -276,7 +279,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
               onChangeText={handleEmailChange}
               keyboardType="email-address"
               autoCapitalize="none"
-              placeholderTextColor={UI_CONFIG.colors.textSecondary}
+              placeholderTextColor={colors.textSecondary}
             />
             {errors.email && <Typography variant="caption" style={styles.errorText}>{errors.email}</Typography>}
           </View>
@@ -289,7 +292,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
                 value={password}
                 onChangeText={handlePasswordChange}
                 secureTextEntry={!showPassword}
-                placeholderTextColor={UI_CONFIG.colors.textSecondary}
+                placeholderTextColor={colors.textSecondary}
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
@@ -298,7 +301,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={24}
-                  color={UI_CONFIG.colors.textSecondary}
+                  color={colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
@@ -346,14 +349,15 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
     position: 'relative',
   },
   scrollContainer: {
@@ -371,12 +375,12 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     fontFamily: 'PlayfairDisplay-Regular',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   form: {
     marginBottom: 32,
@@ -387,17 +391,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.border,
-    color: UI_CONFIG.colors.text,
+    borderColor: colors.border,
+    color: colors.text,
   },
   passwordInputContainer: {
     flexDirection: 'row',
@@ -414,23 +418,23 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   inputError: {
-    borderColor: UI_CONFIG.colors.error,
+    borderColor: colors.error,
   },
   errorText: {
-    color: UI_CONFIG.colors.error,
+    color: colors.error,
     fontSize: 14,
     marginTop: 4,
   },
   button: {
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 8,
     paddingHorizontal: 27,
     paddingVertical: 11,
     alignItems: 'center',
     marginTop: 8,
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.accent,
-    shadowColor: UI_CONFIG.colors.shadow,
+    borderColor: colors.accent,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 6,
       height: 6,
@@ -440,8 +444,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   buttonDisabled: {
-    backgroundColor: UI_CONFIG.colors.disabled,
-    borderColor: UI_CONFIG.colors.disabled,
+    backgroundColor: colors.disabled,
+    borderColor: colors.disabled,
     shadowOpacity: 0.3,
   },
   buttonPressed: {
@@ -454,7 +458,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonText: {
-    color: UI_CONFIG.colors.textLight,
+    color: colors.textLight,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -465,11 +469,11 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   linkText: {
     fontSize: 16,
-    color: UI_CONFIG.colors.accent,
+    color: colors.accent,
     fontWeight: '600',
   },
   watermarkContainer: {
@@ -490,10 +494,12 @@ const styles = StyleSheet.create({
   },
   bottomNoticeText: {
     textAlign: 'center',
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     lineHeight: 18,
   },
 });
+}
+
 
 export default LoginScreen;
 

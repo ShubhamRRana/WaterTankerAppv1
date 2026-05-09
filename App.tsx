@@ -1,11 +1,16 @@
 import React, { useEffect, useRef, Suspense, lazy } from 'react';
-import { NavigationContainer, NavigationContainerRef } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  NavigationContainerRef,
+  DarkTheme,
+  DefaultTheme,
+  Theme as NavTheme,
+} from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { View, ActivityIndicator } from 'react-native';
-import { UI_CONFIG } from './src/constants/config';
 
 // Lazy load navigators for code splitting
 const AuthNavigator = lazy(() => import('./src/navigation/AuthNavigator'));
@@ -17,6 +22,7 @@ import { useAuthStore } from './src/store/authStore';
 
 // Components
 import ErrorBoundary from './src/components/common/ErrorBoundary';
+import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 
 // Types
 import { User } from './src/types';
@@ -29,37 +35,55 @@ export type RootStackParamList = {
 
 const Stack = createStackNavigator<RootStackParamList>();
 
-const App: React.FC = () => {
-  const { user, initializeAuth } = useAuthStore();
+function getRootRouteName(u: User | null): keyof RootStackParamList {
+  if (!u) return 'Auth';
+  if (u.role === 'driver') return 'Driver';
+  if (u.role === 'admin') return 'Admin';
+  return 'Auth';
+}
+
+function NavigatorLoadingFallback() {
+  const { colors } = useTheme();
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: colors.background,
+      }}
+    >
+      <ActivityIndicator size="large" color={colors.accent} />
+    </View>
+  );
+}
+
+function NavigationContent() {
+  const { user } = useAuthStore();
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
+  const { colors, resolvedScheme } = useTheme();
 
-  // Load custom fonts
-  const [fontsLoaded] = useFonts({
-    'PlayfairDisplay-Regular': require('./assets/fonts/PlayfairDisplay-Regular.ttf'),
-  });
+  const navTheme: NavTheme = React.useMemo(() => {
+    const base = resolvedScheme === 'dark' ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: {
+        ...base.colors,
+        primary: colors.accent,
+        background: colors.background,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        notification: colors.accent,
+      },
+    };
+  }, [resolvedScheme, colors]);
 
   useEffect(() => {
-    // Initialize the auth system and load any existing user
-    initializeAuth().catch((_error) => {
-      // Error handled by error boundary
-    });
-  }, [initializeAuth]);
-
-  // Helper function to determine initial route based on user (this app supports driver and admin only)
-  const getInitialRouteName = (user: User | null): keyof RootStackParamList => {
-    if (!user) return 'Auth';
-    if (user.role === 'driver') return 'Driver';
-    if (user.role === 'admin') return 'Admin';
-    return 'Auth';
-  };
-
-  // Navigate when user state changes
-  useEffect(() => {
-    if (navigationRef.current && navigationRef.current.isReady()) {
-      const targetRoute = getInitialRouteName(user);
+    if (navigationRef.current?.isReady()) {
+      const targetRoute = getRootRouteName(user);
       const currentRoute = navigationRef.current.getCurrentRoute()?.name;
-      
-      // Only navigate if we're not already on the target route
+
       if (currentRoute !== targetRoute) {
         navigationRef.current.reset({
           index: 0,
@@ -69,36 +93,48 @@ const App: React.FC = () => {
     }
   }, [user]);
 
-  // Don't render until fonts are loaded
-  if (!fontsLoaded) {
-    return null; // or a loading screen
-  }
-
-  // Loading component for lazy-loaded navigators
-  const NavigatorLoadingFallback = () => (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: UI_CONFIG.colors.background }}>
-      <ActivityIndicator size="large" color={UI_CONFIG.colors.accent} />
-    </View>
+  return (
+    <NavigationContainer ref={navigationRef} theme={navTheme}>
+      <StatusBar style={resolvedScheme === 'dark' ? 'light' : 'dark'} />
+      <Suspense fallback={<NavigatorLoadingFallback />}>
+        <Stack.Navigator
+          initialRouteName={getRootRouteName(user)}
+          screenOptions={{
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="Auth" component={AuthNavigator} />
+          <Stack.Screen name="Driver" component={DriverNavigator} />
+          <Stack.Screen name="Admin" component={AdminNavigator} />
+        </Stack.Navigator>
+      </Suspense>
+    </NavigationContainer>
   );
+}
+
+const App: React.FC = () => {
+  const { initializeAuth } = useAuthStore();
+
+  const [fontsLoaded] = useFonts({
+    'PlayfairDisplay-Regular': require('./assets/fonts/PlayfairDisplay-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    initializeAuth().catch((_error) => {
+      // Error handled by error boundary
+    });
+  }, [initializeAuth]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
-        <NavigationContainer ref={navigationRef}>
-          <StatusBar style="light" />
-          <Suspense fallback={<NavigatorLoadingFallback />}>
-            <Stack.Navigator
-              initialRouteName={getInitialRouteName(user)}
-              screenOptions={{
-                headerShown: false,
-              }}
-            >
-              <Stack.Screen name="Auth" component={AuthNavigator} />
-              <Stack.Screen name="Driver" component={DriverNavigator} />
-              <Stack.Screen name="Admin" component={AdminNavigator} />
-            </Stack.Navigator>
-          </Suspense>
-        </NavigationContainer>
+        <ThemeProvider>
+          <NavigationContent />
+        </ThemeProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );

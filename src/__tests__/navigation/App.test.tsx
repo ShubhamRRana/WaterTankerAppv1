@@ -96,17 +96,8 @@ jest.mock('../../components/common/ErrorBoundary', () => {
   return ({ children }: { children: React.ReactNode }) => <>{children}</>;
 });
 
-// Mock UI_CONFIG
-jest.mock('../../constants/config', () => ({
-  UI_CONFIG: {
-    colors: {
-      background: '#f0ebd8',
-      primary: '#3e5c76',
-    },
-  },
-}));
 
-// Mock font file - use moduleNameMapper pattern instead
+
 jest.mock('expo-font', () => ({
   useFonts: jest.fn(() => [true]),
 }));

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,6 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card } from '../common';
 import { Booking, BookingStatus } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 import { PricingUtils } from '../../utils/pricing';
 import { formatDateTime } from '../../utils/dateUtils';
 
@@ -26,7 +28,10 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
   onClose,
   booking,
   getStatusColor,
-}) => (
+}) => {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  return (
   <Modal
     visible={visible}
     animationType='slide'
@@ -41,7 +46,7 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
           onPress={onClose}
           style={styles.closeButton}
         >
-          <Ionicons name="close" size={24} color={UI_CONFIG.colors.textSecondary} />
+          <Ionicons name="close" size={24} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -139,12 +144,14 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
       )}
     </SafeAreaView>
   </Modal>
-);
+  );
+};
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -153,12 +160,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingVertical: UI_CONFIG.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: UI_CONFIG.colors.border,
+    borderBottomColor: colors.border,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
   },
   closeButton: {
     padding: UI_CONFIG.spacing.sm,
@@ -174,7 +181,7 @@ const styles = StyleSheet.create({
   detailSectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: UI_CONFIG.spacing.md,
   },
   detailItem: {
@@ -185,12 +192,12 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   detailValue: {
     fontSize: 14,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     fontWeight: '400',
   },
   statusBadge: {
@@ -201,19 +208,21 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     fontWeight: '600',
-    color: UI_CONFIG.colors.textLight,
+    color: colors.textLight,
   },
   addressText: {
     fontSize: 14,
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: UI_CONFIG.spacing.xs,
   },
   landmarkText: {
     fontSize: 12,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     fontStyle: 'italic',
     marginTop: UI_CONFIG.spacing.xs,
   },
 });
+}
+
 
 export default BookingDetailsModal;

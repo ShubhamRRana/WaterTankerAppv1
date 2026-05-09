@@ -2,7 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Typography, DriverIcon, AdminIcon } from '../../components/common';
-import { UI_CONFIG } from '../../constants/config';
+import { AppPalette } from '../../theme/palettes';
+import { useTheme } from '../../theme/ThemeProvider';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList, UserRole } from '../../types';
 
@@ -15,6 +16,8 @@ interface Props {
 const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const roles: Array<{ key: UserRole; title: string; subtitle: string }> = [
     { key: 'admin', title: 'Admin', subtitle: 'Manage platform operations' },
@@ -95,7 +98,7 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
                 },
               ]}
             >
-              <IconComponent size={50} color={UI_CONFIG.colors.textSecondary} />
+              <IconComponent size={50} color={colors.textSecondary} />
             </View>
           );
         })}
@@ -123,12 +126,12 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
                   </View>
                   {role.key === 'driver' && (
                     <View style={styles.iconContainer}>
-                      <DriverIcon size={32} color={selectedRole === role.key ? UI_CONFIG.colors.accent : UI_CONFIG.colors.text} />
+                      <DriverIcon size={32} color={selectedRole === role.key ? colors.accent : colors.text} />
                     </View>
                   )}
                   {role.key === 'admin' && (
                     <View style={styles.iconContainer}>
-                      <AdminIcon size={32} color={selectedRole === role.key ? UI_CONFIG.colors.accent : UI_CONFIG.colors.text} />
+                      <AdminIcon size={32} color={selectedRole === role.key ? colors.accent : colors.text} />
                     </View>
                   )}
                 </View>
@@ -153,14 +156,15 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
+function createStyles(colors: AppPalette) {
+  return StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: UI_CONFIG.colors.background,
+    backgroundColor: colors.background,
     position: 'relative',
   },
   watermarkContainer: {
@@ -187,34 +191,34 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     fontFamily: 'PlayfairDisplay-Regular',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   roleContainer: {
     marginBottom: 32,
   },
   roleCard: {
-    backgroundColor: UI_CONFIG.colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: UI_CONFIG.colors.border,
-    shadowColor: UI_CONFIG.colors.shadow,
+    borderColor: colors.border,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
   },
   roleCardSelected: {
-    borderColor: UI_CONFIG.colors.accent,
-    backgroundColor: UI_CONFIG.colors.surfaceLight,
+    borderColor: colors.accent,
+    backgroundColor: colors.surfaceLight,
   },
   roleHeader: {
     flexDirection: 'row',
@@ -233,28 +237,28 @@ const styles = StyleSheet.create({
   roleTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: UI_CONFIG.colors.text,
+    color: colors.text,
     marginBottom: 4,
   },
   roleTitleSelected: {
-    color: UI_CONFIG.colors.accent,
+    color: colors.accent,
   },
   roleDescription: {
     fontSize: 14,
-    color: UI_CONFIG.colors.textSecondary,
+    color: colors.textSecondary,
   },
   roleDescriptionSelected: {
-    color: UI_CONFIG.colors.accentMuted,
+    color: colors.accentMuted,
   },
   button: {
-    backgroundColor: UI_CONFIG.colors.accent,
+    backgroundColor: colors.accent,
     borderRadius: 8,
     paddingHorizontal: 27,
     paddingVertical: 11,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: UI_CONFIG.colors.accent,
-    shadowColor: UI_CONFIG.colors.shadow,
+    borderColor: colors.accent,
+    shadowColor: colors.shadow,
     shadowOffset: {
       width: 6,
       height: 6,
@@ -264,8 +268,8 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   buttonDisabled: {
-    backgroundColor: UI_CONFIG.colors.disabled,
-    borderColor: UI_CONFIG.colors.disabled,
+    backgroundColor: colors.disabled,
+    borderColor: colors.disabled,
     shadowOpacity: 0.3,
   },
   buttonPressed: {
@@ -278,7 +282,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonText: {
-    color: UI_CONFIG.colors.textLight,
+    color: colors.textLight,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -292,18 +296,20 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: UI_CONFIG.colors.accent,
+    borderColor: colors.accent,
   },
   buttonSecondaryDisabled: {
-    borderColor: UI_CONFIG.colors.disabled,
+    borderColor: colors.disabled,
     opacity: 0.5,
   },
   buttonSecondaryText: {
-    color: UI_CONFIG.colors.accent,
+    color: colors.accent,
     fontSize: 18,
     fontWeight: '600',
   },
 });
+}
+
 
 export default RoleEntryScreen;
 

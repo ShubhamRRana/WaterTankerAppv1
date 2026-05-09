@@ -3,52 +3,10 @@
  */
 
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { fireEvent } from '@testing-library/react-native';
 import StatusUpdateModal from '../../../components/admin/StatusUpdateModal';
 import { BookingStatus } from '../../../types';
-
-// Mock UI_CONFIG
-jest.mock('../../../constants/config', () => ({
-  UI_CONFIG: {
-    colors: {
-      text: '#000000',
-      textSecondary: '#666666',
-      error: '#EF4444',
-      primary: '#3B82F6',
-      background: '#FFFFFF',
-      surface: '#F5F5F5',
-      border: '#E5E7EB',
-      textLight: '#FFFFFF',
-      shadow: '#000000',
-    },
-    spacing: {
-      xs: 4,
-      sm: 8,
-      md: 16,
-      lg: 24,
-      xl: 32,
-    },
-    fontSize: {
-      xs: 12,
-      sm: 14,
-      md: 16,
-      lg: 18,
-      xl: 20,
-      xxl: 24,
-    },
-    borderRadius: {
-      sm: 4,
-      md: 8,
-      lg: 12,
-      xl: 16,
-    },
-    fonts: {
-      primary: 'System',
-      bold: 'System',
-      fallback: ['System'],
-    },
-  },
-}));
+import { renderWithProviders as render } from '../../renderWithProviders';
 
 describe('StatusUpdateModal', () => {
   const mockGetStatusColor = (status: BookingStatus): string => {
