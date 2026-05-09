@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, Dimensions } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ScrollView, Platform, KeyboardAvoidingView, Dimensions, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Typography, DriverIcon, AdminIcon } from '../../components/common';
 import { AppPalette } from '../../theme/palettes';
@@ -8,6 +8,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList, UserRole } from '../../types';
 
 type RoleEntryNavigationProp = StackNavigationProp<AuthStackParamList, 'RoleEntry'>;
+
+const CUSTOMER_APP_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.watertanker.app';
 
 interface Props {
   navigation: RoleEntryNavigationProp;
@@ -103,52 +105,69 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
           );
         })}
         <ScrollView contentContainerStyle={styles.scrollContainer} style={styles.contentOverlay}>
-          <View style={styles.header}>
-            <Typography variant="h1" style={styles.title}>Water Tanker - Admin</Typography>
-            <Typography variant="body" style={styles.subtitle}>Select how you want to use the app</Typography>
-          </View>
+          <View style={styles.scrollMain}>
+            <View style={styles.header}>
+              <Typography variant="h1" style={styles.title}>Water Tanker - Admin</Typography>
+              <Typography variant="body" style={styles.subtitle}>Select how you want to use the app</Typography>
+            </View>
 
-          <View style={styles.roleContainer}>
-            {roles.map((role) => (
-              <TouchableOpacity
-                key={role.key}
-                style={[styles.roleCard, selectedRole === role.key && styles.roleCardSelected]}
-                onPress={() => setSelectedRole(role.key)}
-              >
-                <View style={styles.roleHeader}>
-                  <View style={styles.roleInfo}>
-                    <Typography variant="h3" style={[styles.roleTitle, selectedRole === role.key && styles.roleTitleSelected]}>
-                      {role.title}
-                    </Typography>
-                    <Typography variant="caption" style={[styles.roleDescription, selectedRole === role.key && styles.roleDescriptionSelected]}>
-                      {role.subtitle}
-                    </Typography>
+            <View style={styles.roleContainer}>
+              {roles.map((role) => (
+                <TouchableOpacity
+                  key={role.key}
+                  style={[styles.roleCard, selectedRole === role.key && styles.roleCardSelected]}
+                  onPress={() => setSelectedRole(role.key)}
+                >
+                  <View style={styles.roleHeader}>
+                    <View style={styles.roleInfo}>
+                      <Typography variant="h3" style={[styles.roleTitle, selectedRole === role.key && styles.roleTitleSelected]}>
+                        {role.title}
+                      </Typography>
+                      <Typography variant="caption" style={[styles.roleDescription, selectedRole === role.key && styles.roleDescriptionSelected]}>
+                        {role.subtitle}
+                      </Typography>
+                    </View>
+                    {role.key === 'driver' && (
+                      <View style={styles.iconContainer}>
+                        <DriverIcon size={32} color={selectedRole === role.key ? colors.accent : colors.text} />
+                      </View>
+                    )}
+                    {role.key === 'admin' && (
+                      <View style={styles.iconContainer}>
+                        <AdminIcon size={32} color={selectedRole === role.key ? colors.accent : colors.text} />
+                      </View>
+                    )}
                   </View>
-                  {role.key === 'driver' && (
-                    <View style={styles.iconContainer}>
-                      <DriverIcon size={32} color={selectedRole === role.key ? colors.accent : colors.text} />
-                    </View>
-                  )}
-                  {role.key === 'admin' && (
-                    <View style={styles.iconContainer}>
-                      <AdminIcon size={32} color={selectedRole === role.key ? colors.accent : colors.text} />
-                    </View>
-                  )}
-                </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, !selectedRole && styles.buttonDisabled, isButtonPressed && styles.buttonPressed]}
+                onPress={handleContinue}
+                disabled={!selectedRole}
+                onPressIn={() => setIsButtonPressed(true)}
+                onPressOut={() => setIsButtonPressed(false)}
+              >
+                <Typography variant="body" style={styles.buttonText}>Continue</Typography>
               </TouchableOpacity>
-            ))}
+            </View>
           </View>
 
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, !selectedRole && styles.buttonDisabled, isButtonPressed && styles.buttonPressed]}
-              onPress={handleContinue}
-              disabled={!selectedRole}
-              onPressIn={() => setIsButtonPressed(true)}
-              onPressOut={() => setIsButtonPressed(false)}
-            >
-              <Typography variant="body" style={styles.buttonText}>Continue</Typography>
-            </TouchableOpacity>
+          <View style={styles.footer}>
+            <Typography variant="caption" style={styles.footerText}>
+              This app is only for admin and driver for managing bookings. To create bookings, please use the{' '}
+              <Typography
+                variant="caption"
+                style={styles.footerLink}
+                onPress={() => Linking.openURL(CUSTOMER_APP_PLAY_STORE_URL)}
+                accessibilityRole="link"
+              >
+                Water Tanker - Customer
+              </Typography>
+              {' '}app.
+            </Typography>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -180,8 +199,25 @@ function createStyles(colors: AppPalette) {
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 24,
+  },
+  scrollMain: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
+  footer: {
+    marginTop: 24,
+    paddingTop: 8,
+    paddingHorizontal: 4,
+  },
+  footerText: {
+    textAlign: 'center',
+    color: colors.textSecondary,
+  },
+  footerLink: {
+    color: colors.accent,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   header: {
     alignItems: 'center',

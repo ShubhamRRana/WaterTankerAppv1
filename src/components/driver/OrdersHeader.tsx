@@ -8,11 +8,10 @@ import { useTheme } from '../../theme/ThemeProvider';
 interface OrdersHeaderProps {
   userName: string | undefined;
   onLogout: () => void;
-  onOpenSettings?: () => void;
 }
 
 const OrdersHeader: React.FC<OrdersHeaderProps> = memo(
-  ({ userName, onLogout, onOpenSettings }) => {
+  ({ userName, onLogout }) => {
     const { colors } = useTheme();
     const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -27,17 +26,6 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = memo(
           </Typography>
         </View>
         <View style={styles.headerActions}>
-          {onOpenSettings ? (
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={onOpenSettings}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Open settings"
-            >
-              <Ionicons name="settings-outline" size={24} color={colors.textSecondary} />
-            </TouchableOpacity>
-          ) : null}
           <TouchableOpacity
             style={styles.iconButton}
             onPress={onLogout}

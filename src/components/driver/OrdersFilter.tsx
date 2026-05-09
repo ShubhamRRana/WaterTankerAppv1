@@ -32,17 +32,19 @@ const OrdersFilter: React.FC<OrdersFilterProps> = memo(({ activeTab, onTabChange
   }, [onTabChange]);
 
   const tabGliderAnim = useRef(new Animated.Value(0)).current;
-  const [tabOptionWidth, setTabOptionWidth] = useState(0);
+  const [rowWidth, setRowWidth] = useState(0);
   const isInitialRender = useRef(true);
 
+  const segmentWidth = rowWidth > 0 ? rowWidth / tabs.length : 0;
+
   useEffect(() => {
-    if (tabOptionWidth > 0) {
+    if (segmentWidth > 0) {
       let tabIndex = 0;
       if (activeTab === 'available') tabIndex = 0;
       else if (activeTab === 'active') tabIndex = 1;
       else if (activeTab === 'completed') tabIndex = 2;
 
-      const targetValue = tabIndex * tabOptionWidth;
+      const targetValue = tabIndex * segmentWidth;
 
       if (isInitialRender.current) {
         tabGliderAnim.setValue(targetValue);
@@ -58,23 +60,25 @@ const OrdersFilter: React.FC<OrdersFilterProps> = memo(({ activeTab, onTabChange
         });
       }
     }
-  }, [activeTab, tabOptionWidth]);
+  }, [activeTab, segmentWidth]);
 
   return (
     <View style={styles.tabContainer}>
-      <View style={styles.glassRadioGroup}>
-        {tabs.map((tab, index) => (
+      <View
+        style={styles.glassRadioGroup}
+        onLayout={(e) => {
+          const w = e.nativeEvent.layout.width;
+          if (w !== rowWidth) {
+            setRowWidth(w);
+          }
+        }}
+      >
+        {tabs.map((tab) => (
           <TouchableOpacity
             key={tab.key}
             style={styles.glassRadioOption}
             onPress={() => handleTabPress(tab.key)}
             activeOpacity={0.8}
-            onLayout={(e) => {
-              if (index === 0 && tabOptionWidth === 0) {
-                const width = e.nativeEvent.layout.width;
-                setTabOptionWidth(width);
-              }
-            }}
           >
             <Typography 
               variant="body" 
@@ -87,12 +91,12 @@ const OrdersFilter: React.FC<OrdersFilterProps> = memo(({ activeTab, onTabChange
             </Typography>
           </TouchableOpacity>
         ))}
-        {tabOptionWidth > 0 && (
+        {segmentWidth > 0 && (
           <Animated.View
             style={[
               styles.glassGlider,
               {
-                width: tabOptionWidth,
+                width: segmentWidth,
                 transform: [{
                   translateX: tabGliderAnim,
                 }],
@@ -121,7 +125,7 @@ function createStyles(colors: AppPalette) {
       position: 'relative',
       flexDirection: 'row',
       backgroundColor: colors.overlaySubtle,
-      borderRadius: 16,
+      borderRadius: 18,
       overflow: 'hidden',
       alignSelf: 'center',
       shadowColor: colors.shadow,
@@ -136,16 +140,16 @@ function createStyles(colors: AppPalette) {
     },
     glassRadioOption: {
       flex: 1,
-      minWidth: 80,
-      alignItems: 'flex-start',
-      justifyContent: 'flex-start',
-      paddingVertical: 12.8,
-      paddingHorizontal: 25.6,
+      minWidth: 92,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 15,
+      paddingHorizontal: UI_CONFIG.spacing.md,
       zIndex: 2,
     },
     glassRadioLabel: {
-      fontSize: 14,
-      lineHeight: 18,
+      fontSize: 15,
+      lineHeight: 20,
       fontWeight: '600',
       letterSpacing: 0.3,
       color: colors.textSecondary,
@@ -157,10 +161,10 @@ function createStyles(colors: AppPalette) {
     },
     glassGlider: {
       position: 'absolute',
-      top: 0,
-      bottom: 0,
       left: 0,
-      borderRadius: 16,
+      top: 5,
+      bottom: 5,
+      borderRadius: 13,
       zIndex: 1,
       backgroundColor: colors.accent,
       shadowColor: colors.accent,
@@ -171,7 +175,6 @@ function createStyles(colors: AppPalette) {
       shadowOpacity: 0.5,
       shadowRadius: 15,
       elevation: 10,
-      height: '80%',
     },
   });
 }

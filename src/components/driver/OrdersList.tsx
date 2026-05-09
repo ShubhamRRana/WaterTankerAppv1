@@ -166,12 +166,19 @@ const OrdersList: React.FC<OrdersListProps> = ({
     // Get address from the batch-fetched map (passed via initialAddress prop)
     // This eliminates individual API calls per order card
     const customerProfileAddress = initialAddress;
+    const isCompactCard =
+      activeTab === 'available' ||
+      activeTab === 'active' ||
+      activeTab === 'completed';
 
     return (
-      <Card style={styles.orderCard}>
-        <View style={styles.orderHeader}>
+      <Card
+        style={[styles.orderCard, isCompactCard && styles.orderCardCompact]}
+        padding={isCompactCard ? 'small' : 'medium'}
+      >
+        <View style={[styles.orderHeader, isCompactCard && styles.orderHeaderCompact]}>
           <View style={styles.orderInfo}>
-            <Typography variant="body" style={styles.customerName}>
+            <Typography variant="body" style={[styles.customerName, isCompactCard && styles.customerNameCompact]}>
               {order.customerName}
             </Typography>
             <Typography variant="body" style={styles.orderId}>
@@ -185,7 +192,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
           </View>
         </View>
 
-        <View style={styles.orderDetails}>
+        <View style={[styles.orderDetails, isCompactCard && styles.orderDetailsCompact]}>
           <View style={styles.orderDetail}>
             <Ionicons name="water-outline" size={16} color={colors.textSecondary} />
             <Typography variant="caption" style={styles.orderDetailText}>
@@ -205,7 +212,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
             // TODO: Open Google Maps with the address
           }}
           activeOpacity={0.7}
-          style={styles.addressContainer}
+          style={[styles.addressContainer, isCompactCard && styles.addressContainerCompact]}
         >
           <Ionicons name="location" size={14} color={colors.accent} />
           <Typography variant="caption" style={styles.orderAddress}>
@@ -214,7 +221,7 @@ const OrdersList: React.FC<OrdersListProps> = ({
         </TouchableOpacity>
 
         {customerProfileAddress && (
-          <View style={styles.profileAddressContainer}>
+          <View style={[styles.profileAddressContainer, isCompactCard && styles.profileAddressContainerCompact]}>
             <Ionicons name="home" size={14} color={colors.secondary} />
             <Typography variant="caption" style={styles.profileAddress}>
               Profile: {customerProfileAddress}
@@ -222,12 +229,14 @@ const OrdersList: React.FC<OrdersListProps> = ({
           </View>
         )}
 
-        <Typography variant="caption" style={styles.orderTime}>
-          {formattedDate ? `Scheduled: ${formattedDate}` : 'Immediate'}
-        </Typography>
+        {activeTab !== 'completed' && (
+          <Typography variant="caption" style={styles.orderTime}>
+            {formattedDate ? `Scheduled: ${formattedDate}` : 'Immediate'}
+          </Typography>
+        )}
 
         {order.status === 'delivered' && formattedDeliveredDate && (
-          <View style={styles.deliveredInfo}>
+          <View style={[styles.deliveredInfo, activeTab === 'completed' && styles.deliveredInfoCompact]}>
             <Ionicons name="checkmark-circle" size={16} color={colors.success} />
             <Typography variant="caption" style={styles.deliveredText}>
               Delivered: {formattedDeliveredDate}
@@ -409,11 +418,17 @@ function createStyles(colors: AppPalette) {
   orderCard: {
     marginBottom: 16,
   },
+  orderCardCompact: {
+    marginBottom: 12,
+  },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 12,
+  },
+  orderHeaderCompact: {
+    marginBottom: 8,
   },
   orderInfo: {
     flex: 1,
@@ -423,6 +438,9 @@ function createStyles(colors: AppPalette) {
     fontWeight: '600',
     color: colors.text,
     marginBottom: 4,
+  },
+  customerNameCompact: {
+    marginBottom: 2,
   },
   orderId: {
     fontSize: 16,
@@ -442,6 +460,9 @@ function createStyles(colors: AppPalette) {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
+  },
+  orderDetailsCompact: {
+    marginBottom: 6,
   },
   orderDetail: {
     flexDirection: 'row',
@@ -463,6 +484,11 @@ function createStyles(colors: AppPalette) {
     borderWidth: 1,
     borderColor: colors.accent,
   },
+  addressContainerCompact: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 6,
+  },
   orderAddress: {
     fontSize: 12,
     color: colors.accent,
@@ -478,6 +504,11 @@ function createStyles(colors: AppPalette) {
     marginBottom: 8,
     borderWidth: 1,
     borderColor: colors.secondary,
+  },
+  profileAddressContainerCompact: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 6,
   },
   profileAddress: {
     fontSize: 12,
@@ -497,6 +528,11 @@ function createStyles(colors: AppPalette) {
     paddingTop: 8,
     borderTopWidth: 1,
     borderTopColor: colors.border,
+  },
+  deliveredInfoCompact: {
+    marginBottom: 0,
+    paddingTop: 6,
+    borderTopWidth: 0,
   },
   deliveredText: {
     fontSize: 12,

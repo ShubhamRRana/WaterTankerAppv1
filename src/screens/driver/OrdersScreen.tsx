@@ -362,7 +362,6 @@ const OrdersScreen: React.FC = () => {
         <OrdersHeader 
           userName={user?.name} 
           onLogout={handleLogout}
-          onOpenSettings={() => navigation.navigate('Settings')}
         />
         
         <OrdersFilter 

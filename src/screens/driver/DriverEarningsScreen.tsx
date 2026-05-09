@@ -8,6 +8,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, LoadingSpinner } from '../../components/common';
+import AppearanceSettingsSection from '../../components/settings/AppearanceSettingsSection';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { Booking, DriverDashboardStats, isDriverUser } from '../../types';
@@ -156,6 +157,9 @@ const DriverEarningsScreen: React.FC = () => {
         <Typography variant="body" style={styles.headerSubtitle}>
           Deliveries completed for your agency
         </Typography>
+        <View style={styles.appearanceBlock}>
+          <AppearanceSettingsSection />
+        </View>
       </View>
 
       <View style={styles.earningsContainer}>
@@ -229,6 +233,9 @@ function createStyles(colors: AppPalette) {
     },
     headerSubtitle: {
       color: colors.textSecondary,
+    },
+    appearanceBlock: {
+      marginTop: 20,
     },
     earningsContainer: {
       padding: 24,
