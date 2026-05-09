@@ -104,7 +104,7 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
         })}
         <ScrollView contentContainerStyle={styles.scrollContainer} style={styles.contentOverlay}>
           <View style={styles.header}>
-            <Typography variant="h1" style={styles.title}>Welcome to TankerHub</Typography>
+            <Typography variant="h1" style={styles.title}>Water Tanker - Admin</Typography>
             <Typography variant="body" style={styles.subtitle}>Select how you want to use the app</Typography>
           </View>
 
