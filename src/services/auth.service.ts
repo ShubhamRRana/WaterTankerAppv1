@@ -572,7 +572,8 @@ export class AuthService {
 
           await new Promise<void>(resolve => setTimeout(() => resolve(), 500));
 
-          if (!authData.session && role === 'admin') {
+          // No JWT yet when Supabase "Confirm email" is enabled — skip writes that require an authenticated client.
+          if (!authData.session) {
             securityLogger.logRegistrationAttempt(sanitizedEmail, role, true, undefined, userId);
             return {
               success: true,

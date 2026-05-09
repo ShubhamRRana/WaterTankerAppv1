@@ -287,7 +287,10 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
     try {
       const outcome = await register(sanitizedEmail, password, sanitizedName, role, sanitizedPhone, sanitizedBusinessName.trim() || undefined);
       if (outcome?.requiresEmailConfirmation) {
-        Alert.alert('Confirm your email', SUCCESS_MESSAGES.auth.registerConfirmEmail);
+        navigation.replace('PendingEmailVerification', {
+          email: sanitizedEmail,
+          preferredRole: role,
+        });
       } else {
         Alert.alert('Success', SUCCESS_MESSAGES.auth.registerSuccess);
       }

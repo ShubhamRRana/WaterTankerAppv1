@@ -157,12 +157,27 @@ export const ERROR_MESSAGES = {
   },
 };
 
+// Email verification after sign-up (no session until confirmed)
+export const VERIFY_EMAIL_MESSAGES = {
+  title: 'Verify your email',
+  subtitle: 'We sent a confirmation link to:',
+  stepsIntro: 'What to do next',
+  stepCheckInbox: 'Check your inbox and spam or junk folder for our email.',
+  stepTapLink: 'Open the email and tap the confirmation link.',
+  stepSignIn: 'Come back to this app and sign in with the same email and password.',
+  resend: 'Resend confirmation email',
+  resendCooldown: (seconds: number) => `Resend available in ${seconds}s`,
+  continueToSignIn: 'Continue to sign in',
+  resendSuccess: 'Confirmation email sent. Please check your inbox.',
+};
+
 // Success Messages
 export const SUCCESS_MESSAGES = {
   auth: {
     loginSuccess: 'Login successful!',
     registerSuccess: 'Registration successful!',
-    registerConfirmEmail: 'Check your email and confirm your address before signing in.',
+    registerConfirmEmail:
+      'Your account was created. Check your email to confirm your address, then sign in here.',
     logoutSuccess: 'Logged out successfully!',
   },
   booking: {

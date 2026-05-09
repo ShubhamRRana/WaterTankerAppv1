@@ -45,6 +45,7 @@ jest.mock('@react-navigation/bottom-tabs', () => {
 });
 
 import { renderWithProviders as render } from '../renderWithProviders';
+import type { AuthStackParamList } from '../../types';
 import AuthNavigator from '../../navigation/AuthNavigator';
 import DriverNavigator from '../../navigation/DriverNavigator';
 import AdminNavigator from '../../navigation/AdminNavigator';
@@ -66,6 +67,16 @@ jest.mock('../../screens/auth/RoleEntryScreen', () => {
   const React = require('react');
   const { View, Text } = require('react-native');
   return () => <View testID="RoleEntryScreen"><Text>RoleEntryScreen</Text></View>;
+});
+
+jest.mock('../../screens/auth/PendingEmailVerificationScreen', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return () => (
+    <View testID="PendingEmailVerificationScreen">
+      <Text>PendingEmailVerificationScreen</Text>
+    </View>
+  );
 });
 
 jest.mock('../../screens/driver/OrdersScreen', () => {
@@ -186,6 +197,15 @@ describe('Navigation Configuration', () => {
     it('should export AuthStackParamList type', () => {
       const testParams: { RoleEntry: undefined } = { RoleEntry: undefined };
       expect(testParams).toBeDefined();
+    });
+
+    it('should accept PendingEmailVerification route params', () => {
+      const pendingParams: AuthStackParamList['PendingEmailVerification'] = {
+        email: 'user@example.com',
+        preferredRole: 'admin',
+      };
+      expect(pendingParams.email).toBe('user@example.com');
+      expect(pendingParams.preferredRole).toBe('admin');
     });
 
     it('should export DriverTabParamList type', () => {

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   TextInput,
@@ -43,6 +43,13 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   const { login, loginWithCredentialsAndRole, isLoading } = useAuthStore();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  useEffect(() => {
+    const raw = route.params?.initialEmail?.trim();
+    if (raw) {
+      setEmail(SanitizationUtils.sanitizeEmail(raw));
+    }
+  }, [route.params?.initialEmail]);
 
   // Real-time validation handlers
   const handleEmailChange = (text: string) => {

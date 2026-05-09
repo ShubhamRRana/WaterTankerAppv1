@@ -15,6 +15,7 @@ import {
   STORAGE_KEYS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
+  VERIFY_EMAIL_MESSAGES,
   LOADING_MESSAGES,
   DATE_CONFIG,
   FEATURE_FLAGS,
@@ -396,6 +397,7 @@ describe('Configuration Constants', () => {
       const authSuccess = SUCCESS_MESSAGES.auth;
       expect(authSuccess).toHaveProperty('loginSuccess');
       expect(authSuccess).toHaveProperty('registerSuccess');
+      expect(authSuccess).toHaveProperty('registerConfirmEmail');
       expect(authSuccess).toHaveProperty('logoutSuccess');
       Object.values(authSuccess).forEach(value => {
         expect(typeof value).toBe('string');
@@ -414,6 +416,16 @@ describe('Configuration Constants', () => {
         expect(typeof value).toBe('string');
         expect(value.length).toBeGreaterThan(0);
       });
+    });
+  });
+
+  describe('VERIFY_EMAIL_MESSAGES', () => {
+    it('should define verification copy and cooldown helper', () => {
+      expect(VERIFY_EMAIL_MESSAGES).toHaveProperty('title');
+      expect(VERIFY_EMAIL_MESSAGES).toHaveProperty('resend');
+      expect(VERIFY_EMAIL_MESSAGES).toHaveProperty('continueToSignIn');
+      expect(typeof VERIFY_EMAIL_MESSAGES.resendCooldown(42)).toBe('string');
+      expect(VERIFY_EMAIL_MESSAGES.resendCooldown(42)).toContain('42');
     });
   });
 

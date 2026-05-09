@@ -178,11 +178,12 @@ export interface Expense {
  */
 export interface AuthStackParamList {
   RoleEntry: undefined;
-  Login: { preferredRole?: UserRole } | undefined;
+  Login: { preferredRole?: UserRole; initialEmail?: string } | undefined;
   Register: { preferredRole?: UserRole } | undefined;
+  PendingEmailVerification: { email: string; preferredRole?: UserRole };
   [key: string]:
     | undefined
-    | { preferredRole?: UserRole };
+    | { preferredRole?: UserRole; initialEmail?: string; email?: string };
 }
 
 export interface DriverTabParamList {
