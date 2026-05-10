@@ -12,8 +12,8 @@ try {
 
 export default {
   expo: {
-    name: 'water-tanker-app',
-    slug: 'water-tanker-app',
+    name: 'Water Tanker - Customer',
+    slug: 'water-tanker-customer-app',
     version: '1.0.0',
     // ... other config from app.json ...
     
