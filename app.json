@@ -8,8 +8,8 @@
     "fonts": [
       "assets/fonts/PlayfairDisplay-Regular.ttf"
     ],
-    "name": "water-tanker-app",
-    "slug": "water-tanker-app",
+    "name": "Water Tanker - Customer",
+    "slug": "water-tanker-customer-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
