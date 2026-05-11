@@ -12,8 +12,8 @@ try {
 
 export default {
   expo: {
-    name: 'Water Tanker - Customer',
-    slug: 'water-tanker-customer-app',
+    name: 'Water Tanker - Admin',
+    slug: 'water-tanker-admin',
     version: '1.0.0',
     // ... other config from app.json ...
     
@@ -22,7 +22,7 @@ export default {
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
       eas: {
-        "projectId": "d87af120-6b69-4668-908e-002561c55444"
+        "projectId": "43ee633d-249c-4382-bf4f-6fb8211c928a"
       }
     },
     android: {

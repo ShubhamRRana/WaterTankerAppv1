@@ -2,14 +2,14 @@
   "expo": {
     "extra": {
       "eas": {
-        "projectId": "d87af120-6b69-4668-908e-002561c55444"
+        "projectId": "43ee633d-249c-4382-bf4f-6fb8211c928a"
       }
     },
     "fonts": [
       "assets/fonts/PlayfairDisplay-Regular.ttf"
     ],
-    "name": "Water Tanker - Customer",
-    "slug": "water-tanker-customer-app",
+    "name": "Water Tanker - Admin",
+    "slug": "water-tanker-admin",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
