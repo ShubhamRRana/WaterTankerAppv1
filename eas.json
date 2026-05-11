@@ -18,7 +18,7 @@
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://ajdcmqbljypgvbhkiwvw.supabase.co",
@@ -27,6 +27,9 @@
     },
     "production": {
       "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
       "env": {
         "EAS_NO_VCS": "0",
         "EXPO_PUBLIC_SUPABASE_URL": "https://ajdcmqbljypgvbhkiwvw.supabase.co",

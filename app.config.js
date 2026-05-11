@@ -33,10 +33,10 @@ export default {
       }
     },
     android: {
-      package: "com.watertanker.app"
+      package: "in.tankerhub.admin"
     },
     ios: {
-      bundleIdentifier: "com.watertanker.app"
+      bundleIdentifier: "in.tankerhub.admin"
     },
     plugins: ["@react-native-community/datetimepicker"],
   },

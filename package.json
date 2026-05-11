@@ -6,6 +6,8 @@
     "start": "expo start",
     "start:dev": "expo start --dev-client",
     "build:dev:android": "eas build --profile development --platform android",
+    "build:preview:android": "eas build --profile preview --platform android",
+    "build:production:android": "eas build --profile production --platform android",
     "start:tunnel": "expo start --tunnel",
     "android": "expo start --android",
     "ios": "expo start --ios",
