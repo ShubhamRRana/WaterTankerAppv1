@@ -1,3 +1,10 @@
+/**
+ * EAS dev client — iOS (when Apple Developer / EAS credentials are ready):
+ *   eas build --profile development --platform ios
+ * Optional local build (macOS + Xcode):
+ *   npx expo run:ios
+ */
+
 // app.config.js
 
 // Load .env file if dotenv is available (may not be available during EAS build config)
@@ -27,6 +34,9 @@ export default {
     },
     android: {
       package: "com.watertanker.app"
+    },
+    ios: {
+      bundleIdentifier: "com.watertanker.app"
     },
     plugins: ["@react-native-community/datetimepicker"],
   },
