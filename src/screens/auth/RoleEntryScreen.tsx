@@ -9,7 +9,7 @@ import { AuthStackParamList, UserRole } from '../../types';
 
 type RoleEntryNavigationProp = StackNavigationProp<AuthStackParamList, 'RoleEntry'>;
 
-const CUSTOMER_APP_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=in.tankerhub.admin';
+const CUSTOMER_APP_PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.watertanker.app';
 
 interface Props {
   navigation: RoleEntryNavigationProp;
