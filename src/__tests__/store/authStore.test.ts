@@ -4,8 +4,10 @@
 
 import { useAuthStore } from '../../store/authStore';
 import { AuthService } from '../../services/auth.service';
+import { supabase } from '../../lib/supabaseClient';
 import { User, UserRole } from '../../types';
 
+jest.mock('../../lib/supabaseClient');
 // Mock the AuthService
 jest.mock('../../services/auth.service');
 
@@ -62,6 +64,25 @@ describe('useAuthStore', () => {
 
       await useAuthStore.getState().initializeAuth();
 
+      const state = useAuthStore.getState();
+      expect(state.user).toBeNull();
+      expect(state.isAuthenticated).toBe(false);
+      expect(state.isLoading).toBe(false);
+    });
+
+    it('should clear local session when refresh token is invalid', async () => {
+      (AuthService.initializeApp as jest.Mock).mockResolvedValue(undefined);
+      (supabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: null },
+        error: {
+          message: 'Invalid Refresh Token: Refresh Token Not Found',
+          code: 'refresh_token_not_found',
+        },
+      });
+
+      await useAuthStore.getState().initializeAuth();
+
+      expect(supabase.auth.signOut).toHaveBeenCalledWith({ scope: 'local' });
       const state = useAuthStore.getState();
       expect(state.user).toBeNull();
       expect(state.isAuthenticated).toBe(false);

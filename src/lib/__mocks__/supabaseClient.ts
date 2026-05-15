@@ -74,8 +74,11 @@ export const supabase = {
       error: null,
     }),
     onAuthStateChange: jest.fn().mockReturnValue({
-      data: { subscription: null },
-      unsubscribe: jest.fn(),
+      data: {
+        subscription: {
+          unsubscribe: jest.fn(),
+        },
+      },
     }),
   },
   channel: jest.fn().mockReturnValue(mockChannel),

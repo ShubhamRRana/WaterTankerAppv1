@@ -4,6 +4,7 @@ import { AuthService } from '../services/auth.service';
 import { supabase } from '../lib/supabaseClient';
 import { handleError } from '../utils/errorHandler';
 import { ErrorSeverity } from '../utils/errorLogger';
+import { clearInvalidAuthSession, isInvalidRefreshTokenError } from '../utils/authSessionErrors';
 
 /** Returns true if the error is a network failure (e.g. device can't reach Supabase). */
 function isNetworkFailure(error: unknown): boolean {
@@ -77,8 +78,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       let session = null;
       try {
         const result = await supabase.auth.getSession();
+        if (result.error && isInvalidRefreshTokenError(result.error)) {
+          await clearInvalidAuthSession();
+          set({ user: null, isAuthenticated: false, isLoading: false });
+          get().subscribeToAuthChanges();
+          return;
+        }
         session = result.data?.session ?? null;
       } catch (sessionError) {
+        if (isInvalidRefreshTokenError(sessionError)) {
+          await clearInvalidAuthSession();
+          set({ user: null, isAuthenticated: false, isLoading: false });
+          get().subscribeToAuthChanges();
+          return;
+        }
         if (isNetworkFailure(sessionError)) {
           set({ user: null, isAuthenticated: false, isLoading: false });
           get().subscribeToAuthChanges();
