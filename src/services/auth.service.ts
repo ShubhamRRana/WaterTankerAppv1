@@ -463,10 +463,12 @@ export class AuthService {
           role === 'admin' && (additionalData as Partial<AdminUser>)?.businessName
             ? String((additionalData as Partial<AdminUser>).businessName).trim()
             : '';
+        const authRedirectUrl = process.env.EXPO_PUBLIC_AUTH_REDIRECT_URL?.trim();
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: sanitizedEmail,
           password: password,
           options: {
+            ...(authRedirectUrl ? { emailRedirectTo: authRedirectUrl } : {}),
             data: {
               name: sanitizedName,
               role: role,

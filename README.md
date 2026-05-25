@@ -770,6 +770,8 @@ Enable realtime for:
 **Solutions**:
 - Verify `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`
 - Ensure Email provider is enabled in Supabase Auth settings
+- Auth confirmation emails are sent via Resend (Send Email hook). See [docs/RESEND_AUTH_EMAIL_SETUP.md](docs/RESEND_AUTH_EMAIL_SETUP.md) if emails are missing or links fail
+- Optional: set `EXPO_PUBLIC_AUTH_REDIRECT_URL` and add it to Supabase Redirect URLs
 - Check that user exists in `users` table with corresponding `user_roles` entry
 - Verify RLS policies allow user access
 
