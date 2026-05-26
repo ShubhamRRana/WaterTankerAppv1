@@ -1,6 +1,7 @@
 // src/services/user.service.ts
 
 import { dataAccess } from '../lib';
+import { AuthService } from './auth.service';
 import { User, UserRole, isDriverUser, isAdminUser } from '../types/index';
 import { handleAsyncOperationWithRethrow, handleError } from '../utils/errorHandler';
 
@@ -167,6 +168,8 @@ export class UserService {
         } else {
           throw new Error('Unknown user role');
         }
+
+        await AuthService.deleteAuthUserIfRemoved(id);
       },
       {
         context: { operation: 'deleteUser', id },

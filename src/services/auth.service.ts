@@ -32,6 +32,11 @@ export interface AuthResult {
 /** Role from DB may include 'customer'; app only supports driver | admin */
 type RoleFilter = UserRole | 'customer';
 
+export interface DeleteAuthUserResult {
+  authDeleted: boolean;
+  reason?: string;
+}
+
 /** Prefer JSON `error` from edge function body; supabase-js often omits it from `data` on non-2xx. */
 async function edgeFunctionErrorDetail(fnData: unknown, fnError: unknown): Promise<string | undefined> {
   const fromData = (fnData as { error?: string } | null)?.error;
@@ -1126,6 +1131,39 @@ export class AuthService {
   }
 
   /**
+   * Remove the Supabase Auth user after app data is deleted.
+   * Skips auth deletion when the user still has roles or a profile row in the database.
+   */
+  static async deleteAuthUserIfRemoved(userId: string): Promise<DeleteAuthUserResult> {
+    const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-delete-user', {
+      body: { userId },
+    });
+
+    if (fnError) {
+      const detail = await edgeFunctionErrorDetail(fnData, fnError);
+      throw new Error(
+        detail || fnError.message || 'Failed to remove authentication account. Deploy the admin-delete-user Edge Function.'
+      );
+    }
+
+    const result = fnData as {
+      success?: boolean;
+      auth_deleted?: boolean;
+      reason?: string;
+      error?: string;
+    };
+
+    if (!result?.success) {
+      throw new Error(result?.error || 'Failed to remove authentication account.');
+    }
+
+    return {
+      authDeleted: result.auth_deleted ?? false,
+      reason: result.reason,
+    };
+  }
+
+  /**
    * Permanently delete the current customer account and all related data (bookings, profile, then sign out).
    * Only allowed when the current user is a customer and the id matches the current user.
    *
@@ -1145,6 +1183,7 @@ export class AuthService {
       }
 
       await dataAccess.users.deleteCustomerAccount(customerId);
+      await AuthService.deleteAuthUserIfRemoved(customerId);
       await AuthService.logout();
       return { success: true };
     } catch (error) {
@@ -1172,6 +1211,7 @@ export class AuthService {
       }
 
       await dataAccess.users.deleteAdminAccount(adminId);
+      await AuthService.deleteAuthUserIfRemoved(adminId);
       await AuthService.logout();
       return { success: true };
     } catch (error) {
