@@ -37,6 +37,11 @@ export interface DeleteAuthUserResult {
   reason?: string;
 }
 
+export interface DeleteAuthUserOptions {
+  /** When true, throws if the Auth user was not removed (full account deletion flows). */
+  requireAuthDeletion?: boolean;
+}
+
 /** Prefer JSON `error` from edge function body; supabase-js often omits it from `data` on non-2xx. */
 async function edgeFunctionErrorDetail(fnData: unknown, fnError: unknown): Promise<string | undefined> {
   const fromData = (fnData as { error?: string } | null)?.error;
@@ -1132,17 +1137,36 @@ export class AuthService {
 
   /**
    * Remove the Supabase Auth user after app data is deleted.
-   * Skips auth deletion when the user still has roles or a profile row in the database.
+   * Self-delete uses delete-auth-user-on-account-deletion; admin deleting others uses admin-delete-user.
    */
-  static async deleteAuthUserIfRemoved(userId: string): Promise<DeleteAuthUserResult> {
-    const { data: fnData, error: fnError } = await supabase.functions.invoke('admin-delete-user', {
-      body: { userId },
+  static async deleteAuthUserIfRemoved(
+    userId: string,
+    options: DeleteAuthUserOptions = {}
+  ): Promise<DeleteAuthUserResult> {
+    const { requireAuthDeletion = false } = options;
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session?.access_token) {
+      throw new Error('Not authenticated. Sign in again and retry account deletion.');
+    }
+
+    const isSelfDelete = session.user.id === userId;
+    const functionName = isSelfDelete
+      ? 'delete-auth-user-on-account-deletion'
+      : 'admin-delete-user';
+    const body = isSelfDelete ? { user_id: userId } : { userId };
+
+    const { data: fnData, error: fnError } = await supabase.functions.invoke(functionName, {
+      body,
+      headers: { Authorization: `Bearer ${session.access_token}` },
     });
 
     if (fnError) {
       const detail = await edgeFunctionErrorDetail(fnData, fnError);
       throw new Error(
-        detail || fnError.message || 'Failed to remove authentication account. Deploy the admin-delete-user Edge Function.'
+        detail ||
+          fnError.message ||
+          `Failed to remove authentication account. Deploy the ${functionName} Edge Function.`
       );
     }
 
@@ -1157,8 +1181,17 @@ export class AuthService {
       throw new Error(result?.error || 'Failed to remove authentication account.');
     }
 
+    const authDeleted = isSelfDelete ? true : (result.auth_deleted ?? false);
+
+    if (requireAuthDeletion && !authDeleted) {
+      throw new Error(
+        result.reason ||
+          'Account data was removed but the login account could not be deleted. Please contact support.'
+      );
+    }
+
     return {
-      authDeleted: result.auth_deleted ?? false,
+      authDeleted,
       reason: result.reason,
     };
   }
@@ -1183,7 +1216,7 @@ export class AuthService {
       }
 
       await dataAccess.users.deleteCustomerAccount(customerId);
-      await AuthService.deleteAuthUserIfRemoved(customerId);
+      await AuthService.deleteAuthUserIfRemoved(customerId, { requireAuthDeletion: true });
       await AuthService.logout();
       return { success: true };
     } catch (error) {
@@ -1211,7 +1244,7 @@ export class AuthService {
       }
 
       await dataAccess.users.deleteAdminAccount(adminId);
-      await AuthService.deleteAuthUserIfRemoved(adminId);
+      await AuthService.deleteAuthUserIfRemoved(adminId, { requireAuthDeletion: true });
       await AuthService.logout();
       return { success: true };
     } catch (error) {

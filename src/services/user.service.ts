@@ -169,7 +169,7 @@ export class UserService {
           throw new Error('Unknown user role');
         }
 
-        await AuthService.deleteAuthUserIfRemoved(id);
+        await AuthService.deleteAuthUserIfRemoved(id, { requireAuthDeletion: true });
       },
       {
         context: { operation: 'deleteUser', id },
