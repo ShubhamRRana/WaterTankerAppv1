@@ -474,7 +474,8 @@ const VehicleManagementScreen: React.FC = () => {
         sanitizedValue = SanitizationUtils.sanitizeVehicleNumber(value);
         break;
       case 'insuranceCompanyName':
-        sanitizedValue = SanitizationUtils.sanitizeBusinessName(value);
+        // Allow spaces while typing; full sanitization (trim/collapse) runs on submit
+        sanitizedValue = value.replace(/[^a-zA-Z0-9\s&.,'-]/g, '');
         break;
       case 'insuranceExpiryDate':
         sanitizedValue = SanitizationUtils.sanitizeDateString(value);

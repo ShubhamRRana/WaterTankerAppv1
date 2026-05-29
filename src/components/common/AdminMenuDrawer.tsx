@@ -37,15 +37,6 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
       },
     },
     {
-      label: 'Trip details',
-      icon: 'car-outline',
-      route: 'TripDetails',
-      onPress: () => {
-        onNavigate('TripDetails');
-        onClose();
-      },
-    },
-    {
       label: 'Drivers',
       icon: 'people-outline',
       route: 'Drivers',
@@ -60,6 +51,15 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
       route: 'Vehicles',
       onPress: () => {
         onNavigate('Vehicles');
+        onClose();
+      },
+    },
+    {
+      label: 'Trip details',
+      icon: 'car-outline',
+      route: 'TripDetails',
+      onPress: () => {
+        onNavigate('TripDetails');
         onClose();
       },
     },
