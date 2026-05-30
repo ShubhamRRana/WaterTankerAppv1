@@ -8,11 +8,17 @@ import ReportsScreen from '../screens/admin/ReportsScreen';
 import AddBankAccountScreen from '../screens/admin/AddBankAccountScreen';
 import ExpenseScreen from '../screens/admin/ExpenseScreen';
 import TripDetailsScreen from '../screens/admin/TripDetailsScreen';
+import SocietyUserTripBreakdownScreen from '../screens/admin/SocietyUserTripBreakdownScreen';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 
 export type AdminStackParamList = {
   Bookings: undefined;
   TripDetails: undefined;
+  SocietyUserTripBreakdown: {
+    customerId: string;
+    year: number;
+    monthIndex0: number;
+  };
   Drivers: undefined;
   Vehicles: undefined;
   Reports: undefined;
@@ -34,6 +40,7 @@ const AdminNavigator: React.FC = () => {
       >
         <Stack.Screen name="Bookings" component={AllBookingsScreen} />
         <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
+        <Stack.Screen name="SocietyUserTripBreakdown" component={SocietyUserTripBreakdownScreen} />
         <Stack.Screen name="Drivers" component={DriverManagementScreen} />
         <Stack.Screen name="Vehicles" component={VehicleManagementScreen} />
         <Stack.Screen name="Reports" component={ReportsScreen} />

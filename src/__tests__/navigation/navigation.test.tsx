@@ -145,6 +145,12 @@ jest.mock('../../screens/admin/TripDetailsScreen', () => {
   return () => <View testID="TripDetailsScreen"><Text>TripDetailsScreen</Text></View>;
 });
 
+jest.mock('../../screens/admin/SocietyUserTripBreakdownScreen', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return () => <View testID="SocietyUserTripBreakdownScreen"><Text>SocietyUserTripBreakdownScreen</Text></View>;
+});
+
 jest.mock('../../components/common/ErrorBoundary', () => {
   const React = require('react');
   return ({ children }: { children: React.ReactNode }) => <>{children}</>;

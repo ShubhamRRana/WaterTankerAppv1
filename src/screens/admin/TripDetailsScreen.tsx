@@ -28,33 +28,12 @@ import { SocietyTrip, SocietyTripService } from '../../services/societyTrip.serv
 import { SocietyPaymentPeriodsService } from '../../services/societyPaymentPeriods.service';
 import { SocietyTripUsersService } from '../../services/societyTripUsers.service';
 import { formatDateTime } from '../../utils/dateUtils';
+import { buildTankerSizeBreakdown, filterTripsByPeriod } from '../../utils/societyTripBreakdown';
 
 type TripDetailsNavigationProp = StackNavigationProp<AdminStackParamList, 'TripDetails'>;
 
 interface Props {
   navigation: TripDetailsNavigationProp;
-}
-
-function filterTripsByPeriod(
-  list: SocietyTrip[],
-  periodType: 'month' | 'year',
-  year: number,
-  month: number,
-): SocietyTrip[] {
-  if (periodType === 'year') {
-    const start = new Date(year, 0, 1, 0, 0, 0, 0);
-    const end = new Date(year, 11, 31, 23, 59, 59, 999);
-    return list.filter((t) => {
-      const d = new Date(t.scheduledAt);
-      return d >= start && d <= end;
-    });
-  }
-  const monthStart = new Date(year, month, 1, 0, 0, 0, 0);
-  const monthEnd = new Date(year, month + 1, 0, 23, 59, 59, 999);
-  return list.filter((t) => {
-    const d = new Date(t.scheduledAt);
-    return d >= monthStart && d <= monthEnd;
-  });
 }
 
 const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
@@ -112,21 +91,6 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
     setTrips(list);
   }, [canLoad, user?.id, user?.role, (user as any)?.businessName]);
 
-  useFocusEffect(
-    useCallback(() => {
-      let cancelled = false;
-      setIsLoading(true);
-      loadTrips()
-        .catch(() => {})
-        .finally(() => {
-          if (!cancelled) setIsLoading(false);
-        });
-      return () => {
-        cancelled = true;
-      };
-    }, [loadTrips]),
-  );
-
   useEffect(() => {
     if (periodTypeOptionWidth > 0) {
       Animated.spring(periodTypeGliderAnim, {
@@ -161,17 +125,6 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
     }
   }, [selectedYear, yearOptionWidth, yearGliderAnim, availableYears]);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    try {
-      await loadTrips();
-    } catch {
-      Alert.alert('Error', 'Could not load trip details. Try again.');
-    } finally {
-      setRefreshing(false);
-    }
-  }, [loadTrips]);
-
   const handleLogout = useCallback(async () => {
     try {
       await logout();
@@ -186,6 +139,17 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
       navigation.navigate(route as any);
     },
     [navigation],
+  );
+
+  const openSocietyUserBreakdown = useCallback(
+    (customerId: string) => {
+      navigation.navigate('SocietyUserTripBreakdown', {
+        customerId,
+        year: selectedYear,
+        monthIndex0: selectedMonth,
+      });
+    },
+    [navigation, selectedYear, selectedMonth],
   );
 
   const filteredTrips = useMemo(
@@ -243,7 +207,51 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
     [societyUsersById],
   );
 
-  const monthPeriodKey = useMemo(() => `m:${selectedYear}-${selectedMonth}`, [selectedYear, selectedMonth]);
+  const monthPeriodKey = useMemo(
+    () =>
+      SocietyPaymentPeriodsService.buildMonthPeriodKey(
+        selectedYear,
+        selectedMonth,
+        user?.role === 'admin' ? (user as { businessName?: string }).businessName : undefined,
+      ),
+    [selectedYear, selectedMonth, user?.role, user],
+  );
+
+  const loadPaymentPeriodCompletions = useCallback(async () => {
+    if (!canLoad) {
+      setPaymentPeriodLoad('idle');
+      setCompletedAtByCustomerId(new Map());
+      return;
+    }
+
+    if (periodType !== 'month') {
+      setPaymentPeriodLoad('idle');
+      setCompletedAtByCustomerId(new Map());
+      return;
+    }
+
+    const customerIds = [...new Set(filteredTrips.map((t) => t.customerId))];
+    if (customerIds.length === 0) {
+      setPaymentPeriodLoad('ready');
+      setCompletedAtByCustomerId(new Map());
+      return;
+    }
+
+    setPaymentPeriodLoad((prev) => (prev === 'ready' ? 'ready' : 'loading'));
+    try {
+      const fallbackPeriodKey = SocietyPaymentPeriodsService.buildMonthPeriodKey(selectedYear, selectedMonth);
+      const map = await SocietyPaymentPeriodsService.listCompletedAtByCustomerForPeriod(
+        monthPeriodKey,
+        customerIds,
+        monthPeriodKey !== fallbackPeriodKey ? { fallbackPeriodKey } : undefined,
+      );
+      setCompletedAtByCustomerId(map);
+      setPaymentPeriodLoad('ready');
+    } catch {
+      setCompletedAtByCustomerId(new Map());
+      setPaymentPeriodLoad('error');
+    }
+  }, [canLoad, filteredTrips, monthPeriodKey, periodType, selectedMonth, selectedYear]);
 
   const periodLabel = useMemo(() => {
     if (periodType === 'year') return `${selectedYear}`;
@@ -251,47 +259,39 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
   }, [months, periodType, selectedMonth, selectedYear]);
 
   useEffect(() => {
-    let cancelled = false;
+    setPaymentPeriodLoad('idle');
+    setCompletedAtByCustomerId(new Map());
+  }, [monthPeriodKey, periodType]);
 
-    async function loadPaymentPeriodCompletions() {
-      if (!canLoad) {
-        setPaymentPeriodLoad('idle');
-        setCompletedAtByCustomerId(new Map());
-        return;
-      }
-
-      if (periodType !== 'month') {
-        setPaymentPeriodLoad('idle');
-        setCompletedAtByCustomerId(new Map());
-        return;
-      }
-
-      const customerIds = [...new Set(filteredTrips.map((t) => t.customerId))];
-      if (customerIds.length === 0) {
-        setPaymentPeriodLoad('ready');
-        setCompletedAtByCustomerId(new Map());
-        return;
-      }
-
-      setPaymentPeriodLoad('loading');
-      try {
-        const map = await SocietyPaymentPeriodsService.listCompletedAtByCustomerForPeriod(monthPeriodKey, customerIds);
-        if (cancelled) return;
-        setCompletedAtByCustomerId(map);
-        setPaymentPeriodLoad('ready');
-      } catch {
-        if (cancelled) return;
-        setCompletedAtByCustomerId(new Map());
-        setPaymentPeriodLoad('error');
-      }
-    }
-
+  useEffect(() => {
     loadPaymentPeriodCompletions();
+  }, [loadPaymentPeriodCompletions]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [canLoad, monthPeriodKey, periodType, filteredTrips]);
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      setIsLoading(true);
+      loadTrips()
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) setIsLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [loadTrips]),
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([loadTrips(), loadPaymentPeriodCompletions()]);
+    } catch {
+      Alert.alert('Error', 'Could not load trip details. Try again.');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [loadTrips, loadPaymentPeriodCompletions]);
 
   const maxTripCreatedAtByCustomerId = useMemo(() => {
     const m = new Map<string, number>();
@@ -321,39 +321,40 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
     return out;
   }, [periodType, availableSocietyUserIds, completedAtByCustomerId, maxTripCreatedAtByCustomerId]);
 
-  const paymentModalStats = useMemo(() => {
-    if (periodType !== 'month') return { totalSocieties: 0, completedSocieties: 0 };
-    const ids =
-      selectedSocietyUserId === 'All' ? availableSocietyUserIds : [selectedSocietyUserId];
-    let completed = 0;
-    for (const id of ids) {
-      if (paymentSettledByCustomerId.get(id)) completed += 1;
-    }
-    return { totalSocieties: ids.length, completedSocieties: completed };
-  }, [periodType, selectedSocietyUserId, availableSocietyUserIds, paymentSettledByCustomerId]);
+  const paymentStatusSuffix = useMemo(() => {
+    if (periodType !== 'month') return '';
 
-  const tripsByTankerSize = useMemo(() => {
-    const bucket = new Map<number, { count: number; amountSum: number; tripsWithAmount: number }>();
-    for (const t of userFilteredTrips) {
-      const prev = bucket.get(t.tankerSizeLiters) ?? { count: 0, amountSum: 0, tripsWithAmount: 0 };
-      prev.count += 1;
-      if (t.tankerAmount != null && Number.isFinite(t.tankerAmount)) {
-        prev.amountSum += t.tankerAmount;
-        prev.tripsWithAmount += 1;
-      }
-      bucket.set(t.tankerSizeLiters, prev);
+    const targetIds =
+      selectedSocietyUserId === 'All' ? availableSocietyUserIds : [selectedSocietyUserId];
+    if (targetIds.length === 0) return ' • No societies in this month';
+
+    const allSettled = targetIds.every((id) => paymentSettledByCustomerId.get(id) === true);
+    if (allSettled) return ' • Payment completed';
+
+    if (paymentPeriodLoad === 'loading' && completedAtByCustomerId.size === 0) {
+      return ' • Checking…';
     }
-    const allLiters = [...new Set(bucket.keys())].sort((a, b) => a - b);
-    return allLiters.map((liters) => {
-      const b = bucket.get(liters);
-      return {
-        liters,
-        count: b?.count ?? 0,
-        amountSum: b?.amountSum ?? 0,
-        tripsWithAmount: b?.tripsWithAmount ?? 0,
-      };
-    });
-  }, [userFilteredTrips]);
+    if (paymentPeriodLoad === 'error') return ' • Status unavailable';
+
+    if (selectedSocietyUserId === 'All') {
+      const completed = targetIds.filter((id) => paymentSettledByCustomerId.get(id)).length;
+      return ` • Pending (${completed}/${targetIds.length} societies paid • ${userFilteredTrips.length} trips)`;
+    }
+    return ' • Payment pending';
+  }, [
+    periodType,
+    selectedSocietyUserId,
+    availableSocietyUserIds,
+    paymentSettledByCustomerId,
+    paymentPeriodLoad,
+    completedAtByCustomerId,
+    userFilteredTrips.length,
+  ]);
+
+  const tripsByTankerSize = useMemo(
+    () => buildTankerSizeBreakdown(userFilteredTrips, undefined),
+    [userFilteredTrips],
+  );
 
   const anyTripHasAmount = useMemo(
     () => userFilteredTrips.some((t) => t.tankerAmount != null && Number.isFinite(t.tankerAmount)),
@@ -375,6 +376,76 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
       selectedSocietyUserId === 'All' ? '' : ` • ${societyUserLabelById(selectedSocietyUserId)}`;
     return `${userFilteredTrips.length} ${userFilteredTrips.length === 1 ? 'trip' : 'trips'} in this period${userSuffix}`;
   }, [canLoad, societyUserLabelById, selectedSocietyUserId, userFilteredTrips.length]);
+
+  const renderTankerSizeBreakdown = (showTotal: boolean) => {
+    if (userFilteredTrips.length === 0) {
+      return (
+        <Typography variant="caption" style={styles.summaryEmptyText}>
+          No trips in this period
+        </Typography>
+      );
+    }
+
+    return (
+      <>
+        <View style={styles.summaryTableHeader}>
+          <View style={styles.summaryColLeft}>
+            <Typography variant="caption" style={styles.summaryTableHeaderText}>
+              Size
+            </Typography>
+          </View>
+          <View style={styles.summaryColCenter}>
+            <Typography variant="caption" style={styles.summaryTableHeaderText}>
+              Amount
+            </Typography>
+          </View>
+          <View style={styles.summaryColRight}>
+            <Typography variant="caption" style={styles.summaryTableHeaderText}>
+              Trips
+            </Typography>
+          </View>
+        </View>
+        {tripsByTankerSize.map(({ liters, count, amountSum, tripsWithAmount }) => (
+          <View key={liters} style={styles.summaryRow}>
+            <View style={styles.summaryColLeft}>
+              <Typography variant="body" style={styles.summaryCellLeft}>
+                {liters.toLocaleString()}L
+              </Typography>
+            </View>
+            <View style={styles.summaryColCenter}>
+              <Typography variant="body" style={styles.summaryCellCenter}>
+                {count > 0 && tripsWithAmount > 0 ? `₹${amountSum.toLocaleString()}` : '—'}
+              </Typography>
+            </View>
+            <View style={styles.summaryColRight}>
+              <Typography variant="caption" style={styles.summaryCellRight}>
+                {count} {count === 1 ? 'trip' : 'trips'}
+              </Typography>
+            </View>
+          </View>
+        ))}
+        {showTotal ? (
+          <View style={[styles.summaryRow, styles.summaryTotalRow]}>
+            <View style={styles.summaryColLeft}>
+              <Typography variant="body" style={[styles.summaryCellLeft, styles.summaryTotalStrong]}>
+                Total
+              </Typography>
+            </View>
+            <View style={styles.summaryColCenter}>
+              <Typography variant="body" style={[styles.summaryCellCenter, styles.summaryTotalStrong]}>
+                {anyTripHasAmount ? `₹${grandTotalAmount.toLocaleString()}` : '—'}
+              </Typography>
+            </View>
+            <View style={styles.summaryColRight}>
+              <Typography variant="caption" style={styles.summaryCellRight}>
+                {userFilteredTrips.length} {userFilteredTrips.length === 1 ? 'trip' : 'trips'}
+              </Typography>
+            </View>
+          </View>
+        ) : null}
+      </>
+    );
+  };
 
   if (isLoading && trips.length === 0) {
     return (
@@ -563,6 +634,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                     const active = selectedSocietyUserId === id;
                     const showPaid =
                       periodType === 'month' && id !== 'All' && paymentSettledByCustomerId.get(id) === true;
+                    const showBreakdownAction = periodType === 'month' && id !== 'All';
                     return (
                       <TouchableOpacity
                         key={id}
@@ -592,6 +664,24 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                           </Typography>
                         </View>
                         {active ? <Ionicons name="checkmark" size={20} color={colors.accent} /> : null}
+                        {showBreakdownAction ? (
+                          <TouchableOpacity
+                            style={styles.dropdownBreakdownButton}
+                            onPress={() => {
+                              setSelectedSocietyUserId(id);
+                              setSocietyUserDropdownVisible(false);
+                              openSocietyUserBreakdown(id);
+                            }}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            accessibilityRole="button"
+                            accessibilityLabel="View breakdown"
+                          >
+                            <Typography variant="caption" style={styles.dropdownBreakdownButtonText}>
+                              View
+                            </Typography>
+                            <Ionicons name="chevron-forward" size={16} color={colors.accent} />
+                          </TouchableOpacity>
+                        ) : null}
                       </TouchableOpacity>
                     );
                   })}
@@ -602,21 +692,34 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
           <Card
             padding="medium"
             style={styles.summaryCard}
-            onPress={() => setTankerBreakdownVisible(true)}
+            onPress={() =>
+              periodType === 'month' && selectedSocietyUserId !== 'All'
+                ? openSocietyUserBreakdown(selectedSocietyUserId)
+                : setTankerBreakdownVisible(true)
+            }
           >
             <View style={styles.summaryCardHeaderRow}>
               <Typography variant="caption" style={styles.summaryHeading}>
                 Trips by tanker size
               </Typography>
-              <Ionicons name="chevron-up" size={18} color={colors.textSecondary} />
+              <Ionicons
+                name={
+                  periodType === 'month' && selectedSocietyUserId !== 'All' ? 'chevron-forward' : 'chevron-down'
+                }
+                size={18}
+                color={colors.textSecondary}
+              />
             </View>
             <Typography variant="caption" style={styles.meta}>
-              Tap to view breakdown
+              {periodType === 'month' && selectedSocietyUserId !== 'All'
+                ? 'Tap to view trips and pending amount'
+                : 'Tap to view breakdown'}
             </Typography>
           </Card>
         </View>
 
         <FlatList
+          style={styles.tripList}
           data={userFilteredTrips}
           keyExtractor={(item) => item.id}
           contentContainerStyle={userFilteredTrips.length === 0 ? styles.emptyList : styles.listContent}
@@ -763,25 +866,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                 <Typography variant="caption" style={styles.breakdownModalSubtitle}>
                   {periodType === 'month' ? `Payment status for ${periodLabel}` : `Period: ${periodLabel}`}
                   {selectedSocietyUserId === 'All' ? '' : ` • Society user: ${societyUserLabelById(selectedSocietyUserId)}`}
-                  {periodType === 'month' ? (
-                    paymentPeriodLoad === 'ready' ? (
-                      paymentModalStats.totalSocieties === 0 ? (
-                        ' • No societies in this month'
-                      ) : paymentModalStats.completedSocieties === paymentModalStats.totalSocieties ? (
-                        ' • Payment completed'
-                      ) : (
-                        ` • Pending (${paymentModalStats.completedSocieties}/${paymentModalStats.totalSocieties} societies paid • ${userFilteredTrips.length} trips)`
-                      )
-                    ) : paymentPeriodLoad === 'loading' ? (
-                      ' • Checking…'
-                    ) : paymentPeriodLoad === 'error' ? (
-                      ' • Status unavailable'
-                    ) : (
-                      ''
-                    )
-                  ) : (
-                    ''
-                  )}
+                  {paymentStatusSuffix}
                 </Typography>
               </View>
               <TouchableOpacity
@@ -799,45 +884,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
               contentContainerStyle={styles.breakdownModalScrollContent}
               showsVerticalScrollIndicator={false}
             >
-              {tripsByTankerSize.map(({ liters, count, amountSum, tripsWithAmount }) => (
-                <View key={liters} style={styles.summaryRow}>
-                  <View style={styles.summaryColLeft}>
-                    <Typography variant="body" style={styles.summaryCellLeft}>
-                      {liters.toLocaleString()}L
-                    </Typography>
-                  </View>
-                  <View style={styles.summaryColCenter}>
-                    <Typography variant="body" style={styles.summaryCellCenter}>
-                      {count > 0 && tripsWithAmount > 0 ? `₹${amountSum.toLocaleString()}` : '—'}
-                    </Typography>
-                  </View>
-                  <View style={styles.summaryColRight}>
-                    <Typography variant="caption" style={styles.summaryCellRight}>
-                      {count} {count === 1 ? 'trip' : 'trips'}
-                    </Typography>
-                  </View>
-                </View>
-              ))}
-
-              {userFilteredTrips.length > 0 ? (
-                <View style={[styles.summaryRow, styles.summaryTotalRow]}>
-                  <View style={styles.summaryColLeft}>
-                    <Typography variant="body" style={[styles.summaryCellLeft, styles.summaryTotalStrong]}>
-                      Total
-                    </Typography>
-                  </View>
-                  <View style={styles.summaryColCenter}>
-                    <Typography variant="body" style={[styles.summaryCellCenter, styles.summaryTotalStrong]}>
-                      {anyTripHasAmount ? `₹${grandTotalAmount.toLocaleString()}` : '—'}
-                    </Typography>
-                  </View>
-                  <View style={styles.summaryColRight}>
-                    <Typography variant="caption" style={styles.summaryCellRight}>
-                      {userFilteredTrips.length} {userFilteredTrips.length === 1 ? 'trip' : 'trips'}
-                    </Typography>
-                  </View>
-                </View>
-              ) : null}
+              {renderTankerSizeBreakdown(true)}
             </ScrollView>
           </View>
         </View>
@@ -985,6 +1032,7 @@ function createStyles(colors: AppPalette) {
     marginHorizontal: 16,
     marginTop: 12,
     marginBottom: 8,
+    zIndex: 2,
   },
   societyUserFilterContainer: {
     marginBottom: 10,
@@ -1053,6 +1101,18 @@ function createStyles(colors: AppPalette) {
   dropdownPaidIcon: {
     marginRight: 8,
   },
+  dropdownBreakdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+  },
+  dropdownBreakdownButtonText: {
+    color: colors.accent,
+    fontWeight: '600',
+    marginRight: 2,
+  },
   dropdownOptionText: {
     flex: 1,
     marginRight: 0,
@@ -1066,6 +1126,26 @@ function createStyles(colors: AppPalette) {
   summaryCard: {
     paddingVertical: 12,
     paddingHorizontal: 14,
+  },
+  summaryEmptyText: {
+    color: colors.textSecondary,
+    marginTop: 4,
+  },
+  summaryTableHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  summaryTableHeaderText: {
+    color: colors.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  tripList: {
+    flex: 1,
   },
   summaryCardHeaderRow: {
     flexDirection: 'row',
@@ -1191,6 +1271,7 @@ function createStyles(colors: AppPalette) {
   },
   breakdownModalBackdropFill: {
     ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
   },
   breakdownModalSheet: {
     backgroundColor: colors.surface,
@@ -1200,6 +1281,8 @@ function createStyles(colors: AppPalette) {
     paddingTop: 20,
     paddingBottom: 12,
     maxHeight: '85%',
+    zIndex: 1,
+    elevation: 8,
   },
   breakdownModalHeader: {
     flexDirection: 'row',
@@ -1230,9 +1313,7 @@ function createStyles(colors: AppPalette) {
   summaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
+    paddingVertical: 8,
   },
   summaryColLeft: {
     flex: 1,
@@ -1264,8 +1345,10 @@ function createStyles(colors: AppPalette) {
     color: colors.textSecondary,
   },
   summaryTotalRow: {
-    marginTop: 4,
+    marginTop: 6,
     paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
   },
   summaryTotalStrong: {
     fontWeight: '700',

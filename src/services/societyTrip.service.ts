@@ -37,7 +37,7 @@ function mapRow(row: SocietyTripRow): SocietyTrip {
     agencyName: row.agency_name,
     agencyAdminId: row.agency_admin_id ?? null,
     scheduledAt: new Date(row.scheduled_at),
-    tankerSizeLiters: row.tanker_size_liters,
+    tankerSizeLiters: Number(row.tanker_size_liters),
     tankerAmount:
       row.tanker_amount != null && Number.isFinite(row.tanker_amount) ? row.tanker_amount : null,
     photoUrls: parsePhotoUrls(row.photo_urls),
