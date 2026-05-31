@@ -3,7 +3,9 @@ export interface RecoveryTokens {
   refresh_token: string;
 }
 
-const DEFAULT_PASSWORD_RESET_REDIRECT_URL = 'wta://reset-password';
+/** Production web reset page (matches customer app). Override with wta://reset-password for in-app dev. */
+const DEFAULT_PASSWORD_RESET_REDIRECT_URL =
+  'https://tankerhub.in/auth/reset-password';
 
 export function getPasswordResetRedirectUrl(): string {
   return (

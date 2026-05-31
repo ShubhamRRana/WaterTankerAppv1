@@ -53,7 +53,9 @@ describe('authDeepLink', () => {
 
     it('should fall back to default scheme URL', () => {
       delete process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL;
-      expect(getPasswordResetRedirectUrl()).toBe('wta://reset-password');
+      expect(getPasswordResetRedirectUrl()).toBe(
+        'https://tankerhub.in/auth/reset-password',
+      );
     });
   });
 });

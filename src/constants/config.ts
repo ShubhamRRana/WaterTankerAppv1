@@ -183,9 +183,12 @@ export const SUCCESS_MESSAGES = {
     registerConfirmEmail:
       'Your account was created. Check your email to confirm your address, then sign in here.',
     logoutSuccess: 'Logged out successfully!',
-    forgotPasswordTitle: 'Forgot password',
+    resetPasswordRequestTitle: 'Reset your password',
+    resetPasswordRequestSubtitle:
+      'Enter the email for your account and we will send you a reset link.',
+    forgotPasswordTitle: 'Reset your password',
     forgotPasswordSentMessage:
-      'If an account exists for this email, we sent password reset instructions. Check your inbox and spam folder.',
+      'If an account exists for this email, we sent a password reset link. Open it in your browser, choose a new password on TankerHub, then return to this app and sign in with your new password.',
     resetPasswordTitle: 'Set new password',
     resetPasswordSuccess: 'Your password has been updated. Please sign in with your new password.',
     changePasswordTitle: 'Change password',

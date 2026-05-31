@@ -24,6 +24,7 @@ import { AuthService } from '../../services/auth.service';
 import { Typography, DriverIcon, AdminIcon } from '../../components/common';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
+import { ROLE_LOGIN_COPY, createAuthFormCardStyles } from './authScreenShared';
 
 type LoginScreenNavigationProp = StackNavigationProp<AuthStackParamList, 'Login'>;
 type LoginScreenRouteProp = RouteProp<AuthStackParamList, 'Login'>;
@@ -43,6 +44,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   const { login, loginWithCredentialsAndRole, isLoading } = useAuthStore();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const cardStyles = useMemo(() => createAuthFormCardStyles(colors), [colors]);
 
   useEffect(() => {
     const raw = route.params?.initialEmail?.trim();
@@ -177,6 +179,11 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   const preferredRole = route?.params?.preferredRole;
+  const isRoleLogin = preferredRole === 'admin' || preferredRole === 'driver';
+  const roleCopy =
+    preferredRole === 'admin' || preferredRole === 'driver'
+      ? ROLE_LOGIN_COPY[preferredRole]
+      : null;
 
   // Generate non-overlapping positions for watermarks
   const watermarkPositions = useMemo(() => {
@@ -272,91 +279,132 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         ))}
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.header}>
-          <Typography variant="h1" style={styles.title}>Sign in to your account</Typography>
-          {/* <Typography variant="body" style={styles.subtitle}>Sign in to your account</Typography> */}
-        </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Typography variant="body" style={styles.label}>Email Address</Typography>
-            <TextInput
-              style={[styles.input, errors.email && styles.inputError]}
-              value={email}
-              onChangeText={handleEmailChange}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor={colors.textSecondary}
-            />
-            {errors.email && <Typography variant="caption" style={styles.errorText}>{errors.email}</Typography>}
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Typography variant="body" style={styles.label}>Password</Typography>
-            <View style={styles.passwordInputContainer}>
-              <TextInput
-                style={[styles.input, styles.passwordInput, errors.password && styles.inputError]}
-                value={password}
-                onChangeText={handlePasswordChange}
-                secureTextEntry={!showPassword}
-                placeholderTextColor={colors.textSecondary}
-              />
-              <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Ionicons
-                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                  size={24}
-                  color={colors.textSecondary}
-                />
-              </TouchableOpacity>
-            </View>
-            {errors.password && <Typography variant="caption" style={styles.errorText}>{errors.password}</Typography>}
-          </View>
-
-          {route?.params?.preferredRole === 'admin' && (
+          {isRoleLogin && (
             <TouchableOpacity
-              style={styles.forgotPasswordRow}
-              onPress={() =>
-                navigation.navigate('ForgotPassword', { initialEmail: email.trim() || undefined })
-              }
-              accessibilityRole="link"
+              onPress={() => navigation.navigate('RoleEntry')}
+              style={cardStyles.backRow}
+              accessibilityRole="button"
             >
-              <Typography variant="body" style={styles.linkText}>Forgot password?</Typography>
+              <Ionicons name="chevron-back" size={20} color={colors.accent} />
+              <Typography variant="body" style={cardStyles.backText}>
+                Account type
+              </Typography>
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled, isButtonPressed && styles.buttonPressed]}
-            onPress={handleLogin}
-            disabled={isLoading}
-            onPressIn={() => setIsButtonPressed(true)}
-            onPressOut={() => setIsButtonPressed(false)}
-          >
-            <Typography variant="body" style={styles.buttonText}>
-              {isLoading ? 'Signing In...' : 'Sign In'}
+          <View style={styles.centeredContent}>
+          <View style={[styles.header, isRoleLogin && styles.headerRole]}>
+            <Typography variant="h1" style={[styles.title, isRoleLogin && cardStyles.screenTitle]}>
+              {roleCopy?.title ?? 'Sign in to your account'}
             </Typography>
-          </TouchableOpacity>
-        </View>
-        
-        {route?.params?.preferredRole !== 'driver' && (
-          <View style={styles.footer}>
-            <Typography variant="body" style={styles.footerText}>Don't have an account? </Typography>
+            {roleCopy ? (
+              <Typography variant="body" style={cardStyles.screenSubtitle}>
+                {roleCopy.subtitle}
+              </Typography>
+            ) : null}
+          </View>
+
+          <View style={isRoleLogin ? cardStyles.formCard : styles.form}>
+            <View style={styles.inputContainer}>
+              <Typography variant="body" style={styles.label}>Email address</Typography>
+              <TextInput
+                style={[styles.input, errors.email && styles.inputError]}
+                value={email}
+                onChangeText={handleEmailChange}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                placeholderTextColor={colors.textSecondary}
+              />
+              {errors.email && (
+                <Typography variant="caption" style={styles.errorText}>
+                  {errors.email}
+                </Typography>
+              )}
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Typography variant="body" style={styles.label}>Password</Typography>
+              <View style={styles.passwordInputContainer}>
+                <TextInput
+                  style={[styles.input, styles.passwordInput, errors.password && styles.inputError]}
+                  value={password}
+                  onChangeText={handlePasswordChange}
+                  secureTextEntry={!showPassword}
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <TouchableOpacity
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                    size={24}
+                    color={colors.textSecondary}
+                  />
+                </TouchableOpacity>
+              </View>
+              {errors.password && (
+                <Typography variant="caption" style={styles.errorText}>
+                  {errors.password}
+                </Typography>
+              )}
+            </View>
+
+            {preferredRole === 'admin' && (
+              <TouchableOpacity
+                style={styles.forgotPasswordRow}
+                onPress={() =>
+                  navigation.navigate('ForgotPassword', { initialEmail: email.trim() || undefined })
+                }
+                accessibilityRole="link"
+              >
+                <Typography variant="body" style={styles.linkText}>
+                  Forgot password?
+                </Typography>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
-              onPress={() => {
-                const preferredRole = route?.params?.preferredRole;
-                navigation.navigate(
-                  'Register',
-                  preferredRole ? { preferredRole } : undefined
-                );
-              }}
+              style={[
+                isRoleLogin ? cardStyles.primaryButton : styles.button,
+                isLoading && (isRoleLogin ? cardStyles.primaryButtonDisabled : styles.buttonDisabled),
+                !isRoleLogin && isButtonPressed && styles.buttonPressed,
+              ]}
+              onPress={handleLogin}
+              disabled={isLoading}
+              onPressIn={() => !isRoleLogin && setIsButtonPressed(true)}
+              onPressOut={() => !isRoleLogin && setIsButtonPressed(false)}
             >
-              <Typography variant="body" style={styles.linkText}>Sign Up</Typography>
+              <Typography
+                variant="body"
+                style={isRoleLogin ? cardStyles.primaryButtonText : styles.buttonText}
+              >
+                {isLoading
+                  ? 'Signing in...'
+                  : roleCopy?.button ?? 'Sign in'}
+              </Typography>
             </TouchableOpacity>
           </View>
-        )}
-      </ScrollView>
+
+          {preferredRole !== 'driver' && (
+            <View style={styles.footer}>
+              <Typography variant="body" style={styles.footerText}>
+                {"Don't have an account? "}
+              </Typography>
+              <TouchableOpacity
+                onPress={() => {
+                  const role = route?.params?.preferredRole;
+                  navigation.navigate('Register', role ? { preferredRole: role } : undefined);
+                }}
+              >
+                <Typography variant="body" style={[styles.linkText, isRoleLogin && styles.footerLink]}>
+                  {isRoleLogin ? 'Create an account' : 'Sign Up'}
+                </Typography>
+              </TouchableOpacity>
+            </View>
+          )}
+          </View>
+        </ScrollView>
 
       {route?.params?.preferredRole === 'driver' && (
         <View pointerEvents="none" style={styles.bottomNoticeContainer}>
@@ -383,14 +431,20 @@ function createStyles(colors: AppPalette) {
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: 24,
     paddingBottom: 130,
     zIndex: 1,
   },
+  centeredContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   header: {
     alignItems: 'center',
     marginBottom: 40,
+  },
+  headerRole: {
+    marginBottom: 8,
   },
   title: {
     fontSize: 28,
@@ -496,6 +550,9 @@ function createStyles(colors: AppPalette) {
     fontSize: 16,
     color: colors.accent,
     fontWeight: '600',
+  },
+  footerLink: {
+    textDecorationLine: 'underline',
   },
   forgotPasswordRow: {
     alignSelf: 'flex-end',

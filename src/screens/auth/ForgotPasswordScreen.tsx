@@ -14,13 +14,17 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthStackParamList } from '../../types';
-import { Typography, Button } from '../../components/common';
+import { Typography } from '../../components/common';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AppPalette } from '../../theme/palettes';
 import { useAuthStore } from '../../store/authStore';
 import { ValidationUtils, SanitizationUtils } from '../../utils';
 import { SUCCESS_MESSAGES } from '../../constants/config';
 import { getErrorMessage } from '../../utils/errors';
+import {
+  createAuthFormCardStyles,
+  generateGridWatermarkPositions,
+} from './authScreenShared';
 
 type ForgotPasswordNavigationProp = StackNavigationProp<AuthStackParamList, 'ForgotPassword'>;
 type ForgotPasswordRouteProp = RouteProp<AuthStackParamList, 'ForgotPassword'>;
@@ -30,13 +34,21 @@ interface Props {
   route: ForgotPasswordRouteProp;
 }
 
+const KEY_WATERMARK_COUNT = 28;
+
 const ForgotPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const cardStyles = useMemo(() => createAuthFormCardStyles(colors), [colors]);
   const { requestPasswordReset, isLoading } = useAuthStore();
   const [email, setEmail] = useState(route.params?.initialEmail?.trim() ?? '');
   const [emailError, setEmailError] = useState<string | undefined>();
   const [sent, setSent] = useState(false);
+
+  const keyWatermarkPositions = useMemo(
+    () => generateGridWatermarkPositions(KEY_WATERMARK_COUNT),
+    []
+  );
 
   const handleEmailChange = (text: string) => {
     const sanitized = SanitizationUtils.sanitizeEmail(text);
@@ -68,18 +80,52 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
     navigation.navigate('Login', { preferredRole: 'admin', initialEmail: email });
   };
 
+  const renderKeyWatermarks = () =>
+    keyWatermarkPositions.map((position, index) => (
+      <View
+        key={index}
+        style={[
+          cardStyles.watermarkContainer,
+          { top: position.top, left: position.left, transform: [{ rotate: '-35deg' }] },
+        ]}
+      >
+        <Ionicons name="key-outline" size={36} color={colors.textSecondary} />
+      </View>
+    ));
+
   if (sent) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.scroll}>
-          <Typography variant="h1" style={styles.title}>
-            {SUCCESS_MESSAGES.auth.forgotPasswordTitle}
-          </Typography>
-          <Typography variant="body" style={styles.message}>
-            {SUCCESS_MESSAGES.auth.forgotPasswordSentMessage}
-          </Typography>
-          <Button title="Back to Sign In" onPress={goToLogin} style={styles.buttonSpacing} />
-        </ScrollView>
+        <View style={styles.container}>
+          {renderKeyWatermarks()}
+          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+            <TouchableOpacity onPress={goToLogin} style={cardStyles.backRow} accessibilityRole="button">
+              <Ionicons name="chevron-back" size={20} color={colors.accent} />
+              <Typography variant="body" style={cardStyles.backText}>
+                Sign in
+              </Typography>
+            </TouchableOpacity>
+
+            <View style={styles.centeredContent}>
+              <Typography variant="h1" style={cardStyles.screenTitle}>
+                Check your email
+              </Typography>
+              <Typography variant="body" style={styles.sentMessage}>
+                {SUCCESS_MESSAGES.auth.forgotPasswordSentMessage}
+              </Typography>
+
+              <TouchableOpacity
+                style={cardStyles.primaryButton}
+                onPress={goToLogin}
+                accessibilityRole="button"
+              >
+                <Typography variant="body" style={cardStyles.primaryButtonText}>
+                  Back to sign in
+                </Typography>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
       </SafeAreaView>
     );
   }
@@ -90,42 +136,56 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        {renderKeyWatermarks()}
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <TouchableOpacity onPress={goToLogin} style={styles.backRow} accessibilityRole="button">
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
-            <Typography variant="body" style={styles.backText}>Back</Typography>
+          <TouchableOpacity onPress={goToLogin} style={cardStyles.backRow} accessibilityRole="button">
+            <Ionicons name="chevron-back" size={20} color={colors.accent} />
+            <Typography variant="body" style={cardStyles.backText}>
+              Sign in
+            </Typography>
           </TouchableOpacity>
 
-          <Typography variant="h1" style={styles.title}>
-            {SUCCESS_MESSAGES.auth.forgotPasswordTitle}
-          </Typography>
-          <Typography variant="body" style={styles.subtitle}>
-            Enter your admin account email and we will send reset instructions.
-          </Typography>
+          <View style={styles.centeredContent}>
+            <Typography variant="h1" style={cardStyles.screenTitle}>
+              {SUCCESS_MESSAGES.auth.resetPasswordRequestTitle}
+            </Typography>
+            <Typography variant="body" style={cardStyles.screenSubtitle}>
+              {SUCCESS_MESSAGES.auth.resetPasswordRequestSubtitle}
+            </Typography>
 
-          <View style={styles.inputContainer}>
-            <Typography variant="body" style={styles.label}>Email</Typography>
-            <TextInput
-              style={[styles.input, emailError && styles.inputError]}
-              value={email}
-              onChangeText={handleEmailChange}
-              placeholder="Enter your email"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {emailError ? (
-              <Typography variant="caption" style={styles.errorText}>{emailError}</Typography>
-            ) : null}
+            <View style={cardStyles.formCard}>
+              <View style={styles.inputContainer}>
+                <Typography variant="body" style={styles.label}>
+                  Email address
+                </Typography>
+                <TextInput
+                  style={[styles.input, emailError && styles.inputError]}
+                  value={email}
+                  onChangeText={handleEmailChange}
+                  placeholderTextColor={colors.textSecondary}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                {emailError ? (
+                  <Typography variant="caption" style={styles.errorText}>
+                    {emailError}
+                  </Typography>
+                ) : null}
+              </View>
+
+              <TouchableOpacity
+                style={[cardStyles.primaryButton, isLoading && cardStyles.primaryButtonDisabled]}
+                onPress={handleSubmit}
+                disabled={isLoading}
+                accessibilityRole="button"
+              >
+                <Typography variant="body" style={cardStyles.primaryButtonText}>
+                  {isLoading ? 'Sending...' : 'Send reset link'}
+                </Typography>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          <Button
-            title={isLoading ? 'Sending...' : 'Send reset link'}
-            onPress={handleSubmit}
-            loading={isLoading}
-            disabled={isLoading}
-          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -135,14 +195,17 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
 function createStyles(colors: AppPalette) {
   return StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: colors.background },
-    container: { flex: 1 },
-    scroll: { flexGrow: 1, padding: 24, justifyContent: 'center' },
-    backRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
-    backText: { marginLeft: 8, color: colors.text },
-    title: { marginBottom: 12, color: colors.text },
-    subtitle: { marginBottom: 24, color: colors.textSecondary },
-    message: { marginBottom: 32, color: colors.textSecondary, lineHeight: 22 },
-    inputContainer: { marginBottom: 24 },
+    container: { flex: 1, position: 'relative' },
+    scroll: {
+      flexGrow: 1,
+      padding: 24,
+      zIndex: 1,
+    },
+    centeredContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+    },
+    inputContainer: { marginBottom: 20 },
     label: { marginBottom: 8, fontWeight: '600', color: colors.text },
     input: {
       backgroundColor: colors.surface,
@@ -155,7 +218,12 @@ function createStyles(colors: AppPalette) {
     },
     inputError: { borderColor: colors.error },
     errorText: { color: colors.error, marginTop: 6 },
-    buttonSpacing: { marginTop: 16 },
+    sentMessage: {
+      marginBottom: 32,
+      color: colors.textSecondary,
+      lineHeight: 22,
+      textAlign: 'center',
+    },
   });
 }
 
