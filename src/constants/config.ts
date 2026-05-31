@@ -128,6 +128,10 @@ export const ERROR_MESSAGES = {
     networkError: 'Network error during authentication.',
     adminCreatedDriverOnly: 'Only admin-created drivers can login. Please contact the administrator to create your driver account.',
     roleMismatch: 'Invalid credentials for this account type. Please use the correct login page for your account.',
+    currentPasswordIncorrect: 'Invalid email address or password.',
+    passwordResetSessionExpired: 'Your password reset link has expired. Please request a new one.',
+    passwordResetNotAdmin: 'Password reset is only available for admin accounts. Contact your administrator.',
+    driverPasswordUpdateFailed: 'Failed to update driver password. Please try again.',
   },
   booking: {
     createFailed: 'Failed to create booking.',
@@ -179,6 +183,14 @@ export const SUCCESS_MESSAGES = {
     registerConfirmEmail:
       'Your account was created. Check your email to confirm your address, then sign in here.',
     logoutSuccess: 'Logged out successfully!',
+    forgotPasswordTitle: 'Forgot password',
+    forgotPasswordSentMessage:
+      'If an account exists for this email, we sent password reset instructions. Check your inbox and spam folder.',
+    resetPasswordTitle: 'Set new password',
+    resetPasswordSuccess: 'Your password has been updated. Please sign in with your new password.',
+    changePasswordTitle: 'Change password',
+    changePasswordSuccess: 'Your password has been changed successfully.',
+    driverPasswordUpdated: 'Driver password updated successfully.',
   },
   booking: {
     created: 'Booking created successfully!',
@@ -189,6 +201,7 @@ export const SUCCESS_MESSAGES = {
   },
   profile: {
     updated: 'Profile updated successfully!',
+    passwordChanged: 'Your password has been changed successfully.',
   },
   address: {
     added: 'Address added successfully!',

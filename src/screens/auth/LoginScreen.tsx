@@ -315,6 +315,18 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
             {errors.password && <Typography variant="caption" style={styles.errorText}>{errors.password}</Typography>}
           </View>
 
+          {route?.params?.preferredRole === 'admin' && (
+            <TouchableOpacity
+              style={styles.forgotPasswordRow}
+              onPress={() =>
+                navigation.navigate('ForgotPassword', { initialEmail: email.trim() || undefined })
+              }
+              accessibilityRole="link"
+            >
+              <Typography variant="body" style={styles.linkText}>Forgot password?</Typography>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled, isButtonPressed && styles.buttonPressed]}
             onPress={handleLogin}
@@ -346,11 +358,13 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
         )}
       </ScrollView>
 
-      <View pointerEvents="none" style={styles.bottomNoticeContainer}>
-        <Typography variant="caption" style={styles.bottomNoticeText}>
-          Forgot password feature is not available yet. Do not forget your password.
-        </Typography>
-      </View>
+      {route?.params?.preferredRole === 'driver' && (
+        <View pointerEvents="none" style={styles.bottomNoticeContainer}>
+          <Typography variant="caption" style={styles.bottomNoticeText}>
+            Contact your administrator if you need help signing in.
+          </Typography>
+        </View>
+      )}
     </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -482,6 +496,11 @@ function createStyles(colors: AppPalette) {
     fontSize: 16,
     color: colors.accent,
     fontWeight: '600',
+  },
+  forgotPasswordRow: {
+    alignSelf: 'flex-end',
+    marginBottom: 8,
+    marginTop: -8,
   },
   watermarkContainer: {
     position: 'absolute',

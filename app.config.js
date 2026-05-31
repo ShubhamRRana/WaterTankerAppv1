@@ -18,10 +18,12 @@ const appJson = require('./app.json');
 export default {
   expo: {
     ...appJson.expo,
+    scheme: appJson.expo.scheme ?? 'wta',
     extra: {
       ...appJson.expo.extra,
       supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+      passwordResetRedirectUrl: process.env.EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL,
     },
     android: {
       ...appJson.expo.android,

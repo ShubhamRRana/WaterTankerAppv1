@@ -9,6 +9,7 @@ import AddBankAccountScreen from '../screens/admin/AddBankAccountScreen';
 import ExpenseScreen from '../screens/admin/ExpenseScreen';
 import TripDetailsScreen from '../screens/admin/TripDetailsScreen';
 import SocietyUserTripBreakdownScreen from '../screens/admin/SocietyUserTripBreakdownScreen';
+import ChangePasswordScreen from '../screens/admin/ChangePasswordScreen';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 
 export type AdminStackParamList = {
@@ -23,6 +24,7 @@ export type AdminStackParamList = {
   Vehicles: undefined;
   Reports: undefined;
   Profile: undefined;
+  ChangePassword: undefined;
   BankAccounts: undefined;
   Expenses: undefined;
 };
@@ -45,6 +47,7 @@ const AdminNavigator: React.FC = () => {
         <Stack.Screen name="Vehicles" component={VehicleManagementScreen} />
         <Stack.Screen name="Reports" component={ReportsScreen} />
         <Stack.Screen name="Profile" component={AdminProfileScreen} />
+        <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
         <Stack.Screen name="BankAccounts" component={AddBankAccountScreen} />
         <Stack.Screen name="Expenses" component={ExpenseScreen} />
       </Stack.Navigator>

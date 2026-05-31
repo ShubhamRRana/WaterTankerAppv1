@@ -15,8 +15,6 @@ describe('EditProfileForm', () => {
     name: '',
     email: '',
     phone: '',
-    password: '',
-    confirmPassword: '',
   };
 
   const mockFormErrors = {};
@@ -24,13 +22,9 @@ describe('EditProfileForm', () => {
   const defaultProps = {
     formData: mockFormData,
     formErrors: mockFormErrors,
-    showPassword: false,
-    showConfirmPassword: false,
     isSaving: false,
     isDirty: false,
     onFieldChange: jest.fn(),
-    onTogglePasswordVisibility: jest.fn(),
-    onToggleConfirmPasswordVisibility: jest.fn(),
     onSave: jest.fn(),
     onCancel: jest.fn(),
   };
@@ -85,7 +79,6 @@ describe('EditProfileForm', () => {
       
       const countText = getByText('91/100');
       expect(countText).toBeTruthy();
-      // The color should be error color (90% threshold)
     });
 
     it('should show warning color when business name exceeds 75% of max length', () => {
@@ -121,49 +114,6 @@ describe('EditProfileForm', () => {
       fireEvent.changeText(input, 'test@example.com');
       
       expect(defaultProps.onFieldChange).toHaveBeenCalledWith('email', 'test@example.com');
-    });
-
-    it('should call onFieldChange when password is changed', () => {
-      const { getByPlaceholderText } = render(
-        <EditProfileForm {...defaultProps} />
-      );
-      
-      const input = getByPlaceholderText('Leave blank to keep current');
-      fireEvent.changeText(input, 'newpassword123');
-      
-      expect(defaultProps.onFieldChange).toHaveBeenCalledWith('password', 'newpassword123');
-    });
-  });
-
-  describe('Password Visibility Toggle', () => {
-    it('should call onTogglePasswordVisibility when eye icon is pressed', () => {
-      const { getByLabelText } = render(
-        <EditProfileForm {...defaultProps} />
-      );
-      
-      const toggleButton = getByLabelText('Show password');
-      fireEvent.press(toggleButton);
-      
-      expect(defaultProps.onTogglePasswordVisibility).toHaveBeenCalledTimes(1);
-    });
-
-    it('should show "Hide password" label when password is visible', () => {
-      const { getByLabelText } = render(
-        <EditProfileForm {...defaultProps} showPassword={true} />
-      );
-      
-      expect(getByLabelText('Hide password')).toBeTruthy();
-    });
-
-    it('should call onToggleConfirmPasswordVisibility when confirm password eye icon is pressed', () => {
-      const { getByLabelText } = render(
-        <EditProfileForm {...defaultProps} />
-      );
-      
-      const toggleButton = getByLabelText('Show confirm password');
-      fireEvent.press(toggleButton);
-      
-      expect(defaultProps.onToggleConfirmPasswordVisibility).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -203,29 +153,10 @@ describe('EditProfileForm', () => {
       
       expect(getByText('Invalid phone number')).toBeTruthy();
     });
-
-    it('should display password error when present', () => {
-      const formErrors = { password: 'Password must be at least 6 characters' };
-      const { getByText } = render(
-        <EditProfileForm {...defaultProps} formErrors={formErrors} />
-      );
-      
-      expect(getByText('Password must be at least 6 characters')).toBeTruthy();
-    });
-
-    it('should display confirm password error when present', () => {
-      const formErrors = { confirmPassword: 'Passwords do not match' };
-      const { getByText } = render(
-        <EditProfileForm {...defaultProps} formErrors={formErrors} />
-      );
-      
-      expect(getByText('Passwords do not match')).toBeTruthy();
-    });
   });
 
   describe('Form Field Navigation (onSubmitEditing)', () => {
     it('should focus name input when business name onSubmitEditing is triggered', () => {
-      // Spy on TextInput.prototype.focus to track focus calls
       const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
       
       const { getByPlaceholderText } = render(
@@ -242,7 +173,6 @@ describe('EditProfileForm', () => {
     });
 
     it('should focus email input when name onSubmitEditing is triggered', () => {
-      // Spy on TextInput.prototype.focus to track focus calls
       const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
       
       const { getByPlaceholderText } = render(
@@ -259,7 +189,6 @@ describe('EditProfileForm', () => {
     });
 
     it('should focus phone input when email onSubmitEditing is triggered', () => {
-      // Spy on TextInput.prototype.focus to track focus calls
       const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
       
       const { getByPlaceholderText } = render(
@@ -275,48 +204,14 @@ describe('EditProfileForm', () => {
       focusSpy.mockRestore();
     });
 
-    it('should focus password input when phone onSubmitEditing is triggered', () => {
-      // Spy on TextInput.prototype.focus to track focus calls
-      const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
-      
+    it('should call onSave when phone onSubmitEditing is triggered', () => {
       const { getByPlaceholderText } = render(
-        <EditProfileForm {...defaultProps} />
+        <EditProfileForm {...defaultProps} isDirty={true} />
       );
       
       const phoneInput = getByPlaceholderText('Enter phone number');
       
       fireEvent(phoneInput, 'submitEditing');
-      
-      expect(focusSpy).toHaveBeenCalled();
-      
-      focusSpy.mockRestore();
-    });
-
-    it('should focus confirm password input when password onSubmitEditing is triggered', () => {
-      // Spy on TextInput.prototype.focus to track focus calls
-      const focusSpy = jest.spyOn(TextInput.prototype, 'focus');
-      
-      const { getByPlaceholderText } = render(
-        <EditProfileForm {...defaultProps} />
-      );
-      
-      const passwordInput = getByPlaceholderText('Leave blank to keep current');
-      
-      fireEvent(passwordInput, 'submitEditing');
-      
-      expect(focusSpy).toHaveBeenCalled();
-      
-      focusSpy.mockRestore();
-    });
-
-    it('should call onSave when confirm password onSubmitEditing is triggered', () => {
-      const { getByPlaceholderText } = render(
-        <EditProfileForm {...defaultProps} isDirty={true} />
-      );
-      
-      const confirmPasswordInput = getByPlaceholderText('Confirm new password');
-      
-      fireEvent(confirmPasswordInput, 'submitEditing');
       
       expect(defaultProps.onSave).toHaveBeenCalledTimes(1);
     });
@@ -352,7 +247,6 @@ describe('EditProfileForm', () => {
       
       const saveButton = getByText('Save');
       expect(saveButton).toBeTruthy();
-      // Button should be disabled (tested via disabled prop)
     });
 
     it('should disable Save button when isSaving is true', () => {
@@ -360,11 +254,8 @@ describe('EditProfileForm', () => {
         <EditProfileForm {...defaultProps} isSaving={true} isDirty={true} />
       );
       
-      // When loading, the button shows ActivityIndicator instead of text
-      // Verify that the button text is not present (replaced by ActivityIndicator)
       expect(queryByText('Saving...')).toBeNull();
       expect(queryByText('Save')).toBeNull();
-      // The button is disabled when isSaving is true (verified via accessibilityState in component)
     });
 
     it('should disable Cancel button when isSaving is true', () => {
@@ -374,7 +265,6 @@ describe('EditProfileForm', () => {
       
       const cancelButton = getByText('Cancel');
       expect(cancelButton).toBeTruthy();
-      // Button should be disabled (tested via disabled prop)
     });
   });
 
@@ -387,7 +277,6 @@ describe('EditProfileForm', () => {
       
       const input = getByPlaceholderText('Enter business name');
       expect(input).toBeTruthy();
-      // Error styling is applied via style prop
     });
 
     it('should not show error styling when no error exists', () => {
@@ -400,4 +289,3 @@ describe('EditProfileForm', () => {
     });
   });
 });
-

@@ -2,6 +2,8 @@
  * Auth Service Tests
  */
 
+jest.mock('../../lib/supabaseClient');
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthService, AuthResult } from '../../services/auth.service';
 import { supabase } from '../../lib/supabaseClient';

@@ -72,6 +72,10 @@ export const supabase = {
       },
       error: null,
     }),
+    setSession: jest.fn().mockResolvedValue({
+      data: { session: { user: { id: 'test-user-id', email: 'test@example.com' } } },
+      error: null,
+    }),
     getUser: jest.fn().mockResolvedValue({
       data: {
         user: { id: 'test-user-id', email: 'test@example.com' },

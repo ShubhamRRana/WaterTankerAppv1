@@ -35,8 +35,6 @@ interface FormState {
   name: string;
   email: string;
   phone: string;
-  password: string;
-  confirmPassword: string;
 }
 
 interface FormErrors {
@@ -44,16 +42,12 @@ interface FormErrors {
   name?: string;
   email?: string;
   phone?: string;
-  password?: string;
-  confirmPassword?: string;
 }
 
 interface AppState {
   isEditing: boolean;
   editForm: FormState;
   formErrors: FormErrors;
-  showPassword: boolean;
-  showConfirmPassword: boolean;
   isSaving: boolean;
   imageError: boolean;
   imageLoading: boolean;
@@ -68,8 +62,6 @@ type AppAction =
   | { type: 'UPDATE_FIELD'; field: keyof FormState; value: string }
   | { type: 'SET_ERRORS'; payload: FormErrors }
   | { type: 'CLEAR_ERROR'; field: keyof FormErrors }
-  | { type: 'TOGGLE_PASSWORD_VISIBILITY' }
-  | { type: 'TOGGLE_CONFIRM_PASSWORD_VISIBILITY' }
   | { type: 'SET_SAVING'; payload: boolean }
   | { type: 'SET_IMAGE_ERROR'; payload: boolean }
   | { type: 'SET_IMAGE_LOADING'; payload: boolean }
@@ -86,12 +78,8 @@ const initialState: AppState = {
     name: '',
     email: '',
     phone: '',
-    password: '',
-    confirmPassword: '',
   },
   formErrors: {},
-  showPassword: false,
-  showConfirmPassword: false,
   isSaving: false,
   imageError: false,
   imageLoading: true,
@@ -116,10 +104,6 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       const newErrors = { ...state.formErrors };
       delete newErrors[action.field];
       return { ...state, formErrors: newErrors };
-    case 'TOGGLE_PASSWORD_VISIBILITY':
-      return { ...state, showPassword: !state.showPassword };
-    case 'TOGGLE_CONFIRM_PASSWORD_VISIBILITY':
-      return { ...state, showConfirmPassword: !state.showConfirmPassword };
     case 'SET_SAVING':
       return { ...state, isSaving: action.payload };
     case 'SET_IMAGE_ERROR':
@@ -181,7 +165,6 @@ const AdminProfileScreen: React.FC = () => {
   const debouncedName = useDebounce(state.editForm.name, 500);
   const debouncedEmail = useDebounce(state.editForm.email, 500);
   const debouncedPhone = useDebounce(state.editForm.phone, 500);
-  const debouncedPassword = useDebounce(state.editForm.password, 500);
 
   // Initialize form when user data is available
   useEffect(() => {
@@ -191,8 +174,6 @@ const AdminProfileScreen: React.FC = () => {
         name: user.name || '',
         email: user.email || '',
         phone: user.phone || '',
-        password: '',
-        confirmPassword: '',
       };
       dispatch({ type: 'INITIALIZE_FORM', payload: initialForm });
       dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
@@ -207,9 +188,7 @@ const AdminProfileScreen: React.FC = () => {
       state.editForm.businessName.trim() !== (state.initialForm.businessName || '') ||
       state.editForm.name.trim() !== (state.initialForm.name || '') ||
       state.editForm.email.trim() !== (state.initialForm.email || '') ||
-      state.editForm.phone.trim() !== (state.initialForm.phone || '') ||
-      (state.editForm.password !== '' && state.editForm.password.trim() !== '') ||
-      (state.editForm.confirmPassword !== '' && state.editForm.confirmPassword.trim() !== '');
+      state.editForm.phone.trim() !== (state.initialForm.phone || '');
     
     dispatch({ type: 'SET_DIRTY', payload: hasChanges });
   }, [state.editForm, state.isEditing, user, state.initialForm]);
@@ -260,24 +239,8 @@ const AdminProfileScreen: React.FC = () => {
       delete errors.phone;
     }
 
-    // Validate password if provided
-    if (debouncedPassword) {
-      const passwordValidation = ValidationUtils.validatePassword(debouncedPassword);
-      if (!passwordValidation.isValid) {
-        errors.password = passwordValidation.error ?? 'Invalid password';
-      } else {
-        delete errors.password;
-      }
-    }
-
-    if (state.editForm.password && state.editForm.password !== state.editForm.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
-    } else if (state.editForm.confirmPassword && state.editForm.password === state.editForm.confirmPassword) {
-      delete errors.confirmPassword;
-    }
-
     dispatch({ type: 'SET_ERRORS', payload: errors });
-  }, [debouncedBusinessName, debouncedName, debouncedEmail, debouncedPhone, debouncedPassword, state.editForm.password, state.editForm.confirmPassword, state.isEditing]);
+  }, [debouncedBusinessName, debouncedName, debouncedEmail, debouncedPhone, state.isEditing]);
 
 
 
@@ -312,22 +275,6 @@ const AdminProfileScreen: React.FC = () => {
       errors.phone = phoneValidation.error ?? 'Invalid phone';
     }
 
-    // Validate password if provided
-    if (state.editForm.password || state.editForm.confirmPassword) {
-      if (!state.editForm.password) {
-        errors.password = 'Please enter a new password';
-      } else {
-        const passwordValidation = ValidationUtils.validatePassword(state.editForm.password);
-        if (!passwordValidation.isValid) {
-          errors.password = passwordValidation.error ?? 'Invalid password';
-        }
-      }
-
-      if (state.editForm.password && state.editForm.password !== state.editForm.confirmPassword) {
-        errors.confirmPassword = 'Passwords do not match';
-      }
-    }
-
     dispatch({ type: 'SET_ERRORS', payload: errors });
     return Object.keys(errors).length === 0;
   };
@@ -356,11 +303,6 @@ const AdminProfileScreen: React.FC = () => {
         email: sanitizedEmail,
         phone: sanitizedPhone,
       } as Partial<User>;
-      
-      // Only update password if provided
-      if (state.editForm.password) {
-        updates.password = state.editForm.password; // In real app, this should be hashed
-      }
       
       await updateUser(updates);
       dispatch({ type: 'SET_EDITING', payload: false });
@@ -461,8 +403,6 @@ const AdminProfileScreen: React.FC = () => {
                   name: user.name || '',
                   email: user.email || '',
                   phone: user.phone || '',
-                  password: '',
-                  confirmPassword: '',
                 };
                 dispatch({ type: 'RESET_FORM', payload: resetForm });
                 dispatch({ type: 'SET_EDITING', payload: false });
@@ -479,8 +419,6 @@ const AdminProfileScreen: React.FC = () => {
           name: user.name || '',
           email: user.email || '',
           phone: user.phone || '',
-          password: '',
-          confirmPassword: '',
         };
         dispatch({ type: 'RESET_FORM', payload: resetForm });
       }
@@ -597,6 +535,13 @@ const AdminProfileScreen: React.FC = () => {
               variant="primary"
               disabled={isDeleting}
             />
+            <Button
+              title="Change Password"
+              onPress={() => navigation.navigate('ChangePassword')}
+              variant="outline"
+              style={styles.changePasswordButton}
+              disabled={isDeleting}
+            />
             <TouchableOpacity
               style={[styles.actionButton, styles.deleteAccountButton]}
               onPress={handleDeleteAccountPress}
@@ -628,13 +573,9 @@ const AdminProfileScreen: React.FC = () => {
           <EditProfileForm
             formData={state.editForm}
             formErrors={state.formErrors}
-            showPassword={state.showPassword}
-            showConfirmPassword={state.showConfirmPassword}
             isSaving={state.isSaving}
             isDirty={state.isDirty}
             onFieldChange={handleInputChange}
-            onTogglePasswordVisibility={() => dispatch({ type: 'TOGGLE_PASSWORD_VISIBILITY' })}
-            onToggleConfirmPasswordVisibility={() => dispatch({ type: 'TOGGLE_CONFIRM_PASSWORD_VISIBILITY' })}
             onSave={handleSaveProfile}
             onCancel={handleCancelEdit}
           />
@@ -707,6 +648,9 @@ function createStyles(colors: AppPalette) {
     marginHorizontal: 16,
     marginTop: -8,
     marginBottom: 16,
+  },
+  changePasswordButton: {
+    marginTop: 12,
   },
   actionButton: {
     flexDirection: 'row',

@@ -181,6 +181,8 @@ export interface AuthStackParamList {
   Login: { preferredRole?: UserRole; initialEmail?: string } | undefined;
   Register: { preferredRole?: UserRole } | undefined;
   PendingEmailVerification: { email: string; preferredRole?: UserRole };
+  ForgotPassword: { initialEmail?: string } | undefined;
+  ResetPassword: undefined;
   [key: string]:
     | undefined
     | { preferredRole?: UserRole; initialEmail?: string; email?: string };

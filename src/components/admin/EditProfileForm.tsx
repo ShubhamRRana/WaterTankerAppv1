@@ -3,9 +3,7 @@ import {
   View,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import Card from '../common/Card';
 import { Typography, Button } from '../common';
 import { AppPalette } from '../../theme/palettes';
@@ -16,8 +14,6 @@ interface FormState {
   name: string;
   email: string;
   phone: string;
-  password: string;
-  confirmPassword: string;
 }
 
 interface FormErrors {
@@ -25,20 +21,14 @@ interface FormErrors {
   name?: string;
   email?: string;
   phone?: string;
-  password?: string;
-  confirmPassword?: string;
 }
 
 interface EditProfileFormProps {
   formData: FormState;
   formErrors: FormErrors;
-  showPassword: boolean;
-  showConfirmPassword: boolean;
   isSaving: boolean;
   isDirty: boolean;
   onFieldChange: (field: keyof FormState, value: string) => void;
-  onTogglePasswordVisibility: () => void;
-  onToggleConfirmPasswordVisibility: () => void;
   onSave: () => void;
   onCancel: () => void;
 }
@@ -46,13 +36,9 @@ interface EditProfileFormProps {
 const EditProfileForm: React.FC<EditProfileFormProps> = ({
   formData,
   formErrors,
-  showPassword,
-  showConfirmPassword,
   isSaving,
   isDirty,
   onFieldChange,
-  onTogglePasswordVisibility,
-  onToggleConfirmPasswordVisibility,
   onSave,
   onCancel,
 }) => {
@@ -60,8 +46,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
   const nameInputRef = useRef<TextInput>(null);
   const emailInputRef = useRef<TextInput>(null);
   const phoneInputRef = useRef<TextInput>(null);
-  const passwordInputRef = useRef<TextInput>(null);
-  const confirmPasswordInputRef = useRef<TextInput>(null);
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -102,7 +86,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           placeholder="Enter business name"
           placeholderTextColor={colors.textSecondary}
           accessibilityLabel="Business name input"
-          accessibilityHint="Enter your business name. Maximum 100 characters."
           maxLength={100}
           autoCapitalize="words"
           returnKeyType="next"
@@ -135,8 +118,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           onChangeText={(t) => onFieldChange('name', t)}
           placeholder="Enter full name"
           placeholderTextColor={colors.textSecondary}
-          accessibilityLabel="Full name input"
-          accessibilityHint="Enter your full name. Maximum 50 characters."
           maxLength={50}
           autoCapitalize="words"
           returnKeyType="next"
@@ -171,8 +152,6 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           placeholderTextColor={colors.textSecondary}
           keyboardType="email-address"
           autoCapitalize="none"
-          accessibilityLabel="Email address input"
-          accessibilityHint="Enter your email address. This is used for authentication."
           returnKeyType="next"
           onSubmitEditing={() => phoneInputRef.current?.focus()}
         />
@@ -205,94 +184,12 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           placeholderTextColor={colors.textSecondary}
           keyboardType="phone-pad"
           maxLength={10}
-          accessibilityLabel="Phone number input"
-          accessibilityHint="Enter your 10-digit phone number starting with 6-9. This field is required."
-          returnKeyType="next"
-          onSubmitEditing={() => passwordInputRef.current?.focus()}
+          returnKeyType="done"
+          onSubmitEditing={onSave}
         />
         {formErrors.phone && (
           <Typography variant="caption" style={styles.errorText}>
             {formErrors.phone}
-          </Typography>
-        )}
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Typography variant="body" style={styles.inputLabel}>Password</Typography>
-        <View style={[
-          styles.passwordInputContainer,
-          formErrors.password && styles.textInputError
-        ]}>
-          <TextInput
-            ref={passwordInputRef}
-            style={styles.passwordInput}
-            value={formData.password}
-            onChangeText={(t) => onFieldChange('password', t)}
-            placeholder="Leave blank to keep current"
-            placeholderTextColor={colors.textSecondary}
-            secureTextEntry={!showPassword}
-            accessibilityLabel="Password input"
-            accessibilityHint="Enter new password or leave blank to keep current. Minimum 6 characters."
-            returnKeyType="next"
-            onSubmitEditing={() => confirmPasswordInputRef.current?.focus()}
-          />
-          <TouchableOpacity
-            style={styles.eyeIcon}
-            onPress={onTogglePasswordVisibility}
-            accessibilityLabel={showPassword ? "Hide password" : "Show password"}
-            accessibilityRole="button"
-            accessibilityHint="Toggles password visibility"
-          >
-            <Ionicons
-              name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-              size={24}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
-        </View>
-        {formErrors.password && (
-          <Typography variant="caption" style={styles.errorText}>
-            {formErrors.password}
-          </Typography>
-        )}
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Typography variant="body" style={styles.inputLabel}>Confirm Password</Typography>
-        <View style={[
-          styles.passwordInputContainer,
-          formErrors.confirmPassword && styles.textInputError
-        ]}>
-          <TextInput
-            ref={confirmPasswordInputRef}
-            style={styles.passwordInput}
-            value={formData.confirmPassword}
-            onChangeText={(t) => onFieldChange('confirmPassword', t)}
-            placeholder="Confirm new password"
-            placeholderTextColor={colors.textSecondary}
-            secureTextEntry={!showConfirmPassword}
-            accessibilityLabel="Confirm password input"
-            accessibilityHint="Confirm your new password. Must match the password above."
-            returnKeyType="done"
-            onSubmitEditing={onSave}
-          />
-          <TouchableOpacity
-            style={styles.eyeIcon}
-            onPress={onToggleConfirmPasswordVisibility}
-            accessibilityLabel={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-            accessibilityRole="button"
-            accessibilityHint="Toggles confirm password visibility"
-          >
-            <Ionicons
-              name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
-              size={24}
-              color={colors.textSecondary}
-            />
-          </TouchableOpacity>
-        </View>
-        {formErrors.confirmPassword && (
-          <Typography variant="caption" style={styles.errorText}>
-            {formErrors.confirmPassword}
           </Typography>
         )}
       </View>
@@ -358,23 +255,6 @@ function createStyles(colors: AppPalette) {
     borderColor: colors.error,
     borderWidth: 1.5,
   },
-  passwordInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    backgroundColor: colors.surface,
-  },
-  passwordInput: {
-    flex: 1,
-    padding: 12,
-    fontSize: 16,
-    color: colors.text,
-  },
-  eyeIcon: {
-    padding: 12,
-  },
   errorText: {
     color: colors.error,
     fontSize: 12,
@@ -395,6 +275,4 @@ function createStyles(colors: AppPalette) {
 });
 }
 
-
 export default EditProfileForm;
-

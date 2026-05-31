@@ -284,15 +284,27 @@ const DriverManagementScreen: React.FC = () => {
         };
         if (addDriverForm.phone) updateData.phone = addDriverForm.phone;
         if (licenseExpiryParsed) updateData.licenseExpiry = licenseExpiryParsed;
-        
-        // Only update password if provided
-        if (addDriverForm.password) {
-          updateData.password = addDriverForm.password; // In real app, this should be hashed
-        }
-        
+
         await updateUser(editingDriver.id, updateData);
-        
-        Alert.alert('Success', 'Driver updated successfully');
+
+        if (addDriverForm.password) {
+          const passwordResult = await AuthService.adminUpdateUserPassword(
+            editingDriver.id,
+            addDriverForm.password
+          );
+          if (!passwordResult.success) {
+            Alert.alert(
+              'Partial success',
+              `Profile updated but password was not changed: ${passwordResult.error ?? 'Unknown error'}`
+            );
+            setIsSubmitting(false);
+            return;
+          }
+        }
+
+        Alert.alert('Success', addDriverForm.password
+          ? 'Driver updated and password changed successfully'
+          : 'Driver updated successfully');
       }
       
       // Reset form

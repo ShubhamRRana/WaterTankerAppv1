@@ -59,9 +59,14 @@ function NavigatorLoadingFallback() {
 }
 
 function NavigationContent() {
-  const { user } = useAuthStore();
+  const { user, needsPasswordReset } = useAuthStore();
   const navigationRef = useRef<NavigationContainerRef<RootStackParamList>>(null);
   const { colors, resolvedScheme } = useTheme();
+
+  const getTargetRoute = (): keyof RootStackParamList => {
+    if (needsPasswordReset) return 'Auth';
+    return getRootRouteName(user);
+  };
 
   const navTheme: NavTheme = React.useMemo(() => {
     const base = resolvedScheme === 'dark' ? DarkTheme : DefaultTheme;
@@ -81,7 +86,7 @@ function NavigationContent() {
 
   useEffect(() => {
     if (navigationRef.current?.isReady()) {
-      const targetRoute = getRootRouteName(user);
+      const targetRoute = getTargetRoute();
       const currentRoute = navigationRef.current.getCurrentRoute()?.name;
 
       if (currentRoute !== targetRoute) {
@@ -91,14 +96,14 @@ function NavigationContent() {
         });
       }
     }
-  }, [user]);
+  }, [user, needsPasswordReset]);
 
   return (
     <NavigationContainer ref={navigationRef} theme={navTheme}>
       <StatusBar style={resolvedScheme === 'dark' ? 'light' : 'dark'} />
       <Suspense fallback={<NavigatorLoadingFallback />}>
         <Stack.Navigator
-          initialRouteName={getRootRouteName(user)}
+          initialRouteName={getTargetRoute()}
           screenOptions={{
             headerShown: false,
           }}

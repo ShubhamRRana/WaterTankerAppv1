@@ -10,6 +10,7 @@ import { dataAccess } from '../lib/index';
 import { deserializeDate } from '../utils/dateSerialization';
 import { handleError } from '../utils/errorHandler';
 import { getErrorMessage } from '../utils/errors';
+import { getPasswordResetRedirectUrl } from '../utils/authDeepLink';
 
 /**
  * Result of authentication operations
@@ -1285,6 +1286,252 @@ export class AuthService {
           rateLimiter.reset('login');
         }
       });
+    }
+  }
+
+  static getPasswordResetRedirectUrl(): string {
+    return getPasswordResetRedirectUrl();
+  }
+
+  /**
+   * Request a password reset email via Supabase Auth.
+   * Always returns generic success when Supabase accepts or silently fails (no enumeration).
+   */
+  static async requestPasswordReset(email: string): Promise<AuthResult> {
+    try {
+      const sanitizedEmail = SanitizationUtils.sanitizeEmail(email);
+      const emailValidation = ValidationUtils.validateEmail(sanitizedEmail, true);
+      if (!emailValidation.isValid) {
+        return {
+          success: false,
+          error: emailValidation.error || 'Invalid email address',
+        };
+      }
+
+      const rateLimitCheck = rateLimiter.isAllowed('password_reset', sanitizedEmail);
+      if (!rateLimitCheck.allowed) {
+        securityLogger.logRateLimitExceeded('password_reset');
+        return {
+          success: false,
+          error: `Too many reset requests. Please try again after ${new Date(rateLimitCheck.resetTime).toLocaleTimeString()}`,
+        };
+      }
+
+      rateLimiter.record('password_reset', sanitizedEmail);
+
+      const redirectTo = AuthService.getPasswordResetRedirectUrl();
+      const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, { redirectTo });
+
+      if (error) {
+        const msg = error.message?.toLowerCase() ?? '';
+        if (msg.includes('rate') || msg.includes('limit')) {
+          return {
+            success: false,
+            error: 'Too many reset requests. Please try again later.',
+          };
+        }
+        // Do not reveal whether the email exists
+        return { success: true };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: getErrorMessage(error, 'Failed to send reset email. Please try again.'),
+      };
+    }
+  }
+
+  /**
+   * Complete password reset after recovery deep link established a session.
+   * Signs out after success so the user must log in with the new password.
+   */
+  static async completePasswordReset(newPassword: string): Promise<AuthResult> {
+    try {
+      const passwordValidation = ValidationUtils.validatePassword(newPassword);
+      if (!passwordValidation.isValid) {
+        return {
+          success: false,
+          error: passwordValidation.error || ERROR_MESSAGES.auth.weakPassword,
+        };
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        return {
+          success: false,
+          error: ERROR_MESSAGES.auth.passwordResetSessionExpired,
+        };
+      }
+
+      securityLogger.log(
+        SecurityEventType.PASSWORD_CHANGE_ATTEMPT,
+        SecuritySeverity.INFO,
+        { context: 'password_reset' },
+        session.user.id
+      );
+
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) {
+        securityLogger.log(
+          SecurityEventType.PASSWORD_CHANGE_FAILURE,
+          SecuritySeverity.WARNING,
+          { context: 'password_reset', error: updateError.message },
+          session.user.id
+        );
+        return {
+          success: false,
+          error: updateError.message || ERROR_MESSAGES.general.tryAgain,
+        };
+      }
+
+      securityLogger.log(
+        SecurityEventType.PASSWORD_CHANGE_SUCCESS,
+        SecuritySeverity.INFO,
+        { context: 'password_reset' },
+        session.user.id
+      );
+
+      await AuthService.logout();
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: getErrorMessage(error, ERROR_MESSAGES.general.tryAgain),
+      };
+    }
+  }
+
+  /**
+   * Change the signed-in admin's password after verifying the current password.
+   */
+  static async changeOwnPassword(currentPassword: string, newPassword: string): Promise<AuthResult> {
+    try {
+      const newPasswordValidation = ValidationUtils.validatePassword(newPassword);
+      if (!newPasswordValidation.isValid) {
+        return {
+          success: false,
+          error: newPasswordValidation.error || ERROR_MESSAGES.auth.weakPassword,
+        };
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.email) {
+        return {
+          success: false,
+          error: 'Not authenticated. Please sign in again.',
+        };
+      }
+
+      const email = session.user.email;
+
+      securityLogger.log(
+        SecurityEventType.PASSWORD_CHANGE_ATTEMPT,
+        SecuritySeverity.INFO,
+        { context: 'profile_change_password' },
+        session.user.id
+      );
+
+      const { error: verifyError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+
+      if (verifyError) {
+        securityLogger.log(
+          SecurityEventType.PASSWORD_CHANGE_FAILURE,
+          SecuritySeverity.WARNING,
+          { context: 'profile_change_password' },
+          session.user.id
+        );
+        return {
+          success: false,
+          error: ERROR_MESSAGES.auth.currentPasswordIncorrect,
+        };
+      }
+
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) {
+        securityLogger.log(
+          SecurityEventType.PASSWORD_CHANGE_FAILURE,
+          SecuritySeverity.WARNING,
+          { context: 'profile_change_password', error: updateError.message },
+          session.user.id
+        );
+        return {
+          success: false,
+          error: updateError.message || ERROR_MESSAGES.general.tryAgain,
+        };
+      }
+
+      securityLogger.log(
+        SecurityEventType.PASSWORD_CHANGE_SUCCESS,
+        SecuritySeverity.INFO,
+        { context: 'profile_change_password' },
+        session.user.id
+      );
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: getErrorMessage(error, ERROR_MESSAGES.general.tryAgain),
+      };
+    }
+  }
+
+  /**
+   * Admin updates a driver's password via Edge Function (service role).
+   */
+  static async adminUpdateUserPassword(userId: string, newPassword: string): Promise<AuthResult> {
+    try {
+      const passwordValidation = ValidationUtils.validatePassword(newPassword);
+      if (!passwordValidation.isValid) {
+        return {
+          success: false,
+          error: passwordValidation.error || ERROR_MESSAGES.auth.weakPassword,
+        };
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        return {
+          success: false,
+          error: 'Not authenticated. Please sign in again.',
+        };
+      }
+
+      const { data: fnData, error: fnError } = await supabase.functions.invoke(
+        'admin-update-user-password',
+        {
+          body: { userId, password: newPassword },
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        }
+      );
+
+      if (fnError) {
+        const detail = await edgeFunctionErrorDetail(fnData, fnError);
+        return {
+          success: false,
+          error: detail || fnError.message || ERROR_MESSAGES.auth.driverPasswordUpdateFailed,
+        };
+      }
+
+      const result = fnData as { success?: boolean; error?: string };
+      if (!result?.success) {
+        return {
+          success: false,
+          error: result?.error || ERROR_MESSAGES.auth.driverPasswordUpdateFailed,
+        };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: getErrorMessage(error, ERROR_MESSAGES.auth.driverPasswordUpdateFailed),
+      };
     }
   }
 }
