@@ -330,24 +330,34 @@ describe('SupabaseDataAccess', () => {
     describe('updateUserProfile', () => {
       it('should update user profile successfully', async () => {
         const mockUserRow = {
-          id: 'customer-1',
-          email: 'customer@example.com',
+          id: 'driver-1',
+          email: 'driver@example.com',
           password_hash: 'hashed-password',
-          name: 'Test Customer',
+          name: 'Test Driver',
           phone: '1234567890',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-02T00:00:00Z',
         };
 
-        const mockRoleRow = [{ user_id: 'customer-1', role: 'customer', created_at: '2024-01-01T00:00:00Z' }];
-        const mockCustomerRow = {
-          user_id: 'customer-1',
-          saved_addresses: [],
+        const mockRoleRow = [{ user_id: 'driver-1', role: 'driver', created_at: '2024-01-01T00:00:00Z' }];
+        const mockDriverRow = {
+          user_id: 'driver-1',
+          vehicle_number: '',
+          license_number: 'LIC123',
+          license_expiry: '2026-12-31',
+          driver_license_image_url: '',
+          vehicle_registration_image_url: '',
+          total_earnings: 0,
+          completed_orders: 0,
+          created_by_admin: true,
+          created_by_admin_id: 'admin-1',
+          emergency_contact_name: 'Contact',
+          emergency_contact_phone: '9876543210',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-02T00:00:00Z',
         };
 
-        // Mock getUserById calls: users, user_roles, customers
+        // Mock getUserById calls: users, user_roles, drivers
         (supabase.from as jest.Mock).mockReturnValueOnce({
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
@@ -362,23 +372,21 @@ describe('SupabaseDataAccess', () => {
         (supabase.from as jest.Mock).mockReturnValueOnce({
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
-          single: jest.fn().mockResolvedValue({ data: mockCustomerRow, error: null }),
+          single: jest.fn().mockResolvedValue({ data: mockDriverRow, error: null }),
         });
 
-        // Mock saveUser calls: users (upsert), user_roles (upsert), customers (upsert)
+        // Mock update calls: users, drivers
         (supabase.from as jest.Mock).mockReturnValueOnce({
-          upsert: jest.fn().mockResolvedValue({ data: null, error: null }),
-        });
-
-        (supabase.from as jest.Mock).mockReturnValueOnce({
-          upsert: jest.fn().mockResolvedValue({ data: null, error: null }),
+          update: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockResolvedValue({ data: null, error: null }),
         });
 
         (supabase.from as jest.Mock).mockReturnValueOnce({
-          upsert: jest.fn().mockResolvedValue({ data: null, error: null }),
+          update: jest.fn().mockReturnThis(),
+          eq: jest.fn().mockResolvedValue({ data: null, error: null }),
         });
 
-        await dataAccess.users.updateUserProfile('customer-1', { name: 'Updated Name' });
+        await dataAccess.users.updateUserProfile('driver-1', { name: 'Updated Name' });
 
         expect(supabase.from).toHaveBeenCalled();
       });

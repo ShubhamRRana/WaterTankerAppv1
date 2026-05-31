@@ -277,22 +277,25 @@ async function mapUserToDb(user: User): Promise<{
   let adminRow: Partial<AdminRow> | undefined;
 
   if (isDriverUser(user)) {
+    const driverUser = user as DriverUser;
     driverRow = {
       user_id: user.id,
-      vehicle_number: user.vehicleNumber || '',
-      license_number: user.licenseNumber || '',
-      license_expiry: serializeDate(user.licenseExpiry) || '',
-      driver_license_image_url: user.driverLicenseImage || '',
-      vehicle_registration_image_url: user.vehicleRegistrationImage || '',
-      total_earnings: user.totalEarnings || 0,
-      completed_orders: user.completedOrders || 0,
-      created_by_admin: user.createdByAdmin || false,
-      created_by_admin_id: (user as DriverUser).createdByAdminId || null,
-      emergency_contact_name: user.emergencyContactName || null,
-      emergency_contact_phone: user.emergencyContactPhone || null,
+      vehicle_number: driverUser.vehicleNumber || '',
+      license_number: driverUser.licenseNumber || '',
+      license_expiry: serializeDate(driverUser.licenseExpiry) || '',
+      driver_license_image_url: driverUser.driverLicenseImage || '',
+      vehicle_registration_image_url: driverUser.vehicleRegistrationImage || '',
+      total_earnings: driverUser.totalEarnings || 0,
+      completed_orders: driverUser.completedOrders || 0,
+      created_by_admin: driverUser.createdByAdmin ?? true,
+      emergency_contact_name: driverUser.emergencyContactName || null,
+      emergency_contact_phone: driverUser.emergencyContactPhone || null,
       created_at: serializeDate(user.createdAt) || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
+    if (driverUser.createdByAdminId !== undefined) {
+      driverRow.created_by_admin_id = driverUser.createdByAdminId;
+    }
   } else if (isAdminUser(user)) {
     adminRow = {
       user_id: user.id,
@@ -871,22 +874,82 @@ class SupabaseUserDataAccess implements IUserDataAccess {
 
   async updateUserProfile(id: string, updates: Partial<User>): Promise<void> {
     try {
-      // Get existing user
       const existingUser = await this.getUserById(id);
       if (!existingUser) {
         throw new NotFoundError('User', id);
       }
 
-      // Merge updates
       const updatedUser = { ...existingUser, ...updates } as User;
+      const now = new Date().toISOString();
 
-      // Save updated user
-      await this.saveUser(updatedUser);
+      // Use UPDATE (not upsert): upsert also requires INSERT RLS, which blocks admins
+      // editing driver profiles (users_insert_own only allows auth.uid() = id).
+      const { error: userError } = await supabase
+        .from('users')
+        .update({
+          email: updatedUser.email,
+          name: updatedUser.name,
+          phone: updatedUser.phone || null,
+          updated_at: now,
+        })
+        .eq('id', id);
+
+      if (userError) {
+        throw userError;
+      }
+
+      if (isDriverUser(updatedUser)) {
+        const driverUser = updatedUser as DriverUser;
+        const licenseExpiry = serializeDate(driverUser.licenseExpiry);
+        const driverPayload: Record<string, unknown> = {
+          vehicle_number: driverUser.vehicleNumber || '',
+          license_number: driverUser.licenseNumber || '',
+          driver_license_image_url: driverUser.driverLicenseImage || '',
+          vehicle_registration_image_url: driverUser.vehicleRegistrationImage || '',
+          total_earnings: driverUser.totalEarnings ?? 0,
+          completed_orders: driverUser.completedOrders ?? 0,
+          emergency_contact_name: driverUser.emergencyContactName || null,
+          emergency_contact_phone: driverUser.emergencyContactPhone || null,
+          updated_at: now,
+        };
+        if (licenseExpiry) {
+          driverPayload.license_expiry = licenseExpiry;
+        }
+
+        const { error: driverError } = await supabase
+          .from('drivers')
+          .update(driverPayload)
+          .eq('user_id', id);
+
+        if (driverError) {
+          throw driverError;
+        }
+      } else if (isAdminUser(updatedUser)) {
+        const { error: adminError } = await supabase
+          .from('admins')
+          .update({
+            business_name: updatedUser.businessName || null,
+            updated_at: now,
+          })
+          .eq('user_id', id);
+
+        if (adminError) {
+          throw adminError;
+        }
+      }
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw error;
       }
-      throw new DataAccessError('Failed to update user profile', 'updateUserProfile', { error, id });
+      const supabaseMessage =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : undefined;
+      throw new DataAccessError(
+        supabaseMessage || 'Failed to update user profile',
+        'updateUserProfile',
+        { error, id }
+      );
     }
   }
 

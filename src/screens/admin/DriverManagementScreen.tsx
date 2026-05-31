@@ -28,6 +28,7 @@ import { ValidationUtils } from '../../utils/validation';
 import { SanitizationUtils } from '../../utils/sanitization';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { AuthService } from '../../services/auth.service';
+import { getErrorMessage } from '../../utils/errors';
 
 type DriverManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Drivers'>;
 
@@ -169,8 +170,12 @@ const DriverManagementScreen: React.FC = () => {
       } else if (addDriverForm.password !== addDriverForm.confirmPassword) {
         errors.confirmPassword = 'Passwords do not match';
       }
-    } else if (addDriverForm.password && addDriverForm.password !== addDriverForm.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
+    } else if (addDriverForm.password) {
+      if (!addDriverForm.confirmPassword) {
+        errors.confirmPassword = 'Please confirm your password';
+      } else if (addDriverForm.password !== addDriverForm.confirmPassword) {
+        errors.confirmPassword = 'Passwords do not match';
+      }
     }
     
     // Emergency contact validation
@@ -275,36 +280,74 @@ const DriverManagementScreen: React.FC = () => {
           const y = parseInt(m[3] ?? '', 10);
           return new Date(y, mo, d);
         })();
-        const updateData: Partial<DriverUser> = {
-          name: addDriverForm.name.trim(),
-          email: SanitizationUtils.sanitizeEmail(addDriverForm.email),
-          licenseNumber: addDriverForm.licenseNumber.trim(),
-          emergencyContactName: addDriverForm.emergencyContactName.trim(),
-          emergencyContactPhone: addDriverForm.emergencyContactPhone,
-        };
-        if (addDriverForm.phone) updateData.phone = addDriverForm.phone;
-        if (licenseExpiryParsed) updateData.licenseExpiry = licenseExpiryParsed;
+        const sanitizedEmail = SanitizationUtils.sanitizeEmail(addDriverForm.email);
+        const updateData: Partial<DriverUser> = {};
+        const trimmedName = addDriverForm.name.trim();
+        const trimmedLicense = addDriverForm.licenseNumber.trim();
+        const trimmedEcName = addDriverForm.emergencyContactName.trim();
 
-        await updateUser(editingDriver.id, updateData);
+        if (trimmedName !== (editingDriver.name || '')) updateData.name = trimmedName;
+        if (sanitizedEmail !== (editingDriver.email || '')) updateData.email = sanitizedEmail;
+        if ((addDriverForm.phone || '') !== (editingDriver.phone || '')) {
+          updateData.phone = addDriverForm.phone;
+        }
+        if (trimmedLicense !== (editingDriver.licenseNumber || '')) {
+          updateData.licenseNumber = trimmedLicense;
+        }
+        if (trimmedEcName !== (editingDriver.emergencyContactName || '')) {
+          updateData.emergencyContactName = trimmedEcName;
+        }
+        if ((addDriverForm.emergencyContactPhone || '') !== (editingDriver.emergencyContactPhone || '')) {
+          updateData.emergencyContactPhone = addDriverForm.emergencyContactPhone;
+        }
+        if (licenseExpiryParsed) {
+          const existingExpiry = editingDriver.licenseExpiry
+            ? new Date(editingDriver.licenseExpiry).toISOString().split('T')[0]
+            : '';
+          const newExpiry = licenseExpiryParsed.toISOString().split('T')[0];
+          if (newExpiry !== existingExpiry) {
+            updateData.licenseExpiry = licenseExpiryParsed;
+          }
+        }
 
-        if (addDriverForm.password) {
+        const profileChanged = Object.keys(updateData).length > 0;
+        const passwordChanged = Boolean(addDriverForm.password);
+
+        if (!profileChanged && !passwordChanged) {
+          Alert.alert('No changes', 'No updates were made.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (profileChanged) {
+          await updateUser(editingDriver.id, updateData);
+        }
+
+        if (passwordChanged) {
           const passwordResult = await AuthService.adminUpdateUserPassword(
             editingDriver.id,
             addDriverForm.password
           );
           if (!passwordResult.success) {
             Alert.alert(
-              'Partial success',
-              `Profile updated but password was not changed: ${passwordResult.error ?? 'Unknown error'}`
+              profileChanged ? 'Partial success' : 'Error',
+              profileChanged
+                ? `Profile updated but password was not changed: ${passwordResult.error ?? 'Unknown error'}`
+                : (passwordResult.error ?? 'Failed to update driver password. Please try again.')
             );
             setIsSubmitting(false);
             return;
           }
         }
 
-        Alert.alert('Success', addDriverForm.password
-          ? 'Driver updated and password changed successfully'
-          : 'Driver updated successfully');
+        Alert.alert(
+          'Success',
+          passwordChanged && profileChanged
+            ? 'Driver updated and password changed successfully'
+            : passwordChanged
+              ? 'Driver password changed successfully'
+              : 'Driver updated successfully'
+        );
       }
       
       // Reset form
@@ -323,7 +366,13 @@ const DriverManagementScreen: React.FC = () => {
       setEditingDriver(null);
       setShowAddDriverModal(false);
     } catch (error) {
-      Alert.alert('Error', isEditMode ? 'Failed to update driver. Please try again.' : 'Failed to add driver. Please try again.');
+      Alert.alert(
+        'Error',
+        getErrorMessage(
+          error,
+          isEditMode ? 'Failed to update driver. Please try again.' : 'Failed to add driver. Please try again.'
+        )
+      );
     } finally {
       setIsSubmitting(false);
     }
