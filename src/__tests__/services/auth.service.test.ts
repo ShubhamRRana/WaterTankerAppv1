@@ -4,6 +4,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthService, AuthResult } from '../../services/auth.service';
+import { supabase } from '../../lib/supabaseClient';
 import { LocalStorageService } from '../../services/localStorage';
 import { User, UserRole, DriverUser, AdminUser } from '../../types';
 import { rateLimiter } from '../../utils/rateLimiter';
@@ -570,6 +571,136 @@ describe('AuthService', () => {
       jest.spyOn(LocalStorageService, 'initializeSampleData').mockRejectedValue(new Error('Init error'));
 
       await expect(AuthService.initializeApp()).resolves.not.toThrow();
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    it('should send a reset email and return generic success', async () => {
+      const result = await AuthService.requestPasswordReset('admin@test.com');
+
+      expect(result.success).toBe(true);
+      expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+        'admin@test.com',
+        expect.objectContaining({ redirectTo: expect.any(String) })
+      );
+    });
+
+    it('should reject an invalid email', async () => {
+      const result = await AuthService.requestPasswordReset('not-an-email');
+
+      expect(result.success).toBe(false);
+      expect(supabase.auth.resetPasswordForEmail).not.toHaveBeenCalled();
+    });
+
+    it('should return generic success even when Supabase errors (no enumeration)', async () => {
+      (supabase.auth.resetPasswordForEmail as jest.Mock).mockResolvedValueOnce({
+        data: {},
+        error: { message: 'User not found' },
+      });
+
+      const result = await AuthService.requestPasswordReset('unknown@test.com');
+
+      expect(result.success).toBe(true);
+    });
+
+    it('should surface a rate-limit error', async () => {
+      jest.spyOn(rateLimiter, 'isAllowed').mockReturnValue({
+        allowed: false,
+        remaining: 0,
+        resetTime: Date.now() + 3600000,
+      });
+
+      const result = await AuthService.requestPasswordReset('admin@test.com');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Too many reset requests');
+    });
+  });
+
+  describe('changeOwnPassword', () => {
+    it('should verify the current password then update it', async () => {
+      const result = await AuthService.changeOwnPassword('current123', 'newpass123');
+
+      expect(result.success).toBe(true);
+      expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'current123',
+      });
+      expect(supabase.auth.updateUser).toHaveBeenCalledWith({ password: 'newpass123' });
+    });
+
+    it('should fail when the current password is incorrect', async () => {
+      (supabase.auth.signInWithPassword as jest.Mock).mockResolvedValueOnce({
+        data: { user: null, session: null },
+        error: { message: 'Invalid login credentials' },
+      });
+
+      const result = await AuthService.changeOwnPassword('wrong', 'newpass123');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe(ERROR_MESSAGES.auth.currentPasswordIncorrect);
+      expect(supabase.auth.updateUser).not.toHaveBeenCalled();
+    });
+
+    it('should reject a weak new password', async () => {
+      jest.spyOn(ValidationUtils, 'validatePassword').mockReturnValue({
+        isValid: false,
+        error: 'Password is too weak.',
+      });
+
+      const result = await AuthService.changeOwnPassword('current123', '123');
+
+      expect(result.success).toBe(false);
+      expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('adminUpdateUserPassword', () => {
+    it('should invoke the admin edge function with the driver id', async () => {
+      const result = await AuthService.adminUpdateUserPassword('driver-1', 'newpass123');
+
+      expect(result.success).toBe(true);
+      expect(supabase.functions.invoke).toHaveBeenCalledWith(
+        'admin-update-user-password',
+        expect.objectContaining({
+          body: { userId: 'driver-1', password: 'newpass123' },
+        })
+      );
+    });
+
+    it('should map an edge function error to a failure result', async () => {
+      (supabase.functions.invoke as jest.Mock).mockResolvedValueOnce({
+        data: { error: 'You can only update passwords for drivers you created' },
+        error: { message: 'Edge Function returned a non-2xx status code' },
+      });
+
+      const result = await AuthService.adminUpdateUserPassword('driver-2', 'newpass123');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('drivers you created');
+    });
+  });
+
+  describe('completePasswordReset', () => {
+    it('should update the password and sign out', async () => {
+      const result = await AuthService.completePasswordReset('newpass123');
+
+      expect(result.success).toBe(true);
+      expect(supabase.auth.updateUser).toHaveBeenCalledWith({ password: 'newpass123' });
+      expect(supabase.auth.signOut).toHaveBeenCalled();
+    });
+
+    it('should fail when there is no active recovery session', async () => {
+      (supabase.auth.getSession as jest.Mock).mockResolvedValueOnce({
+        data: { session: null },
+        error: null,
+      });
+
+      const result = await AuthService.completePasswordReset('newpass123');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe(ERROR_MESSAGES.auth.passwordResetSessionExpired);
+      expect(supabase.auth.updateUser).not.toHaveBeenCalled();
     });
   });
 });
