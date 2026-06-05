@@ -19,7 +19,7 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = memo(
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Typography variant="h2" style={styles.title}>
-            Welcome, {driverName}!
+            Welcome, {driverName || 'Driver'}!
           </Typography>
           <Typography variant="body" style={styles.subtitle}>
             Manage your orders and deliveries
