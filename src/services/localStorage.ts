@@ -206,10 +206,14 @@ export class LocalStorageService {
   }
 
   static async getAvailableBookings(
-    options?: { limit?: number; offset?: number; sortBy?: 'createdAt'; sortOrder?: 'asc' | 'desc' }
+    options?: { limit?: number; offset?: number; sortBy?: 'createdAt'; sortOrder?: 'asc' | 'desc'; agencyId?: string }
   ): Promise<Booking[]> {
     const bookings = await this.getBookings();
     let filtered = bookings.filter(booking => booking.status === 'pending' && !booking.driverId);
+
+    if (options?.agencyId) {
+      filtered = filtered.filter(booking => booking.agencyId === options.agencyId);
+    }
     
     // Sort bookings
     const sortBy = options?.sortBy || 'createdAt';

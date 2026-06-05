@@ -97,6 +97,34 @@ describe('BookingService', () => {
       expect(booking?.driverName).toBe('Test Driver');
     });
 
+    it('should throw error when accepting booking from another agency', async () => {
+      await LocalStorageService.updateBooking(bookingId, { agencyId: 'other-agency' });
+
+      await expect(
+        BookingService.updateBookingStatus(
+          bookingId,
+          'accepted',
+          { driverId: 'driver-1' },
+          { driverAgencyId: 'my-agency' }
+        )
+      ).rejects.toThrow('This order belongs to another agency');
+    });
+
+    it('should accept booking when agency matches', async () => {
+      await LocalStorageService.updateBooking(bookingId, { agencyId: 'my-agency' });
+
+      await BookingService.updateBookingStatus(
+        bookingId,
+        'accepted',
+        { driverId: 'driver-1' },
+        { driverAgencyId: 'my-agency' }
+      );
+
+      const booking = await LocalStorageService.getBookingById(bookingId);
+      expect(booking?.status).toBe('accepted');
+      expect(booking?.driverId).toBe('driver-1');
+    });
+
     it('should throw error when LocalStorageService fails', async () => {
       jest.spyOn(LocalStorageService, 'updateBooking').mockRejectedValue(new Error('Update error'));
       

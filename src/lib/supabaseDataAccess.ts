@@ -18,6 +18,7 @@ import {
   Unsubscribe,
   PaginationOptions,
   BookingQueryOptions,
+  AvailableBookingsOptions,
 } from './dataAccess.interface';
 import { SubscriptionManager } from '../utils/subscriptionManager';
 import { generateId as generateUUID } from '../utils/idUtils';
@@ -1310,13 +1311,17 @@ class SupabaseBookingDataAccess implements IBookingDataAccess {
     }
   }
 
-  async getAvailableBookings(options?: PaginationOptions): Promise<Booking[]> {
+  async getAvailableBookings(options?: AvailableBookingsOptions): Promise<Booking[]> {
     try {
       let query = supabase
         .from('bookings')
         .select('*')
         .eq('status', 'pending')
         .is('driver_id', null);
+
+      if (options?.agencyId) {
+        query = query.eq('agency_id', options.agencyId);
+      }
 
       // Apply sorting
       const sortBy = options?.sortBy || 'created_at';

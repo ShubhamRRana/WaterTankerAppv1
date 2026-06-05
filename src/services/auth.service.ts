@@ -167,6 +167,7 @@ async function fetchUserWithRole(userId: string, role?: RoleFilter, retryCount: 
         totalEarnings: Number(driverData.total_earnings),
         completedOrders: driverData.completed_orders,
         createdByAdmin: driverData.created_by_admin,
+        createdByAdminId: driverData.created_by_admin_id || undefined,
         emergencyContactName: driverData.emergency_contact_name || undefined,
         emergencyContactPhone: driverData.emergency_contact_phone || undefined,
       } as AppUser;

@@ -7,9 +7,11 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 // import { Typography } from '../../components/common';
-import { Booking } from '../../types';
+import { Booking, isDriverUser } from '../../types';
 import { DriverStackParamList, DriverTabParamList } from '../../navigation/DriverNavigator';
 import { getErrorMessage } from '../../utils/errors';
+import { bookingMatchesDriverAgency } from '../../utils/driverAgencyScope';
+import { ERROR_MESSAGES } from '../../constants/config';
 import OrdersHeader from '../../components/driver/OrdersHeader';
 import OrdersFilter, { OrderTab } from '../../components/driver/OrdersFilter';
 import OrdersList from '../../components/driver/OrdersList';
@@ -52,6 +54,8 @@ const OrdersScreen: React.FC = () => {
   // Cache expiry time (5 minutes)
   const CACHE_EXPIRY = 5 * 60 * 1000;
 
+  const driverAgencyId = user && isDriverUser(user) ? user.createdByAdminId : undefined;
+
   const loadOrdersData = useCallback(async (forceRefresh = false) => {
     if (!user?.id) return;
     
@@ -79,7 +83,7 @@ const OrdersScreen: React.FC = () => {
       clearError();
       
       if (activeTab === 'available') {
-        await fetchAvailableBookings({ limit: 50 });
+        await fetchAvailableBookings({ limit: 50, agencyId: driverAgencyId });
       } else if (activeTab === 'active') {
         // Only fetch active bookings (accepted or in_transit)
         await fetchDriverBookings(user.id, { 
@@ -102,7 +106,7 @@ const OrdersScreen: React.FC = () => {
       const errorMessage = getErrorMessage(error, 'Failed to load orders');
       setLocalError(errorMessage);
           }
-  }, [activeTab, user?.id, fetchAvailableBookings, fetchDriverBookings, clearError]);
+  }, [activeTab, user?.id, driverAgencyId, fetchAvailableBookings, fetchDriverBookings, clearError]);
 
   // Load data when tab changes (only once, not on focus)
   useEffect(() => {
@@ -189,10 +193,15 @@ const OrdersScreen: React.FC = () => {
   const handleAcceptOrder = useCallback(async (orderId: string) => {
     if (!user?.id) return;
 
+    const currentBooking = bookings.find((b) => b.id === orderId);
+    if (currentBooking && driverAgencyId && !bookingMatchesDriverAgency(currentBooking, driverAgencyId)) {
+      Alert.alert('Error', ERROR_MESSAGES.booking.wrongAgency);
+      return;
+    }
+
     setProcessingOrder(orderId);
 
     // Optimistic update: assign driver immediately
-    const currentBooking = bookings.find((b) => b.id === orderId);
     if (currentBooking) {
       const optimisticBooking: Booking = {
         ...currentBooking,
@@ -221,7 +230,7 @@ const OrdersScreen: React.FC = () => {
         driverName: user.name,
         driverPhone: user.phone || '',
         acceptedAt: new Date(),
-      });
+      }, { driverAgencyId });
 
       dataCache.current.available = null;
       dataCache.current.active = null;
@@ -239,7 +248,7 @@ const OrdersScreen: React.FC = () => {
     } finally {
       setProcessingOrder(null);
     }
-  }, [user, bookings, activeTab, updateBookingStatus, loadOrdersData]);
+  }, [user, bookings, activeTab, driverAgencyId, updateBookingStatus, loadOrdersData]);
 
   const handleStartDelivery = useCallback(async (orderId: string) => {
     setProcessingOrder(orderId);
@@ -312,8 +321,10 @@ const OrdersScreen: React.FC = () => {
     // This ensures data integrity if cache is stale
     switch (activeTab) {
       case 'available':
-        return dataSource.filter(booking => 
-          booking.status === 'pending' && !booking.driverId
+        return dataSource.filter(booking =>
+          booking.status === 'pending' &&
+          !booking.driverId &&
+          bookingMatchesDriverAgency(booking, driverAgencyId)
         );
       case 'active':
         return dataSource.filter(booking => 
@@ -327,7 +338,7 @@ const OrdersScreen: React.FC = () => {
       default:
         return [];
     }
-  }, [bookings, activeTab, user?.id]);
+  }, [bookings, activeTab, user?.id, driverAgencyId]);
 
   const handleLogout = useCallback(() => {
     Alert.alert(

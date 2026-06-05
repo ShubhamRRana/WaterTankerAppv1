@@ -27,6 +27,10 @@ dist/
 web-build/
 *.tsbuildinfo
 
+# Native folders (regenerated on EAS from app.config.js / app.json)
+/android
+/ios
+
 # Git
 .git/
 .gitignore

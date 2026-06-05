@@ -12,15 +12,10 @@ import AppearanceSettingsSection from '../../components/settings/AppearanceSetti
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { Booking, DriverDashboardStats, isDriverUser } from '../../types';
+import { bookingsForDriverAgency } from '../../utils/driverAgencyScope';
 import { errorLogger } from '../../utils/errorLogger';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
-
-/** Delivered bookings scoped to the driver's agency (booking.agency_id = admin who created the driver). */
-function bookingsForDriverAgency(bookings: Booking[], agencyId: string | undefined): Booking[] {
-  if (!agencyId) return bookings;
-  return bookings.filter((b) => b.agencyId === agencyId);
-}
 
 const DriverEarningsScreen: React.FC = () => {
   const { colors } = useTheme();

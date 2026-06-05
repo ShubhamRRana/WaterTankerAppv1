@@ -135,7 +135,7 @@ describe('useBookingStore', () => {
       const state = useBookingStore.getState();
       expect(state.bookings[0].status).toBe('accepted');
       expect(state.isLoading).toBe(false);
-      expect(BookingService.updateBookingStatus).toHaveBeenCalledWith('booking-1', 'accepted', undefined);
+      expect(BookingService.updateBookingStatus).toHaveBeenCalledWith('booking-1', 'accepted', undefined, undefined);
     });
 
     it('should update booking with additional data', async () => {
@@ -170,12 +170,14 @@ describe('useBookingStore', () => {
       const bookings = [mockBooking];
       (BookingService.getAvailableBookings as jest.Mock).mockResolvedValue(bookings);
 
-      await useBookingStore.getState().fetchAvailableBookings();
+      await useBookingStore.getState().fetchAvailableBookings({ agencyId: 'admin-1' });
 
       const state = useBookingStore.getState();
       expect(state.bookings).toEqual(bookings);
       expect(state.isLoading).toBe(false);
-      expect(BookingService.getAvailableBookings).toHaveBeenCalled();
+      expect(BookingService.getAvailableBookings).toHaveBeenCalledWith(
+        expect.objectContaining({ agencyId: 'admin-1' })
+      );
     });
 
     it('should handle fetch errors', async () => {

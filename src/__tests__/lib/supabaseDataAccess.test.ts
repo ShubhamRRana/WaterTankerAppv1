@@ -713,6 +713,7 @@ describe('SupabaseDataAccess', () => {
         (supabase.from as jest.Mock).mockReturnValue({
           select: jest.fn().mockReturnThis(),
           eq: jest.fn().mockReturnThis(),
+          is: jest.fn().mockReturnThis(),
           order: jest.fn().mockResolvedValue({ data: mockBookingRows, error: null }),
         });
 
@@ -720,6 +721,54 @@ describe('SupabaseDataAccess', () => {
 
         expect(Array.isArray(result)).toBe(true);
         expect(supabase.from).toHaveBeenCalledWith('bookings');
+      });
+
+      it('should filter by agency_id when agencyId option is provided', async () => {
+        const mockBookingRows = [
+          {
+            id: 'booking-1',
+            customer_id: 'customer-1',
+            customer_name: 'Test Customer',
+            customer_phone: '1234567890',
+            status: 'pending',
+            tanker_size: 10000,
+            quantity: 1,
+            base_price: 600,
+            distance_charge: 50,
+            total_price: 650,
+            delivery_address: mockAddress,
+            distance: 10,
+            payment_status: 'pending',
+            can_cancel: true,
+            created_at: '2024-01-01T00:00:00Z',
+            updated_at: '2024-01-01T00:00:00Z',
+            scheduled_for: null,
+            accepted_at: null,
+            delivered_at: null,
+            agency_id: 'admin-1',
+            agency_name: 'Agency One',
+            driver_id: null,
+            driver_name: null,
+            driver_phone: null,
+            payment_id: null,
+            cancellation_reason: null,
+          },
+        ];
+
+        const eqMock = jest.fn().mockReturnThis();
+        const isMock = jest.fn().mockReturnThis();
+        const orderMock = jest.fn().mockResolvedValue({ data: mockBookingRows, error: null });
+
+        (supabase.from as jest.Mock).mockReturnValue({
+          select: jest.fn().mockReturnThis(),
+          eq: eqMock,
+          is: isMock,
+          order: orderMock,
+        });
+
+        await dataAccess.bookings.getAvailableBookings({ agencyId: 'admin-1' });
+
+        expect(eqMock).toHaveBeenCalledWith('agency_id', 'admin-1');
       });
     });
 

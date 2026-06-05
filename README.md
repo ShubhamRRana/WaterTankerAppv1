@@ -717,7 +717,7 @@ RLS is **enabled on all tables** with comprehensive role-based access control po
 **Bookings Table:**
 - Customers can create, view, and update their own bookings
 - Customers can delete their own bookings (for Delete Account; `customer_id = auth.uid()`)
-- Drivers can view available bookings and update assigned bookings
+- Drivers can view available bookings for their agency and update assigned bookings
 - Admins can view and update bookings for their agency
 
 **Vehicles Table:**

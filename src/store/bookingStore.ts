@@ -19,8 +19,8 @@ interface BookingState {
   
   // Actions
   createBooking: (bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => Promise<string>;
-  updateBookingStatus: (bookingId: string, status: BookingStatus, additionalData?: Partial<Booking>) => Promise<void>;
-  fetchAvailableBookings: (options?: { limit?: number; offset?: number }) => Promise<void>;
+  updateBookingStatus: (bookingId: string, status: BookingStatus, additionalData?: Partial<Booking>, options?: { driverAgencyId?: string }) => Promise<void>;
+  fetchAvailableBookings: (options?: { limit?: number; offset?: number; agencyId?: string }) => Promise<void>;
   fetchDriverBookings: (driverId: string, options?: { status?: BookingStatus[]; limit?: number; offset?: number }) => Promise<void>;
   fetchAllBookings: () => Promise<void>;
   fetchDriverBookingsForEarnings: (driverId: string, options?: { startDate?: Date; endDate?: Date }) => Promise<Booking[]>;
@@ -78,10 +78,10 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     }
   },
 
-  updateBookingStatus: async (bookingId, status, additionalData) => {
+  updateBookingStatus: async (bookingId, status, additionalData, options) => {
     set({ isLoading: true, error: null });
     try {
-      await BookingService.updateBookingStatus(bookingId, status, additionalData);
+      await BookingService.updateBookingStatus(bookingId, status, additionalData, options);
       
       // Update local state
       const { bookings } = get();
@@ -112,7 +112,8 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         limit, 
         offset: options?.offset || 0,
         sortBy: 'createdAt',
-        sortOrder: 'desc'
+        sortOrder: 'desc',
+        agencyId: options?.agencyId,
       });
       set({ bookings, isLoading: false });
     } catch (error) {

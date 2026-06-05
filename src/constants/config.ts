@@ -139,6 +139,7 @@ export const ERROR_MESSAGES = {
     cancelFailed: 'Failed to cancel booking.',
     notFound: 'Booking not found.',
     alreadyAccepted: 'Booking has already been accepted by another driver.',
+    wrongAgency: 'This order belongs to another agency and cannot be accepted.',
     cannotCancel: 'This booking cannot be cancelled.',
   },
   location: {

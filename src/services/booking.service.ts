@@ -1,7 +1,8 @@
 import { dataAccess } from '../lib/index';
 import { Booking, BookingStatus } from '../types/index';
 import { handleAsyncOperationWithRethrow, handleError } from '../utils/errorHandler';
-import type { PaginationOptions, BookingQueryOptions } from '../lib/dataAccess.interface';
+import type { PaginationOptions, BookingQueryOptions, AvailableBookingsOptions } from '../lib/dataAccess.interface';
+import { ERROR_MESSAGES } from '../constants/config';
 
 /**
  * Booking Service
@@ -65,13 +66,20 @@ export class BookingService {
   static async updateBookingStatus(
     bookingId: string,
     status: BookingStatus,
-    additionalData?: Partial<Booking>
+    additionalData?: Partial<Booking>,
+    options?: { driverAgencyId?: string }
   ): Promise<void> {
     return handleAsyncOperationWithRethrow(
       async () => {
         const existingBooking = await dataAccess.bookings.getBookingById(bookingId);
         if (!existingBooking) {
-          throw new Error('Booking not found');
+          throw new Error(ERROR_MESSAGES.booking.notFound);
+        }
+
+        if (status === 'accepted' && options?.driverAgencyId) {
+          if (!existingBooking.agencyId || existingBooking.agencyId !== options.driverAgencyId) {
+            throw new Error(ERROR_MESSAGES.booking.wrongAgency);
+          }
         }
 
         const updates: Partial<Booking> = {
@@ -164,16 +172,17 @@ export class BookingService {
    * @param options - Optional pagination and sorting options
    */
   static async getAvailableBookings(
-    options?: { limit?: number; offset?: number; sortBy?: 'createdAt'; sortOrder?: 'asc' | 'desc' }
+    options?: { limit?: number; offset?: number; sortBy?: 'createdAt'; sortOrder?: 'asc' | 'desc'; agencyId?: string }
   ): Promise<Booking[]> {
     return handleAsyncOperationWithRethrow(
       async () => {
         // Map service options to data access options (camelCase to snake_case)
-        const paginationOptions: PaginationOptions = {
+        const paginationOptions: AvailableBookingsOptions = {
           limit: options?.limit,
           offset: options?.offset,
           sortBy: options?.sortBy === 'createdAt' ? 'created_at' : undefined,
           sortOrder: options?.sortOrder,
+          agencyId: options?.agencyId,
         };
         
         const bookings = await dataAccess.bookings.getAvailableBookings(paginationOptions);

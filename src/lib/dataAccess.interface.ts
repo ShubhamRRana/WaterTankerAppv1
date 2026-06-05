@@ -40,6 +40,14 @@ export interface BookingQueryOptions extends PaginationOptions {
   startDate?: string;
   /** ISO date string; filter by delivered_at <= endDate */
   endDate?: string;
+  /** Admin/agency UUID; scope results to a single agency */
+  agencyId?: string;
+}
+
+/** Options for fetching pending unassigned bookings */
+export interface AvailableBookingsOptions extends PaginationOptions {
+  /** Admin/agency UUID; only return bookings for this agency */
+  agencyId?: string;
 }
 
 /**
@@ -73,7 +81,7 @@ export interface IBookingDataAccess {
   getBookingById(bookingId: string): Promise<Booking | null>;
   getBookingsByCustomer(customerId: string, options?: PaginationOptions): Promise<Booking[]>;
   getBookingsByDriver(driverId: string, options?: BookingQueryOptions): Promise<Booking[]>;
-  getAvailableBookings(options?: PaginationOptions): Promise<Booking[]>;
+  getAvailableBookings(options?: AvailableBookingsOptions): Promise<Booking[]>;
   subscribeToBookingUpdates(bookingId: string, callback: SubscriptionCallback<Booking>): Unsubscribe;
 }
 
