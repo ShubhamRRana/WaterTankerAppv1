@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   View, 
   StyleSheet, 
@@ -9,7 +9,6 @@ import {
   Platform,
   RefreshControl,
   Image,
-  Animated,
   Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,9 +16,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
-import { Typography, Card, Button, Input, DatePickerInput, AdminMenuDrawer } from '../../components/common';
+import { Typography, Card, Button, Input, DatePickerInput, AdminMenuDrawer, MonthYearFilterRow } from '../../components/common';
 import { ExpenseType, Expense } from '../../types';
-import { UI_CONFIG } from '../../constants/config';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ValidationUtils, SanitizationUtils, PricingUtils } from '../../utils';
@@ -57,38 +55,14 @@ const ExpenseScreen: React.FC = () => {
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   
-  // Period filter state
-  const [periodType, setPeriodType] = useState<'month' | 'year'>('month');
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   
   // Summary filter state
   const [summaryFilter, setSummaryFilter] = useState<'all' | 'diesel' | 'maintenance'>('all');
   const [summaryDropdownVisible, setSummaryDropdownVisible] = useState(false);
-  
-  // Animation values for glass gliders
-  const periodTypeGliderAnim = useRef(new Animated.Value(0)).current;
-  const monthGliderAnim = useRef(new Animated.Value(0)).current;
-  const yearGliderAnim = useRef(new Animated.Value(0)).current;
-  
-  // Width measurements for glider positioning
-  const [periodTypeOptionWidth, setPeriodTypeOptionWidth] = useState(0);
-  const [monthOptionWidth, setMonthOptionWidth] = useState(0);
-  const [yearOptionWidth, setYearOptionWidth] = useState(0);
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  // Generate year options (current year + 4 previous years)
-  const getAvailableYears = () => {
-    const currentYear = new Date().getFullYear();
-    const years = [];
-    for (let i = 0; i < 5; i++) {
-      years.push(currentYear - i);
-    }
-    return years;
-  };
-
-  const availableYears = getAvailableYears();
 
   // Format date to DD/MM/YYYY
   const formatDate = (date: Date): string => {
@@ -112,43 +86,6 @@ const ExpenseScreen: React.FC = () => {
     }
   }, [viewMode, user?.id]);
 
-  // Animate glider when periodType changes
-  useEffect(() => {
-    if (periodTypeOptionWidth > 0) {
-      Animated.spring(periodTypeGliderAnim, {
-        toValue: periodType === 'month' ? 0 : periodTypeOptionWidth,
-        useNativeDriver: true,
-        tension: 120,
-        friction: 8,
-      }).start();
-    }
-  }, [periodType, periodTypeOptionWidth]);
-
-  // Animate glider when selectedMonth changes
-  useEffect(() => {
-    if (monthOptionWidth > 0) {
-      Animated.spring(monthGliderAnim, {
-        toValue: selectedMonth * monthOptionWidth,
-        useNativeDriver: true,
-        tension: 120,
-        friction: 8,
-      }).start();
-    }
-  }, [selectedMonth, monthOptionWidth]);
-
-  // Animate glider when selectedYear changes
-  useEffect(() => {
-    if (yearOptionWidth > 0) {
-      const yearIndex = availableYears.indexOf(selectedYear);
-      Animated.spring(yearGliderAnim, {
-        toValue: yearIndex >= 0 ? yearIndex * yearOptionWidth : 0,
-        useNativeDriver: true,
-        tension: 120,
-        friction: 8,
-      }).start();
-    }
-  }, [selectedYear, yearOptionWidth]);
-
   const loadExpenses = async () => {
     if (!user?.id) return;
     
@@ -171,25 +108,13 @@ const ExpenseScreen: React.FC = () => {
 
   // Filter expenses based on period and summary filter
   const getFilteredExpensesByPeriod = () => {
-    let periodFiltered: Expense[] = [];
-    
-    if (periodType === 'month') {
-      const monthStart = new Date(selectedYear, selectedMonth, 1);
-      const monthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
-      
-      periodFiltered = expenses.filter(expense => {
-        const expenseDate = new Date(expense.expenseDate);
-        return expenseDate >= monthStart && expenseDate <= monthEnd;
-      });
-    } else {
-      const yearStart = new Date(selectedYear, 0, 1);
-      const yearEnd = new Date(selectedYear, 11, 31, 23, 59, 59, 999);
-      
-      periodFiltered = expenses.filter(expense => {
-        const expenseDate = new Date(expense.expenseDate);
-        return expenseDate >= yearStart && expenseDate <= yearEnd;
-      });
-    }
+    const monthStart = new Date(selectedYear, selectedMonth, 1);
+    const monthEnd = new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999);
+
+    let periodFiltered = expenses.filter(expense => {
+      const expenseDate = new Date(expense.expenseDate);
+      return expenseDate >= monthStart && expenseDate <= monthEnd;
+    });
     
     // Apply type filter based on summary filter
     if (summaryFilter === 'all') {
@@ -405,7 +330,7 @@ const ExpenseScreen: React.FC = () => {
     try {
       await exportExpensesToExcel(
         expenses,
-        periodType,
+        'month',
         selectedYear,
         selectedMonth
       );
@@ -656,170 +581,19 @@ const ExpenseScreen: React.FC = () => {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
-          {/* Period Type Toggle */}
-          <View style={styles.periodTypeToggle}>
-            <View style={styles.glassRadioGroup}>
-              <TouchableOpacity
-                style={styles.glassRadioOption}
-                onPress={() => setPeriodType('month')}
-                activeOpacity={0.8}
-                onLayout={(e) => {
-                  if (periodTypeOptionWidth === 0) {
-                    setPeriodTypeOptionWidth(e.nativeEvent.layout.width);
-                  }
-                }}
-              >
-                <Typography 
-                  variant="body" 
-                  style={[
-                    styles.glassRadioLabel,
-                    periodType === 'month' && styles.glassRadioLabelActive
-                  ]}
-                >
-                  Month
-                </Typography>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.glassRadioOption}
-                onPress={() => setPeriodType('year')}
-                activeOpacity={0.8}
-              >
-                <Typography 
-                  variant="body" 
-                  style={[
-                    styles.glassRadioLabel,
-                    periodType === 'year' && styles.glassRadioLabelActive
-                  ]}
-                >
-                  Year
-                </Typography>
-              </TouchableOpacity>
-              {periodTypeOptionWidth > 0 && (
-                <Animated.View
-                  style={[
-                    styles.glassGlider,
-                    {
-                      width: periodTypeOptionWidth,
-                      transform: [{
-                        translateX: periodTypeGliderAnim,
-                      }],
-                    },
-                  ]}
-                />
-              )}
-            </View>
-          </View>
-
-          {/* Month Selector */}
-          {periodType === 'month' && (
-            <View style={styles.filterContainer}>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.monthSelector}
-                contentContainerStyle={styles.monthSelectorContent}
-              >
-                <View style={styles.glassRadioGroup}>
-                  {months.map((month, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={styles.glassRadioOption}
-                      onPress={() => setSelectedMonth(index)}
-                      activeOpacity={0.8}
-                      onLayout={(e) => {
-                        if (monthOptionWidth === 0 && index === 0) {
-                          setMonthOptionWidth(e.nativeEvent.layout.width);
-                        }
-                      }}
-                    >
-                      <Typography 
-                        variant="body" 
-                        style={[
-                          styles.glassRadioLabel,
-                          selectedMonth === index && styles.glassRadioLabelActive
-                        ]}
-                      >
-                        {month}
-                      </Typography>
-                    </TouchableOpacity>
-                  ))}
-                  {monthOptionWidth > 0 && (
-                    <Animated.View
-                      style={[
-                        styles.glassGlider,
-                        {
-                          width: monthOptionWidth,
-                          transform: [{
-                            translateX: monthGliderAnim,
-                          }],
-                        },
-                      ]}
-                    />
-                  )}
-                </View>
-              </ScrollView>
-            </View>
-          )}
-
-          {/* Year Selector */}
-          {periodType === 'year' && (
-            <View style={styles.filterContainer}>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.monthSelector}
-                contentContainerStyle={styles.monthSelectorContent}
-              >
-                <View style={styles.glassRadioGroup}>
-                  {availableYears.map((year, index) => (
-                    <TouchableOpacity
-                      key={year}
-                      style={styles.glassRadioOption}
-                      onPress={() => setSelectedYear(year)}
-                      activeOpacity={0.8}
-                      onLayout={(e) => {
-                        if (yearOptionWidth === 0 && index === 0) {
-                          setYearOptionWidth(e.nativeEvent.layout.width);
-                        }
-                      }}
-                    >
-                      <Typography 
-                        variant="body" 
-                        style={[
-                          styles.glassRadioLabel,
-                          selectedYear === year && styles.glassRadioLabelActive
-                        ]}
-                      >
-                        {year}
-                      </Typography>
-                    </TouchableOpacity>
-                  ))}
-                  {yearOptionWidth > 0 && (
-                    <Animated.View
-                      style={[
-                        styles.glassGlider,
-                        {
-                          width: yearOptionWidth,
-                          transform: [{
-                            translateX: yearGliderAnim,
-                          }],
-                        },
-                      ]}
-                    />
-                  )}
-                </View>
-              </ScrollView>
-            </View>
-          )}
+          <MonthYearFilterRow
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            onMonthChange={setSelectedMonth}
+            onYearChange={setSelectedYear}
+          />
 
           {/* Summary Card */}
           {filteredExpenses.length > 0 && (
             <>
               <Card style={styles.summaryCard}>
                 <Typography variant="h3" style={styles.summaryTitle}>
-                  {periodType === 'month' 
-                    ? `${months[selectedMonth]} ${selectedYear} Summary` 
-                    : `${selectedYear} Summary`}
+                  {`${months[selectedMonth]} ${selectedYear} Summary`}
                 </Typography>
                 <View style={styles.summaryMetrics}>
                   {summaryFilter === 'all' && (
@@ -989,8 +763,8 @@ const ExpenseScreen: React.FC = () => {
               <Ionicons name="receipt-outline" size={48} color={colors.textSecondary} />
               <Typography variant="body" style={styles.emptyText}>
                 {summaryFilter !== 'all'
-                  ? `No ${summaryFilter} expenses found for ${periodType === 'month' ? months[selectedMonth] + ' ' + selectedYear : selectedYear}`
-                  : `No expenses found for ${periodType === 'month' ? months[selectedMonth] + ' ' + selectedYear : selectedYear}`}
+                  ? `No ${summaryFilter} expenses found for ${months[selectedMonth]} ${selectedYear}`
+                  : `No expenses found for ${months[selectedMonth]} ${selectedYear}`}
               </Typography>
               <Typography variant="caption" style={styles.emptySubtext}>
                 {summaryFilter !== 'all' ? 'Try selecting a different filter or period' : 'Add your first expense or try a different period'}
@@ -1352,70 +1126,6 @@ function createStyles(colors: AppPalette) {
     width: '100%',
     height: 150,
     borderRadius: 12,
-  },
-  periodTypeToggle: {
-    paddingHorizontal: UI_CONFIG.spacing.lg,
-    paddingVertical: UI_CONFIG.spacing.md,
-    alignItems: 'center',
-  },
-  monthSelector: {
-    paddingVertical: UI_CONFIG.spacing.md,
-  },
-  monthSelectorContent: {
-    paddingHorizontal: UI_CONFIG.spacing.lg,
-  },
-  glassRadioGroup: {
-    position: 'relative',
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 16,
-    overflow: 'hidden',
-    alignSelf: 'center',
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 0,
-  },
-  glassRadioOption: {
-    flex: 1,
-    minWidth: 80,
-    paddingVertical: 12.8,
-    paddingHorizontal: 25.6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  glassRadioLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-    color: colors.text,
-  },
-  glassRadioLabelActive: {
-    color: colors.text,
-  },
-  glassGlider: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    borderRadius: 16,
-    zIndex: 1,
-    backgroundColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOffset: {
-      width: 0,
-      height: 0,
-    },
-    shadowOpacity: 0.5,
-    shadowRadius: 18,
-    elevation: 10,
-    height: '100%',
   },
   summaryCard: {
     marginBottom: 16,

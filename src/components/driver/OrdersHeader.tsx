@@ -6,12 +6,12 @@ import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
 
 interface OrdersHeaderProps {
-  userName: string | undefined;
+  driverName: string | undefined;
   onLogout: () => void;
 }
 
 const OrdersHeader: React.FC<OrdersHeaderProps> = memo(
-  ({ userName, onLogout }) => {
+  ({ driverName, onLogout }) => {
     const { colors } = useTheme();
     const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -19,7 +19,7 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = memo(
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Typography variant="h2" style={styles.title}>
-            Welcome, {userName || 'Driver'}!
+            Welcome, {driverName}!
           </Typography>
           <Typography variant="body" style={styles.subtitle}>
             Manage your orders and deliveries

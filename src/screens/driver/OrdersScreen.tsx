@@ -56,6 +56,14 @@ const OrdersScreen: React.FC = () => {
 
   const driverAgencyId = user && isDriverUser(user) ? user.createdByAdminId : undefined;
 
+  const driverDisplayName = useMemo(() => {
+    if (!user || !isDriverUser(user)) return undefined;
+    const trimmedName = user.name?.trim();
+    if (trimmedName) return trimmedName;
+    const emailPrefix = user.email?.split('@')[0]?.trim();
+    return emailPrefix || undefined;
+  }, [user]);
+
   const loadOrdersData = useCallback(async (forceRefresh = false) => {
     if (!user?.id) return;
     
@@ -371,7 +379,7 @@ const OrdersScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <OrdersHeader 
-          userName={user?.name} 
+          driverName={driverDisplayName} 
           onLogout={handleLogout}
         />
         

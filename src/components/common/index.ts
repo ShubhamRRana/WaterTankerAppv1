@@ -10,3 +10,4 @@ export { default as DriverIcon } from './DriverIcon';
 export { default as AdminIcon } from './AdminIcon';
 export { default as AdminMenuDrawer } from './AdminMenuDrawer';
 export { default as ErrorBoundary } from './ErrorBoundary';
+export { default as MonthYearFilterRow } from './MonthYearFilterRow';

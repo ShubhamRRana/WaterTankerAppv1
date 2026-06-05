@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,7 +10,6 @@ import {
   Pressable,
   Alert,
   ScrollView,
-  Animated,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,9 +18,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { useAuthStore } from '../../store/authStore';
 import Card from '../../components/common/Card';
-import { Typography, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
+import { Typography, LoadingSpinner, AdminMenuDrawer, MonthYearFilterRow } from '../../components/common';
 import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
-import { UI_CONFIG } from '../../constants/config';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
 import { SocietyTrip, SocietyTripService } from '../../services/societyTrip.service';
@@ -49,7 +47,6 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
   const [photoPreviewUri, setPhotoPreviewUri] = useState<string | null>(null);
   const [tankerBreakdownVisible, setTankerBreakdownVisible] = useState(false);
 
-  const [periodType, setPeriodType] = useState<'month' | 'year'>('month');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedSocietyUserId, setSelectedSocietyUserId] = useState<string>('All');
@@ -61,24 +58,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
   const [paymentPeriodLoad, setPaymentPeriodLoad] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [completedAtByCustomerId, setCompletedAtByCustomerId] = useState<Map<string, Date>>(() => new Map());
 
-  const periodTypeGliderAnim = useRef(new Animated.Value(0)).current;
-  const monthGliderAnim = useRef(new Animated.Value(0)).current;
-  const yearGliderAnim = useRef(new Animated.Value(0)).current;
-
-  const [periodTypeOptionWidth, setPeriodTypeOptionWidth] = useState(0);
-  const [monthOptionWidth, setMonthOptionWidth] = useState(0);
-  const [yearOptionWidth, setYearOptionWidth] = useState(0);
-
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-  const availableYears = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    const years: number[] = [];
-    for (let i = 0; i < 5; i++) {
-      years.push(currentYear - i);
-    }
-    return years;
-  }, []);
 
   const canLoad = user?.role === 'admin' && !!user.id;
 
@@ -90,40 +70,6 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
     );
     setTrips(list);
   }, [canLoad, user?.id, user?.role, (user as any)?.businessName]);
-
-  useEffect(() => {
-    if (periodTypeOptionWidth > 0) {
-      Animated.spring(periodTypeGliderAnim, {
-        toValue: periodType === 'month' ? 0 : periodTypeOptionWidth,
-        useNativeDriver: true,
-        tension: 120,
-        friction: 8,
-      }).start();
-    }
-  }, [periodType, periodTypeOptionWidth, periodTypeGliderAnim]);
-
-  useEffect(() => {
-    if (monthOptionWidth > 0) {
-      Animated.spring(monthGliderAnim, {
-        toValue: selectedMonth * monthOptionWidth,
-        useNativeDriver: true,
-        tension: 120,
-        friction: 8,
-      }).start();
-    }
-  }, [selectedMonth, monthOptionWidth, monthGliderAnim]);
-
-  useEffect(() => {
-    if (yearOptionWidth > 0) {
-      const yearIndex = availableYears.indexOf(selectedYear);
-      Animated.spring(yearGliderAnim, {
-        toValue: yearIndex >= 0 ? yearIndex * yearOptionWidth : 0,
-        useNativeDriver: true,
-        tension: 120,
-        friction: 8,
-      }).start();
-    }
-  }, [selectedYear, yearOptionWidth, yearGliderAnim, availableYears]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -153,8 +99,8 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
   );
 
   const filteredTrips = useMemo(
-    () => filterTripsByPeriod(trips, periodType, selectedYear, selectedMonth),
-    [trips, periodType, selectedYear, selectedMonth],
+    () => filterTripsByPeriod(trips, 'month', selectedYear, selectedMonth),
+    [trips, selectedYear, selectedMonth],
   );
 
   const availableSocietyUserIds = useMemo(() => {
@@ -224,12 +170,6 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
-    if (periodType !== 'month') {
-      setPaymentPeriodLoad('idle');
-      setCompletedAtByCustomerId(new Map());
-      return;
-    }
-
     const customerIds = [...new Set(filteredTrips.map((t) => t.customerId))];
     if (customerIds.length === 0) {
       setPaymentPeriodLoad('ready');
@@ -251,17 +191,17 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
       setCompletedAtByCustomerId(new Map());
       setPaymentPeriodLoad('error');
     }
-  }, [canLoad, filteredTrips, monthPeriodKey, periodType, selectedMonth, selectedYear]);
+  }, [canLoad, filteredTrips, monthPeriodKey, selectedMonth, selectedYear]);
 
-  const periodLabel = useMemo(() => {
-    if (periodType === 'year') return `${selectedYear}`;
-    return `${months[selectedMonth]} ${selectedYear}`;
-  }, [months, periodType, selectedMonth, selectedYear]);
+  const periodLabel = useMemo(
+    () => `${months[selectedMonth]} ${selectedYear}`,
+    [months, selectedMonth, selectedYear],
+  );
 
   useEffect(() => {
     setPaymentPeriodLoad('idle');
     setCompletedAtByCustomerId(new Map());
-  }, [monthPeriodKey, periodType]);
+  }, [monthPeriodKey]);
 
   useEffect(() => {
     loadPaymentPeriodCompletions();
@@ -305,10 +245,6 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
 
   const paymentSettledByCustomerId = useMemo(() => {
     const out = new Map<string, boolean>();
-    if (periodType !== 'month') {
-      for (const id of availableSocietyUserIds) out.set(id, false);
-      return out;
-    }
     for (const id of availableSocietyUserIds) {
       const completedAt = completedAtByCustomerId.get(id);
       const maxTs = maxTripCreatedAtByCustomerId.get(id);
@@ -319,11 +255,9 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
       }
     }
     return out;
-  }, [periodType, availableSocietyUserIds, completedAtByCustomerId, maxTripCreatedAtByCustomerId]);
+  }, [availableSocietyUserIds, completedAtByCustomerId, maxTripCreatedAtByCustomerId]);
 
   const paymentStatusSuffix = useMemo(() => {
-    if (periodType !== 'month') return '';
-
     const targetIds =
       selectedSocietyUserId === 'All' ? availableSocietyUserIds : [selectedSocietyUserId];
     if (targetIds.length === 0) return ' • No societies in this month';
@@ -342,7 +276,6 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
     }
     return ' • Payment pending';
   }, [
-    periodType,
     selectedSocietyUserId,
     availableSocietyUserIds,
     paymentSettledByCustomerId,
@@ -481,117 +414,12 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         </View>
 
-        <View style={styles.periodTypeToggle}>
-          <View style={styles.glassRadioGroup}>
-            <TouchableOpacity
-              style={styles.glassRadioOption}
-              onPress={() => setPeriodType('month')}
-              activeOpacity={0.8}
-              onLayout={(e) => {
-                if (periodTypeOptionWidth === 0) {
-                  setPeriodTypeOptionWidth(e.nativeEvent.layout.width);
-                }
-              }}
-            >
-              <Typography
-                variant="caption"
-                style={[styles.glassRadioLabel, periodType === 'month' && styles.glassRadioLabelActive]}
-              >
-                Month
-              </Typography>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.glassRadioOption}
-              onPress={() => setPeriodType('year')}
-              activeOpacity={0.8}
-            >
-              <Typography
-                variant="caption"
-                style={[styles.glassRadioLabel, periodType === 'year' && styles.glassRadioLabelActive]}
-              >
-                Year
-              </Typography>
-            </TouchableOpacity>
-            {periodTypeOptionWidth > 0 ? (
-              <Animated.View
-                style={[
-                  styles.glassGlider,
-                  { width: periodTypeOptionWidth, transform: [{ translateX: periodTypeGliderAnim }] },
-                ]}
-              />
-            ) : null}
-          </View>
-        </View>
-
-        <View style={styles.filterContainer}>
-          {periodType === 'year' ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.monthSelectorContent}
-              style={styles.monthSelector}
-            >
-              <View style={styles.glassRadioGroup}>
-                {availableYears.map((year, index) => (
-                  <TouchableOpacity
-                    key={year}
-                    style={styles.glassRadioOption}
-                    onPress={() => setSelectedYear(year)}
-                    activeOpacity={0.8}
-                    onLayout={(e) => {
-                      if (yearOptionWidth === 0 && index === 0) setYearOptionWidth(e.nativeEvent.layout.width);
-                    }}
-                  >
-                    <Typography variant="caption" style={styles.glassRadioLabel}>
-                      {year}
-                    </Typography>
-                  </TouchableOpacity>
-                ))}
-                {yearOptionWidth > 0 ? (
-                  <Animated.View
-                    style={[
-                      styles.glassGlider,
-                      { width: yearOptionWidth, transform: [{ translateX: yearGliderAnim }] },
-                    ]}
-                  />
-                ) : null}
-              </View>
-            </ScrollView>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.monthSelectorContent}
-              style={styles.monthSelector}
-            >
-              <View style={styles.glassRadioGroup}>
-                {months.map((month, index) => (
-                  <TouchableOpacity
-                    key={month}
-                    style={styles.glassRadioOption}
-                    onPress={() => setSelectedMonth(index)}
-                    activeOpacity={0.8}
-                    onLayout={(e) => {
-                      if (monthOptionWidth === 0 && index === 0) setMonthOptionWidth(e.nativeEvent.layout.width);
-                    }}
-                  >
-                    <Typography variant="caption" style={styles.glassRadioLabel}>
-                      {month}
-                    </Typography>
-                  </TouchableOpacity>
-                ))}
-                {monthOptionWidth > 0 ? (
-                  <Animated.View
-                    style={[
-                      styles.glassGlider,
-                      { width: monthOptionWidth, transform: [{ translateX: monthGliderAnim }] },
-                    ]}
-                  />
-                ) : null}
-              </View>
-            </ScrollView>
-          )}
-        </View>
+        <MonthYearFilterRow
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
+          onMonthChange={setSelectedMonth}
+          onYearChange={setSelectedYear}
+        />
 
         <View style={styles.summaryCardWrap}>
           <View style={styles.societyUserFilterContainer}>
@@ -607,8 +435,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                   ? 'All society users'
                   : societyUserLabelById(selectedSocietyUserId)}
               </Typography>
-              {periodType === 'month' &&
-              selectedSocietyUserId !== 'All' &&
+              {selectedSocietyUserId !== 'All' &&
               paymentSettledByCustomerId.get(selectedSocietyUserId) ? (
                 <Ionicons name="checkmark-circle" size={20} color={colors.success} style={styles.societyUserPaidIcon} />
               ) : null}
@@ -632,9 +459,8 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                 <ScrollView style={styles.dropdownScroll} showsVerticalScrollIndicator={false}>
                   {['All', ...availableSocietyUserIds].map((id) => {
                     const active = selectedSocietyUserId === id;
-                    const showPaid =
-                      periodType === 'month' && id !== 'All' && paymentSettledByCustomerId.get(id) === true;
-                    const showBreakdownAction = periodType === 'month' && id !== 'All';
+                    const showPaid = id !== 'All' && paymentSettledByCustomerId.get(id) === true;
+                    const showBreakdownAction = id !== 'All';
                     return (
                       <TouchableOpacity
                         key={id}
@@ -693,7 +519,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
             padding="medium"
             style={styles.summaryCard}
             onPress={() =>
-              periodType === 'month' && selectedSocietyUserId !== 'All'
+              selectedSocietyUserId !== 'All'
                 ? openSocietyUserBreakdown(selectedSocietyUserId)
                 : setTankerBreakdownVisible(true)
             }
@@ -703,15 +529,13 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                 Trips by tanker size
               </Typography>
               <Ionicons
-                name={
-                  periodType === 'month' && selectedSocietyUserId !== 'All' ? 'chevron-forward' : 'chevron-down'
-                }
+                name={selectedSocietyUserId !== 'All' ? 'chevron-forward' : 'chevron-down'}
                 size={18}
                 color={colors.textSecondary}
               />
             </View>
             <Typography variant="caption" style={styles.meta}>
-              {periodType === 'month' && selectedSocietyUserId !== 'All'
+              {selectedSocietyUserId !== 'All'
                 ? 'Tap to view trips and pending amount'
                 : 'Tap to view breakdown'}
             </Typography>
@@ -739,7 +563,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
               <Typography variant="caption" style={styles.emptySubtext}>
                 {trips.length === 0
                   ? 'Trips will appear here once society users log trips for your agency.'
-                  : 'Try another month or year, or switch between Month and Year.'}
+                  : 'Try another month or year.'}
               </Typography>
             </View>
           }
@@ -864,7 +688,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
                   Trips by tanker size
                 </Typography>
                 <Typography variant="caption" style={styles.breakdownModalSubtitle}>
-                  {periodType === 'month' ? `Payment status for ${periodLabel}` : `Period: ${periodLabel}`}
+                  {`Payment status for ${periodLabel}`}
                   {selectedSocietyUserId === 'All' ? '' : ` • Society user: ${societyUserLabelById(selectedSocietyUserId)}`}
                   {paymentStatusSuffix}
                 </Typography>
@@ -965,68 +789,6 @@ function createStyles(colors: AppPalette) {
   subtitle: {
     color: colors.textSecondary,
     marginTop: 4,
-  },
-  periodTypeToggle: {
-    paddingHorizontal: UI_CONFIG.spacing.lg,
-    paddingTop: UI_CONFIG.spacing.sm,
-    paddingBottom: UI_CONFIG.spacing.sm,
-    alignItems: 'center',
-  },
-  filterContainer: {
-    paddingVertical: UI_CONFIG.spacing.sm,
-  },
-  monthSelector: {
-    paddingVertical: UI_CONFIG.spacing.sm,
-  },
-  monthSelectorContent: {
-    paddingHorizontal: UI_CONFIG.spacing.lg,
-  },
-  glassRadioGroup: {
-    position: 'relative',
-    flexDirection: 'row',
-    backgroundColor: colors.overlaySubtle,
-    borderRadius: 16,
-    overflow: 'hidden',
-    alignSelf: 'center',
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 0,
-  },
-  glassRadioOption: {
-    flex: 1,
-    minWidth: 80,
-    paddingVertical: 12.8,
-    paddingHorizontal: 25.6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-  },
-  glassRadioLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-    color: colors.text,
-  },
-  glassRadioLabelActive: {
-    color: colors.text,
-  },
-  glassGlider: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    borderRadius: 16,
-    zIndex: 1,
-    backgroundColor: colors.accent,
-    shadowColor: colors.accent,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 18,
-    elevation: 10,
-    height: '100%',
   },
   summaryCardWrap: {
     marginHorizontal: 16,
