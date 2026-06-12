@@ -1,6 +1,6 @@
-# Water Tanker Booking App
+# Water Tanker Admin + Driver App
 
-A comprehensive mobile application for on-demand water tanker delivery services. Built with React Native (Expo) and TypeScript, featuring a Supabase backend with real-time capabilities. This app supports **admin and driver** roles only; customer booking is handled by a separate customer mobile app that shares the same backend.
+A React Native (Expo) mobile application for water tanker **agency admins** and **drivers**. Built with TypeScript and Supabase (PostgreSQL, Auth, Realtime, Edge Functions), with **Razorpay** for platform subscriptions and delivery payments. Customer booking is handled by a separate customer mobile app that shares the same backend.
 
 ## Table of Contents
 
@@ -13,26 +13,30 @@ A comprehensive mobile application for on-demand water tanker delivery services.
 - [Project Structure](#project-structure)
 - [Testing](#testing)
 - [Supabase Configuration](#supabase-configuration)
+- [Payments & Subscriptions (Razorpay)](#payments--subscriptions-razorpay)
+- [Edge Functions](#edge-functions)
+- [Documentation](#documentation)
 - [Troubleshooting](#troubleshooting)
 - [Roadmap](#roadmap)
 
 ## Features
 
 ### Driver Features
-- **Order Management**: Accept/reject available bookings
+- **Order Management**: Accept/reject available bookings scoped to the driver’s agency
 - **Status Updates**: Update booking status (in_transit, delivered)
 - **Earnings Tracking**: View earnings, completed orders, and statistics
-- **Payment Collection**: Collect and record payments from customers
+- **Payment Collection**: Collect delivery payments via Razorpay Checkout or manual QR/cash (agency-configurable)
 - **Order Filtering**: Filter orders by status (pending, accepted, in_transit, delivered)
 
 ### Admin Features
-- **Dashboard**: View comprehensive statistics and reports
-- **Booking Management**: View and manage all bookings across the platform
-- **Driver Management**: Add, edit, and manage driver accounts
+- **Dashboard & Reports**: View statistics, society trip breakdowns, and revenue reports
+- **Booking Management**: View and manage all bookings for the agency
+- **Driver Management**: Add, edit, reset passwords, and remove driver accounts (via Edge Functions)
 - **Vehicle Management**: Manage vehicle fleet with insurance and capacity details
-- **Bank Account Management**: Manage bank accounts for payments
-- **Expense Management**: Track and manage business expenses (diesel and maintenance) with receipt image uploads
-- **Reports & Analytics**: Generate reports on bookings, revenue, and driver performance
+- **Bank Account Management**: Manage bank accounts for manual QR collection
+- **Platform Subscription**: Subscribe to agency plans (monthly/quarterly/half-yearly/yearly) via Razorpay
+- **Razorpay Route & Payouts**: Onboard linked accounts, track KYC status, and view delivery payment history
+- **Expense Management**: Track diesel and maintenance expenses with receipt image uploads
 
 ## Tech Stack
 
@@ -43,11 +47,15 @@ A comprehensive mobile application for on-demand water tanker delivery services.
 - **Zustand** (State Management)
 - **React Native Maps** (Location Services)
 - **Expo Location** (GPS & Location Tracking)
+- **react-native-razorpay** (In-app Checkout)
 
 ### Backend
 - **Supabase** (PostgreSQL Database)
 - **Supabase Auth** (Authentication)
 - **Supabase Realtime** (Real-time Subscriptions)
+- **Supabase Edge Functions** (Razorpay orders, webhooks, admin auth helpers, Resend email hook)
+- **Razorpay** (Platform subscriptions + Route linked accounts for delivery payments)
+- **Resend** (Auth emails via Send Email hook)
 
 ### Testing
 - **Jest** (Unit Testing)
@@ -207,22 +215,19 @@ classDiagram
 
 ### 2. Component Diagram - System Architecture
 
+This app exposes **Auth**, **Driver**, and **Admin** navigators only. Customer booking UI lives in a separate mobile app that shares the same Supabase project.
+
 ```mermaid
 graph TB
     subgraph "Presentation Layer"
         A[App.tsx] --> B[AuthNavigator]
-        A --> C[CustomerNavigator]
         A --> D[DriverNavigator]
         A --> E[AdminNavigator]
         
         B --> F[LoginScreen]
         B --> G[RegisterScreen]
         B --> H[RoleEntryScreen]
-        
-        C --> I[CustomerHomeScreen]
-        C --> J[BookingScreen]
-        C --> K[OrderTrackingScreen]
-        C --> L[OrderHistoryScreen]
+        B --> H2[ForgotPasswordScreen]
         
         D --> M[OrdersScreen]
         D --> N[DriverEarningsScreen]
@@ -233,6 +238,9 @@ graph TB
         E --> R[VehicleManagementScreen]
         E --> S[ReportsScreen]
         E --> TA[ExpenseScreen]
+        E --> TB[SubscriptionPlansScreen]
+        E --> TC[RazorpayAccountSetupScreen]
+        E --> TD[DeliveryPaymentHistoryScreen]
     end
     
     subgraph "State Management Layer"
@@ -271,11 +279,11 @@ graph TB
         AQ[Pricing Utils]
     end
     
-    I --> T
-    J --> U
     M --> U
     P --> U
     TA --> AE
+    TB --> AA
+    O --> AA
     
     T --> X
     U --> Y
@@ -305,9 +313,11 @@ graph TB
 
 ### 3. Sequence Diagram - Booking Flow
 
+End-to-end platform flow (customer actions occur in the separate customer app; driver/admin actions in this app).
+
 ```mermaid
 sequenceDiagram
-    participant C as Customer
+    participant C as Customer App
     participant CS as CustomerScreen
     participant BS as BookingStore
     participant BKS as BookingService
@@ -410,21 +420,18 @@ graph LR
     
     subgraph "Navigation"
         E[AuthNavigator]
-        F[CustomerNavigator]
         G[DriverNavigator]
         H[AdminNavigator]
     end
     
     subgraph "Screens"
         I[Auth Screens]
-        J[Customer Screens]
         K[Driver Screens]
         L[Admin Screens]
     end
     
     subgraph "Components"
         M[Common Components]
-        N[Customer Components]
         O[Driver Components]
         P[Admin Components]
     end
@@ -437,26 +444,21 @@ graph LR
     end
     
     I --> E
-    J --> F
     K --> G
     L --> H
     
     E --> A
-    F --> A
     G --> A
     H --> A
     
     I --> C
-    J --> C
     K --> C
     L --> C
     
-    J --> D
     K --> D
     L --> D
     
     M --> A
-    N --> A
     O --> A
     P --> A
     
@@ -470,12 +472,15 @@ graph LR
 
 ## Prerequisites
 
-Before you begin, ensure you have the following installed:
+Before you begin, ensure you have the following installed or configured:
 
 - **Node.js** 18+ and npm
-- **Expo CLI** (`npm install -g expo-cli`)
+- **Expo CLI** / **EAS CLI** (for dev client and production builds)
 - **Git** for version control
-- **Supabase Account** with a project created
+- **Supabase Account** with a project created (shared with the customer app)
+- **Supabase CLI** (`npx supabase`) for migrations and Edge Function deploys
+- **Razorpay Account** (test keys for development; Route enabled for delivery payouts)
+- **Resend Account** (for auth emails via the Send Email hook)
 - **Google Maps API Key** (optional, for enhanced location features)
 
 ## Setup
@@ -495,34 +500,43 @@ npm install
 
 ### 3. Environment Configuration
 
-Create a `.env` file in the root directory:
+Copy `.env.example` to `.env` in the project root and fill in values:
 
 ```env
-# Supabase Configuration
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+# Supabase (Dashboard → Settings → API)
+EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
 
-# Service Role Key (for scripts only - NEVER ship to client)
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+# Razorpay publishable Key ID only — never put Key Secret in the app
+EXPO_PUBLIC_RAZORPAY_KEY_ID=rzp_test_your_key_id_here
 
-# Google Maps API Key (optional)
-EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+# Optional: auth email link landing page (add to Supabase Redirect URLs)
+EXPO_PUBLIC_AUTH_REDIRECT_URL=https://yourdomain.com/auth/confirmed
+
+# Password reset redirect (admin forgot-password flow)
+EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL=https://tankerhub.in/auth/reset-password
+
+# Server-side only (migration/scripts — never ship to client)
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
 ```
+
+Edge Function secrets (Razorpay Key Secret, webhook secret, Resend) belong in `supabase/functions/.env` — see [Edge Functions](#edge-functions).
 
 ### 4. Supabase Database Setup
 
-Ensure your Supabase project has the following tables configured:
+Apply migrations from `supabase/migrations/` (includes Razorpay foundation and agency trial/RLS fixes):
 
-- `users` - Base user table
-- `user_roles` - Multi-role support table
-- `customers` - Customer-specific data
-- `drivers` - Driver-specific data
-- `admins` - Admin-specific data
-- `bookings` - Booking/order table
-- `vehicles` - Vehicle management table
-- `bank_accounts` - Bank account information
-- `tanker_sizes` - Tanker size configurations
-- `pricing` - Pricing configuration
+```bash
+npx supabase link --project-ref <your-project-ref>
+npx supabase db push
+```
+
+Ensure your Supabase project has the core tables configured:
+
+- `users`, `user_roles`, `customers`, `drivers`, `admins`
+- `bookings`, `vehicles`, `bank_accounts`, `tanker_sizes`, `pricing`, `expenses`
+- `subscription_plans`, `subscriptions`, `payment_transactions` (payments)
+- `agency_razorpay_accounts` (Razorpay Route onboarding per agency)
 
 **Important**: Row Level Security (RLS) is enabled on all tables with comprehensive policies. Configure realtime publications for:
 - `bookings`
@@ -540,7 +554,22 @@ Ensure your Supabase project has the following tables configured:
 - `driver_applications`
 - `driver_locations`
 
-### 5. Start the Development Server
+### 5. Supabase Edge Functions
+
+Deploy server-side functions (Razorpay, auth email hook, admin helpers). Full details: [supabase/functions/README.md](supabase/functions/README.md).
+
+```bash
+# Copy and fill Edge Function secrets
+cp supabase/functions/.env.example supabase/functions/.env
+npx supabase secrets set --env-file supabase/functions/.env
+
+# Deploy all configured functions
+npx supabase functions deploy
+```
+
+Configure the **Send Email** auth hook and **Razorpay webhook** in their respective dashboards after deploy.
+
+### 6. Start the Development Server
 
 ```bash
 npm start
@@ -551,6 +580,8 @@ Then choose your platform:
 - Press `i` for iOS
 - Press `w` for Web
 
+**Note:** Razorpay Checkout (`react-native-razorpay`) requires a **development build**, not Expo Go. Use `npm run build:dev:android` (EAS) or `npx expo run:android` locally.
+
 ## Project Structure
 
 ```
@@ -559,65 +590,44 @@ WaterTankerAppv1/
 │   ├── components/          # Reusable UI components
 │   │   ├── admin/           # Admin-specific components
 │   │   ├── driver/          # Driver-specific components
-│   │   └── common/          # Shared components (used across admin/driver flows)
+│   │   └── common/          # Shared components
 │   │
 │   ├── screens/             # Screen components
-│   │   ├── admin/           # Admin screens
+│   │   ├── admin/           # Admin screens (bookings, drivers, subscription, payouts)
+│   │   │   ├── subscription/
+│   │   │   └── payments/
 │   │   ├── driver/          # Driver screens
-│   │   └── auth/            # Authentication and role selection screens
+│   │   ├── auth/            # Login, register, password reset
+│   │   └── shared/          # Cross-role screens (e.g. PaymentResult)
 │   │
-│   ├── navigation/          # Navigation configuration
-│   │   ├── AuthNavigator.tsx
-│   │   ├── DriverNavigator.tsx
-│   │   └── AdminNavigator.tsx
+│   ├── navigation/          # AuthNavigator, DriverNavigator, AdminNavigator
 │   │
-│   ├── services/          # Business logic layer
+│   ├── services/            # Business logic layer
 │   │   ├── auth.service.ts
 │   │   ├── booking.service.ts
-│   │   ├── user.service.ts
 │   │   ├── payment.service.ts
-│   │   ├── location.service.ts
-│   │   ├── vehicle.service.ts
-│   │   ├── bankAccount.service.ts
-│   │   └── expense.service.ts
-│   │
-│   ├── store/             # Zustand state management
-│   │   ├── authStore.ts
-│   │   ├── bookingStore.ts
-│   │   ├── userStore.ts
-│   │   └── vehicleStore.ts
-│   │
-│   ├── lib/               # Data access layer
-│   │   ├── dataAccess.interface.ts
-│   │   ├── supabaseDataAccess.ts
-│   │   ├── supabaseClient.ts
-│   │   └── subscriptionManager.ts
-│   │
-│   ├── utils/             # Utility functions
-│   │   ├── validation.ts
-│   │   ├── pricing.ts
-│   │   ├── errorHandler.ts
-│   │   ├── analytics.ts
+│   │   ├── razorpayCheckout.service.ts
+│   │   ├── subscription.service.ts
+│   │   ├── agencyPayout.service.ts
 │   │   └── ...
 │   │
-│   ├── types/             # TypeScript type definitions
-│   │   └── index.ts
-│   │
-│   └── constants/         # App constants
-│       └── config.ts
+│   ├── store/               # Zustand state (auth, booking, subscription, …)
+│   ├── lib/                 # Data access layer + Supabase client
+│   ├── utils/               # Validation, pricing, payment display, gating
+│   ├── types/               # TypeScript definitions (incl. razorpay, subscription)
+│   ├── constants/           # App config and feature flags
+│   └── theme/               # Theming (light/dark palettes)
 │
-├── scripts/               # Utility scripts
-│   ├── seed-test-data.ts
-│   ├── performance-test.ts
-│   └── ...
+├── supabase/
+│   ├── migrations/          # SQL migrations (apply with supabase db push)
+│   ├── functions/           # Edge Functions (Razorpay, send-email, admin-*)
+│   └── config.toml          # Function JWT verification settings
 │
-├── assets/               # Static assets
-│   ├── fonts/
-│   └── images/
-│
-├── App.tsx               # Root component
+├── docs/                    # Setup and implementation guides
+├── scripts/                 # Seed and utility scripts
+├── assets/                  # Fonts, icons, images
+├── App.tsx
 ├── package.json
-├── tsconfig.json
 └── README.md
 ```
 
@@ -628,6 +638,11 @@ WaterTankerAppv1/
 ```bash
 # Run all tests
 npm test
+
+# Typecheck app, tests, and scripts
+npm run typecheck
+npm run typecheck:test
+npm run typecheck:scripts
 
 # Run tests in watch mode
 npm run test:watch
@@ -656,16 +671,14 @@ The project maintains comprehensive test coverage for:
 
 ### Required Tables
 
-1. **users**: Base user information
-2. **user_roles**: Multi-role support (customer, driver, admin)
-3. **customers**: Customer-specific data
-4. **drivers**: Driver-specific data
-5. **admins**: Admin-specific data
-6. **bookings**: Booking/order information
-7. **vehicles**: Vehicle fleet management
-8. **bank_accounts**: Bank account details
-9. **tanker_sizes**: Available tanker sizes
-10. **pricing**: Distance-based pricing configuration
+Core app tables plus payment/subscription objects used by admin and driver flows:
+
+1. **users**, **user_roles**, **customers**, **drivers**, **admins**
+2. **bookings** — includes `payment_status`, `payment_id`, delivery amount fields (Razorpay migration)
+3. **vehicles**, **bank_accounts**, **tanker_sizes**, **pricing**, **expenses**
+4. **subscription_plans**, **subscriptions** — agency platform subscription
+5. **payment_transactions** — shared payment ledger (gateway order/transaction IDs)
+6. **agency_razorpay_accounts** — Razorpay Route linked account per agency
 
 ### Row Level Security (RLS)
 
@@ -761,6 +774,54 @@ Enable realtime for:
 - `notifications` table (for push notifications)
 - `users` table (for profile updates)
 
+## Payments & Subscriptions (Razorpay)
+
+Two independent money flows share one Supabase backend and webhook:
+
+| Flow | Who pays | Who receives | App role |
+|------|----------|--------------|----------|
+| **A — Platform subscription** | Agency admin | Platform (your Razorpay account) | Admin |
+| **B — Delivery payment** | Customer at delivery | Agency (Razorpay Route linked account) | Driver (+ admin setup) |
+
+**Admin:** Subscription plans/checkout, payment history, Route onboarding (`RazorpayAccountSetupScreen`), agency payouts, delivery payment history.
+
+**Driver:** `CollectPaymentScreen` — Razorpay Checkout when Route is active, otherwise manual QR/cash per agency settings.
+
+**Feature flags** in `src/constants/config.ts`: `enableRazorpaySubscription`, `enableOnlinePayment`, `enableSubscriptionGating`.
+
+**Implementation guides:**
+
+- [docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md](docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md) — screen and UX spec
+- [docs/RAZORPAY_IMPLEMENTATION_PHASES.md](docs/RAZORPAY_IMPLEMENTATION_PHASES.md) — phased rollout checklist
+
+Apply migration `supabase/migrations/20260612120000_razorpay_admin_driver_foundation.sql` before using payments in production.
+
+## Edge Functions
+
+Server-side logic lives under `supabase/functions/`. Deploy from the project root.
+
+| Function | Purpose |
+|----------|---------|
+| `create-subscription-order` / `verify-subscription-payment` | Flow A — agency subscription |
+| `create-delivery-order` / `verify-delivery-payment` | Flow B — driver delivery collection |
+| `create-linked-account` / `get-linked-account-status` | Razorpay Route onboarding |
+| `razorpay-webhook` | Payment and account events (source of truth) |
+| `send-email` | Auth emails via Resend |
+| `admin-create-driver` / `admin-update-user-password` / `admin-delete-user` | Admin user management |
+
+See [supabase/functions/README.md](supabase/functions/README.md) for deploy commands, secrets, and webhook configuration.
+
+## Documentation
+
+| Topic | Doc |
+|-------|-----|
+| Razorpay payments & subscriptions | [docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md](docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md) |
+| Razorpay implementation phases | [docs/RAZORPAY_IMPLEMENTATION_PHASES.md](docs/RAZORPAY_IMPLEMENTATION_PHASES.md) |
+| Resend auth email hook | [docs/RESEND_AUTH_EMAIL_SETUP.md](docs/RESEND_AUTH_EMAIL_SETUP.md) |
+| Admin password reset | [docs/WTA_ADMIN_PASSWORD_RESET.md](docs/WTA_ADMIN_PASSWORD_RESET.md) |
+| Edge Functions reference | [supabase/functions/README.md](supabase/functions/README.md) |
+| Customer app profile (separate repo) | [docs/CUSTOMER_PROFILE.md](docs/CUSTOMER_PROFILE.md) |
+
 ## Troubleshooting
 
 ### Authentication Issues
@@ -774,6 +835,18 @@ Enable realtime for:
 - Optional: set `EXPO_PUBLIC_AUTH_REDIRECT_URL` and add it to Supabase Redirect URLs
 - Check that user exists in `users` table with corresponding `user_roles` entry
 - Verify RLS policies allow user access
+
+### Payment / Razorpay Issues
+
+**Problem**: Checkout fails, subscription not activating, or webhook not updating status
+
+**Solutions**:
+- Confirm `EXPO_PUBLIC_RAZORPAY_KEY_ID` matches the Razorpay account used by Edge Functions
+- Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` via `npx supabase secrets set`
+- Deploy `razorpay-webhook` with `--no-verify-jwt` and point Razorpay Dashboard to  
+  `https://<project-ref>.supabase.co/functions/v1/razorpay-webhook`
+- Ensure migration `20260612120000_razorpay_admin_driver_foundation.sql` is applied
+- For delivery payouts, complete Route linked-account onboarding (`agency_razorpay_accounts.status = active`)
 
 ### Realtime Not Working
 
@@ -807,54 +880,24 @@ Enable realtime for:
 
 ## Roadmap
 
-### Version 2.0 (Planned Features)
+### Shipped (current baseline)
 
-- [ ] **Online Payment Integration**
-  - Payment gateway integration (Razorpay/Stripe)
-  - Payment history and receipts
-  - Refund management
+- [x] **Razorpay payments** — Platform subscription (Flow A) and verified delivery collection (Flow B)
+- [x] **Agency subscription gating** — Trial and active subscription checks for admin access
+- [x] **Razorpay Route onboarding** — Linked accounts, KYC polling, payout history
+- [x] **Resend auth emails** — Send Email hook replaces default Supabase mail
+- [x] **Admin driver lifecycle** — Create without confirmation email, password reset, auth user cleanup
+- [x] **Push notifications** — Real-time order updates (feature flag enabled)
+- [x] **Real-time GPS tracking** — Driver location updates (feature flag enabled)
 
-- [ ] **Push Notifications**
-  - Real-time order updates
-  - Driver assignment notifications
-  - Payment reminders
+### Planned
 
-- [ ] **Real-time GPS Tracking**
-  - Live driver location tracking
-  - Route optimization
-  - ETA calculations
-
-- [ ] **Google Distance Matrix Integration**
-  - Accurate distance calculations
-  - Traffic-aware routing
-  - Multiple route options
-
-- [ ] **Driver Self-Registration**
-  - Driver application workflow
-  - Document upload and verification
-  - Approval/rejection system
-
-- [ ] **Ratings & Reviews**
-  - Customer ratings for drivers
-  - Driver ratings for customers
-  - Review system
-
-- [ ] **ASAP Bookings**
-  - Immediate booking option
-  - Priority queue for urgent orders
-  - Fast-track driver assignment
-
-- [ ] **Performance Optimizations**
-  - Query optimization
-  - Caching strategies
-  - Image optimization
-  - Bundle size reduction
-
-- [ ] **Advanced Analytics**
-  - Revenue forecasting
-  - Driver performance metrics
-  - Customer behavior analysis
-  - Demand prediction
+- [ ] **Refund management** — Admin-initiated refunds for failed/disputed delivery payments
+- [ ] **Google Distance Matrix** — Traffic-aware distance and ETA
+- [ ] **Driver self-registration** — Application workflow with document verification
+- [ ] **Ratings & reviews** — Post-delivery feedback
+- [ ] **ASAP bookings** — Priority queue for urgent orders
+- [ ] **Performance & analytics** — Query caching, revenue forecasting, demand prediction
 
 ## Contributing
 
