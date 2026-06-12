@@ -620,10 +620,19 @@ const AddBankAccountScreen: React.FC = () => {
             <Ionicons name="menu" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerTextContainer}>
-            <Typography variant="h2" style={styles.headerTitle}>Bank Accounts</Typography>
+            <Typography variant="h2" style={styles.headerTitle}>Payments & Payouts</Typography>
           </View>
         </View>
       </View>
+
+      <Card style={{ margin: 16, padding: 16, gap: 8 }}>
+        <Typography variant="h3">Online payouts (Razorpay)</Typography>
+        <Typography variant="body" style={{ opacity: 0.8 }}>
+          Complete Route setup to enable verified delivery payments to your agency account.
+        </Typography>
+        <Button title="Razorpay payout setup" onPress={() => navigation.navigate('RazorpayAccountSetup')} />
+        <Button title="Payout summary" variant="outline" onPress={() => navigation.navigate('AgencyPayouts')} />
+      </Card>
 
       <ScrollView 
         style={styles.container} 

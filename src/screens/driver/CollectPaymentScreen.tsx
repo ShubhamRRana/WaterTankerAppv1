@@ -8,7 +8,10 @@ import { useBookingStore } from '../../store/bookingStore';
 import { Alert } from 'react-native';
 import { DriverStackParamList } from '../../navigation/DriverNavigator';
 import { Booking } from '../../types';
-import { BankAccountService } from '../../services';
+import { BankAccountService, PaymentService } from '../../services';
+import { openCheckout } from '../../services/razorpayCheckout.service';
+import { FEATURE_FLAGS, ERROR_MESSAGES } from '../../constants/config';
+import { getBookingPaymentChipLabel, getBookingPaymentChip } from '../../utils/paymentDisplay';
 import AmountInputModal from '../../components/driver/AmountInputModal';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -31,6 +34,8 @@ const CollectPaymentScreen: React.FC = () => {
   const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [isSubmittingDelivery, setIsSubmittingDelivery] = useState(false);
   const [hasAutoOpenedModal, setHasAutoOpenedModal] = useState(false);
+  const [collectingPayment, setCollectingPayment] = useState(false);
+  const allowCash = true;
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -105,23 +110,95 @@ const CollectPaymentScreen: React.FC = () => {
     }
   };
 
+  const handleRazorpayCollect = async () => {
+    if (!orderId || !booking) return;
+    if (!booking.deliveredAmount || !booking.deliveredTankerLiters) {
+      setShowDeliveryModal(true);
+      return;
+    }
+    if (booking.paymentStatus === 'completed') {
+      Alert.alert('Already paid', 'This booking is already marked as paid.');
+      return;
+    }
+
+    setCollectingPayment(true);
+    try {
+      const order = await PaymentService.createDeliveryPayment(orderId);
+      const checkout = await openCheckout({
+        orderId: order.orderId,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: order.keyId,
+        description: `Delivery payment — ${booking.customerName}`,
+        prefill: { contact: booking.customerPhone, name: booking.customerName },
+      });
+
+      if (checkout.status === 'cancelled') {
+        Alert.alert('Cancelled', ERROR_MESSAGES.payment.cancelled);
+        return;
+      }
+      if (checkout.status === 'error') {
+        Alert.alert('Payment failed', checkout.message);
+        return;
+      }
+
+      const verify = await PaymentService.verifyDeliveryPayment(orderId, checkout.data);
+      if (!verify.success) {
+        Alert.alert('Verification failed', verify.error ?? ERROR_MESSAGES.payment.failed);
+        return;
+      }
+
+      await loadBooking();
+      Alert.alert('Success', 'Payment collected and delivery completed.');
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : ERROR_MESSAGES.payment.failed);
+    } finally {
+      setCollectingPayment(false);
+    }
+  };
+
+  const handleCashPayment = async () => {
+    if (!orderId || !booking) return;
+    if (!booking.deliveredAmount || !booking.deliveredTankerLiters) {
+      setShowDeliveryModal(true);
+      return;
+    }
+    setCollectingPayment(true);
+    try {
+      const result = await PaymentService.recordCashPayment(orderId, 'driver_cash');
+      if (!result.success) {
+        Alert.alert('Error', result.error ?? 'Cash payment failed');
+        return;
+      }
+      Alert.alert('Success', 'Cash payment recorded.');
+      navigation.goBack();
+    } finally {
+      setCollectingPayment(false);
+    }
+  };
+
   const handleCompleteDelivery = async () => {
     if (!orderId) {
       Alert.alert('Error', 'Order ID not found');
       return;
     }
-
-    // If delivery details are not saved yet, collect them first.
     if (!booking?.deliveredAmount || !booking?.deliveredTankerLiters) {
       setShowDeliveryModal(true);
       return;
     }
 
+    if (FEATURE_FLAGS.enableOnlinePayment && booking.paymentStatus !== 'completed') {
+      Alert.alert(
+        'Payment required',
+        'Collect payment via Razorpay or record cash before completing delivery.'
+      );
+      return;
+    }
+
     try {
       setIsSubmittingDelivery(true);
-      await updateBookingStatus(orderId, 'delivered', {
-        deliveredAt: new Date(),
-      });
+      await updateBookingStatus(orderId, 'delivered', { deliveredAt: new Date() });
       Alert.alert('Success', 'Delivery completed successfully!');
       navigation.goBack();
     } catch (error) {
@@ -231,9 +308,32 @@ const CollectPaymentScreen: React.FC = () => {
                     Amount to Pay
                   </Typography>
                   <Typography variant="h2" style={styles.amount}>
-                    ₹{booking.totalPrice.toLocaleString('en-IN')}
+                    ₹{(booking.deliveredAmount ?? booking.totalPrice).toLocaleString('en-IN')}
+                  </Typography>
+                  <Typography variant="caption" style={styles.amountLabel}>
+                    {getBookingPaymentChipLabel(getBookingPaymentChip(booking))}
                   </Typography>
                 </View>
+
+                {FEATURE_FLAGS.enableOnlinePayment && booking.paymentStatus !== 'completed' ? (
+                  <View style={styles.buttonContainer}>
+                    <Button
+                      title={collectingPayment ? 'Processing...' : `Collect payment (₹${(booking.deliveredAmount ?? booking.totalPrice).toLocaleString('en-IN')})`}
+                      onPress={() => void handleRazorpayCollect()}
+                      disabled={collectingPayment}
+                      style={styles.okButton}
+                    />
+                    {allowCash ? (
+                      <Button
+                        title="Record cash payment"
+                        variant="outline"
+                        onPress={() => void handleCashPayment()}
+                        disabled={collectingPayment}
+                        style={styles.backButton}
+                      />
+                    ) : null}
+                  </View>
+                ) : null}
 
                 <View style={styles.qrCodeSection}>
                   <Typography variant="h3" style={styles.qrCodeTitle}>
@@ -268,13 +368,16 @@ const CollectPaymentScreen: React.FC = () => {
               </>
             )}
           </View>
-          <View style={styles.buttonContainer}>
-            <Button
-              title="Payment Collected"
-              onPress={handleCompleteDelivery}
-              style={styles.okButton}
-            />
-          </View>
+          {!FEATURE_FLAGS.enableOnlinePayment || booking.paymentStatus === 'completed' ? (
+            <View style={styles.buttonContainer}>
+              <Button
+                title="Payment Collected"
+                onPress={handleCompleteDelivery}
+                style={styles.okButton}
+                disabled={collectingPayment}
+              />
+            </View>
+          ) : null}
         </View>
       </ScrollView>
 

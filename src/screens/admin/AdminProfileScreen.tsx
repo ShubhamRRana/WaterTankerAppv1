@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Typography, Button, Card, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
 import ProfileHeader from '../../components/admin/ProfileHeader';
+import AdminSubscriptionCard from '../../components/admin/AdminSubscriptionCard';
 import EditProfileForm from '../../components/admin/EditProfileForm';
 import AppearanceSettingsSection from '../../components/settings/AppearanceSettingsSection';
 import { useAuthStore } from '../../store/authStore';
@@ -510,6 +511,7 @@ const AdminProfileScreen: React.FC = () => {
 
         {isAdminUser(user) && (
           <>
+            <AdminSubscriptionCard userId={user.id} navigation={navigation} />
             <ProfileHeader
               user={user}
               imageError={state.imageError}

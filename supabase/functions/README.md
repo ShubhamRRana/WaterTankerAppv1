@@ -1,5 +1,19 @@
 # Supabase Edge Functions
 
+## Razorpay (admin/driver + shared webhook)
+
+| Function | Flow | Auth |
+|----------|------|------|
+| `create-subscription-order` | `agency_subscription` | Admin JWT |
+| `verify-subscription-payment` | `agency_subscription` | Admin JWT |
+| `create-delivery-order` | `driver_delivery` | Driver JWT |
+| `verify-delivery-payment` | `driver_delivery` | Driver JWT |
+| `create-linked-account` | Route onboarding | Admin JWT |
+| `get-linked-account-status` | Route status | Admin JWT |
+| `razorpay-webhook` | All flows + `account.activated` | Webhook signature |
+
+Set secrets: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`.
+
 ## send-email (Auth Hook + Resend)
 
 Sends **all** Supabase Auth emails (signup, recovery, magic link, email change, notifications) via [Resend](https://resend.com) when the **Send Email** hook is enabled in the dashboard.

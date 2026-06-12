@@ -153,6 +153,16 @@ export const ERROR_MESSAGES = {
     failed: 'Payment failed. Please try again.',
     cancelled: 'Payment was cancelled.',
     networkError: 'Network error during payment.',
+    razorpayNotConfigured: 'Razorpay is not configured. Set EXPO_PUBLIC_RAZORPAY_KEY_ID.',
+    razorpayRequiresDevBuild: 'Razorpay requires a development build (not Expo Go).',
+    razorpayCheckoutFailed: 'Razorpay checkout failed. Please try again.',
+    razorpayNetworkError: 'Network error during Razorpay checkout.',
+    razorpayCancelled: 'Payment was cancelled.',
+    agencyNotOnboarded: 'Agency cannot accept online payments — complete payout setup in admin.',
+    signatureMismatch: 'Payment verification failed. Contact support if amount was debited.',
+    subscriptionNotEligible: 'Subscription is not eligible for payment.',
+    bookingAlreadyPaid: 'This booking is already paid.',
+    paymentInProgress: 'A payment is already in progress for this booking.',
   },
   general: {
     unexpected: 'An unexpected error occurred.',
@@ -254,9 +264,21 @@ export const DATE_CONFIG = {
   timezone: 'Asia/Kolkata',
 };
 
+export const RAZORPAY_CONFIG = {
+  keyId: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID ?? '',
+  companyName: 'Water Tanker Hub',
+};
+
+export const SUBSCRIPTION_CONFIG = {
+  expiringSoonDays: 7,
+  gracePeriodDays: 0,
+};
+
 // Feature Flags
 export const FEATURE_FLAGS = {
-  enableOnlinePayment: false, // Disabled in MVP
+  enableRazorpaySubscription: true,
+  enableOnlinePayment: true,
+  enableSubscriptionGating: true,
   enablePushNotifications: true, // ✅ Enabled - Phase 3 Item 2 Complete
   enableRealTimeTracking: true, // ✅ Enabled - Phase 3 Item 2 Complete
   enableDriverSelfRegistration: false, // Disabled in MVP

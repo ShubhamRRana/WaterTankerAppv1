@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import OrdersScreen from '../screens/driver/OrdersScreen';
 import DriverEarningsScreen from '../screens/driver/DriverEarningsScreen';
 import CollectPaymentScreen from '../screens/driver/CollectPaymentScreen';
+import PaymentResultScreen from '../screens/shared/PaymentResultScreen';
+import type { PaymentResultScreenParams } from '../types/razorpay.types';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import { useTheme } from '../theme/ThemeProvider';
 
@@ -16,6 +18,7 @@ export type DriverTabParamList = {
 export type DriverStackParamList = {
   DriverTabs: undefined;
   CollectPayment: { orderId: string; autoOpenDeliveryModal?: boolean };
+  PaymentResult: PaymentResultScreenParams;
 };
 
 const Tab = createBottomTabNavigator<DriverTabParamList>();
@@ -85,6 +88,7 @@ const DriverNavigator: React.FC = () => {
       <Stack.Navigator screenOptions={stackScreenOptions}>
         <Stack.Screen name="DriverTabs" component={DriverTabsScreen} />
         <Stack.Screen name="CollectPayment" component={CollectPaymentScreen} />
+        <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
       </Stack.Navigator>
     </ErrorBoundary>
   );

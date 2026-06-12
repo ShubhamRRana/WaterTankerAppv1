@@ -10,6 +10,7 @@ import { Booking, BookingStatus } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { PricingUtils } from '../../utils/pricing';
 import { formatDateTime } from '../../utils/dateUtils';
+import { getBookingPaymentChip, getBookingPaymentChipLabel } from '../../utils/paymentDisplay';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
 
@@ -60,15 +61,22 @@ const BookingCard: React.FC<BookingCardProps> = ({
             #{bookingIdShort}
           </Typography>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-          <Ionicons
-            name={statusIcon as keyof typeof Ionicons.glyphMap}
-            size={16}
-            color={colors.textLight}
-          />
-          <Typography variant="caption" style={styles.statusText}>
-            {statusText}
-          </Typography>
+        <View style={styles.badgeRow}>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+            <Ionicons
+              name={statusIcon as keyof typeof Ionicons.glyphMap}
+              size={16}
+              color={colors.textLight}
+            />
+            <Typography variant="caption" style={styles.statusText}>
+              {statusText}
+            </Typography>
+          </View>
+          <View style={[styles.statusBadge, { backgroundColor: colors.border }]}>
+            <Typography variant="caption" style={styles.statusText}>
+              {getBookingPaymentChipLabel(getBookingPaymentChip(booking))}
+            </Typography>
+          </View>
         </View>
       </View>
 
@@ -145,6 +153,11 @@ function createStyles(colors: AppPalette) {
     },
     bookingInfo: {
       flex: 1,
+    },
+    badgeRow: {
+      flexDirection: 'row',
+      gap: 6,
+      alignItems: 'center',
     },
     customerName: {
       fontSize: 18,

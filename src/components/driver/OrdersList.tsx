@@ -8,6 +8,7 @@ import { OrderTab } from './OrdersFilter';
 import { UserService } from '../../services/user.service';
 import { errorLogger } from '../../utils/errorLogger';
 import { formatDateTime } from '../../utils/dateUtils';
+import { getBookingPaymentChip, getBookingPaymentChipLabel } from '../../utils/paymentDisplay';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
 
@@ -185,10 +186,17 @@ const OrdersList: React.FC<OrdersListProps> = ({
               {order.customerPhone}
             </Typography>
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
-            <Typography variant="caption" style={styles.statusText}>
-              {statusText}
-            </Typography>
+          <View style={styles.badgeRow}>
+            <View style={[styles.statusBadge, { backgroundColor: statusColor }]}>
+              <Typography variant="caption" style={styles.statusText}>
+                {statusText}
+              </Typography>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: colors.border }]}>
+              <Typography variant="caption" style={styles.statusText}>
+                {getBookingPaymentChipLabel(getBookingPaymentChip(order))}
+              </Typography>
+            </View>
           </View>
         </View>
 
@@ -445,6 +453,11 @@ function createStyles(colors: AppPalette) {
   orderId: {
     fontSize: 16,
     color: colors.textSecondary,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
   },
   statusBadge: {
     paddingHorizontal: 8,

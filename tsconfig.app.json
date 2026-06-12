@@ -8,6 +8,7 @@
     "node_modules",
     "src/__tests__",
     "**/__mocks__",
-    "scripts"
+    "scripts",
+    "supabase/functions"
   ]
 }

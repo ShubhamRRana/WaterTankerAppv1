@@ -9,7 +9,12 @@ export type AdminRoute =
   | 'Reports'
   | 'Profile'
   | 'BankAccounts'
-  | 'Expenses';
+  | 'Expenses'
+  | 'SubscriptionPlans'
+  | 'SubscriptionStatus'
+  | 'RazorpayAccountSetup'
+  | 'AgencyPayouts'
+  | 'DeliveryPaymentHistory';
 
 interface AdminMenuDrawerProps {
   visible: boolean;
@@ -17,6 +22,7 @@ interface AdminMenuDrawerProps {
   onNavigate: (route: AdminRoute) => void;
   onLogout: () => void;
   currentRoute?: AdminRoute;
+  subscriptionExpiring?: boolean;
 }
 
 const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
@@ -25,79 +31,68 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
   onNavigate,
   onLogout,
   currentRoute,
+  subscriptionExpiring,
 }) => {
   const menuItems: MenuItem<AdminRoute>[] = [
     {
       label: 'Bookings',
       icon: 'receipt-outline',
       route: 'Bookings',
-      onPress: () => {
-        onNavigate('Bookings');
-        onClose();
-      },
+      onPress: () => { onNavigate('Bookings'); onClose(); },
     },
     {
       label: 'Drivers',
       icon: 'people-outline',
       route: 'Drivers',
-      onPress: () => {
-        onNavigate('Drivers');
-        onClose();
-      },
+      onPress: () => { onNavigate('Drivers'); onClose(); },
     },
     {
       label: 'Vehicles',
       icon: 'car-outline',
       route: 'Vehicles',
-      onPress: () => {
-        onNavigate('Vehicles');
-        onClose();
-      },
+      onPress: () => { onNavigate('Vehicles'); onClose(); },
     },
     {
       label: 'Trip details',
       icon: 'car-outline',
       route: 'TripDetails',
-      onPress: () => {
-        onNavigate('TripDetails');
-        onClose();
-      },
+      onPress: () => { onNavigate('TripDetails'); onClose(); },
     },
     {
       label: 'Reports',
       icon: 'bar-chart-outline',
       route: 'Reports',
-      onPress: () => {
-        onNavigate('Reports');
-        onClose();
-      },
+      onPress: () => { onNavigate('Reports'); onClose(); },
     },
     {
-      label: 'Add Bank Account',
+      label: subscriptionExpiring ? 'Subscription (expiring)' : 'Subscription',
       icon: 'card-outline',
+      route: 'SubscriptionPlans',
+      onPress: () => { onNavigate('SubscriptionStatus'); onClose(); },
+    },
+    {
+      label: 'Payments & Payouts',
+      icon: 'wallet-outline',
       route: 'BankAccounts',
-      onPress: () => {
-        onNavigate('BankAccounts');
-        onClose();
-      },
+      onPress: () => { onNavigate('BankAccounts'); onClose(); },
+    },
+    {
+      label: 'Payout history',
+      icon: 'list-outline',
+      route: 'DeliveryPaymentHistory',
+      onPress: () => { onNavigate('DeliveryPaymentHistory'); onClose(); },
+    },
+    {
+      label: 'Profile',
+      icon: 'person-outline',
+      route: 'Profile',
+      onPress: () => { onNavigate('Profile'); onClose(); },
     },
     {
       label: 'Expenses',
       icon: 'cash-outline',
       route: 'Expenses',
-      onPress: () => {
-        onNavigate('Expenses');
-        onClose();
-      },
-    },
-    {
-      label: 'Profile',
-      icon: 'person-circle-outline',
-      route: 'Profile',
-      onPress: () => {
-        onNavigate('Profile');
-        onClose();
-      },
+      onPress: () => { onNavigate('Expenses'); onClose(); },
     },
   ];
 
@@ -106,12 +101,11 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
       visible={visible}
       onClose={onClose}
       onNavigate={onNavigate}
-      onLogout={onLogout}
-      {...(currentRoute ? { currentRoute } : {})}
       menuItems={menuItems}
+      onLogout={onLogout}
+      {...(currentRoute !== undefined ? { currentRoute } : {})}
     />
   );
 };
 
 export default AdminMenuDrawer;
-

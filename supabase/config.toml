@@ -1,0 +1,41 @@
+[functions.create-subscription-order]
+enabled = true
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/create-subscription-order/index.ts"
+
+[functions.verify-subscription-payment]
+enabled = true
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/verify-subscription-payment/index.ts"
+
+[functions.create-delivery-order]
+enabled = true
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/create-delivery-order/index.ts"
+
+[functions.verify-delivery-payment]
+enabled = true
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/verify-delivery-payment/index.ts"
+
+[functions.razorpay-webhook]
+enabled = true
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/razorpay-webhook/index.ts"
+
+[functions.create-linked-account]
+enabled = true
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/create-linked-account/index.ts"
+
+[functions.get-linked-account-status]
+enabled = true
+verify_jwt = true
+import_map = "./functions/deno.json"
+entrypoint = "./functions/get-linked-account-status/index.ts"
