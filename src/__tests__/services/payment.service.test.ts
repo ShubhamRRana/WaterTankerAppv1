@@ -1,165 +1,124 @@
 /**
- * Payment Service Tests
+ * Payment Service Tests — Razorpay + cash ledger
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+jest.mock('../../lib/supabaseClient', () => ({
+  supabase: {
+    auth: { getUser: jest.fn() },
+    functions: { invoke: jest.fn() },
+    from: jest.fn(),
+  },
+}));
+
+jest.mock('../../lib/index', () => ({
+  dataAccess: {
+    bookings: {
+      getBookingById: jest.fn(),
+      updateBooking: jest.fn(),
+    },
+  },
+}));
+
+import { supabase } from '../../lib/supabaseClient';
+import { dataAccess } from '../../lib/index';
 import { PaymentService } from '../../services/payment.service';
-import { LocalStorageService } from '../../services/localStorage';
-import { BookingService } from '../../services/booking.service';
-import { Booking } from '../../types';
 
-// Clear AsyncStorage before each test
-beforeEach(async () => {
-  await AsyncStorage.clear();
-});
-
-// Restore all mocks after each test to prevent mock leakage
-afterEach(() => {
-  jest.restoreAllMocks();
-});
+const mockBooking = {
+  id: 'booking-1',
+  agencyId: 'agency-1',
+  deliveredAmount: 500,
+  totalPrice: 500,
+  paymentStatus: 'pending' as const,
+  status: 'in_transit' as const,
+};
 
 describe('PaymentService', () => {
-  const mockBookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'> = {
-    customerId: 'customer-1',
-    customerName: 'Test Customer',
-    customerPhone: '1234567890',
-    status: 'pending',
-    tankerSize: 1000,
-    basePrice: 500,
-    distanceCharge: 100,
-    totalPrice: 600,
-    deliveryAddress: {
-      street: '123 Test St',
-      city: 'Test City',
-      state: 'Test State',
-      pincode: '123456',
-      latitude: 0,
-      longitude: 0,
-    },
-    distance: 10,
-    paymentStatus: 'pending',
-    canCancel: true,
-  };
-
-  describe('processCODPayment', () => {
-    let bookingId: string;
-
-    beforeEach(async () => {
-      bookingId = await BookingService.createBooking(mockBookingData);
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (supabase.auth.getUser as jest.Mock).mockResolvedValue({
+      data: { user: { id: 'driver-1' } },
     });
+    const insertMock = jest.fn().mockResolvedValue({ error: null });
+    (supabase.from as jest.Mock).mockReturnValue({ insert: insertMock });
+  });
 
-    it('should process COD payment and mark as pending', async () => {
-      const result = await PaymentService.processCODPayment(bookingId, 600);
-      
+  describe('recordCashPayment', () => {
+    it('marks booking delivered and inserts cash ledger row', async () => {
+      (dataAccess.bookings.getBookingById as jest.Mock).mockResolvedValue(mockBooking);
+      (dataAccess.bookings.updateBooking as jest.Mock).mockResolvedValue(undefined);
+
+      const result = await PaymentService.recordCashPayment('booking-1', 'driver_cash');
+
       expect(result.success).toBe(true);
-      expect(result.paymentId).toBeTruthy();
-      expect(result.paymentId).toContain('cod_');
-      expect(result.paymentId).toContain(bookingId);
-      
-      const booking = await LocalStorageService.getBookingById(bookingId);
-      expect(booking?.paymentStatus).toBe('pending');
-      expect(booking?.paymentId).toBe(result.paymentId);
+      expect(result.paymentId).toMatch(/^cash_booking-1_/);
+      expect(dataAccess.bookings.updateBooking).toHaveBeenCalledWith(
+        'booking-1',
+        expect.objectContaining({
+          paymentStatus: 'completed',
+          status: 'delivered',
+        })
+      );
+      expect(supabase.from).toHaveBeenCalledWith('payment_transactions');
     });
 
-    it('should generate unique payment IDs', async () => {
-      const result1 = await PaymentService.processCODPayment(bookingId, 600);
-      const result2 = await PaymentService.processCODPayment(bookingId, 600);
-      
-      expect(result1.paymentId).not.toBe(result2.paymentId);
-    });
+    it('returns error when booking not found', async () => {
+      (dataAccess.bookings.getBookingById as jest.Mock).mockResolvedValue(null);
 
-    it('should return error when booking does not exist', async () => {
-      const result = await PaymentService.processCODPayment('non-existent', 600);
-      
+      const result = await PaymentService.recordCashPayment('missing');
+
       expect(result.success).toBe(false);
-      expect(result.error).toBeTruthy();
+      expect(result.error).toBe('Booking not found');
     });
+  });
 
-    it('should return error when LocalStorageService fails', async () => {
-      jest.spyOn(LocalStorageService, 'updateBooking').mockRejectedValue(new Error('Update error'));
-      
-      const result = await PaymentService.processCODPayment(bookingId, 600);
-      
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Update error');
+  describe('createSubscriptionPayment', () => {
+    it('invokes create-subscription-order edge function', async () => {
+      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+        data: {
+          orderId: 'order_1',
+          amount: 99900,
+          currency: 'INR',
+          keyId: 'rzp_test',
+        },
+        error: null,
+      });
+
+      const order = await PaymentService.createSubscriptionPayment('sub-1', 'plan-1');
+
+      expect(supabase.functions.invoke).toHaveBeenCalledWith('create-subscription-order', {
+        body: { subscriptionId: 'sub-1', planId: 'plan-1' },
+      });
+      expect(order.orderId).toBe('order_1');
     });
+  });
 
-    it('should handle non-Error exceptions', async () => {
-      jest.spyOn(LocalStorageService, 'updateBooking').mockRejectedValue('String error');
-      
-      const result = await PaymentService.processCODPayment(bookingId, 600);
-      
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Payment processing failed');
+  describe('verifyDeliveryPayment', () => {
+    it('returns success from edge function', async () => {
+      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
+        data: { success: true, bookingId: 'booking-1' },
+        error: null,
+      });
+
+      const result = await PaymentService.verifyDeliveryPayment('booking-1', {
+        razorpay_order_id: 'order_1',
+        razorpay_payment_id: 'pay_1',
+        razorpay_signature: 'sig',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.bookingId).toBe('booking-1');
     });
   });
 
   describe('confirmCODPayment', () => {
-    let bookingId: string;
+    it('delegates to recordCashPayment', async () => {
+      (dataAccess.bookings.getBookingById as jest.Mock).mockResolvedValue(mockBooking);
+      (dataAccess.bookings.updateBooking as jest.Mock).mockResolvedValue(undefined);
 
-    beforeEach(async () => {
-      bookingId = await BookingService.createBooking(mockBookingData);
-      await PaymentService.processCODPayment(bookingId, 600);
-    });
+      const result = await PaymentService.confirmCODPayment('booking-1');
 
-    it('should confirm COD payment and mark as completed', async () => {
-      const result = await PaymentService.confirmCODPayment(bookingId);
-      
       expect(result.success).toBe(true);
-      expect(result.paymentId).toBeTruthy();
-      expect(result.paymentId).toContain('cod_confirmed_');
-      expect(result.paymentId).toContain(bookingId);
-      
-      const booking = await LocalStorageService.getBookingById(bookingId);
-      expect(booking?.paymentStatus).toBe('completed');
-      expect(booking?.paymentId).toBe(result.paymentId);
-    });
-
-    it('should generate unique payment IDs for confirmations', async () => {
-      const result1 = await PaymentService.confirmCODPayment(bookingId);
-      const result2 = await PaymentService.confirmCODPayment(bookingId);
-      
-      expect(result1.paymentId).not.toBe(result2.paymentId);
-    });
-
-    it('should return error when booking does not exist', async () => {
-      const result = await PaymentService.confirmCODPayment('non-existent');
-      
-      expect(result.success).toBe(false);
-      expect(result.error).toBeTruthy();
-    });
-
-    it('should return error when LocalStorageService fails', async () => {
-      jest.spyOn(LocalStorageService, 'updateBooking').mockRejectedValue(new Error('Update error'));
-      
-      const result = await PaymentService.confirmCODPayment(bookingId);
-      
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Update error');
-    });
-
-    it('should handle non-Error exceptions', async () => {
-      jest.spyOn(LocalStorageService, 'updateBooking').mockRejectedValue('String error');
-      
-      const result = await PaymentService.confirmCODPayment(bookingId);
-      
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Payment confirmation failed');
-    });
-  });
-
-  describe('processOnlinePayment', () => {
-    it('should throw error indicating online payments are not implemented', async () => {
-      await expect(
-        PaymentService.processOnlinePayment('booking-1', 600, 'razorpay')
-      ).rejects.toThrow('Online payments not implemented in MVP. Use COD instead.');
-    });
-
-    it('should throw error for stripe payment method', async () => {
-      await expect(
-        PaymentService.processOnlinePayment('booking-1', 600, 'stripe')
-      ).rejects.toThrow('Online payments not implemented in MVP. Use COD instead.');
+      expect(result.paymentId).toMatch(/^cash_/);
     });
   });
 });
-

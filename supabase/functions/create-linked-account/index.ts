@@ -1,6 +1,10 @@
 import { assertAdminUser } from "../_shared/activation.ts";
 import { errorResponse, handleCors, jsonResponse } from "../_shared/http.ts";
-import { createLinkedAccount } from "../_shared/razorpay.ts";
+import {
+  addLinkedAccountBankAccount,
+  createLinkedAccount,
+  requestRouteProduct,
+} from "../_shared/razorpay.ts";
 import { getServiceClient, getUserFromRequest } from "../_shared/supabase.ts";
 
 Deno.serve(async (req: Request) => {
@@ -71,7 +75,30 @@ Deno.serve(async (req: Request) => {
 
     const rzAccount = await createLinkedAccount(accountPayload);
     const accountId = String(rzAccount.id ?? "");
-    const rzStatus = mapRazorpayStatus(String(rzAccount.status ?? "created"));
+    let rzStatus = mapRazorpayStatus(String(rzAccount.status ?? "created"));
+
+    if (accountId) {
+      try {
+        await requestRouteProduct(accountId);
+      } catch (routeErr) {
+        console.warn("Route product request:", routeErr);
+      }
+
+      if (bankAccountNumber && bankIfsc) {
+        try {
+          await addLinkedAccountBankAccount(accountId, {
+            accountNumber: bankAccountNumber,
+            ifsc: bankIfsc,
+            beneficiaryName: contactName || businessName,
+          });
+          if (rzStatus === "created") {
+            rzStatus = "under_review";
+          }
+        } catch (bankErr) {
+          console.warn("Bank account submission:", bankErr);
+        }
+      }
+    }
 
     const row = {
       agency_id: agencyId,

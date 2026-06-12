@@ -303,13 +303,6 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
     [userFilteredTrips],
   );
 
-  const subtitle = useMemo(() => {
-    if (!canLoad) return 'Sign in as an admin to view trips';
-    const userSuffix =
-      selectedSocietyUserId === 'All' ? '' : ` • ${societyUserLabelById(selectedSocietyUserId)}`;
-    return `${userFilteredTrips.length} ${userFilteredTrips.length === 1 ? 'trip' : 'trips'} in this period${userSuffix}`;
-  }, [canLoad, societyUserLabelById, selectedSocietyUserId, userFilteredTrips.length]);
-
   const renderTankerSizeBreakdown = (showTotal: boolean) => {
     if (userFilteredTrips.length === 0) {
       return (
@@ -408,9 +401,12 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
             <Typography variant="h2" style={styles.title}>
               Trip details
             </Typography>
-            <Typography variant="body" style={styles.subtitle}>
-              {subtitle}
-            </Typography>
+          <Typography variant="body" style={styles.subtitle}>
+            Society billing periods — bulk settlement tracking (not per-delivery Razorpay)
+          </Typography>
+          <Typography variant="caption" style={[styles.subtitle, { opacity: 0.75, marginTop: 4 }]}>
+            Per-delivery Razorpay payments are collected by drivers and appear under Bookings / Reports.
+          </Typography>
           </View>
         </View>
 

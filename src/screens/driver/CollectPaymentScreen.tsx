@@ -8,10 +8,10 @@ import { useBookingStore } from '../../store/bookingStore';
 import { Alert } from 'react-native';
 import { DriverStackParamList } from '../../navigation/DriverNavigator';
 import { Booking } from '../../types';
-import { BankAccountService, PaymentService } from '../../services';
+import { BankAccountService, PaymentService, AgencyPayoutService } from '../../services';
 import { openCheckout } from '../../services/razorpayCheckout.service';
 import { FEATURE_FLAGS, ERROR_MESSAGES } from '../../constants/config';
-import { getBookingPaymentChipLabel, getBookingPaymentChip } from '../../utils/paymentDisplay';
+import { getBookingPaymentChipLabel, getBookingPaymentChip, canCollectOnlinePayment } from '../../utils/paymentDisplay';
 import AmountInputModal from '../../components/driver/AmountInputModal';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -35,7 +35,10 @@ const CollectPaymentScreen: React.FC = () => {
   const [isSubmittingDelivery, setIsSubmittingDelivery] = useState(false);
   const [hasAutoOpenedModal, setHasAutoOpenedModal] = useState(false);
   const [collectingPayment, setCollectingPayment] = useState(false);
-  const allowCash = true;
+  const [allowCash, setAllowCash] = useState(true);
+  const [defaultCollectionMethod, setDefaultCollectionMethod] = useState<'razorpay' | 'manual_qr'>('manual_qr');
+  const [payoutActive, setPayoutActive] = useState(false);
+  const [agencySettingsLoaded, setAgencySettingsLoaded] = useState(false);
 
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -76,8 +79,27 @@ const CollectPaymentScreen: React.FC = () => {
 
       setBooking(bookingData);
 
-      // Fetch QR code image for the admin
       if (bookingData.agencyId) {
+        try {
+          const account = await AgencyPayoutService.getLocalAccount(bookingData.agencyId);
+          if (account) {
+            setAllowCash(account.allowCashCollection);
+            setDefaultCollectionMethod(account.defaultCollectionMethod);
+          }
+          const routeStatus = await AgencyPayoutService.getAccountStatus();
+          setPayoutActive(routeStatus.status === 'active');
+          if (routeStatus.allowCashCollection !== undefined) {
+            setAllowCash(routeStatus.allowCashCollection);
+          }
+          if (routeStatus.defaultCollectionMethod) {
+            setDefaultCollectionMethod(routeStatus.defaultCollectionMethod);
+          }
+        } catch {
+          setPayoutActive(false);
+        } finally {
+          setAgencySettingsLoaded(true);
+        }
+
         setLoadingQRCode(true);
         try {
           const defaultAccount = await BankAccountService.getDefaultBankAccount(bookingData.agencyId);
@@ -116,8 +138,17 @@ const CollectPaymentScreen: React.FC = () => {
       setShowDeliveryModal(true);
       return;
     }
+    if (!payoutActive) {
+      Alert.alert('Online payments unavailable', ERROR_MESSAGES.payment.agencyNotOnboarded);
+      return;
+    }
     if (booking.paymentStatus === 'completed') {
-      Alert.alert('Already paid', 'This booking is already marked as paid.');
+      navigation.navigate('PaymentResult', {
+        type: 'delivery',
+        status: 'success',
+        message: 'This booking is already paid.',
+        ...(booking.paymentId ? { referenceId: booking.paymentId } : {}),
+      });
       return;
     }
 
@@ -134,25 +165,44 @@ const CollectPaymentScreen: React.FC = () => {
       });
 
       if (checkout.status === 'cancelled') {
-        Alert.alert('Cancelled', ERROR_MESSAGES.payment.cancelled);
+        navigation.navigate('PaymentResult', {
+          type: 'delivery',
+          status: 'failed',
+          message: ERROR_MESSAGES.payment.cancelled,
+        });
         return;
       }
       if (checkout.status === 'error') {
-        Alert.alert('Payment failed', checkout.message);
+        navigation.navigate('PaymentResult', {
+          type: 'delivery',
+          status: 'failed',
+          message: checkout.message,
+        });
         return;
       }
 
       const verify = await PaymentService.verifyDeliveryPayment(orderId, checkout.data);
       if (!verify.success) {
-        Alert.alert('Verification failed', verify.error ?? ERROR_MESSAGES.payment.failed);
+        navigation.navigate('PaymentResult', {
+          type: 'delivery',
+          status: 'failed',
+          message: verify.error ?? ERROR_MESSAGES.payment.failed,
+        });
         return;
       }
 
-      await loadBooking();
-      Alert.alert('Success', 'Payment collected and delivery completed.');
-      navigation.goBack();
+      navigation.replace('PaymentResult', {
+        type: 'delivery',
+        status: 'success',
+        referenceId: checkout.data.razorpay_payment_id,
+        message: 'Payment collected and delivery completed.',
+      });
     } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : ERROR_MESSAGES.payment.failed);
+      navigation.navigate('PaymentResult', {
+        type: 'delivery',
+        status: 'failed',
+        message: error instanceof Error ? error.message : ERROR_MESSAGES.payment.failed,
+      });
     } finally {
       setCollectingPayment(false);
     }
@@ -160,6 +210,10 @@ const CollectPaymentScreen: React.FC = () => {
 
   const handleCashPayment = async () => {
     if (!orderId || !booking) return;
+    if (!allowCash) {
+      Alert.alert('Cash not allowed', 'Your admin has disabled cash collection for this agency.');
+      return;
+    }
     if (!booking.deliveredAmount || !booking.deliveredTankerLiters) {
       setShowDeliveryModal(true);
       return;
@@ -168,11 +222,19 @@ const CollectPaymentScreen: React.FC = () => {
     try {
       const result = await PaymentService.recordCashPayment(orderId, 'driver_cash');
       if (!result.success) {
-        Alert.alert('Error', result.error ?? 'Cash payment failed');
+        navigation.navigate('PaymentResult', {
+          type: 'delivery',
+          status: 'failed',
+          message: result.error ?? 'Cash payment failed',
+        });
         return;
       }
-      Alert.alert('Success', 'Cash payment recorded.');
-      navigation.goBack();
+      navigation.replace('PaymentResult', {
+        type: 'delivery',
+        status: 'success',
+        message: 'Cash payment recorded.',
+        ...(result.paymentId ? { referenceId: result.paymentId } : {}),
+      });
     } finally {
       setCollectingPayment(false);
     }
@@ -189,9 +251,13 @@ const CollectPaymentScreen: React.FC = () => {
     }
 
     if (FEATURE_FLAGS.enableOnlinePayment && booking.paymentStatus !== 'completed') {
+      const needsOnline =
+        defaultCollectionMethod === 'razorpay' || !allowCash;
       Alert.alert(
         'Payment required',
-        'Collect payment via Razorpay or record cash before completing delivery.'
+        needsOnline
+          ? 'Collect payment via Razorpay before completing delivery.'
+          : 'Collect payment via Razorpay or record cash before completing delivery.'
       );
       return;
     }
@@ -285,6 +351,17 @@ const CollectPaymentScreen: React.FC = () => {
     );
   }
 
+  const showOnlineCollect =
+    FEATURE_FLAGS.enableOnlinePayment &&
+    booking.paymentStatus !== 'completed' &&
+    canCollectOnlinePayment(booking, payoutActive) &&
+    (defaultCollectionMethod === 'razorpay' || payoutActive);
+  const showManualQrPrimary = defaultCollectionMethod === 'manual_qr';
+  const showPaymentCollectedButton =
+    !FEATURE_FLAGS.enableOnlinePayment ||
+    booking.paymentStatus === 'completed' ||
+    (defaultCollectionMethod === 'manual_qr' && allowCash);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView 
@@ -315,12 +392,12 @@ const CollectPaymentScreen: React.FC = () => {
                   </Typography>
                 </View>
 
-                {FEATURE_FLAGS.enableOnlinePayment && booking.paymentStatus !== 'completed' ? (
+                {showOnlineCollect ? (
                   <View style={styles.buttonContainer}>
                     <Button
                       title={collectingPayment ? 'Processing...' : `Collect payment (₹${(booking.deliveredAmount ?? booking.totalPrice).toLocaleString('en-IN')})`}
                       onPress={() => void handleRazorpayCollect()}
-                      disabled={collectingPayment}
+                      disabled={collectingPayment || !agencySettingsLoaded}
                       style={styles.okButton}
                     />
                     {allowCash ? (
@@ -335,9 +412,15 @@ const CollectPaymentScreen: React.FC = () => {
                   </View>
                 ) : null}
 
+                {!payoutActive && FEATURE_FLAGS.enableOnlinePayment && booking.paymentStatus !== 'completed' ? (
+                  <Typography variant="caption" style={[styles.subtitle, { color: colors.warning, marginBottom: 12 }]}>
+                    {ERROR_MESSAGES.payment.agencyNotOnboarded}
+                  </Typography>
+                ) : null}
+
                 <View style={styles.qrCodeSection}>
                   <Typography variant="h3" style={styles.qrCodeTitle}>
-                    Scan QR Code to Pay
+                    {showManualQrPrimary ? 'Manual QR (scan to pay)' : 'Scan QR Code to Pay'}
                   </Typography>
                   {loadingQRCode ? (
                     <View style={styles.qrCodeLoadingContainer}>
@@ -368,7 +451,7 @@ const CollectPaymentScreen: React.FC = () => {
               </>
             )}
           </View>
-          {!FEATURE_FLAGS.enableOnlinePayment || booking.paymentStatus === 'completed' ? (
+          {showPaymentCollectedButton ? (
             <View style={styles.buttonContainer}>
               <Button
                 title="Payment Collected"

@@ -25,6 +25,22 @@ export class SubscriptionService {
     return subscriptionDataAccess.hasActiveSubscription(userId);
   }
 
+  static async ensureAgencyTrial(userId: string): Promise<void> {
+    await subscriptionDataAccess.provisionAgencyTrial(userId);
+  }
+
+  static getTrialDaysRemaining(sub: UserSubscription | null): number | null {
+    if (!sub?.isTrial || !sub.trialEndDate) return null;
+    const diff = sub.trialEndDate.getTime() - Date.now();
+    if (diff <= 0) return 0;
+    return Math.ceil(diff / (24 * 60 * 60 * 1000));
+  }
+
+  static isOnTrial(sub: UserSubscription | null): boolean {
+    if (!sub?.isTrial || !sub.trialEndDate) return false;
+    return sub.trialEndDate.getTime() > Date.now() && sub.status === 'active';
+  }
+
   static async prepareSubscriptionCheckout(
     userId: string,
     planId: string
@@ -39,6 +55,14 @@ export class SubscriptionService {
       existing.endDate.getTime() > now
     ) {
       throw new Error('You already have an active subscription.');
+    }
+
+    if (existing?.status === 'active' && existing.isTrial) {
+      await subscriptionDataAccess.updateSubscription(existing.id, {
+        planId,
+        status: 'pending',
+      });
+      return { ...existing, planId, status: 'pending' as const };
     }
 
     if (existing?.status === 'pending') {
@@ -81,9 +105,14 @@ export class SubscriptionService {
     return PaymentService.getPaymentHistory(userId, { flow: 'agency_subscription' });
   }
 
-  static isExpiringSoon(endDate: Date | null, withinDays = 7): boolean {
-    if (!endDate) return false;
-    const diff = endDate.getTime() - Date.now();
+  static isExpiringSoon(
+    endDate: Date | null,
+    withinDays = 7,
+    sub?: UserSubscription | null
+  ): boolean {
+    const target = sub?.isTrial && sub.trialEndDate ? sub.trialEndDate : endDate;
+    if (!target) return false;
+    const diff = target.getTime() - Date.now();
     return diff > 0 && diff <= withinDays * 24 * 60 * 60 * 1000;
   }
 }

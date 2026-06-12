@@ -16,6 +16,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useBookingStore } from '../../store/bookingStore';
 import { useAuthStore } from '../../store/authStore';
 import { Typography, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
+import { getBookingPaymentChip } from '../../utils/paymentDisplay';
 import BookingCard from '../../components/admin/BookingCard';
 import BookingDetailsModal from '../../components/admin/BookingDetailsModal';
 import StatusUpdateModal from '../../components/admin/StatusUpdateModal';
@@ -34,7 +35,7 @@ const AllBookingsScreen: React.FC = () => {
   const { user: currentAdmin, logout } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all' | 'unpaid'>('all');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -83,8 +84,14 @@ const AllBookingsScreen: React.FC = () => {
       );
     }
 
-    // Filter by status
-    if (statusFilter !== 'all') {
+    // Filter by status or payment
+    if (statusFilter === 'unpaid') {
+      filtered = filtered.filter(
+        (booking) =>
+          (booking.status === 'delivered' || booking.status === 'in_transit') &&
+          getBookingPaymentChip(booking) === 'unpaid'
+      );
+    } else if (statusFilter !== 'all') {
       filtered = filtered.filter(booking => booking.status === statusFilter);
     }
 
@@ -105,6 +112,11 @@ const AllBookingsScreen: React.FC = () => {
       in_transit: adminBookings.filter(booking => booking.status === 'in_transit').length,
       delivered: adminBookings.filter(booking => booking.status === 'delivered').length,
       cancelled: adminBookings.filter(booking => booking.status === 'cancelled').length,
+      unpaid: adminBookings.filter(
+        (booking) =>
+          (booking.status === 'delivered' || booking.status === 'in_transit') &&
+          getBookingPaymentChip(booking) === 'unpaid'
+      ).length,
     };
   }, [bookings, currentAdmin]);
 
@@ -115,6 +127,7 @@ const AllBookingsScreen: React.FC = () => {
     { key: 'in_transit', label: 'In Transit', icon: 'car-outline', count: filterCounts.in_transit },
     { key: 'delivered', label: 'Delivered', icon: 'checkmark-done-outline', count: filterCounts.delivered },
     { key: 'cancelled', label: 'Cancelled', icon: 'close-circle-outline', count: filterCounts.cancelled },
+    { key: 'unpaid', label: 'Unpaid', icon: 'wallet-outline', count: filterCounts.unpaid },
   ], [filterCounts]);
 
   const getStatusColor = useCallback((status: BookingStatus) => {
@@ -204,7 +217,7 @@ const AllBookingsScreen: React.FC = () => {
         styles.filterButton,
         statusFilter === filter.key && styles.filterButtonActive
       ]}
-      onPress={() => setStatusFilter(filter.key as BookingStatus | 'all')}
+      onPress={() => setStatusFilter(filter.key as BookingStatus | 'all' | 'unpaid')}
     >
       <Ionicons 
         name={filter.icon as any} 

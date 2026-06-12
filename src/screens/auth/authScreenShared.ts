@@ -8,7 +8,7 @@ export const ROLE_LOGIN_COPY: Record<
 > = {
   admin: {
     title: 'Admin Sign In',
-    subtitle: 'Manage platform operations',
+    subtitle: 'Manage bookings and drivers. Active subscription or free trial required.',
     button: 'Sign in to admin account',
   },
   driver: {

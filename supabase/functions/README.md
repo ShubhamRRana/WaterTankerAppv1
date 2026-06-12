@@ -14,6 +14,10 @@
 
 Set secrets: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`.
 
+**Razorpay Dashboard webhook:** Point to  
+`https://<project-ref>.supabase.co/functions/v1/razorpay-webhook`  
+Enable events: `payment.captured`, `payment.failed`, `account.activated`, `account.updated`.
+
 ## send-email (Auth Hook + Resend)
 
 Sends **all** Supabase Auth emails (signup, recovery, magic link, email change, notifications) via [Resend](https://resend.com) when the **Send Email** hook is enabled in the dashboard.

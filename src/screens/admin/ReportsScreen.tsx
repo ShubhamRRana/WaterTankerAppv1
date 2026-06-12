@@ -65,6 +65,30 @@ const ReportsScreen: React.FC = () => {
   const totalOrders = monthlyData.totalOrders;
   const dailyBreakdown = calculateDailyBreakdown(bookings, selectedYear, selectedMonth);
 
+  const paymentMetrics = useMemo(() => {
+    const monthBookings = bookings.filter((b) => {
+      const d = b.deliveredAt ?? b.updatedAt;
+      return (
+        d.getFullYear() === selectedYear &&
+        d.getMonth() === selectedMonth &&
+        b.status === 'delivered'
+      );
+    });
+    const razorpayCollected = monthBookings
+      .filter(
+        (b) =>
+          b.paymentStatus === 'completed' &&
+          b.paymentId &&
+          !b.paymentId.startsWith('cash_') &&
+          !b.paymentId.startsWith('cod_')
+      )
+      .reduce((sum, b) => sum + (b.deliveredAmount ?? b.totalPrice), 0);
+    const pendingCollections = monthBookings
+      .filter((b) => b.paymentStatus !== 'completed')
+      .reduce((sum, b) => sum + (b.deliveredAmount ?? b.totalPrice), 0);
+    return { razorpayCollected, pendingCollections };
+  }, [bookings, selectedYear, selectedMonth]);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -177,6 +201,30 @@ const ReportsScreen: React.FC = () => {
               </View>
               <Typography variant="body" style={styles.summaryLabel}>
                 Total Orders
+              </Typography>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.summarySection}>
+          <Typography variant="h2" style={styles.summaryTitle}>
+            Delivery payments (Razorpay)
+          </Typography>
+          <View style={styles.summaryMetrics}>
+            <View style={styles.summaryMetric}>
+              <Typography variant="h1" style={styles.summaryValue}>
+                {PricingUtils.formatPrice(paymentMetrics.razorpayCollected)}
+              </Typography>
+              <Typography variant="body" style={styles.summaryLabel}>
+                Collected online
+              </Typography>
+            </View>
+            <View style={styles.summaryMetric}>
+              <Typography variant="h1" style={styles.summaryValue}>
+                {PricingUtils.formatPrice(paymentMetrics.pendingCollections)}
+              </Typography>
+              <Typography variant="body" style={styles.summaryLabel}>
+                Pending collections
               </Typography>
             </View>
           </View>

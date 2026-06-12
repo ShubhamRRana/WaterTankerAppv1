@@ -172,12 +172,38 @@ export class PaymentService {
       const booking = await dataAccess.bookings.getBookingById(bookingId);
       if (!booking) return { success: false, error: 'Booking not found' };
       const paymentId = `cash_${bookingId}_${Date.now()}_${generateShortId()}`;
+      const amount = booking.deliveredAmount ?? booking.totalPrice;
+      const agencyId = booking.agencyId;
+      const { data: authData } = await supabase.auth.getUser();
+      const driverId = authData.user?.id;
+
       await dataAccess.bookings.updateBooking(bookingId, {
         paymentStatus: 'completed',
         paymentId,
         status: 'delivered',
         deliveredAt: new Date(),
       });
+
+      if (driverId && agencyId) {
+        await supabase.from('payment_transactions').insert({
+          user_id: driverId,
+          amount,
+          currency: 'INR',
+          payment_gateway: 'cash',
+          gateway_transaction_id: paymentId,
+          status: 'success',
+          payment_method: 'cash',
+          metadata: {
+            flow: 'driver_delivery',
+            booking_id: bookingId,
+            agency_id: agencyId,
+            note: note ?? 'driver_cash',
+          },
+          initiated_at: new Date().toISOString(),
+          completed_at: new Date().toISOString(),
+        });
+      }
+
       return { success: true, paymentId };
     } catch (error) {
       handleError(error, { context: { operation: 'recordCashPayment', bookingId, note } });

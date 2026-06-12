@@ -30,6 +30,8 @@ const SubscriptionStatusScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   const sub = currentSubscription;
+  const onTrial = SubscriptionService.isOnTrial(sub);
+  const trialDays = SubscriptionService.getTrialDaysRemaining(sub);
   const endLabel = sub?.endDate ? sub.endDate.toLocaleDateString() : '—';
 
   return (
@@ -37,18 +39,30 @@ const SubscriptionStatusScreen: React.FC<Props> = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.scroll}>
         <Card style={styles.card}>
           <Typography variant="h2">Subscription</Typography>
-          <Typography variant="body">Status: {sub?.status ?? 'none'}</Typography>
+          <Typography variant="body">
+            Status: {onTrial ? 'Free trial' : (sub?.status ?? 'none')}
+          </Typography>
+          {onTrial ? (
+            <Typography variant="body">
+              Trial: {trialDays ?? 0} day{trialDays === 1 ? '' : 's'} remaining
+            </Typography>
+          ) : null}
           <Typography variant="body">Valid until: {endLabel}</Typography>
-          <Button title="Renew / change plan" onPress={() => navigation.navigate('SubscriptionPlans')} />
+          <Button
+            title={onTrial ? 'Subscribe now' : 'Renew / change plan'}
+            onPress={() => navigation.navigate('SubscriptionPlans')}
+          />
           <Button
             title="Payment history"
             variant="outline"
             onPress={() => navigation.navigate('SubscriptionPaymentHistory')}
           />
         </Card>
-        {SubscriptionService.isExpiringSoon(sub?.endDate ?? null) ? (
+        {SubscriptionService.isExpiringSoon(sub?.endDate ?? null, undefined, sub) ? (
           <Typography variant="caption" style={{ opacity: 0.8 }}>
-            Your subscription expires soon. Renew to avoid service interruption.
+            {onTrial
+              ? 'Your trial ends soon. Subscribe to avoid losing access.'
+              : 'Your subscription expires soon. Renew to avoid service interruption.'}
           </Typography>
         ) : null}
       </ScrollView>

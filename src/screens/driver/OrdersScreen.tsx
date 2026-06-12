@@ -13,6 +13,7 @@ import { getErrorMessage } from '../../utils/errors';
 import { bookingMatchesDriverAgency } from '../../utils/driverAgencyScope';
 import { ERROR_MESSAGES } from '../../constants/config';
 import OrdersHeader from '../../components/driver/OrdersHeader';
+import DriverAgencyInactiveBanner from '../../components/driver/DriverAgencyInactiveBanner';
 import OrdersFilter, { OrderTab } from '../../components/driver/OrdersFilter';
 import OrdersList from '../../components/driver/OrdersList';
 import { AppPalette } from '../../theme/palettes';
@@ -382,6 +383,7 @@ const OrdersScreen: React.FC = () => {
           driverName={driverDisplayName} 
           onLogout={handleLogout}
         />
+        <DriverAgencyInactiveBanner />
         
         <OrdersFilter 
           activeTab={activeTab} 

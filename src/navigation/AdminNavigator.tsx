@@ -20,6 +20,7 @@ import DeliveryPaymentHistoryScreen from '../screens/admin/payments/DeliveryPaym
 import PaymentResultScreen from '../screens/shared/PaymentResultScreen';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import AdminSubscriptionGate from '../components/admin/AdminSubscriptionGate';
+import AdminPayoutBanner from '../components/admin/AdminPayoutBanner';
 import type { PaymentResultScreenParams } from '../types/razorpay.types';
 
 export type AdminStackParamList = {
@@ -53,6 +54,7 @@ const AdminNavigator: React.FC = () => {
   return (
     <ErrorBoundary resetKeys={['Admin']}>
       <AdminSubscriptionGate>
+      <AdminPayoutBanner />
       <Stack.Navigator
         screenOptions={{
           headerShown: false,

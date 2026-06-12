@@ -115,6 +115,60 @@ export async function createLinkedAccount(
   return data as Record<string, unknown>;
 }
 
+export async function addLinkedAccountBankAccount(
+  accountId: string,
+  params: {
+    accountNumber: string;
+    ifsc: string;
+    beneficiaryName: string;
+  }
+): Promise<Record<string, unknown>> {
+  const { keyId, keySecret } = getRazorpayConfig();
+  const res = await fetch(`${RAZORPAY_API_BASE}/accounts/${accountId}/bank_account`, {
+    method: "POST",
+    headers: {
+      Authorization: basicAuthHeader(keyId, keySecret),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      account_number: params.accountNumber,
+      ifsc_code: params.ifsc,
+      beneficiary_name: params.beneficiaryName,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const msg = (data as { error?: { description?: string } })?.error?.description ??
+      "Razorpay bank account submission failed";
+    throw new Error(msg);
+  }
+  return data as Record<string, unknown>;
+}
+
+export async function requestRouteProduct(
+  accountId: string
+): Promise<Record<string, unknown>> {
+  const { keyId, keySecret } = getRazorpayConfig();
+  const res = await fetch(`${RAZORPAY_API_BASE}/accounts/${accountId}/products`, {
+    method: "POST",
+    headers: {
+      Authorization: basicAuthHeader(keyId, keySecret),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      product_name: "route",
+      tnc_accepted: true,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const msg = (data as { error?: { description?: string } })?.error?.description ??
+      "Razorpay Route product request failed";
+    throw new Error(msg);
+  }
+  return data as Record<string, unknown>;
+}
+
 export async function fetchLinkedAccount(
   accountId: string
 ): Promise<Record<string, unknown>> {

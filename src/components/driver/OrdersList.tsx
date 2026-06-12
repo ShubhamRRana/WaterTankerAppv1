@@ -274,13 +274,25 @@ const OrdersList: React.FC<OrdersListProps> = ({
         )}
 
         {activeTab === 'active' && order.status === 'in_transit' && (
-          <Button
-            title="Collect Payment"
-            onPress={() => onCollectPayment(order.id)}
-            loading={isProcessing}
-            disabled={isProcessing}
-            style={[styles.actionButton, styles.completeButton]}
-          />
+          <>
+            <Button
+              title="Collect Payment"
+              onPress={() => onCollectPayment(order.id)}
+              loading={isProcessing}
+              disabled={isProcessing}
+              style={[styles.actionButton, styles.completeButton]}
+            />
+            {order.paymentStatus === 'failed' ? (
+              <Button
+                title="Retry payment"
+                variant="outline"
+                onPress={() => onCollectPayment(order.id)}
+                loading={isProcessing}
+                disabled={isProcessing}
+                style={styles.actionButton}
+              />
+            ) : null}
+          </>
         )}
       </Card>
     );

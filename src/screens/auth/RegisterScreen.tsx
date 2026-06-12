@@ -312,6 +312,11 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.header}>
           <Typography variant="h1" style={styles.title}>Create Account</Typography>
           <Typography variant="body" style={styles.subtitle}>Sign up to get started</Typography>
+          {role === 'admin' ? (
+            <Typography variant="caption" style={[styles.subtitle, { marginTop: 8, opacity: 0.85 }]}>
+              Agency admins get a 1-month free trial. After email verification, sign in to use the app — subscribe before trial ends to keep access.
+            </Typography>
+          ) : null}
         </View>
 
         <View style={styles.form}>

@@ -33,8 +33,12 @@ export function getBookingPaymentChipLabel(chip: BookingPaymentChip): string {
   }
 }
 
-export function canCollectOnlinePayment(booking: Booking): boolean {
+export function canCollectOnlinePayment(
+  booking: Booking,
+  payoutActive = true
+): boolean {
   if (!FEATURE_FLAGS.enableOnlinePayment) return false;
+  if (!payoutActive) return false;
   if (booking.status === 'cancelled' || booking.status === 'delivered') return false;
   const amount = booking.deliveredAmount ?? booking.totalPrice;
   if (amount <= 0) return false;

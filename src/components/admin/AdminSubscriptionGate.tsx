@@ -28,6 +28,7 @@ const AdminSubscriptionGate: React.FC<Props> = ({ children }) => {
 
     void (async () => {
       try {
+        await SubscriptionService.ensureAgencyTrial(user.id);
         const hasActive = await SubscriptionService.hasActiveSubscription(user.id);
         if (!hasActive) {
           navigation.reset({

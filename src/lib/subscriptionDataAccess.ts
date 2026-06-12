@@ -154,6 +154,14 @@ export const subscriptionDataAccess = {
     return Boolean(data);
   },
 
+  async provisionAgencyTrial(userId: string): Promise<string | null> {
+    const { data, error } = await supabase.rpc('provision_agency_trial', {
+      p_user_id: userId,
+    });
+    if (error) throw error;
+    return data != null ? String(data) : null;
+  },
+
   async createSubscription(data: CreateSubscriptionData): Promise<UserSubscription> {
     const { data: row, error } = await supabase
       .from('subscriptions')

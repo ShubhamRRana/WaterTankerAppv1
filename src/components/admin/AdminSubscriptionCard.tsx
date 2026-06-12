@@ -18,27 +18,46 @@ const AdminSubscriptionCard: React.FC<Props> = ({ userId, navigation }) => {
     void refresh(userId);
   }, [userId, refresh]);
 
-  const expiring = SubscriptionService.isExpiringSoon(currentSubscription?.endDate ?? null);
+  const trialDays = SubscriptionService.getTrialDaysRemaining(currentSubscription);
+  const onTrial = SubscriptionService.isOnTrial(currentSubscription);
+  const expiring = SubscriptionService.isExpiringSoon(
+    currentSubscription?.endDate ?? null,
+    undefined,
+    currentSubscription
+  );
 
   return (
     <Card style={styles.card}>
       <Typography variant="h3">Agency subscription</Typography>
       <Typography variant="body">
-        {hasActive ? 'Active' : 'Inactive or expired'}
-        {currentSubscription?.endDate
+        {onTrial
+          ? `Free trial — ${trialDays ?? 0} day${trialDays === 1 ? '' : 's'} left`
+          : hasActive
+            ? 'Active'
+            : 'Inactive or expired'}
+        {!onTrial && currentSubscription?.endDate
           ? ` — until ${currentSubscription.endDate.toLocaleDateString()}`
-          : ''}
+          : onTrial && currentSubscription?.trialEndDate
+            ? ` (ends ${currentSubscription.trialEndDate.toLocaleDateString()})`
+            : ''}
       </Typography>
+      {onTrial ? (
+        <Typography variant="caption" style={{ opacity: 0.7 }}>
+          Subscribe before trial ends to keep full access after your first month.
+        </Typography>
+      ) : null}
       {expiring ? (
         <Typography variant="caption" style={{ opacity: 0.7 }}>
-          Expires soon — renew to keep drivers and bookings active.
+          {onTrial
+            ? 'Trial ending soon — choose a plan to continue.'
+            : 'Expires soon — renew to keep drivers and bookings active.'}
         </Typography>
       ) : null}
       <View style={styles.row}>
         <Button
-          title={hasActive ? 'Manage' : 'Subscribe'}
+          title={onTrial || !hasActive ? 'Subscribe' : 'Manage'}
           onPress={() =>
-            navigation.navigate(hasActive ? 'SubscriptionStatus' : 'SubscriptionPlans')
+            navigation.navigate(onTrial || !hasActive ? 'SubscriptionPlans' : 'SubscriptionStatus')
           }
         />
         <Button
