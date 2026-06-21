@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ const AdminPayoutBanner: React.FC = () => {
   const { user } = useAuthStore();
   const navigation = useNavigation<Nav>();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -37,7 +39,10 @@ const AdminPayoutBanner: React.FC = () => {
 
   return (
     <TouchableOpacity
-      style={[styles.banner, { backgroundColor: colors.warning + '22', borderColor: colors.warning }]}
+      style={[
+        styles.banner,
+        { backgroundColor: colors.warning + '22', borderColor: colors.warning, marginTop: insets.top + 8 },
+      ]}
       onPress={() => navigation.navigate('RazorpayAccountSetup')}
       activeOpacity={0.85}
     >
@@ -56,7 +61,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginHorizontal: 16,
-    marginTop: 8,
     padding: 12,
     borderRadius: 10,
     borderWidth: 1,

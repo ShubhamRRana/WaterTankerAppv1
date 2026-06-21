@@ -1,12 +1,14 @@
-import React, { useEffect, useMemo } from 'react';
-import { StyleSheet, ScrollView, Alert } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { Typography, Button, Card, LoadingSpinner } from '../../../components/common';
+import { Typography, Button, Card, LoadingSpinner, AdminMenuDrawer } from '../../../components/common';
+import type { AdminRoute } from '../../../components/common/AdminMenuDrawer';
 import { useAuthStore } from '../../../store/authStore';
 import { useSubscriptionStore } from '../../../store/subscriptionStore';
 import { SubscriptionService } from '../../../services/subscription.service';
-import { FEATURE_FLAGS } from '../../../constants/config';
+import { FEATURE_FLAGS, UI_CONFIG } from '../../../constants/config';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { AdminStackParamList } from '../../../navigation/AdminNavigator';
 import type { SubscriptionPlan } from '../../../types/subscription.types';
@@ -18,15 +20,29 @@ interface Props {
 }
 
 const SubscriptionPlansScreen: React.FC<Props> = ({ navigation }) => {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { plans, loading, loadPlans, currentSubscription, refresh } = useSubscriptionStore();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     void loadPlans();
     if (user?.id) void refresh(user.id);
   }, [user?.id]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      Alert.alert('Error', 'Failed to logout. Please try again.');
+    }
+  };
+
+  const handleMenuNavigate = (route: AdminRoute) => {
+    if (route === 'SubscriptionPlans') return;
+    navigation.navigate(route);
+  };
 
   const handleSelect = async (plan: SubscriptionPlan) => {
     if (!user?.id) return;
@@ -52,8 +68,23 @@ const SubscriptionPlansScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => setMenuVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="menu" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <View style={styles.headerTextContainer}>
+            <Typography variant="h2" style={styles.title}>
+              Agency subscription
+            </Typography>
+          </View>
+        </View>
+      </View>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Typography variant="h1">Agency subscription</Typography>
         <Typography variant="body" style={[styles.subtitle, { opacity: 0.8 }]}>
           Choose a plan to activate your agency account on the platform.
         </Typography>
@@ -77,13 +108,41 @@ const SubscriptionPlansScreen: React.FC<Props> = ({ navigation }) => {
           </Card>
         ))}
       </ScrollView>
+      <AdminMenuDrawer
+        visible={menuVisible}
+        onClose={() => setMenuVisible(false)}
+        onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
+        currentRoute="SubscriptionPlans"
+      />
     </SafeAreaView>
   );
 };
 
-function createStyles(colors: { background: string }) {
+function createStyles(colors: { background: string; surface: string; border: string }) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
+    header: {
+      paddingHorizontal: UI_CONFIG.spacing.lg,
+      paddingVertical: UI_CONFIG.spacing.md,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    menuButton: {
+      padding: 8,
+      marginRight: 12,
+    },
+    headerTextContainer: {
+      flex: 1,
+    },
+    title: {
+      marginBottom: 0,
+    },
     scroll: { padding: 16, gap: 12 },
     subtitle: { marginBottom: 8 },
     card: { padding: 16, gap: 8 },

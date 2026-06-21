@@ -54,12 +54,14 @@ const AdminNavigator: React.FC = () => {
   return (
     <ErrorBoundary resetKeys={['Admin']}>
       <AdminSubscriptionGate>
+        {(initialRouteName) => (
+          <>
       <AdminPayoutBanner />
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
         }}
-        initialRouteName="Bookings"
+        initialRouteName={initialRouteName}
       >
         <Stack.Screen name="Bookings" component={AllBookingsScreen} />
         <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
@@ -80,6 +82,8 @@ const AdminNavigator: React.FC = () => {
         <Stack.Screen name="DeliveryPaymentHistory" component={DeliveryPaymentHistoryScreen} />
         <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
       </Stack.Navigator>
+          </>
+        )}
       </AdminSubscriptionGate>
     </ErrorBoundary>
   );
