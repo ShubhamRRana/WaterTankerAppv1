@@ -66,7 +66,9 @@ npx supabase secrets set --env-file supabase/functions/.env
 | `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `SEND_EMAIL_HOOK_SECRET` | `send-email` |
 | `AUTH_REDIRECT_URL` (optional) | `send-email` — confirmation link base URL |
 
-`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically in the Edge runtime.
+`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEYS`, and `SUPABASE_SECRET_KEYS` are injected automatically in the hosted Edge runtime (legacy `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` remain available during migration). Shared helpers in `_shared/supabase.ts` read the new JSON key env vars with legacy fallback.
+
+For local `supabase functions serve`, you may set `SUPABASE_PUBLISHABLE_KEYS` and `SUPABASE_SECRET_KEYS` in `supabase/functions/.env` — see `.env.example`.
 
 ---
 

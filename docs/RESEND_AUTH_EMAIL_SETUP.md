@@ -39,7 +39,7 @@ npx supabase secrets set --env-file supabase/functions/.env
 | `RESEND_FROM_EMAIL` | Verified sender |
 | `AUTH_REDIRECT_URL` | Optional default redirect after verify |
 
-`SUPABASE_URL` is provided automatically in Edge Functions.
+`SUPABASE_URL` is provided automatically in Edge Functions. API keys are available as `SUPABASE_PUBLISHABLE_KEYS` and `SUPABASE_SECRET_KEYS` (JSON dictionaries); legacy `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` remain during migration.
 
 ## 3. Deploy `send-email`
 

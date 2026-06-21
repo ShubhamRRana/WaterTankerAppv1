@@ -31,7 +31,7 @@ jest.mock('@expo/vector-icons', () => {
 });
 
 process.env.EXPO_PUBLIC_SUPABASE_URL ||= 'http://localhost:54321';
-process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ||= 'test-anon-key';
+process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||= 'test-publishable-key';
 
 // Mock expo-constants to avoid ESM parsing in Jest.
 jest.mock('expo-constants', () => ({

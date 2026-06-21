@@ -503,9 +503,9 @@ npm install
 Copy `.env.example` to `.env` in the project root and fill in values:
 
 ```env
-# Supabase (Dashboard → Settings → API)
+# Supabase (Dashboard → Settings → API → Publishable and secret API keys)
 EXPO_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_your_key_here
 
 # Razorpay publishable Key ID only — never put Key Secret in the app
 EXPO_PUBLIC_RAZORPAY_KEY_ID=rzp_test_your_key_id_here
@@ -517,10 +517,12 @@ EXPO_PUBLIC_AUTH_REDIRECT_URL=https://yourdomain.com/auth/confirmed
 EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL=https://tankerhub.in/auth/reset-password
 
 # Server-side only (migration/scripts — never ship to client)
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+SUPABASE_SECRET_KEY=sb_secret_your_key_here
 ```
 
 Edge Function secrets (Razorpay Key Secret, webhook secret, Resend) belong in `supabase/functions/.env` — see [Edge Functions](#edge-functions).
+
+**Supabase API keys migration:** In Dashboard → Settings → API → **Publishable and secret API keys**, create keys if needed (`sb_publishable_...` / `sb_secret_...`). Update `.env`, `eas.json`, and EAS secrets with the publishable key. Edge Functions on hosted Supabase receive `SUPABASE_PUBLISHABLE_KEYS` and `SUPABASE_SECRET_KEYS` automatically. After verifying all flows, deactivate legacy `anon` / `service_role` keys. See [Supabase migration guide](https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys).
 
 ### 4. Supabase Database Setup
 
@@ -829,7 +831,7 @@ See [supabase/functions/README.md](supabase/functions/README.md) for deploy comm
 **Problem**: Login fails or user not found
 
 **Solutions**:
-- Verify `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `.env`
+- Verify `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env` (or legacy `EXPO_PUBLIC_SUPABASE_ANON_KEY` during migration)
 - Ensure Email provider is enabled in Supabase Auth settings
 - Auth confirmation emails are sent via Resend (Send Email hook). See [docs/RESEND_AUTH_EMAIL_SETUP.md](docs/RESEND_AUTH_EMAIL_SETUP.md) if emails are missing or links fail
 - Optional: set `EXPO_PUBLIC_AUTH_REDIRECT_URL` and add it to Supabase Redirect URLs

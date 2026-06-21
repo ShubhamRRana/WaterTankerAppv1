@@ -9,7 +9,7 @@
  */
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getServiceClient } from "../_shared/supabase.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -37,13 +37,10 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "Missing or invalid Authorization header" }, 401);
   }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  if (!supabaseUrl || !supabaseServiceKey) {
+  const supabase = getServiceClient();
+  if (!Deno.env.get("SUPABASE_URL")) {
     return jsonResponse({ error: "Server configuration error" }, 500);
   }
-
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
     const token = authHeader.replace("Bearer ", "");
