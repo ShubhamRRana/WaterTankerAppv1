@@ -3,6 +3,7 @@ import {
   completeBookingPayment,
   failBookingPayment,
   failPaymentTransaction,
+  recordDeliveryTransfer,
   updateAgencyRazorpayAccountStatus,
 } from "../_shared/activation.ts";
 import { errorResponse, handleCors, jsonResponse } from "../_shared/http.ts";
@@ -25,6 +26,14 @@ interface RazorpayWebhookPayload {
     account?: {
       entity?: {
         id?: string;
+        status?: string;
+        notes?: Record<string, string>;
+      };
+    };
+    transfer?: {
+      entity?: {
+        id?: string;
+        source?: string;
         status?: string;
         notes?: Record<string, string>;
       };
@@ -89,6 +98,25 @@ Deno.serve(async (req: Request) => {
           mapAccountStatus(account.status),
           account.id
         );
+      }
+      return jsonResponse({ received: true });
+    }
+
+    if (event === "transfer.processed" || event === "transfer.failed") {
+      const transfer = payload.payload?.transfer?.entity;
+      if (transfer?.id) {
+        const transferStatus = event === "transfer.processed"
+          ? "processed"
+          : transfer.status ?? "failed";
+        const notes = transfer.notes ?? {};
+        const orderId = notes.order_id ?? null;
+        await recordDeliveryTransfer({
+          transferId: transfer.id,
+          paymentId: transfer.source ?? null,
+          orderId: typeof orderId === "string" ? orderId : null,
+          status: transferStatus,
+          settledAt: event === "transfer.processed" ? new Date().toISOString() : null,
+        });
       }
       return jsonResponse({ received: true });
     }

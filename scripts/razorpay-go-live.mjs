@@ -24,6 +24,10 @@ const WEBHOOK_URL =
 const WEBHOOK_EVENTS = {
   'payment.captured': true,
   'payment.failed': true,
+  'account.activated': true,
+  'account.updated': true,
+  'transfer.processed': true,
+  'transfer.failed': true,
 };
 
 function loadEnvFile(path) {
@@ -75,10 +79,31 @@ async function ensureWebhook(keyId, keySecret) {
   const existing = items.find((w) => w.url === WEBHOOK_URL && w.active !== false);
   if (existing) {
     console.log(`Webhook already exists (id=${existing.id}).`);
+    const currentEvents = existing.events ?? {};
+    const needsUpdate = Object.keys(WEBHOOK_EVENTS).some((event) => !currentEvents[event]);
+    if (needsUpdate) {
+      try {
+        await razorpayFetch(keyId, keySecret, `/webhooks/${existing.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            url: WEBHOOK_URL,
+            active: true,
+            events: { ...currentEvents, ...WEBHOOK_EVENTS },
+          }),
+        });
+        console.log('Updated webhook events for Route account activation and transfer settlement.');
+      } catch (patchError) {
+        console.warn(
+          'Could not auto-update webhook events via API. Add these in Razorpay Dashboard → Webhooks → Edit:',
+          Object.keys(WEBHOOK_EVENTS).join(', ')
+        );
+        console.warn(patchError.message ?? patchError);
+      }
+    }
     console.log(
       'If you need a new secret, regenerate it in Razorpay Dashboard and set RAZORPAY_WEBHOOK_SECRET in supabase/functions/.env before re-running.'
     );
-    return process.env.RAZORPAY_WEBHOOK_SECRET ?? null;
+    return existing.secret ?? null;
   }
 
   const created = await razorpayFetch(keyId, keySecret, '/webhooks', {
@@ -168,9 +193,10 @@ async function main() {
   console.log('Verifying Razorpay Live credentials…');
   await razorpayFetch(keyId, keySecret, '/orders?count=1');
 
-  if (!webhookSecret) {
-    console.log('Creating or locating Live webhook…');
-    webhookSecret = await ensureWebhook(keyId, keySecret);
+  console.log('Ensuring Live webhook and Route events…');
+  const ensuredWebhookSecret = await ensureWebhook(keyId, keySecret);
+  if (!webhookSecret && ensuredWebhookSecret) {
+    webhookSecret = ensuredWebhookSecret;
   }
 
   if (!webhookSecret) {

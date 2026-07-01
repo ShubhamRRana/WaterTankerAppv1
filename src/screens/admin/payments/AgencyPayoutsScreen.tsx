@@ -38,8 +38,12 @@ const AgencyPayoutsScreen: React.FC = () => {
         </View>
         <View style={styles.row}>
           <Card style={styles.stat}><Typography variant="caption">This month</Typography><Typography variant="h3">₹{summary?.month ?? 0}</Typography></Card>
-          <Card style={styles.stat}><Typography variant="caption">Pending</Typography><Typography variant="h3">₹{summary?.pending ?? 0}</Typography></Card>
+          <Card style={styles.stat}><Typography variant="caption">Pending payment</Typography><Typography variant="h3">₹{summary?.pending ?? 0}</Typography></Card>
         </View>
+        <Card style={styles.statFull}>
+          <Typography variant="caption">Awaiting Razorpay settlement</Typography>
+          <Typography variant="h3">₹{summary?.pendingSettlement ?? 0}</Typography>
+        </Card>
         <Typography variant="caption" style={{ opacity: 0.8 }}>
           Online delivery payments may settle in 2–3 business days per Razorpay.
         </Typography>
@@ -54,6 +58,7 @@ function createStyles(colors: { background: string }) {
     scroll: { padding: 16, gap: 12 },
     row: { flexDirection: 'row', gap: 8 },
     stat: { flex: 1, padding: 12 },
+    statFull: { padding: 12 },
   });
 }
 

@@ -255,6 +255,71 @@ export async function failBookingPayment(
     .neq("payment_status", "completed");
 }
 
+export interface RecordTransferParams {
+  transferId: string;
+  paymentId?: string | null;
+  orderId?: string | null;
+  status: string;
+  settledAt?: string | null;
+}
+
+export async function recordDeliveryTransfer(
+  params: RecordTransferParams
+): Promise<{ updated: boolean }> {
+  const admin = getServiceClient();
+  const now = new Date().toISOString();
+
+  let query = admin
+    .from("payment_transactions")
+    .select("id, metadata, gateway_order_id, gateway_transaction_id");
+
+  if (params.paymentId) {
+    query = query.eq("gateway_transaction_id", params.paymentId);
+  } else if (params.orderId) {
+    query = query.eq("gateway_order_id", params.orderId);
+  } else {
+    return { updated: false };
+  }
+
+  const { data: tx, error } = await query.maybeSingle();
+  if (error || !tx) {
+    return { updated: false };
+  }
+
+  const existingMeta = (tx.metadata as Record<string, unknown> | null) ?? {};
+  const flow = existingMeta.flow;
+  if (flow !== "driver_delivery" && flow !== "customer_booking") {
+    return { updated: false };
+  }
+
+  const existingTransferId = existingMeta.transfer_id;
+  if (
+    existingTransferId === params.transferId &&
+    existingMeta.transfer_status === params.status
+  ) {
+    return { updated: false };
+  }
+
+  const metadata: Record<string, unknown> = {
+    ...existingMeta,
+    transfer_id: params.transferId,
+    transfer_status: params.status,
+  };
+  if (params.settledAt) {
+    metadata.transfer_settled_at = params.settledAt;
+  }
+
+  await admin
+    .from("payment_transactions")
+    .update({
+      metadata,
+      updated_at: now,
+    })
+    .eq("id", tx.id);
+
+  return { updated: true };
+}
+
 export async function updateAgencyRazorpayAccountStatus(
   agencyId: string,
   status: string,

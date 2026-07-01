@@ -1,11 +1,43 @@
 import { assertAdminUser } from "../_shared/activation.ts";
 import { errorResponse, handleCors, jsonResponse } from "../_shared/http.ts";
 import {
-  addLinkedAccountBankAccount,
-  createLinkedAccount,
+  createLinkedAccountStakeholder,
+  createOrReuseLinkedAccount,
+  isStakeholderAlreadyExistsError,
+  mapRazorpayRouteError,
   requestRouteProduct,
+  updateRouteProductSettlement,
 } from "../_shared/razorpay.ts";
 import { getServiceClient, getUserFromRequest } from "../_shared/supabase.ts";
+
+function normalizePhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 10) return digits;
+  if (digits.length === 12 && digits.startsWith("91")) return digits.slice(2);
+  return digits;
+}
+
+/** Razorpay reference_id max 20 chars; suffix must not be truncated off the end. */
+function routeReferenceId(agencyId: string, suffix = ""): string {
+  const base = agencyId.replace(/-/g, "");
+  if (!suffix) return base.slice(0, 20);
+  const maxBaseLen = Math.max(1, 20 - suffix.length);
+  return `${base.slice(0, maxBaseLen)}${suffix}`;
+}
+
+async function persistLinkedAccountProgress(
+  admin: ReturnType<typeof getServiceClient>,
+  agencyId: string,
+  existingId: string | undefined,
+  row: Record<string, unknown>
+): Promise<void> {
+  const payload = { ...row, updated_at: new Date().toISOString() };
+  if (existingId) {
+    await admin.from("agency_razorpay_accounts").update(payload).eq("id", existingId);
+    return;
+  }
+  await admin.from("agency_razorpay_accounts").insert(payload);
+}
 
 Deno.serve(async (req: Request) => {
   const cors = handleCors(req);
@@ -31,19 +63,57 @@ Deno.serve(async (req: Request) => {
       ? body.contactEmail.trim()
       : "";
     const contactPhone = typeof body.contactPhone === "string"
-      ? body.contactPhone.trim()
+      ? normalizePhone(body.contactPhone.trim())
       : "";
     const contactName = typeof body.contactName === "string"
       ? body.contactName.trim()
       : "";
-    const pan = typeof body.pan === "string" ? body.pan.trim() : "";
+    const pan = typeof body.pan === "string" ? body.pan.trim().toUpperCase() : "";
     const bankAccountNumber = typeof body.bankAccountNumber === "string"
       ? body.bankAccountNumber.trim()
       : "";
-    const bankIfsc = typeof body.bankIfsc === "string" ? body.bankIfsc.trim() : "";
+    const bankIfsc = typeof body.bankIfsc === "string"
+      ? body.bankIfsc.trim().toUpperCase()
+      : "";
+    const registeredStreet = typeof body.registeredStreet === "string"
+      ? body.registeredStreet.trim()
+      : "";
+    const registeredStreet2 = typeof body.registeredStreet2 === "string"
+      ? body.registeredStreet2.trim()
+      : "";
+    const registeredCity = typeof body.registeredCity === "string"
+      ? body.registeredCity.trim()
+      : "";
+    const registeredState = typeof body.registeredState === "string"
+      ? body.registeredState.trim()
+      : "";
+    const registeredPostalCode = typeof body.registeredPostalCode === "string"
+      ? body.registeredPostalCode.trim()
+      : "";
 
-    if (!businessName || !contactEmail || !contactPhone) {
-      return errorResponse("businessName, contactEmail, and contactPhone are required", 400);
+    if (!businessName || !contactName || !contactEmail || !contactPhone) {
+      return errorResponse(
+        "businessName, contactName (as on PAN), contactEmail, and contactPhone are required",
+        400
+      );
+    }
+    if (contactPhone.length !== 10) {
+      return errorResponse("contactPhone must be a valid 10-digit Indian mobile number", 400);
+    }
+    if (!pan || !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+      return errorResponse("A valid PAN is required for Razorpay Route KYC", 400);
+    }
+    if (!bankAccountNumber || !bankIfsc) {
+      return errorResponse("Bank account number and IFSC are required", 400);
+    }
+    if (!registeredStreet || !registeredCity || !registeredState || !registeredPostalCode) {
+      return errorResponse(
+        "Registered business address (street, city, state, PIN) is required",
+        400
+      );
+    }
+    if (!/^\d{6}$/.test(registeredPostalCode)) {
+      return errorResponse("registeredPostalCode must be a 6-digit PIN code", 400);
     }
 
     const admin = getServiceClient();
@@ -63,40 +133,91 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const accountPayload = {
-      email: contactEmail,
-      phone: contactPhone,
-      type: "route",
-      legal_business_name: businessName,
-      business_type: "individual",
-      contact_name: contactName || businessName,
-      notes: { agency_id: agencyId },
-    };
+    // Reuse an in-progress linked account so retries continue stakeholder/KYC steps
+    // instead of failing with "merchant email already exists".
+    let accountId = existing?.status === "rejected"
+      ? ""
+      : (existing?.razorpay_account_id ?? "");
+    let rzStatus = existing?.status ?? "created";
+    const referenceId = routeReferenceId(
+      agencyId,
+      accountId ? "" : String(Date.now()).slice(-8)
+    );
 
-    const rzAccount = await createLinkedAccount(accountPayload);
-    const accountId = String(rzAccount.id ?? "");
-    let rzStatus = mapRazorpayStatus(String(rzAccount.status ?? "created"));
+    if (!accountId) {
+      const rzAccount = await createOrReuseLinkedAccount({
+        email: contactEmail,
+        phone: contactPhone,
+        legalBusinessName: businessName,
+        contactName,
+        referenceId,
+        pan,
+        registeredStreet,
+        registeredStreet2: registeredStreet2 || undefined,
+        registeredCity,
+        registeredState,
+        registeredPostalCode,
+        notes: { agency_id: agencyId },
+      });
+      accountId = String(rzAccount.id ?? "");
+      rzStatus = mapRazorpayStatus(String(rzAccount.status ?? "created"));
+
+      await persistLinkedAccountProgress(admin, agencyId, existing?.id, {
+        agency_id: agencyId,
+        razorpay_account_id: accountId || null,
+        status: rzStatus,
+        business_name: businessName,
+        contact_name: contactName,
+        contact_email: contactEmail,
+        contact_phone: contactPhone,
+        pan: pan || null,
+        bank_account_number: bankAccountNumber || null,
+        bank_ifsc: bankIfsc || null,
+      });
+    }
+
+    const residentialStreet = registeredStreet2
+      ? `${registeredStreet}, ${registeredStreet2}`
+      : registeredStreet;
 
     if (accountId) {
       try {
-        await requestRouteProduct(accountId);
-      } catch (routeErr) {
-        console.warn("Route product request:", routeErr);
-      }
-
-      if (bankAccountNumber && bankIfsc) {
         try {
-          await addLinkedAccountBankAccount(accountId, {
+          await createLinkedAccountStakeholder({
+            accountId,
+            name: contactName,
+            email: contactEmail,
+            phone: contactPhone,
+            pan,
+            street: residentialStreet,
+            city: registeredCity,
+            state: registeredState,
+            postalCode: registeredPostalCode,
+          });
+        } catch (stakeholderErr) {
+          const stakeholderMessage = stakeholderErr instanceof Error
+            ? stakeholderErr.message
+            : "";
+          if (!isStakeholderAlreadyExistsError(stakeholderMessage)) {
+            throw stakeholderErr;
+          }
+        }
+
+        const product = await requestRouteProduct(accountId);
+        const productId = String(product.id ?? "");
+        if (productId) {
+          await updateRouteProductSettlement(accountId, productId, {
             accountNumber: bankAccountNumber,
             ifsc: bankIfsc,
-            beneficiaryName: contactName || businessName,
+            beneficiaryName: contactName,
           });
           if (rzStatus === "created") {
             rzStatus = "under_review";
           }
-        } catch (bankErr) {
-          console.warn("Bank account submission:", bankErr);
         }
+      } catch (routeErr) {
+        const message = routeErr instanceof Error ? routeErr.message : "Route setup failed";
+        throw new Error(message);
       }
     }
 
@@ -105,7 +226,7 @@ Deno.serve(async (req: Request) => {
       razorpay_account_id: accountId || null,
       status: rzStatus,
       business_name: businessName,
-      contact_name: contactName || businessName,
+      contact_name: contactName,
       contact_email: contactEmail,
       contact_phone: contactPhone,
       pan: pan || null,
@@ -126,7 +247,9 @@ Deno.serve(async (req: Request) => {
     });
   } catch (e) {
     console.error(e);
-    const message = e instanceof Error ? e.message : "Internal error";
+    const message = e instanceof Error
+      ? mapRazorpayRouteError(e.message)
+      : "Internal error";
     return errorResponse(message, 500);
   }
 });

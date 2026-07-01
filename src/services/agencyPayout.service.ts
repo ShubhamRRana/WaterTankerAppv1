@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 import { subscriptionDataAccess } from '../lib/subscriptionDataAccess';
 import { PaymentService } from './payment.service';
@@ -20,6 +21,30 @@ export interface OnboardingPayload {
   pan?: string;
   bankAccountNumber?: string;
   bankIfsc?: string;
+  registeredStreet?: string;
+  registeredStreet2?: string;
+  registeredCity?: string;
+  registeredState?: string;
+  registeredPostalCode?: string;
+}
+
+async function parseEdgeFunctionError(
+  error: unknown,
+  fallback: string
+): Promise<string> {
+  if (error instanceof FunctionsHttpError) {
+    try {
+      const body = (await error.context.json()) as { error?: string };
+      if (body?.error) return body.error;
+    } catch {
+      // ignore
+    }
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: string }).message;
+    if (message) return message;
+  }
+  return fallback;
 }
 
 export interface PayoutSummary {
@@ -27,6 +52,11 @@ export interface PayoutSummary {
   week: number;
   month: number;
   pending: number;
+  pendingSettlement: number;
+}
+
+function isTransferSettled(metadata: Record<string, unknown>): boolean {
+  return metadata.transfer_status === 'processed';
 }
 
 export class AgencyPayoutService {
@@ -45,9 +75,14 @@ export class AgencyPayoutService {
       body: payload,
     });
     if (error) {
-      throw new Error('Failed to submit Razorpay onboarding');
+      const message = await parseEdgeFunctionError(error, 'Failed to submit Razorpay onboarding');
+      throw new Error(message);
     }
-    return data as LinkedAccountStatus;
+    const body = data as LinkedAccountStatus & { error?: string };
+    if (body?.error) {
+      throw new Error(body.error);
+    }
+    return body as LinkedAccountStatus;
   }
 
   static async refreshStatus(): Promise<LinkedAccountStatus> {
@@ -90,11 +125,16 @@ export class AgencyPayoutService {
       .filter((p) => p.status === 'pending' || p.status === 'processing')
       .reduce((acc, p) => acc + p.amount, 0);
 
+    const pendingSettlement = success
+      .filter((p) => !isTransferSettled(p.metadata))
+      .reduce((acc, p) => acc + p.amount, 0);
+
     return {
       today: sumSince(startOfDay),
       week: sumSince(startOfWeek),
       month: sumSince(startOfMonth),
       pending,
+      pendingSettlement,
     };
   }
 }

@@ -11,6 +11,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const WEBHOOK_URL =
   'https://ajdcmqbljypgvbhkiwvw.supabase.co/functions/v1/razorpay-webhook';
+const REQUIRED_WEBHOOK_EVENTS = [
+  'payment.captured',
+  'payment.failed',
+  'account.activated',
+  'account.updated',
+  'transfer.processed',
+  'transfer.failed',
+];
 
 function loadEnvFile(path) {
   if (!existsSync(path)) return {};
@@ -84,8 +92,13 @@ async function main() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error?.description ?? `HTTP ${res.status}`);
-      const hit = (data.items ?? []).some((w) => w.url === WEBHOOK_URL && w.active !== false);
-      if (!hit) throw new Error(`No active webhook for ${WEBHOOK_URL}`);
+      const webhook = (data.items ?? []).find((w) => w.url === WEBHOOK_URL && w.active !== false);
+      if (!webhook) throw new Error(`No active webhook for ${WEBHOOK_URL}`);
+      const events = webhook.events ?? {};
+      const missing = REQUIRED_WEBHOOK_EVENTS.filter((event) => !events[event]);
+      if (missing.length) {
+        throw new Error(`Webhook missing events: ${missing.join(', ')}. Re-run razorpay-go-live.mjs`);
+      }
     })) && ok;
 
   ok =
@@ -105,7 +118,7 @@ async function main() {
     })) && ok;
 
   {
-    const res = await fetch('https://api.razorpay.com/v1/accounts', {
+    const res = await fetch('https://api.razorpay.com/v2/accounts', {
       method: 'POST',
       headers: {
         Authorization: basicAuth(keyId, keySecret),
@@ -115,9 +128,24 @@ async function main() {
         email: 'route-healthcheck@tankerhub.in',
         phone: '9999999999',
         type: 'route',
+        reference_id: 'healthcheck01',
         legal_business_name: 'Route Healthcheck',
         business_type: 'individual',
         contact_name: 'Healthcheck',
+        profile: {
+          category: 'others',
+          subcategory: 'others',
+          addresses: {
+            registered: {
+              street1: 'Healthcheck Street',
+              street2: 'Healthcheck Area',
+              city: 'Bengaluru',
+              state: 'KARNATAKA',
+              postal_code: '560001',
+              country: 'IN',
+            },
+          },
+        },
       }),
     });
     const data = await res.json().catch(() => ({}));

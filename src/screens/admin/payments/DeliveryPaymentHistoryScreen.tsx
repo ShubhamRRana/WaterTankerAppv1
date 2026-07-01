@@ -46,6 +46,14 @@ const DeliveryPaymentHistoryScreen: React.FC = () => {
             {item.gatewayTransactionId ? (
               <Typography variant="caption">Razorpay: {item.gatewayTransactionId}</Typography>
             ) : null}
+            {typeof item.metadata?.transfer_id === 'string' ? (
+              <Typography variant="caption">
+                Transfer: {item.metadata.transfer_id}
+                {typeof item.metadata.transfer_status === 'string'
+                  ? ` (${item.metadata.transfer_status})`
+                  : ''}
+              </Typography>
+            ) : null}
           </Card>
         )}
       />
