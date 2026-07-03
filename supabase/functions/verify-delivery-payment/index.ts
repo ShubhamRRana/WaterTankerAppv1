@@ -48,9 +48,18 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const flow = (tx?.metadata as Record<string, unknown> | null)?.flow;
+    if (!tx) {
+      return errorResponse("Payment transaction not found", 404);
+    }
+
+    const meta = (tx.metadata as Record<string, unknown> | null) ?? {};
+    const flow = meta.flow;
     if (flow && flow !== "driver_delivery") {
       return errorResponse("Invalid payment flow", 400);
+    }
+
+    if (!meta.booking_id || meta.booking_id !== bookingId) {
+      return errorResponse("Booking mismatch", 400);
     }
 
     const result = await completeBookingPayment({

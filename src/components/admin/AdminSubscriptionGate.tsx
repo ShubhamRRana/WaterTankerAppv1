@@ -34,7 +34,7 @@ const AdminSubscriptionGate: React.FC<Props> = ({ children }) => {
           initialRoute: hasActive ? 'Bookings' : 'SubscriptionPlans',
         });
       } catch {
-        setGate({ status: 'ready', initialRoute: 'Bookings' });
+        setGate({ status: 'ready', initialRoute: 'SubscriptionPlans' });
       }
     })();
   }, [user?.id]);

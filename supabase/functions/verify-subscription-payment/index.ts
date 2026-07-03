@@ -50,8 +50,12 @@ Deno.serve(async (req: Request) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const flow = (tx?.metadata as Record<string, unknown> | null)?.flow;
-    if (flow && flow !== "agency_subscription") {
+    if (!tx) {
+      return errorResponse("Payment transaction not found", 404);
+    }
+
+    const flow = (tx.metadata as Record<string, unknown> | null)?.flow;
+    if (flow && flow !== "agency_subscription" && flow !== "customer_subscription") {
       return errorResponse("Invalid payment flow", 400);
     }
 

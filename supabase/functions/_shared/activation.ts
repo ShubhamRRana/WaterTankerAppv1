@@ -101,18 +101,8 @@ export async function activateSubscriptionPayment(
 
   const now = new Date().toISOString();
 
-  await admin
-    .from("payment_transactions")
-    .update({
-      status: "success",
-      gateway_transaction_id: params.paymentId,
-      payment_method: params.paymentMethod ?? null,
-      bank_name: params.bankName ?? null,
-      completed_at: now,
-      updated_at: now,
-    })
-    .eq("id", tx.id);
-
+  // Validate subscription ownership and plan before touching the payment record.
+  // If either check fails we must not commit the payment as successful.
   const { data: sub, error: subError } = await admin
     .from("subscriptions")
     .select("id, plan_id, user_id")
@@ -133,11 +123,28 @@ export async function activateSubscriptionPayment(
     throw new Error("Plan not found");
   }
 
+  // All validation passed — now commit the payment and activate the subscription.
+  const { error: txUpdateError } = await admin
+    .from("payment_transactions")
+    .update({
+      status: "success",
+      gateway_transaction_id: params.paymentId,
+      payment_method: params.paymentMethod ?? null,
+      bank_name: params.bankName ?? null,
+      completed_at: now,
+      updated_at: now,
+    })
+    .eq("id", tx.id);
+
+  if (txUpdateError) {
+    throw new Error(`Failed to record payment: ${txUpdateError.message}`);
+  }
+
   const startDate = new Date();
   const endDate = new Date(startDate);
   endDate.setMonth(endDate.getMonth() + Number(plan.duration_months));
 
-  await admin
+  const { error: subUpdateError } = await admin
     .from("subscriptions")
     .update({
       status: "active",
@@ -148,6 +155,10 @@ export async function activateSubscriptionPayment(
       updated_at: now,
     })
     .eq("id", params.subscriptionId);
+
+  if (subUpdateError) {
+    throw new Error(`Failed to activate subscription: ${subUpdateError.message}`);
+  }
 
   return { alreadyCompleted: false };
 }
@@ -193,7 +204,14 @@ export async function completeBookingPayment(
     bookingUpdate.delivered_at = now;
   }
 
-  await admin.from("bookings").update(bookingUpdate).eq("id", params.bookingId);
+  const { error: bookingUpdateError } = await admin
+    .from("bookings")
+    .update(bookingUpdate)
+    .eq("id", params.bookingId);
+
+  if (bookingUpdateError) {
+    throw new Error(`Failed to update booking: ${bookingUpdateError.message}`);
+  }
 
   const { data: tx } = await admin
     .from("payment_transactions")
@@ -202,7 +220,7 @@ export async function completeBookingPayment(
     .maybeSingle();
 
   if (tx && tx.status !== "success") {
-    await admin
+    const { error: txUpdateError } = await admin
       .from("payment_transactions")
       .update({
         status: "success",
@@ -213,9 +231,32 @@ export async function completeBookingPayment(
         updated_at: now,
       })
       .eq("id", tx.id);
+
+    if (txUpdateError) {
+      throw new Error(`Failed to record payment transaction: ${txUpdateError.message}`);
+    }
   }
 
   return { alreadyCompleted: false };
+}
+
+export async function failSubscriptionPayment(orderId: string): Promise<void> {
+  const admin = getServiceClient();
+  const now = new Date().toISOString();
+
+  const { data: tx } = await admin
+    .from("payment_transactions")
+    .select("subscription_id")
+    .eq("gateway_order_id", orderId)
+    .maybeSingle();
+
+  if (!tx?.subscription_id) return;
+
+  await admin
+    .from("subscriptions")
+    .update({ status: "failed", updated_at: now })
+    .eq("id", tx.subscription_id)
+    .neq("status", "active");
 }
 
 export async function failPaymentTransaction(

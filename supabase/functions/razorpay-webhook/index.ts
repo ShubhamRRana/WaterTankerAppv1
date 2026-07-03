@@ -3,6 +3,7 @@ import {
   completeBookingPayment,
   failBookingPayment,
   failPaymentTransaction,
+  failSubscriptionPayment,
   recordDeliveryTransfer,
   updateAgencyRazorpayAccountStatus,
 } from "../_shared/activation.ts";
@@ -86,7 +87,12 @@ Deno.serve(async (req: Request) => {
       return errorResponse("Invalid webhook signature", 401);
     }
 
-    const payload = JSON.parse(rawBody) as RazorpayWebhookPayload;
+    let payload: RazorpayWebhookPayload;
+    try {
+      payload = JSON.parse(rawBody) as RazorpayWebhookPayload;
+    } catch {
+      return errorResponse("Invalid JSON body", 400);
+    }
     const event = payload.event ?? "";
 
     if (event === "account.activated" || event === "account.updated") {
@@ -186,6 +192,9 @@ Deno.serve(async (req: Request) => {
         notes.booking_id
       ) {
         await failBookingPayment(notes.booking_id, payment.id);
+      }
+      if (flow === "agency_subscription" || flow === "customer_subscription") {
+        await failSubscriptionPayment(payment.order_id);
       }
     }
 
