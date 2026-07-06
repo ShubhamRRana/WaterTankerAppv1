@@ -70,13 +70,13 @@ INSERT INTO subscription_plans (
   is_active, display_order, account_kind
 )
 SELECT * FROM (VALUES
-  ('Agency Monthly', 'Platform access for agency admins', 1, 999.00, 'INR',
+  ('Agency Monthly', 'Platform access for agency admins', 1, 2799.00, 'INR',
    '["Unlimited bookings","Driver management","Reports"]'::jsonb, true, 10, 'agency'),
-  ('Agency Quarterly', 'Platform access — quarterly billing', 3, 2699.00, 'INR',
+  ('Agency Quarterly', 'Platform access — quarterly billing', 3, 7499.00, 'INR',
    '["Unlimited bookings","Driver management","Reports"]'::jsonb, true, 11, 'agency'),
-  ('Agency Half-Yearly', 'Platform access — 6 months', 6, 4999.00, 'INR',
+  ('Agency Half-Yearly', 'Platform access — 6 months', 6, 13999.00, 'INR',
    '["Unlimited bookings","Driver management","Reports"]'::jsonb, true, 12, 'agency'),
-  ('Agency Yearly', 'Platform access — yearly billing', 12, 8999.00, 'INR',
+  ('Agency Yearly', 'Platform access — yearly billing', 12, 24999.00, 'INR',
    '["Unlimited bookings","Driver management","Reports"]'::jsonb, true, 13, 'agency')
 ) AS v(name, description, duration_months, price, currency, features, is_active, display_order, account_kind)
 WHERE NOT EXISTS (

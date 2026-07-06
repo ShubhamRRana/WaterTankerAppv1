@@ -32,17 +32,15 @@ import { getErrorMessage } from '../../utils/errors';
 
 type DriverManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Drivers'>;
 
-type EnrichedDriver = DriverUser & { totalEarnings: number; completedOrders: number };
-
 const DriverManagementScreen: React.FC = () => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const navigation = useNavigation<DriverManagementScreenNavigationProp>();
   const { users, fetchAllUsers, updateUser, deleteUser, isLoading } = useUserStore();
   const { user: currentUser, logout } = useAuthStore();
-  const { bookings, fetchAllBookings } = useBookingStore();
+  const { fetchAllBookings } = useBookingStore();
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedDriver, setSelectedDriver] = useState<EnrichedDriver | null>(null);
+  const [selectedDriver, setSelectedDriver] = useState<DriverUser | null>(null);
   const [showDriverModal, setShowDriverModal] = useState(false);
   const [showAddDriverModal, setShowAddDriverModal] = useState(false);
   const [editingDriver, setEditingDriver] = useState<DriverUser | null>(null);
@@ -66,48 +64,13 @@ const DriverManagementScreen: React.FC = () => {
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Calculate driver statistics from bookings
-  const calculateDriverStats = useCallback((driverId: string) => {
-    const driverBookings = bookings.filter(
-      booking => booking.driverId === driverId && booking.status === 'delivered'
-    );
-    
-    const totalEarnings = driverBookings.reduce((sum, booking) => sum + (booking.totalPrice || 0), 0);
-    const completedOrders = driverBookings.length;
-    
-    return { totalEarnings, completedOrders };
-  }, [bookings]);
-
-  // Enrich drivers with calculated statistics
-  const drivers = useMemo((): EnrichedDriver[] => {
-    return users
-      .filter((user): user is DriverUser => user.role === 'driver')
-      .map(driver => {
-        const stats = calculateDriverStats(driver.id);
-        return {
-          ...driver,
-          totalEarnings: stats.totalEarnings,
-          completedOrders: stats.completedOrders,
-        };
-      });
-  }, [users, calculateDriverStats]);
+  const drivers = useMemo((): DriverUser[] => {
+    return users.filter((user): user is DriverUser => user.role === 'driver');
+  }, [users]);
 
   useEffect(() => {
     loadDrivers();
   }, []);
-
-  // Update selectedDriver with enriched data when drivers/bookings change
-  useEffect(() => {
-    if (selectedDriver) {
-      const updatedDriver = drivers.find(d => d.id === selectedDriver.id);
-      if (updatedDriver && (
-        updatedDriver.totalEarnings !== selectedDriver.totalEarnings ||
-        updatedDriver.completedOrders !== selectedDriver.completedOrders
-      )) {
-        setSelectedDriver(updatedDriver);
-      }
-    }
-  }, [drivers, bookings, selectedDriver]);
 
   const loadDrivers = async () => {
     try {

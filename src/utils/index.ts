@@ -1,5 +1,11 @@
 // Utils exports
 export { PricingUtils } from './pricing';
+export {
+  getEffectiveMonthlyPrice,
+  getMonthlyPlanPrice,
+  getPlanSavings,
+} from './subscriptionPricing';
+export type { PlanSavings } from './subscriptionPricing';
 export { ValidationUtils } from './validation';
 export { SanitizationUtils } from './sanitization';
 export { errorLogger, ErrorSeverity } from './errorLogger';

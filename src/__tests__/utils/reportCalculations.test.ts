@@ -7,6 +7,7 @@ import {
   calculateDailyBreakdown,
   calculateYearlyData,
   calculateMonthlyBreakdown,
+  calculateDriverMonthlyPerformance,
   MonthlyData,
   DailyBreakdownItem,
   MonthlyBreakdownItem,
@@ -290,6 +291,63 @@ describe('Report Calculations', () => {
         expect(month.revenue).toBe(0);
         expect(month.orders).toBe(0);
       });
+    });
+  });
+
+  describe('calculateDriverMonthlyPerformance', () => {
+    const driverId = 'driver-1';
+
+    const createDriverBooking = (
+      id: string,
+      deliveredAt: Date,
+      status: Booking['status'] = 'delivered',
+      options?: { driverId?: string; totalPrice?: number; deliveredAmount?: number; updatedAt?: Date },
+    ): Booking => ({
+      ...createMockBooking(id, deliveredAt, status, options?.totalPrice ?? 650),
+      driverId: options?.driverId ?? driverId,
+      deliveredAt: status === 'delivered' ? deliveredAt : undefined,
+      updatedAt: options?.updatedAt ?? deliveredAt,
+      deliveredAmount: options?.deliveredAmount,
+    });
+
+    it('should calculate earnings and orders for the selected driver and month', () => {
+      const bookings: Booking[] = [
+        createDriverBooking('1', new Date(2024, 0, 10), 'delivered', { totalPrice: 500 }),
+        createDriverBooking('2', new Date(2024, 0, 20), 'delivered', { deliveredAmount: 750 }),
+        createDriverBooking('3', new Date(2024, 0, 25), 'pending'),
+        createDriverBooking('4', new Date(2024, 1, 5), 'delivered'),
+        createDriverBooking('5', new Date(2024, 0, 15), 'delivered', { driverId: 'driver-2' }),
+      ];
+
+      const result = calculateDriverMonthlyPerformance(bookings, driverId, 2024, 0);
+
+      expect(result.totalEarnings).toBe(1250);
+      expect(result.completedOrders).toBe(2);
+    });
+
+    it('should use deliveredAt for period matching', () => {
+      const bookings: Booking[] = [
+        createDriverBooking('1', new Date(2024, 2, 15), 'delivered', {
+          totalPrice: 600,
+          updatedAt: new Date(2024, 0, 1),
+        }),
+      ];
+
+      const result = calculateDriverMonthlyPerformance(bookings, driverId, 2024, 2);
+
+      expect(result.totalEarnings).toBe(600);
+      expect(result.completedOrders).toBe(1);
+    });
+
+    it('should return zeros when no matching bookings exist', () => {
+      const bookings: Booking[] = [
+        createDriverBooking('1', new Date(2024, 0, 10), 'delivered'),
+      ];
+
+      const result = calculateDriverMonthlyPerformance(bookings, driverId, 2024, 5);
+
+      expect(result.totalEarnings).toBe(0);
+      expect(result.completedOrders).toBe(0);
     });
   });
 });

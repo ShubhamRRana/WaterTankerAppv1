@@ -19,6 +19,11 @@ export interface MonthlyBreakdownItem {
   orders: number;
 }
 
+export interface DriverMonthlyPerformance {
+  totalEarnings: number;
+  completedOrders: number;
+}
+
 /**
  * Calculate monthly revenue and order statistics
  */
@@ -128,5 +133,37 @@ export const calculateMonthlyBreakdown = (
   }
 
   return monthlyData;
+};
+
+/**
+ * Calculate a driver's earnings and completed orders for a specific calendar month.
+ * Uses deliveredAt (fallback: updatedAt) for period matching.
+ */
+export const calculateDriverMonthlyPerformance = (
+  bookings: Booking[],
+  driverId: string,
+  year: number,
+  month: number,
+): DriverMonthlyPerformance => {
+  const monthBookings = bookings.filter((booking) => {
+    if (booking.driverId !== driverId || booking.status !== 'delivered') {
+      return false;
+    }
+    const deliveryDate = booking.deliveredAt ?? booking.updatedAt;
+    return (
+      deliveryDate.getFullYear() === year &&
+      deliveryDate.getMonth() === month
+    );
+  });
+
+  const totalEarnings = monthBookings.reduce(
+    (sum, booking) => sum + (booking.deliveredAmount ?? booking.totalPrice ?? 0),
+    0,
+  );
+
+  return {
+    totalEarnings,
+    completedOrders: monthBookings.length,
+  };
 };
 

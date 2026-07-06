@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,13 +8,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Typography, Card } from '../common';
+import { Typography, Card, MonthYearStepperRow } from '../common';
 import { User, DriverUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
 import { PricingUtils } from '../../utils/pricing';
 import { formatDateOnly } from '../../utils/dateUtils';
+import { useBookingStore } from '../../store/bookingStore';
+import { calculateDriverMonthlyPerformance } from '../../utils/reportCalculations';
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export interface DriverModalProps {
   visible: boolean;
@@ -29,6 +33,32 @@ const DriverModal: React.FC<DriverModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { bookings } = useBookingStore();
+  const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
+
+  useEffect(() => {
+    if (visible && driver) {
+      const now = new Date();
+      setSelectedMonth(now.getMonth());
+      setSelectedYear(now.getFullYear());
+    }
+  }, [visible, driver?.id]);
+
+  const performance = useMemo(() => {
+    if (!driver) {
+      return { totalEarnings: 0, completedOrders: 0 };
+    }
+    return calculateDriverMonthlyPerformance(
+      bookings,
+      driver.id,
+      selectedYear,
+      selectedMonth,
+    );
+  }, [bookings, driver, selectedYear, selectedMonth]);
+
+  const periodLabel = `${MONTH_LABELS[selectedMonth]} ${selectedYear}`;
+
   return (
   <Modal
     visible={visible}
@@ -113,16 +143,25 @@ const DriverModal: React.FC<DriverModalProps> = ({
                 <Typography variant="h3" style={styles.detailSectionTitle}>
                   Performance
                 </Typography>
+                <MonthYearStepperRow
+                  selectedMonth={selectedMonth}
+                  selectedYear={selectedYear}
+                  onMonthChange={setSelectedMonth}
+                  onYearChange={setSelectedYear}
+                />
+                <Typography variant="caption" style={styles.periodSubtitle}>
+                  {periodLabel}
+                </Typography>
                 <View style={styles.detailItem}>
                   <Typography variant="body" style={styles.detailLabel}>Total Earnings</Typography>
                   <Typography variant="body" style={styles.detailValue}>
-                    {PricingUtils.formatPrice((driver as DriverUser).totalEarnings || 0)}
+                    {PricingUtils.formatPrice(performance.totalEarnings)}
                   </Typography>
                 </View>
                 <View style={styles.detailItem}>
                   <Typography variant="body" style={styles.detailLabel}>Completed Orders</Typography>
                   <Typography variant="body" style={styles.detailValue}>
-                    {(driver as DriverUser).completedOrders || 0}
+                    {performance.completedOrders}
                   </Typography>
                 </View>
               </Card>
@@ -172,6 +211,11 @@ function createStyles(colors: AppPalette) {
     color: colors.text,
     marginBottom: UI_CONFIG.spacing.md,
   },
+  periodSubtitle: {
+    color: colors.textSecondary,
+    marginBottom: UI_CONFIG.spacing.sm,
+    fontWeight: '600',
+  },
   detailItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -197,4 +241,3 @@ function createStyles(colors: AppPalette) {
 
 
 export default DriverModal;
-

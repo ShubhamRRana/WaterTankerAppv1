@@ -7,10 +7,12 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { Booking, Expense } from '../types';
-import { formatDate } from './dateUtils';
+import { formatDate, formatDateTime } from './dateUtils';
 import { PricingUtils } from './pricing';
 import { errorLogger } from './errorLogger';
 import { DailyBreakdownItem, MonthlyBreakdownItem } from './reportCalculations';
+import { SocietyTrip } from '../services/societyTrip.service';
+import { TankerSizeBreakdownRow } from './societyTripBreakdown';
 
 // Get document directory using legacy API
 const getDocumentDirectory = (): string => {
@@ -372,6 +374,131 @@ export async function exportExpensesToExcel(
 
   } catch (error) {
     errorLogger.medium('Failed to export expenses to Excel', error, { periodType, selectedYear, selectedMonth });
+    throw error;
+  }
+}
+
+function escapeCsvCell(value: unknown): string {
+  return `"${String(value ?? '').replace(/"/g, '""')}"`;
+}
+
+function appendCsvSection(
+  csvRows: string[],
+  title: string,
+  rows: Array<Record<string, unknown>>,
+): void {
+  csvRows.push(title);
+  if (rows.length === 0) {
+    csvRows.push('No data available');
+    csvRows.push('');
+    return;
+  }
+  const firstRow = rows[0];
+  if (!firstRow) {
+    csvRows.push('No data available');
+    csvRows.push('');
+    return;
+  }
+  const headers = Object.keys(firstRow);
+  csvRows.push(headers.map((header) => escapeCsvCell(header)).join(','));
+  rows.forEach((row) => {
+    csvRows.push(headers.map((header) => escapeCsvCell(row[header])).join(','));
+  });
+  csvRows.push('');
+}
+
+/**
+ * Export society trip details to Excel file (CSV format)
+ */
+export async function exportTripDetailsToExcel(
+  trips: SocietyTrip[],
+  selectedYear: number,
+  selectedMonth: number,
+  options: {
+    societyUserLabel: string;
+    tankerBreakdown: TankerSizeBreakdownRow[];
+    grandTotalAmount: number;
+    getSocietyUserDisplay: (customerId: string) => string;
+    getTripPaymentStatus: (trip: SocietyTrip) => string;
+  },
+  fileName?: string,
+): Promise<void> {
+  try {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    const periodLabel = `${monthNames[selectedMonth]} ${selectedYear}`;
+    const csvRows: string[] = [];
+
+    csvRows.push('Summary');
+    csvRows.push('Metric,Value');
+    csvRows.push(`Period,"${periodLabel.replace(/"/g, '""')}"`);
+    csvRows.push(`Society User,"${options.societyUserLabel.replace(/"/g, '""')}"`);
+    csvRows.push(`Total Trips,"${trips.length}"`);
+    csvRows.push(`Total Amount,"${PricingUtils.formatPrice(options.grandTotalAmount)}"`);
+    csvRows.push('');
+
+    const breakdownRows = options.tankerBreakdown.map((row) => ({
+      'Size (L)': row.liters.toLocaleString(),
+      Amount:
+        row.count > 0 && row.tripsWithAmount > 0
+          ? PricingUtils.formatPrice(row.amountSum)
+          : '—',
+      Trips: row.count,
+    }));
+    breakdownRows.push({
+      'Size (L)': 'Total',
+      Amount:
+        trips.some((t) => t.tankerAmount != null && Number.isFinite(t.tankerAmount))
+          ? PricingUtils.formatPrice(options.grandTotalAmount)
+          : '—',
+      Trips: trips.length,
+    });
+    appendCsvSection(csvRows, 'Trips by Tanker Size', breakdownRows);
+
+    const tripRows = trips.map((trip) => ({
+      'Society User': options.getSocietyUserDisplay(trip.customerId),
+      Agency: trip.agencyName,
+      'Scheduled At': formatDateTime(trip.scheduledAt),
+      'Tanker Size (L)': trip.tankerSizeLiters,
+      Amount:
+        trip.tankerAmount != null && Number.isFinite(trip.tankerAmount)
+          ? PricingUtils.formatPrice(trip.tankerAmount)
+          : '—',
+      'Payment Status': options.getTripPaymentStatus(trip),
+    }));
+    appendCsvSection(csvRows, 'Trip Details', tripRows);
+
+    const csvContent = csvRows.join('\n');
+    const societySlug =
+      options.societyUserLabel === 'All society users'
+        ? ''
+        : `_${options.societyUserLabel.replace(/[^\w]+/g, '_').slice(0, 40)}`;
+    const defaultFileName = `TripDetails_${monthNames[selectedMonth]}_${selectedYear}${societySlug}.csv`;
+    const finalFileName = fileName || defaultFileName;
+
+    const docDir = getDocumentDirectory();
+    const fileUri = `${docDir}${finalFileName}`;
+    await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+      encoding: FileSystem.EncodingType.UTF8,
+    });
+
+    const isAvailable = await Sharing.isAvailableAsync();
+    if (isAvailable) {
+      await Sharing.shareAsync(fileUri, {
+        mimeType: 'text/csv',
+        dialogTitle: `Export ${periodLabel} Trip Details`,
+      });
+    } else {
+      throw new Error('Sharing is not available on this device');
+    }
+  } catch (error) {
+    errorLogger.medium('Failed to export trip details to Excel', error, {
+      selectedYear,
+      selectedMonth,
+      tripCount: trips.length,
+    });
     throw error;
   }
 }

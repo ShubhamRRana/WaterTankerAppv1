@@ -26,7 +26,9 @@ import { SocietyTrip, SocietyTripService } from '../../services/societyTrip.serv
 import { SocietyPaymentPeriodsService } from '../../services/societyPaymentPeriods.service';
 import { SocietyTripUsersService } from '../../services/societyTripUsers.service';
 import { formatDateTime } from '../../utils/dateUtils';
-import { buildTankerSizeBreakdown, filterTripsByPeriod } from '../../utils/societyTripBreakdown';
+import { buildTankerSizeBreakdown, filterTripsByPeriod, isTripPending } from '../../utils/societyTripBreakdown';
+import { exportTripDetailsToExcel } from '../../utils/excelExport';
+import { errorLogger } from '../../utils/errorLogger';
 
 type TripDetailsNavigationProp = StackNavigationProp<AdminStackParamList, 'TripDetails'>;
 
@@ -303,6 +305,46 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
     [userFilteredTrips],
   );
 
+  const handleDownloadExcel = useCallback(async () => {
+    try {
+      await exportTripDetailsToExcel(
+        userFilteredTrips,
+        selectedYear,
+        selectedMonth,
+        {
+          societyUserLabel:
+            selectedSocietyUserId === 'All'
+              ? 'All society users'
+              : societyUserLabelById(selectedSocietyUserId),
+          tankerBreakdown: tripsByTankerSize,
+          grandTotalAmount,
+          getSocietyUserDisplay: societyUserLabelById,
+          getTripPaymentStatus: (trip) => {
+            const settled = paymentSettledByCustomerId.get(trip.customerId);
+            if (settled === undefined) return 'Unknown';
+            if (!settled) return 'Payment pending';
+            return isTripPending(trip, completedAtByCustomerId.get(trip.customerId))
+              ? 'Pending (post-settlement trip)'
+              : 'Settled';
+          },
+        },
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to export trip details. Please try again.');
+      errorLogger.medium('Failed to export trip details', error);
+    }
+  }, [
+    userFilteredTrips,
+    selectedYear,
+    selectedMonth,
+    selectedSocietyUserId,
+    societyUserLabelById,
+    tripsByTankerSize,
+    grandTotalAmount,
+    paymentSettledByCustomerId,
+    completedAtByCustomerId,
+  ]);
+
   const renderTankerSizeBreakdown = (showTotal: boolean) => {
     if (userFilteredTrips.length === 0) {
       return (
@@ -402,12 +444,19 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
               Trip details
             </Typography>
           <Typography variant="body" style={styles.subtitle}>
-            Society billing periods — bulk settlement tracking (not per-delivery Razorpay)
+            Society billing periods — bulk settlement tracking
           </Typography>
-          <Typography variant="caption" style={[styles.subtitle, { opacity: 0.75, marginTop: 4 }]}>
+          {/* <Typography variant="caption" style={[styles.subtitle, { opacity: 0.75, marginTop: 4 }]}>
             Per-delivery Razorpay payments are collected by drivers and appear under Bookings / Reports.
-          </Typography>
+          </Typography> */}
           </View>
+          <TouchableOpacity
+            style={styles.downloadButton}
+            onPress={handleDownloadExcel}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="download-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
         </View>
 
         <MonthYearFilterRow
@@ -774,6 +823,10 @@ function createStyles(colors: AppPalette) {
   menuButton: {
     padding: 8,
     marginRight: 8,
+  },
+  downloadButton: {
+    padding: 8,
+    marginLeft: 12,
   },
   headerTextContainer: {
     flex: 1,

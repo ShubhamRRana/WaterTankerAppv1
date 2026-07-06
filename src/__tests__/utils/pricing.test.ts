@@ -34,6 +34,11 @@ describe('PricingUtils', () => {
       expect(result).toContain('₹');
       expect(result).toContain('1,234');
     });
+
+    it('should limit decimal places when specified', () => {
+      expect(PricingUtils.formatPrice(2499.6666666666665, 2)).toBe('₹2,499.67');
+      expect(PricingUtils.formatPrice(2333.1666666666665, 2)).toBe('₹2,333.17');
+    });
   });
 
   describe('formatNumber', () => {

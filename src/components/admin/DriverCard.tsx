@@ -8,7 +8,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card } from '../common';
 import { DriverUser } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
-import { PricingUtils } from '../../utils/pricing';
 import { formatDateOnly } from '../../utils/dateUtils';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -30,10 +29,6 @@ const DriverCard: React.FC<DriverCardProps> = ({
   const formattedLicenseExpiry = useMemo(() => {
     return driver.licenseExpiry ? formatDateOnly(driver.licenseExpiry) : 'Expiry not provided';
   }, [driver.licenseExpiry]);
-
-  const formattedEarnings = useMemo(() => {
-    return PricingUtils.formatPrice(driver.totalEarnings || 0);
-  }, [driver.totalEarnings]);
 
   const emergencyContact = useMemo(() => {
     return driver.emergencyContactName ? `${driver.emergencyContactName} - ${driver.emergencyContactPhone}` : 'Emergency contact not provided';
@@ -84,12 +79,6 @@ const DriverCard: React.FC<DriverCardProps> = ({
           <Ionicons name="call-outline" size={16} color={colors.textSecondary} />
           <Typography variant="caption" style={styles.detailText}>
             {emergencyContact}
-          </Typography>
-        </View>
-        <View style={styles.detailRow}>
-          <Ionicons name="cash-outline" size={16} color={colors.textSecondary} />
-          <Typography variant="caption" style={styles.detailText}>
-            {formattedEarnings} earned
           </Typography>
         </View>
       </View>

@@ -22,7 +22,6 @@ interface AdminMenuDrawerProps {
   onNavigate: (route: AdminRoute) => void;
   onLogout: () => void;
   currentRoute?: AdminRoute;
-  subscriptionExpiring?: boolean;
 }
 
 const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
@@ -31,7 +30,6 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
   onNavigate,
   onLogout,
   currentRoute,
-  subscriptionExpiring,
 }) => {
   const menuItems: MenuItem<AdminRoute>[] = [
     {
@@ -63,12 +61,6 @@ const AdminMenuDrawer: React.FC<AdminMenuDrawerProps> = ({
       icon: 'bar-chart-outline',
       route: 'Reports',
       onPress: () => { onNavigate('Reports'); onClose(); },
-    },
-    {
-      label: subscriptionExpiring ? 'Subscription (expiring)' : 'Subscription',
-      icon: 'card-outline',
-      route: 'SubscriptionPlans',
-      onPress: () => { onNavigate('SubscriptionStatus'); onClose(); },
     },
     {
       label: 'Payments & Payouts',

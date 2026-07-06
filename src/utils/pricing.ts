@@ -1,8 +1,9 @@
 export class PricingUtils {
   // Format number according to Indian numbering system (groups: last 3 digits, then groups of 2)
   // Example: 1234567 -> 12,34,567
-  private static formatIndianNumber(num: number): string {
-    const numStr = num.toString();
+  private static formatIndianNumber(num: number, decimalPlaces?: number): string {
+    const numStr =
+      decimalPlaces != null ? num.toFixed(decimalPlaces) : num.toString();
     const parts = numStr.split('.');
     let integerPart = parts[0];
     const decimalPart = parts[1] || '';
@@ -27,8 +28,8 @@ export class PricingUtils {
   }
 
   // Format price for display (Indian numbering system)
-  static formatPrice(amount: number): string {
-    const formatted = this.formatIndianNumber(amount);
+  static formatPrice(amount: number, decimalPlaces?: number): string {
+    const formatted = this.formatIndianNumber(amount, decimalPlaces);
     return `₹${formatted}`;
   }
 

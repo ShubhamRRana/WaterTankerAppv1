@@ -13,6 +13,8 @@ import { ERROR_MESSAGES, LOADING_MESSAGES } from '../../../constants/config';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { AdminStackParamList } from '../../../navigation/AdminNavigator';
 import type { RazorpayOrderResponse } from '../../../types/razorpay.types';
+import { PricingUtils } from '../../../utils/pricing';
+import { getMonthlyPlanPrice, getPlanSavings } from '../../../utils/subscriptionPricing';
 
 type Nav = StackNavigationProp<AdminStackParamList, 'SubscriptionCheckout'>;
 type Route = RouteProp<AdminStackParamList, 'SubscriptionCheckout'>;
@@ -25,11 +27,23 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
   const route = useRoute<Route>();
   const { subscriptionId, planId, planName } = route.params;
   const { user } = useAuthStore();
+  const { plans } = useSubscriptionStore();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [order, setOrder] = useState<RazorpayOrderResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+
+  const savingsMessage = useMemo(() => {
+    const plan = plans.find((item) => item.id === planId);
+    const monthlyPrice = getMonthlyPlanPrice(plans);
+    if (!plan || monthlyPrice == null) return null;
+
+    const savings = getPlanSavings(plan, monthlyPrice);
+    if (!savings) return null;
+
+    return `You save ${PricingUtils.formatPrice(savings.savingsAmount)} (${savings.savingsPercent}%) vs paying monthly`;
+  }, [plans, planId]);
 
   const loadOrder = useCallback(async () => {
     setLoading(true);
@@ -47,6 +61,12 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
   useEffect(() => {
     void loadOrder();
   }, [loadOrder]);
+
+  useEffect(() => {
+    if (plans.length === 0) {
+      void useSubscriptionStore.getState().loadPlans();
+    }
+  }, [plans.length]);
 
   const handlePay = async () => {
     if (!order || !user) return;
@@ -108,6 +128,11 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
         <Typography variant="h2">Checkout</Typography>
         <Typography variant="body">{planName}</Typography>
         <Typography variant="h1">₹{(order?.amount ?? 0) / 100}</Typography>
+        {savingsMessage ? (
+          <Typography variant="caption" style={styles.savingsCaption}>
+            {savingsMessage}
+          </Typography>
+        ) : null}
         <Typography variant="caption" style={{ opacity: 0.8 }}>
           Payment goes to the platform operator for agency app access.
         </Typography>
@@ -121,10 +146,14 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-function createStyles(colors: { background: string }) {
+function createStyles(colors: { background: string; success: string }) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background, padding: 16 },
     card: { padding: 16, gap: 12 },
+    savingsCaption: {
+      color: colors.success,
+      fontWeight: '600',
+    },
   });
 }
 

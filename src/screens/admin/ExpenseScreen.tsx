@@ -17,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/authStore';
 import { Typography, Card, Button, Input, DatePickerInput, AdminMenuDrawer, MonthYearFilterRow } from '../../components/common';
+import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { ExpenseType, Expense } from '../../types';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -322,7 +323,10 @@ const ExpenseScreen: React.FC = () => {
     }
   };
 
-  const handleNavigate = (route: keyof AdminStackParamList) => {
+  const handleNavigate = (route: AdminRoute) => {
+    if (route === 'Expenses') {
+      return;
+    }
     navigation.navigate(route);
   };
 
