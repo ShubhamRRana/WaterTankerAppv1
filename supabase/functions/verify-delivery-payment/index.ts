@@ -54,7 +54,7 @@ Deno.serve(async (req: Request) => {
 
     const meta = (tx.metadata as Record<string, unknown> | null) ?? {};
     const flow = meta.flow;
-    if (flow && flow !== "driver_delivery") {
+    if (flow !== "driver_delivery") {
       return errorResponse("Invalid payment flow", 400);
     }
 
@@ -62,15 +62,25 @@ Deno.serve(async (req: Request) => {
       return errorResponse("Booking mismatch", 400);
     }
 
-    const { data: booking } = await admin
+    const { data: booking, error: bookingError } = await admin
       .from("bookings")
-      .select("agency_id")
+      .select("agency_id, driver_id")
       .eq("id", bookingId)
       .single();
 
-    if (booking?.agency_id) {
-      await assertAgencySubscriptionActive(booking.agency_id);
+    if (bookingError || !booking) {
+      return errorResponse("Booking not found", 404);
     }
+
+    if (booking.driver_id && booking.driver_id !== user.id) {
+      return errorResponse("Booking not assigned to this driver", 403);
+    }
+
+    if (!booking.agency_id) {
+      return errorResponse("Booking has no associated agency", 400);
+    }
+
+    await assertAgencySubscriptionActive(booking.agency_id);
 
     const result = await completeBookingPayment({
       bookingId,

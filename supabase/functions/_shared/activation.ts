@@ -111,30 +111,27 @@ export async function activateSubscriptionPayment(
   }
 
   const flow = (tx.metadata as Record<string, unknown> | null)?.flow;
-  if (
-    flow &&
-    flow !== "agency_subscription" &&
-    flow !== "customer_subscription"
-  ) {
+  // Reject absent flow — all subscription payments must carry an explicit flow tag.
+  if (flow !== "agency_subscription" && flow !== "customer_subscription") {
     throw new Error("Invalid payment flow for subscription activation");
   }
 
-  if (tx.status === "success") {
-    return { alreadyCompleted: true };
-  }
-
-  const now = new Date().toISOString();
-
-  // Validate subscription ownership and plan before touching the payment record.
-  // If either check fails we must not commit the payment as successful.
+  // Validate subscription ownership and plan before touching any records.
   const { data: sub, error: subError } = await admin
     .from("subscriptions")
-    .select("id, plan_id, user_id")
+    .select("id, plan_id, user_id, status")
     .eq("id", params.subscriptionId)
     .single();
 
   if (subError || !sub || sub.user_id !== params.userId) {
     throw new Error("Subscription not found");
+  }
+
+  // Guard on subscription status rather than payment_transaction status so that
+  // a partial-commit (tx=success but sub still pending) is recoverable on retry
+  // instead of being permanently blocked by the old tx-status early-return.
+  if (sub.status === "active") {
+    return { alreadyCompleted: true };
   }
 
   const { data: plan, error: planError } = await admin
@@ -147,8 +144,12 @@ export async function activateSubscriptionPayment(
     throw new Error("Plan not found");
   }
 
-  // All validation passed — now commit the payment and activate the subscription.
-  const { error: txUpdateError } = await admin
+  const now = new Date().toISOString();
+
+  // WHERE status='pending' makes the UPDATE atomic against concurrent webhook
+  // retries: only one request matches and writes 'success'; the rest see zero
+  // updated rows and return alreadyCompleted, preventing double-activation.
+  const { data: updatedTx, error: txUpdateError } = await admin
     .from("payment_transactions")
     .update({
       status: "success",
@@ -158,10 +159,16 @@ export async function activateSubscriptionPayment(
       completed_at: now,
       updated_at: now,
     })
-    .eq("id", tx.id);
+    .eq("id", tx.id)
+    .eq("status", "pending")
+    .select("id");
 
   if (txUpdateError) {
     throw new Error(`Failed to record payment: ${txUpdateError.message}`);
+  }
+
+  if (!updatedTx || updatedTx.length === 0) {
+    return { alreadyCompleted: true };
   }
 
   const startDate = new Date();

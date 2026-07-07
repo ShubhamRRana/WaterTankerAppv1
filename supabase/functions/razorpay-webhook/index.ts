@@ -144,8 +144,8 @@ Deno.serve(async (req: Request) => {
     }
 
     const notes = payment.notes ?? {};
-    const flow = notes.flow ??
-      (existingTx?.metadata as Record<string, unknown> | null)?.flow;
+    const dbMeta = (existingTx?.metadata as Record<string, unknown> | null) ?? {};
+    const flow = notes.flow ?? dbMeta.flow;
 
     if (event === "payment.captured") {
       if (
@@ -169,7 +169,18 @@ Deno.serve(async (req: Request) => {
         flow === "customer_booking" ||
         flow === "driver_delivery"
       ) {
-        const bookingId = notes.booking_id;
+        const notesBookingId = typeof notes.booking_id === "string" ? notes.booking_id : null;
+        const dbBookingId = typeof dbMeta.booking_id === "string" ? dbMeta.booking_id : null;
+
+        // If both sources have a booking_id they must agree; a mismatch means
+        // the webhook notes and the DB record have diverged — skip rather than
+        // completing the wrong booking.
+        if (notesBookingId && dbBookingId && notesBookingId !== dbBookingId) {
+          console.error(`Booking ID mismatch: notes=${notesBookingId} db=${dbBookingId} order=${payment.order_id}`);
+          return jsonResponse({ received: true, skipped: "booking_id_mismatch" });
+        }
+
+        const bookingId = notesBookingId ?? dbBookingId;
         if (bookingId) {
           await completeBookingPayment({
             bookingId,

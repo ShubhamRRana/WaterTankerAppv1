@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
     const { data: booking, error: bookingError } = await admin
       .from("bookings")
       .select(
-        "id, customer_id, agency_id, total_price, delivered_amount, payment_status, status"
+        "id, customer_id, agency_id, driver_id, total_price, delivered_amount, payment_status, status"
       )
       .eq("id", bookingId)
       .single();
@@ -49,6 +49,10 @@ Deno.serve(async (req: Request) => {
     await assertAgencySubscriptionActive(booking.agency_id);
 
     await assertDriverForBooking(user.id, booking.agency_id);
+
+    if (booking.driver_id && booking.driver_id !== user.id) {
+      return errorResponse("Booking is not assigned to you", 403);
+    }
 
     if (booking.payment_status === "completed") {
       return errorResponse("Booking is already paid", 400, {

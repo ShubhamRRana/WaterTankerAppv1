@@ -63,91 +63,55 @@ CREATE POLICY bookings_update_drivers ON bookings
     )
   );
 
--- Admin operational mutations require active subscription (when policies exist, recreate with guard)
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'bookings' AND policyname = 'bookings_insert_admin'
-  ) THEN
-    DROP POLICY bookings_insert_admin ON bookings;
-    CREATE POLICY bookings_insert_admin ON bookings
-      FOR INSERT
-      WITH CHECK (
-        has_active_subscription(auth.uid())
-        AND agency_id = auth.uid()
-      );
-  END IF;
+-- Admin operational mutations require active subscription.
+-- DROP IF EXISTS + CREATE is unconditional so these policies are always present
+-- on both fresh databases and existing ones (avoids the IF EXISTS silent-skip bug).
+DROP POLICY IF EXISTS bookings_insert_admin ON bookings;
+CREATE POLICY bookings_insert_admin ON bookings
+  FOR INSERT
+  WITH CHECK (
+    has_active_subscription(auth.uid())
+    AND agency_id = auth.uid()
+  );
 
-  IF EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'bookings' AND policyname = 'bookings_update_admin'
-  ) THEN
-    DROP POLICY bookings_update_admin ON bookings;
-    CREATE POLICY bookings_update_admin ON bookings
-      FOR UPDATE
-      USING (has_active_subscription(auth.uid()) AND agency_id = auth.uid())
-      WITH CHECK (has_active_subscription(auth.uid()) AND agency_id = auth.uid());
-  END IF;
+DROP POLICY IF EXISTS bookings_update_admin ON bookings;
+CREATE POLICY bookings_update_admin ON bookings
+  FOR UPDATE
+  USING (has_active_subscription(auth.uid()) AND agency_id = auth.uid())
+  WITH CHECK (has_active_subscription(auth.uid()) AND agency_id = auth.uid());
 
-  IF EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'drivers' AND policyname = 'drivers_insert_admin'
-  ) THEN
-    DROP POLICY drivers_insert_admin ON drivers;
-    CREATE POLICY drivers_insert_admin ON drivers
-      FOR INSERT
-      WITH CHECK (
-        has_active_subscription(auth.uid())
-        AND created_by_admin_id = auth.uid()
-      );
-  END IF;
+DROP POLICY IF EXISTS drivers_insert_admin ON drivers;
+CREATE POLICY drivers_insert_admin ON drivers
+  FOR INSERT
+  WITH CHECK (
+    has_active_subscription(auth.uid())
+    AND created_by_admin_id = auth.uid()
+  );
 
-  IF EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'drivers' AND policyname = 'drivers_update_admin'
-  ) THEN
-    DROP POLICY drivers_update_admin ON drivers;
-    CREATE POLICY drivers_update_admin ON drivers
-      FOR UPDATE
-      USING (has_active_subscription(auth.uid()) AND created_by_admin_id = auth.uid())
-      WITH CHECK (has_active_subscription(auth.uid()) AND created_by_admin_id = auth.uid());
-  END IF;
+DROP POLICY IF EXISTS drivers_update_admin ON drivers;
+CREATE POLICY drivers_update_admin ON drivers
+  FOR UPDATE
+  USING (has_active_subscription(auth.uid()) AND created_by_admin_id = auth.uid())
+  WITH CHECK (has_active_subscription(auth.uid()) AND created_by_admin_id = auth.uid());
 
-  IF EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'vehicles' AND policyname = 'vehicles_insert_admin'
-  ) THEN
-    DROP POLICY vehicles_insert_admin ON vehicles;
-    CREATE POLICY vehicles_insert_admin ON vehicles
-      FOR INSERT
-      WITH CHECK (
-        has_active_subscription(auth.uid())
-        AND agency_id = auth.uid()
-      );
-  END IF;
+DROP POLICY IF EXISTS vehicles_insert_admin ON vehicles;
+CREATE POLICY vehicles_insert_admin ON vehicles
+  FOR INSERT
+  WITH CHECK (
+    has_active_subscription(auth.uid())
+    AND agency_id = auth.uid()
+  );
 
-  IF EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'vehicles' AND policyname = 'vehicles_update_admin'
-  ) THEN
-    DROP POLICY vehicles_update_admin ON vehicles;
-    CREATE POLICY vehicles_update_admin ON vehicles
-      FOR UPDATE
-      USING (has_active_subscription(auth.uid()) AND agency_id = auth.uid())
-      WITH CHECK (has_active_subscription(auth.uid()) AND agency_id = auth.uid());
-  END IF;
+DROP POLICY IF EXISTS vehicles_update_admin ON vehicles;
+CREATE POLICY vehicles_update_admin ON vehicles
+  FOR UPDATE
+  USING (has_active_subscription(auth.uid()) AND agency_id = auth.uid())
+  WITH CHECK (has_active_subscription(auth.uid()) AND agency_id = auth.uid());
 
-  IF EXISTS (
-    SELECT 1 FROM pg_policies
-    WHERE schemaname = 'public' AND tablename = 'vehicles' AND policyname = 'vehicles_delete_admin'
-  ) THEN
-    DROP POLICY vehicles_delete_admin ON vehicles;
-    CREATE POLICY vehicles_delete_admin ON vehicles
-      FOR DELETE
-      USING (has_active_subscription(auth.uid()) AND agency_id = auth.uid());
-  END IF;
-END $$;
+DROP POLICY IF EXISTS vehicles_delete_admin ON vehicles;
+CREATE POLICY vehicles_delete_admin ON vehicles
+  FOR DELETE
+  USING (has_active_subscription(auth.uid()) AND agency_id = auth.uid());
 
 -- Block payout onboarding rows when subscription inactive
 DROP POLICY IF EXISTS agency_razorpay_accounts_admin_insert ON agency_razorpay_accounts;

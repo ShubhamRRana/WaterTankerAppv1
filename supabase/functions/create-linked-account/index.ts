@@ -17,6 +17,17 @@ function normalizePhone(raw: string): string {
   return digits;
 }
 
+function maskPan(pan: string): string {
+  if (pan.length !== 10) return "X".repeat(pan.length);
+  // Keep last 4 characters (digit-digit-digit-letter); mask the rest.
+  return `XXXXXX${pan.slice(6)}`;
+}
+
+function maskBankAccount(account: string): string {
+  if (account.length <= 4) return "X".repeat(account.length);
+  return "X".repeat(account.length - 4) + account.slice(-4);
+}
+
 /** Razorpay reference_id max 20 chars; suffix must not be truncated off the end. */
 function routeReferenceId(agencyId: string, suffix = ""): string {
   const base = agencyId.replace(/-/g, "");
@@ -171,8 +182,8 @@ Deno.serve(async (req: Request) => {
         contact_name: contactName,
         contact_email: contactEmail,
         contact_phone: contactPhone,
-        pan: pan || null,
-        bank_account_number: bankAccountNumber || null,
+        pan: pan ? maskPan(pan) : null,
+        bank_account_number: bankAccountNumber ? maskBankAccount(bankAccountNumber) : null,
         bank_ifsc: bankIfsc || null,
       });
     }
@@ -230,8 +241,8 @@ Deno.serve(async (req: Request) => {
       contact_name: contactName,
       contact_email: contactEmail,
       contact_phone: contactPhone,
-      pan: pan || null,
-      bank_account_number: bankAccountNumber || null,
+      pan: pan ? maskPan(pan) : null,
+      bank_account_number: bankAccountNumber ? maskBankAccount(bankAccountNumber) : null,
       bank_ifsc: bankIfsc || null,
       updated_at: new Date().toISOString(),
     };
