@@ -1,5 +1,29 @@
 import { getServiceClient } from "./supabase.ts";
 
+export class AgencySubscriptionInactiveError extends Error {
+  code = "agency_subscription_inactive";
+
+  constructor(message = "Agency subscription inactive") {
+    super(message);
+    this.name = "AgencySubscriptionInactiveError";
+  }
+}
+
+export async function assertAgencySubscriptionActive(agencyId: string): Promise<void> {
+  const admin = getServiceClient();
+  const { data, error } = await admin.rpc("has_active_subscription", {
+    p_user_id: agencyId,
+  });
+
+  if (error) {
+    throw new Error(`Subscription check failed: ${error.message}`);
+  }
+
+  if (!data) {
+    throw new AgencySubscriptionInactiveError();
+  }
+}
+
 export async function assertAdminUser(userId: string): Promise<void> {
   const admin = getServiceClient();
   const { data: roleRow, error: roleError } = await admin

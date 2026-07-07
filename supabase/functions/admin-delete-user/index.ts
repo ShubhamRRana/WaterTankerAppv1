@@ -8,6 +8,7 @@
  */
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { assertAgencySubscriptionActive, AgencySubscriptionInactiveError } from "../_shared/activation.ts";
 import { getServiceClient } from "../_shared/supabase.ts";
 
 const corsHeaders = {
@@ -64,6 +65,7 @@ Deno.serve(async (req: Request) => {
       if (!isAdmin) {
         return jsonResponse({ error: "Only admins can delete other users" }, 403);
       }
+      await assertAgencySubscriptionActive(caller.id);
     }
 
     const { data: remainingRoles, error: rolesError } = await supabase
@@ -115,6 +117,9 @@ Deno.serve(async (req: Request) => {
 
     return jsonResponse({ success: true, auth_deleted: true });
   } catch (e) {
+    if (e instanceof AgencySubscriptionInactiveError) {
+      return jsonResponse({ error: e.message, code: e.code }, 403);
+    }
     const message = e instanceof Error ? e.message : "Unknown error";
     return jsonResponse({ error: message }, 500);
   }

@@ -1,5 +1,7 @@
 import {
+  assertAgencySubscriptionActive,
   assertDriverForBooking,
+  AgencySubscriptionInactiveError,
   hasPendingBookingPayment,
 } from "../_shared/activation.ts";
 import { errorResponse, handleCors, jsonResponse } from "../_shared/http.ts";
@@ -43,6 +45,8 @@ Deno.serve(async (req: Request) => {
     if (bookingError || !booking) {
       return errorResponse("Booking not found", 404);
     }
+
+    await assertAgencySubscriptionActive(booking.agency_id);
 
     await assertDriverForBooking(user.id, booking.agency_id);
 
@@ -151,6 +155,9 @@ Deno.serve(async (req: Request) => {
     });
   } catch (e) {
     console.error(e);
+    if (e instanceof AgencySubscriptionInactiveError) {
+      return errorResponse(e.message, 403, { code: e.code });
+    }
     const message = e instanceof Error ? e.message : "Internal error";
     return errorResponse(message, 500);
   }

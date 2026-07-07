@@ -1,4 +1,4 @@
-import { completeBookingPayment } from "../_shared/activation.ts";
+import { completeBookingPayment, assertAgencySubscriptionActive, AgencySubscriptionInactiveError } from "../_shared/activation.ts";
 import { errorResponse, handleCors, jsonResponse } from "../_shared/http.ts";
 import { verifyPaymentSignature } from "../_shared/razorpay.ts";
 import { getServiceClient, getUserFromRequest } from "../_shared/supabase.ts";
@@ -62,6 +62,16 @@ Deno.serve(async (req: Request) => {
       return errorResponse("Booking mismatch", 400);
     }
 
+    const { data: booking } = await admin
+      .from("bookings")
+      .select("agency_id")
+      .eq("id", bookingId)
+      .single();
+
+    if (booking?.agency_id) {
+      await assertAgencySubscriptionActive(booking.agency_id);
+    }
+
     const result = await completeBookingPayment({
       bookingId,
       orderId,
@@ -76,6 +86,9 @@ Deno.serve(async (req: Request) => {
     });
   } catch (e) {
     console.error(e);
+    if (e instanceof AgencySubscriptionInactiveError) {
+      return errorResponse(e.message, 403, { code: e.code });
+    }
     const message = e instanceof Error ? e.message : "Internal error";
     return errorResponse(message, 500);
   }

@@ -2,6 +2,7 @@ import { FunctionsHttpError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
 import { subscriptionDataAccess } from '../lib/subscriptionDataAccess';
 import { PaymentService } from './payment.service';
+import { assertAgencySubscriptionActive } from '../utils/subscriptionGating';
 import type { AgencyRazorpayAccount } from '../types/subscription.types';
 
 export interface LinkedAccountStatus {
@@ -71,6 +72,11 @@ export class AgencyPayoutService {
   }
 
   static async submitOnboarding(payload: OnboardingPayload): Promise<LinkedAccountStatus> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) {
+      await assertAgencySubscriptionActive(user.id);
+    }
+
     const { data, error } = await supabase.functions.invoke('create-linked-account', {
       body: payload,
     });

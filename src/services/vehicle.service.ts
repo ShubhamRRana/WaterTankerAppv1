@@ -3,6 +3,7 @@
 import { dataAccess } from '../lib';
 import { Vehicle } from '../types/index';
 import { handleAsyncOperationWithRethrow } from '../utils/errorHandler';
+import { assertAgencySubscriptionActive } from '../utils/subscriptionGating';
 
 /**
  * VehicleService - Handles vehicle CRUD operations using the data access layer
@@ -61,6 +62,10 @@ export class VehicleService {
   static async createVehicle(vehicleData: Omit<Vehicle, 'id' | 'createdAt' | 'updatedAt'>): Promise<Vehicle> {
     return handleAsyncOperationWithRethrow(
       async () => {
+        if (vehicleData.agencyId) {
+          await assertAgencySubscriptionActive(vehicleData.agencyId);
+        }
+
         const id = dataAccess.generateId();
         const newVehicle: Vehicle = {
           ...vehicleData,
@@ -85,6 +90,11 @@ export class VehicleService {
   static async updateVehicle(vehicleId: string, updates: Partial<Vehicle>): Promise<void> {
     return handleAsyncOperationWithRethrow(
       async () => {
+        const existing = await dataAccess.vehicles.getVehicleById(vehicleId);
+        if (existing?.agencyId) {
+          await assertAgencySubscriptionActive(existing.agencyId);
+        }
+
         await dataAccess.vehicles.updateVehicle(vehicleId, updates);
       },
       {
@@ -100,6 +110,11 @@ export class VehicleService {
   static async deleteVehicle(vehicleId: string): Promise<void> {
     return handleAsyncOperationWithRethrow(
       async () => {
+        const existing = await dataAccess.vehicles.getVehicleById(vehicleId);
+        if (existing?.agencyId) {
+          await assertAgencySubscriptionActive(existing.agencyId);
+        }
+
         await dataAccess.vehicles.deleteVehicle(vehicleId);
       },
       {

@@ -161,6 +161,8 @@ export const ERROR_MESSAGES = {
     agencyNotOnboarded: 'Agency cannot accept online payments — complete payout setup in admin.',
     signatureMismatch: 'Payment verification failed. Contact support if amount was debited.',
     subscriptionNotEligible: 'Subscription is not eligible for payment.',
+    agencySubscriptionInactive:
+      'Agency subscription inactive. Contact your admin to renew.',
     bookingAlreadyPaid: 'This booking is already paid.',
     paymentInProgress: 'A payment is already in progress for this booking.',
   },

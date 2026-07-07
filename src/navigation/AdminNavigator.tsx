@@ -19,8 +19,11 @@ import AgencyPayoutsScreen from '../screens/admin/payments/AgencyPayoutsScreen';
 import DeliveryPaymentHistoryScreen from '../screens/admin/payments/DeliveryPaymentHistoryScreen';
 import PaymentResultScreen from '../screens/shared/PaymentResultScreen';
 import ErrorBoundary from '../components/common/ErrorBoundary';
-import AdminSubscriptionGate from '../components/admin/AdminSubscriptionGate';
+import AdminSubscriptionGate, { useAdminSubscriptionGate } from '../components/admin/AdminSubscriptionGate';
 import AdminPayoutBanner from '../components/admin/AdminPayoutBanner';
+import AdminSubscriptionLockedBanner from '../components/admin/AdminSubscriptionLockedBanner';
+import { FEATURE_FLAGS } from '../constants/config';
+import { useAdminPostUnlockNavigation } from './useAdminPostUnlockNavigation';
 import type { PaymentResultScreenParams } from '../types/razorpay.types';
 
 export type AdminStackParamList = {
@@ -50,40 +53,64 @@ export type AdminStackParamList = {
 
 const Stack = createStackNavigator<AdminStackParamList>();
 
+const screenOptions = { headerShown: false as const };
+
+const AdminLockedStack: React.FC = () => (
+  <Stack.Navigator screenOptions={screenOptions} initialRouteName="SubscriptionPlans">
+    <Stack.Screen name="SubscriptionPlans" component={SubscriptionPlansScreen} />
+    <Stack.Screen name="SubscriptionCheckout" component={SubscriptionCheckoutScreen} />
+    <Stack.Screen name="SubscriptionStatus" component={SubscriptionStatusScreen} />
+    <Stack.Screen name="SubscriptionPaymentHistory" component={SubscriptionPaymentHistoryScreen} />
+    <Stack.Screen name="Profile" component={AdminProfileScreen} />
+    <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+    <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
+  </Stack.Navigator>
+);
+
+const AdminFullStack: React.FC = () => {
+  useAdminPostUnlockNavigation();
+
+  return (
+  <Stack.Navigator screenOptions={screenOptions} initialRouteName="Bookings">
+    <Stack.Screen name="Bookings" component={AllBookingsScreen} />
+    <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
+    <Stack.Screen name="SocietyUserTripBreakdown" component={SocietyUserTripBreakdownScreen} />
+    <Stack.Screen name="Drivers" component={DriverManagementScreen} />
+    <Stack.Screen name="Vehicles" component={VehicleManagementScreen} />
+    <Stack.Screen name="Reports" component={ReportsScreen} />
+    <Stack.Screen name="Profile" component={AdminProfileScreen} />
+    <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+    <Stack.Screen name="BankAccounts" component={AddBankAccountScreen} />
+    <Stack.Screen name="Expenses" component={ExpenseScreen} />
+    <Stack.Screen name="SubscriptionPlans" component={SubscriptionPlansScreen} />
+    <Stack.Screen name="SubscriptionCheckout" component={SubscriptionCheckoutScreen} />
+    <Stack.Screen name="SubscriptionStatus" component={SubscriptionStatusScreen} />
+    <Stack.Screen name="SubscriptionPaymentHistory" component={SubscriptionPaymentHistoryScreen} />
+    <Stack.Screen name="RazorpayAccountSetup" component={RazorpayAccountSetupScreen} />
+    <Stack.Screen name="AgencyPayouts" component={AgencyPayoutsScreen} />
+    <Stack.Screen name="DeliveryPaymentHistory" component={DeliveryPaymentHistoryScreen} />
+    <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
+  </Stack.Navigator>
+  );
+};
+
+const AdminNavigatorContent: React.FC = () => {
+  const { hasActive } = useAdminSubscriptionGate();
+  const locked = FEATURE_FLAGS.enableSubscriptionGating && !hasActive;
+
+  return (
+    <>
+      {locked ? <AdminSubscriptionLockedBanner /> : <AdminPayoutBanner />}
+      {locked ? <AdminLockedStack /> : <AdminFullStack />}
+    </>
+  );
+};
+
 const AdminNavigator: React.FC = () => {
   return (
     <ErrorBoundary resetKeys={['Admin']}>
       <AdminSubscriptionGate>
-        {(initialRouteName) => (
-          <>
-      <AdminPayoutBanner />
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-        }}
-        initialRouteName={initialRouteName}
-      >
-        <Stack.Screen name="Bookings" component={AllBookingsScreen} />
-        <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
-        <Stack.Screen name="SocietyUserTripBreakdown" component={SocietyUserTripBreakdownScreen} />
-        <Stack.Screen name="Drivers" component={DriverManagementScreen} />
-        <Stack.Screen name="Vehicles" component={VehicleManagementScreen} />
-        <Stack.Screen name="Reports" component={ReportsScreen} />
-        <Stack.Screen name="Profile" component={AdminProfileScreen} />
-        <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
-        <Stack.Screen name="BankAccounts" component={AddBankAccountScreen} />
-        <Stack.Screen name="Expenses" component={ExpenseScreen} />
-        <Stack.Screen name="SubscriptionPlans" component={SubscriptionPlansScreen} />
-        <Stack.Screen name="SubscriptionCheckout" component={SubscriptionCheckoutScreen} />
-        <Stack.Screen name="SubscriptionStatus" component={SubscriptionStatusScreen} />
-        <Stack.Screen name="SubscriptionPaymentHistory" component={SubscriptionPaymentHistoryScreen} />
-        <Stack.Screen name="RazorpayAccountSetup" component={RazorpayAccountSetupScreen} />
-        <Stack.Screen name="AgencyPayouts" component={AgencyPayoutsScreen} />
-        <Stack.Screen name="DeliveryPaymentHistory" component={DeliveryPaymentHistoryScreen} />
-        <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
-      </Stack.Navigator>
-          </>
-        )}
+        <AdminNavigatorContent />
       </AdminSubscriptionGate>
     </ErrorBoundary>
   );

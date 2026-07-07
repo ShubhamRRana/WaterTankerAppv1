@@ -6,6 +6,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Typography, Button, Card, LoadingSpinner } from '../../../components/common';
 import { useAuthStore } from '../../../store/authStore';
 import { useSubscriptionStore } from '../../../store/subscriptionStore';
+import { useAdminSubscriptionGate } from '../../../context/AdminSubscriptionGateContext';
 import { PaymentService } from '../../../services/payment.service';
 import { SubscriptionService } from '../../../services/subscription.service';
 import { openCheckout } from '../../../services/razorpayCheckout.service';
@@ -28,6 +29,7 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
   const { subscriptionId, planId, planName } = route.params;
   const { user } = useAuthStore();
   const { plans } = useSubscriptionStore();
+  const { refresh: refreshSubscriptionGate } = useAdminSubscriptionGate();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [order, setOrder] = useState<RazorpayOrderResponse | null>(null);
@@ -101,7 +103,10 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       await SubscriptionService.activateSubscription(subscriptionId, result.data);
-      if (user.id) await useSubscriptionStore.getState().refresh(user.id);
+      if (user.id) {
+        await useSubscriptionStore.getState().refresh(user.id);
+        await refreshSubscriptionGate({ navigateTo: 'SubscriptionStatus' });
+      }
       navigation.replace('PaymentResult', {
         type: 'subscription',
         status: 'success',

@@ -1,4 +1,4 @@
-import { assertAdminUser } from "../_shared/activation.ts";
+import { assertAdminUser, assertAgencySubscriptionActive, AgencySubscriptionInactiveError } from "../_shared/activation.ts";
 import { errorResponse, handleCors, jsonResponse } from "../_shared/http.ts";
 import {
   createLinkedAccountStakeholder,
@@ -54,6 +54,7 @@ Deno.serve(async (req: Request) => {
     }
 
     await assertAdminUser(user.id);
+    await assertAgencySubscriptionActive(user.id);
 
     const body = await req.json().catch(() => ({}));
     const businessName = typeof body.businessName === "string"
@@ -247,6 +248,9 @@ Deno.serve(async (req: Request) => {
     });
   } catch (e) {
     console.error(e);
+    if (e instanceof AgencySubscriptionInactiveError) {
+      return errorResponse(e.message, 403, { code: e.code });
+    }
     const message = e instanceof Error
       ? mapRazorpayRouteError(e.message)
       : "Internal error";

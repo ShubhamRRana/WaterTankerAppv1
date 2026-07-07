@@ -9,6 +9,7 @@
  */
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { assertAgencySubscriptionActive, AgencySubscriptionInactiveError } from "../_shared/activation.ts";
 import { getServiceClient } from "../_shared/supabase.ts";
 
 const corsHeaders = {
@@ -54,6 +55,8 @@ Deno.serve(async (req: Request) => {
     if (!isAdmin) {
       return jsonResponse({ error: "Only admins can create driver accounts" }, 403);
     }
+
+    await assertAgencySubscriptionActive(adminUser.id);
 
     const body = await req.json();
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
@@ -111,6 +114,9 @@ Deno.serve(async (req: Request) => {
 
     return jsonResponse({ success: true, user_id: userId });
   } catch (e) {
+    if (e instanceof AgencySubscriptionInactiveError) {
+      return jsonResponse({ error: e.message, code: e.code }, 403);
+    }
     const message = e instanceof Error ? e.message : "Unknown error";
     return jsonResponse({ error: message }, 500);
   }

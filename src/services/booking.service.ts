@@ -3,6 +3,7 @@ import { Booking, BookingStatus } from '../types/index';
 import { handleAsyncOperationWithRethrow, handleError } from '../utils/errorHandler';
 import type { PaginationOptions, BookingQueryOptions, AvailableBookingsOptions } from '../lib/dataAccess.interface';
 import { ERROR_MESSAGES } from '../constants/config';
+import { assertAgencySubscriptionActive } from '../utils/subscriptionGating';
 
 /**
  * Booking Service
@@ -31,6 +32,10 @@ export class BookingService {
   static async createBooking(bookingData: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
     return handleAsyncOperationWithRethrow(
       async () => {
+        if (bookingData.agencyId) {
+          await assertAgencySubscriptionActive(bookingData.agencyId);
+        }
+
         const id = dataAccess.generateId();
 
         // Derive tanker size from selected vehicle capacity when not explicitly provided.
@@ -80,6 +85,10 @@ export class BookingService {
           if (!existingBooking.agencyId || existingBooking.agencyId !== options.driverAgencyId) {
             throw new Error(ERROR_MESSAGES.booking.wrongAgency);
           }
+        }
+
+        if (existingBooking.agencyId) {
+          await assertAgencySubscriptionActive(existingBooking.agencyId);
         }
 
         const updates: Partial<Booking> = {
