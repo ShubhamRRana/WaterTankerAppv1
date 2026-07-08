@@ -92,7 +92,10 @@ const OrdersScreen: React.FC = () => {
       clearError();
       
       if (activeTab === 'available') {
-        await fetchAvailableBookings({ limit: 50, agencyId: driverAgencyId });
+        await fetchAvailableBookings({
+          limit: 50,
+          ...(driverAgencyId !== undefined ? { agencyId: driverAgencyId } : {}),
+        });
       } else if (activeTab === 'active') {
         // Only fetch active bookings (accepted or in_transit)
         await fetchDriverBookings(user.id, { 
@@ -239,7 +242,7 @@ const OrdersScreen: React.FC = () => {
         driverName: user.name,
         driverPhone: user.phone || '',
         acceptedAt: new Date(),
-      }, { driverAgencyId });
+      }, driverAgencyId !== undefined ? { driverAgencyId } : undefined);
 
       dataCache.current.available = null;
       dataCache.current.active = null;

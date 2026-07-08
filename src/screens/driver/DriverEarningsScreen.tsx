@@ -25,8 +25,6 @@ const DriverEarningsScreen: React.FC = () => {
   const { isLoading, fetchDriverBookings, fetchDriverBookingsForEarnings } = useBookingStore();
   const [refreshing, setRefreshing] = useState(false);
   const [earningsStats, setEarningsStats] = useState<DriverDashboardStats | null>(null);
-  const [onlineRevenueMonth, setOnlineRevenueMonth] = useState(0);
-  const [pendingRevenueMonth, setPendingRevenueMonth] = useState(0);
 
   const calculateEarningsStats = useCallback(async () => {
     if (!user?.id) {
@@ -62,19 +60,6 @@ const DriverEarningsScreen: React.FC = () => {
     const scopedWeek = bookingsForDriverAgency(weeklyBookings, agencyId);
     const scopedMonth = bookingsForDriverAgency(monthlyBookings, agencyId);
 
-    const sumRevenue = (list: Booking[]) =>
-      list.reduce((acc, b) => acc + (b.deliveredAmount ?? b.totalPrice), 0);
-    const onlinePaid = (b: Booking) =>
-      b.paymentStatus === 'completed' &&
-      b.paymentId &&
-      !b.paymentId.startsWith('cash_') &&
-      !b.paymentId.startsWith('cod_');
-    const pendingPayment = (b: Booking) =>
-      b.status === 'delivered' && b.paymentStatus !== 'completed';
-
-    const monthOnline = scopedMonth.filter(onlinePaid);
-    const monthPending = scopedMonth.filter(pendingPayment);
-
     await Promise.all([
       fetchDriverBookings(user.id, { status: ['pending'], limit: 100 }),
       fetchDriverBookings(user.id, { status: ['accepted', 'in_transit'], limit: 100 }),
@@ -104,8 +89,6 @@ const DriverEarningsScreen: React.FC = () => {
       isOnline: true,
       lastActiveAt: new Date(),
     });
-    setOnlineRevenueMonth(sumRevenue(monthOnline));
-    setPendingRevenueMonth(sumRevenue(monthPending));
   }, [user, fetchDriverBookingsForEarnings, fetchDriverBookings]);
 
   const loadDriverData = useCallback(async () => {
@@ -213,32 +196,8 @@ const DriverEarningsScreen: React.FC = () => {
           </Typography>
         </Card>
 
-        <Card style={styles.earningsCard}>
-          <View style={styles.earningsCardHeader}>
-            <Ionicons name="card-outline" size={24} color={colors.accent} />
-            <Typography variant="h3" style={styles.earningsCardTitle}>
-              Online collected (this month)
-            </Typography>
-          </View>
-          <Typography variant="h1" style={styles.earningsCardAmount}>
-            ₹{onlineRevenueMonth.toLocaleString('en-IN')}
-          </Typography>
-        </Card>
-
-        <Card style={styles.earningsCard}>
-          <View style={styles.earningsCardHeader}>
-            <Ionicons name="hourglass-outline" size={24} color={colors.warning} />
-            <Typography variant="h3" style={styles.earningsCardTitle}>
-              Pending payment (this month)
-            </Typography>
-          </View>
-          <Typography variant="h1" style={styles.earningsCardAmount}>
-            ₹{pendingRevenueMonth.toLocaleString('en-IN')}
-          </Typography>
-        </Card>
-
         <Typography variant="caption" style={{ opacity: 0.7, paddingHorizontal: 4 }}>
-          Online payments may settle in 2–3 business days per Razorpay. Counts reflect completed deliveries for your agency.
+          Counts reflect completed deliveries for your agency.
         </Typography>
       </View>
     </ScrollView>
