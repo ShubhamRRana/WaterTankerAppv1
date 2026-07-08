@@ -24,6 +24,7 @@ import AdminPayoutBanner from '../components/admin/AdminPayoutBanner';
 import AdminSubscriptionLockedBanner from '../components/admin/AdminSubscriptionLockedBanner';
 import { FEATURE_FLAGS } from '../constants/config';
 import { useAdminPostUnlockNavigation } from './useAdminPostUnlockNavigation';
+import { useAdminPendingSubscriptionSuccessNavigation } from './useAdminPendingSubscriptionSuccessNavigation';
 import type { PaymentResultScreenParams } from '../types/razorpay.types';
 
 export type AdminStackParamList = {
@@ -69,6 +70,7 @@ const AdminLockedStack: React.FC = () => (
 
 const AdminFullStack: React.FC = () => {
   useAdminPostUnlockNavigation();
+  useAdminPendingSubscriptionSuccessNavigation();
 
   return (
   <Stack.Navigator screenOptions={screenOptions} initialRouteName="Bookings">

@@ -33,6 +33,13 @@ const SubscriptionStatusScreen: React.FC<Props> = ({ navigation }) => {
   const onTrial = SubscriptionService.isOnTrial(sub);
   const trialDays = SubscriptionService.getTrialDaysRemaining(sub);
   const endLabel = sub?.endDate ? sub.endDate.toLocaleDateString() : '—';
+  const expiringSoon = SubscriptionService.isExpiringSoon(sub?.endDate ?? null, undefined, sub);
+  const activePaid = sub?.status === 'active' && !onTrial;
+  const primaryCtaTitle = onTrial
+    ? 'Subscribe now'
+    : activePaid && !expiringSoon
+      ? 'View plans'
+      : 'Renew / change plan';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -49,7 +56,8 @@ const SubscriptionStatusScreen: React.FC<Props> = ({ navigation }) => {
           ) : null}
           <Typography variant="body">Valid until: {endLabel}</Typography>
           <Button
-            title={onTrial ? 'Subscribe now' : 'Renew / change plan'}
+            title={primaryCtaTitle}
+            variant={activePaid && !expiringSoon ? 'outline' : 'primary'}
             onPress={() => navigation.navigate('SubscriptionPlans')}
           />
           <Button
@@ -58,7 +66,7 @@ const SubscriptionStatusScreen: React.FC<Props> = ({ navigation }) => {
             onPress={() => navigation.navigate('SubscriptionPaymentHistory')}
           />
         </Card>
-        {SubscriptionService.isExpiringSoon(sub?.endDate ?? null, undefined, sub) ? (
+        {expiringSoon ? (
           <Typography variant="caption" style={{ opacity: 0.8 }}>
             {onTrial
               ? 'Your trial ends soon. Subscribe to avoid losing access.'

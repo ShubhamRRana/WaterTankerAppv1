@@ -26,6 +26,10 @@ export function useAdminSubscriptionGate(): AdminSubscriptionGateValue {
   return ctx;
 }
 
+export function useOptionalAdminSubscriptionGate(): AdminSubscriptionGateValue | null {
+  return useContext(AdminSubscriptionGateContext);
+}
+
 interface Props {
   children: React.ReactNode;
 }

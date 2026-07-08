@@ -2,14 +2,21 @@ import { create } from 'zustand';
 import { SubscriptionService } from '../services/subscription.service';
 import type { SubscriptionPlan, UserSubscription } from '../types/subscription.types';
 
+export interface PendingSubscriptionPaymentSuccess {
+  referenceId?: string;
+}
+
 interface SubscriptionState {
   plans: SubscriptionPlan[];
   currentSubscription: UserSubscription | null;
   hasActive: boolean;
   loading: boolean;
   error: string | null;
+  pendingSubscriptionPaymentSuccess: PendingSubscriptionPaymentSuccess | null;
   refresh: (userId: string) => Promise<void>;
   loadPlans: () => Promise<void>;
+  setPendingSubscriptionPaymentSuccess: (payload: PendingSubscriptionPaymentSuccess | null) => void;
+  clearPendingSubscriptionPaymentSuccess: () => void;
 }
 
 export const useSubscriptionStore = create<SubscriptionState>((set) => ({
@@ -18,6 +25,15 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   hasActive: false,
   loading: false,
   error: null,
+  pendingSubscriptionPaymentSuccess: null,
+
+  setPendingSubscriptionPaymentSuccess: (payload) => {
+    set({ pendingSubscriptionPaymentSuccess: payload });
+  },
+
+  clearPendingSubscriptionPaymentSuccess: () => {
+    set({ pendingSubscriptionPaymentSuccess: null });
+  },
 
   loadPlans: async () => {
     set({ loading: true, error: null });

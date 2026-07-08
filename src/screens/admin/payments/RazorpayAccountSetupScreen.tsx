@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   ScrollView,
-  TextInput,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -12,7 +11,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import { Typography, Button, Card, LoadingSpinner } from '../../../components/common';
+import { Typography, Button, Card, LoadingSpinner, Input } from '../../../components/common';
 import { AgencyPayoutService } from '../../../services/agencyPayout.service';
 import type { LinkedAccountStatus } from '../../../services/agencyPayout.service';
 import { useTheme } from '../../../theme/ThemeProvider';
@@ -136,18 +135,85 @@ const RazorpayAccountSetupScreen: React.FC = () => {
           </Card>
           {status.status !== 'active' ? (
             <Card style={styles.card}>
-              <TextInput style={styles.input} placeholder="Business / trade name" value={businessName} onChangeText={setBusinessName} placeholderTextColor={colors.textSecondary} />
-              <TextInput style={styles.input} placeholder="Your name (exactly as on PAN card)" value={contactName} onChangeText={setContactName} placeholderTextColor={colors.textSecondary} autoCapitalize="words" />
-              <TextInput style={styles.input} placeholder="Contact email" value={contactEmail} onChangeText={setContactEmail} placeholderTextColor={colors.textSecondary} autoCapitalize="none" />
-              <TextInput style={styles.input} placeholder="Mobile (Aadhaar/CKYC-linked number)" value={contactPhone} onChangeText={setContactPhone} placeholderTextColor={colors.textSecondary} keyboardType="phone-pad" />
-              <TextInput style={styles.input} placeholder="Personal PAN (sole operator / individual)" value={pan} onChangeText={setPan} placeholderTextColor={colors.textSecondary} autoCapitalize="characters" />
-              <TextInput style={styles.input} placeholder="Bank Account Number" value={bankAccountNumber} onChangeText={setBankAccountNumber} placeholderTextColor={colors.textSecondary} />
-              <TextInput style={styles.input} placeholder="IFSC" value={bankIfsc} onChangeText={setBankIfsc} placeholderTextColor={colors.textSecondary} autoCapitalize="characters" />
-              <TextInput style={styles.input} placeholder="Address line 1" value={registeredStreet} onChangeText={setRegisteredStreet} placeholderTextColor={colors.textSecondary} />
-              <TextInput style={styles.input} placeholder="Area / locality (optional)" value={registeredStreet2} onChangeText={setRegisteredStreet2} placeholderTextColor={colors.textSecondary} />
-              <TextInput style={styles.input} placeholder="City" value={registeredCity} onChangeText={setRegisteredCity} placeholderTextColor={colors.textSecondary} />
-              <TextInput style={styles.input} placeholder="State" value={registeredState} onChangeText={setRegisteredState} placeholderTextColor={colors.textSecondary} />
-              <TextInput style={styles.input} placeholder="PIN code" value={registeredPostalCode} onChangeText={setRegisteredPostalCode} placeholderTextColor={colors.textSecondary} keyboardType="number-pad" maxLength={6} />
+              <Input
+                label="Business / trade name *"
+                placeholder="Enter business or trade name"
+                value={businessName}
+                onChangeText={setBusinessName}
+              />
+              <Input
+                label="Your name (as on PAN) *"
+                placeholder="Enter name exactly as on PAN"
+                value={contactName}
+                onChangeText={setContactName}
+                autoCapitalize="words"
+              />
+              <Input
+                label="Contact email *"
+                placeholder="Enter contact email"
+                value={contactEmail}
+                onChangeText={setContactEmail}
+                autoCapitalize="none"
+              />
+              <Input
+                label="Mobile (Aadhaar/CKYC-linked) *"
+                placeholder="Enter mobile number"
+                value={contactPhone}
+                onChangeText={setContactPhone}
+                keyboardType="phone-pad"
+              />
+              <Input
+                label="PAN Number *"
+                placeholder="Enter PAN number"
+                value={pan}
+                onChangeText={setPan}
+                autoCapitalize="characters"
+              />
+              <Input
+                label="Bank account number *"
+                placeholder="Enter account number"
+                value={bankAccountNumber}
+                onChangeText={setBankAccountNumber}
+              />
+              <Input
+                label="IFSC *"
+                placeholder="Enter IFSC code"
+                value={bankIfsc}
+                onChangeText={setBankIfsc}
+                autoCapitalize="characters"
+              />
+              <Input
+                label="Address line 1 *"
+                placeholder="Enter street address"
+                value={registeredStreet}
+                onChangeText={setRegisteredStreet}
+              />
+              <Input
+                label="Area / locality"
+                placeholder="Optional"
+                value={registeredStreet2}
+                onChangeText={setRegisteredStreet2}
+              />
+              <Input
+                label="City *"
+                placeholder="Enter city"
+                value={registeredCity}
+                onChangeText={setRegisteredCity}
+              />
+              <Input
+                label="State *"
+                placeholder="Enter state"
+                value={registeredState}
+                onChangeText={setRegisteredState}
+              />
+              <Input
+                label="PIN code *"
+                placeholder="Enter 6-digit PIN"
+                value={registeredPostalCode}
+                onChangeText={setRegisteredPostalCode}
+                keyboardType="number-pad"
+                maxLength={6}
+              />
               <Button title={submitting ? 'Submitting...' : 'Submit for verification'} onPress={() => void handleSubmit()} disabled={submitting} />
             </Card>
           ) : (
@@ -167,14 +233,6 @@ function createStyles(colors: { background: string; text: string; border: string
     backRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
     backText: { marginLeft: 8, color: colors.text },
     card: { padding: 16, gap: 10 },
-    input: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 8,
-      padding: 12,
-      color: colors.text,
-      marginBottom: 8,
-    },
   });
 }
 

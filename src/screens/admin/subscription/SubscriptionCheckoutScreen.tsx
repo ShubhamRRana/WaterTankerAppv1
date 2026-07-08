@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { RouteProp, useRoute } from '@react-navigation/native';
@@ -6,7 +6,6 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Typography, Button, Card, LoadingSpinner } from '../../../components/common';
 import { useAuthStore } from '../../../store/authStore';
 import { useSubscriptionStore } from '../../../store/subscriptionStore';
-import { useAdminSubscriptionGate } from '../../../context/AdminSubscriptionGateContext';
 import { PaymentService } from '../../../services/payment.service';
 import { SubscriptionService } from '../../../services/subscription.service';
 import { openCheckout } from '../../../services/razorpayCheckout.service';
@@ -29,12 +28,15 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
   const { subscriptionId, planId, planName } = route.params;
   const { user } = useAuthStore();
   const { plans } = useSubscriptionStore();
-  const { refresh: refreshSubscriptionGate } = useAdminSubscriptionGate();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [order, setOrder] = useState<RazorpayOrderResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
+  const orderLoadedRef = useRef(false);
+  const paymentCompletedRef = useRef(false);
+  const navigationRef = useRef(navigation);
+  navigationRef.current = navigation;
 
   const savingsMessage = useMemo(() => {
     const plan = plans.find((item) => item.id === planId);
@@ -47,18 +49,41 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
     return `You save ${PricingUtils.formatPrice(savings.savingsAmount)} (${savings.savingsPercent}%) vs paying monthly`;
   }, [plans, planId]);
 
+  const navigateToPaymentSuccess = useCallback((referenceId?: string) => {
+    paymentCompletedRef.current = true;
+    useSubscriptionStore.getState().setPendingSubscriptionPaymentSuccess(
+      referenceId ? { referenceId } : {}
+    );
+    navigationRef.current.replace('PaymentResult', {
+      type: 'subscription',
+      status: 'success',
+      ...(referenceId ? { referenceId } : {}),
+    });
+  }, []);
+
   const loadOrder = useCallback(async () => {
+    if (orderLoadedRef.current || paymentCompletedRef.current) return;
+    orderLoadedRef.current = true;
     setLoading(true);
     try {
       const created = await PaymentService.createSubscriptionPayment(subscriptionId, planId);
       setOrder(created);
     } catch (e) {
-      Alert.alert('Error', e instanceof Error ? e.message : ERROR_MESSAGES.payment.failed);
-      navigation.goBack();
+      const message = e instanceof Error ? e.message : ERROR_MESSAGES.payment.failed;
+      if (message === ERROR_MESSAGES.payment.subscriptionNotEligible && user?.id) {
+        const sub = await SubscriptionService.getCurrentSubscription(user.id);
+        if (sub?.status === 'active') {
+          navigateToPaymentSuccess();
+          return;
+        }
+      }
+      orderLoadedRef.current = false;
+      Alert.alert('Error', message);
+      navigationRef.current.goBack();
     } finally {
       setLoading(false);
     }
-  }, [subscriptionId, planId, navigation]);
+  }, [subscriptionId, planId, user?.id, navigateToPaymentSuccess]);
 
   useEffect(() => {
     void loadOrder();
@@ -73,6 +98,7 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
   const handlePay = async () => {
     if (!order || !user) return;
     setPaying(true);
+    paymentCompletedRef.current = true;
     const result = await openCheckout({
       orderId: order.orderId,
       amount: order.amount,
@@ -87,11 +113,13 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
     });
 
     if (result.status === 'cancelled') {
+      paymentCompletedRef.current = false;
       setPaying(false);
       Alert.alert('Cancelled', ERROR_MESSAGES.payment.cancelled);
       return;
     }
     if (result.status === 'error') {
+      paymentCompletedRef.current = false;
       setPaying(false);
       navigation.navigate('PaymentResult', {
         type: 'subscription',
@@ -103,16 +131,13 @@ const SubscriptionCheckoutScreen: React.FC<Props> = ({ navigation }) => {
 
     try {
       await SubscriptionService.activateSubscription(subscriptionId, result.data);
+      const referenceId = result.data.razorpay_payment_id;
+      navigateToPaymentSuccess(referenceId);
       if (user.id) {
         await useSubscriptionStore.getState().refresh(user.id);
-        await refreshSubscriptionGate({ navigateTo: 'SubscriptionStatus' });
       }
-      navigation.replace('PaymentResult', {
-        type: 'subscription',
-        status: 'success',
-        referenceId: result.data.razorpay_payment_id,
-      });
     } catch (e) {
+      paymentCompletedRef.current = false;
       navigation.navigate('PaymentResult', {
         type: 'subscription',
         status: 'failed',

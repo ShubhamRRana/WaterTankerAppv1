@@ -5,6 +5,8 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Button } from '../../components/common';
+import { useOptionalAdminSubscriptionGate } from '../../context/AdminSubscriptionGateContext';
+import { useSubscriptionStore } from '../../store/subscriptionStore';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { PaymentResultScreenParams } from '../../types/razorpay.types';
 
@@ -17,6 +19,7 @@ interface Props {
 const PaymentResultScreen: React.FC<Props> = ({ navigation }) => {
   const route = useRoute<RouteProp<Record<string, Params>, string>>();
   const params = route.params as Params;
+  const gateContext = useOptionalAdminSubscriptionGate();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
@@ -24,6 +27,16 @@ const PaymentResultScreen: React.FC<Props> = ({ navigation }) => {
   const title = isSuccess ? 'Payment successful' : params.status === 'pending' ? 'Payment processing' : 'Payment failed';
 
   const onPrimary = () => {
+    if (params.type === 'subscription' && params.status === 'success') {
+      void (async () => {
+        useSubscriptionStore.getState().clearPendingSubscriptionPaymentSuccess();
+        if (gateContext) {
+          await gateContext.refresh({ navigateTo: 'SubscriptionStatus' });
+        }
+        navigation.navigate('SubscriptionStatus' as never);
+      })();
+      return;
+    }
     if (params.type === 'subscription') {
       navigation.navigate('SubscriptionStatus' as never);
       return;
