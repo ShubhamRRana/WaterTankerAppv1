@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Typography, Button, Card, LoadingSpinner, Input } from '../../../components/common';
 import { AgencyPayoutService } from '../../../services/agencyPayout.service';
 import type { LinkedAccountStatus } from '../../../services/agencyPayout.service';
+import { useOptionalAdminSubscriptionGate } from '../../../context/AdminSubscriptionGateContext';
 import { useTheme } from '../../../theme/ThemeProvider';
 import type { AdminStackParamList } from '../../../navigation/AdminNavigator';
 
@@ -24,6 +25,7 @@ type RazorpayAccountSetupNavigationProp = StackNavigationProp<
 
 const RazorpayAccountSetupScreen: React.FC = () => {
   const navigation = useNavigation<RazorpayAccountSetupNavigationProp>();
+  const subscriptionGate = useOptionalAdminSubscriptionGate();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -49,6 +51,9 @@ const RazorpayAccountSetupScreen: React.FC = () => {
       const s = await AgencyPayoutService.getAccountStatus();
       setStatus(s);
       if (s.businessName) setBusinessName(s.businessName);
+      if (subscriptionGate) {
+        await subscriptionGate.refresh();
+      }
     } finally {
       setLoading(false);
     }
@@ -97,6 +102,9 @@ const RazorpayAccountSetupScreen: React.FC = () => {
         registeredPostalCode,
       });
       setStatus(result);
+      if (subscriptionGate) {
+        await subscriptionGate.refresh();
+      }
       Alert.alert('Submitted', 'Razorpay payout setup submitted. Status will update after review.');
     } catch (e) {
       Alert.alert('Error', e instanceof Error ? e.message : 'Submission failed');

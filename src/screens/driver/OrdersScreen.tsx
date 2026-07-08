@@ -377,7 +377,7 @@ const OrdersScreen: React.FC = () => {
   const displayError = localError || error;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
       <View style={styles.container}>
         <OrdersHeader 
           driverName={driverDisplayName} 

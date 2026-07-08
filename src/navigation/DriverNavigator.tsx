@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import OrdersScreen from '../screens/driver/OrdersScreen';
 import DriverEarningsScreen from '../screens/driver/DriverEarningsScreen';
@@ -27,8 +28,12 @@ export type DriverStackParamList = {
 const Tab = createBottomTabNavigator<DriverTabParamList>();
 const Stack = createStackNavigator<DriverStackParamList>();
 
+const TAB_BAR_BASE_HEIGHT = 60;
+const TAB_BAR_PADDING_TOP = 8;
+
 const DriverTabsScreen: React.FC = () => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const tabOptions = useMemo(
     () => ({
       headerShown: false as const,
@@ -38,16 +43,16 @@ const DriverTabsScreen: React.FC = () => {
         backgroundColor: colors.surface,
         borderTopWidth: 1,
         borderTopColor: colors.border,
-        paddingBottom: 8,
-        paddingTop: 8,
-        height: 60,
+        paddingTop: TAB_BAR_PADDING_TOP,
+        paddingBottom: TAB_BAR_PADDING_TOP + insets.bottom,
+        height: TAB_BAR_BASE_HEIGHT + insets.bottom,
       },
       tabBarLabelStyle: {
         fontSize: 12,
         fontWeight: '500' as const,
       },
     }),
-    [colors]
+    [colors, insets.bottom]
   );
 
   return (

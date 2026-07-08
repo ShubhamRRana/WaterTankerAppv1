@@ -60,15 +60,39 @@ function isTransferSettled(metadata: Record<string, unknown>): boolean {
   return metadata.transfer_status === 'processed';
 }
 
+function mapLocalAccount(local: AgencyRazorpayAccount): LinkedAccountStatus {
+  return {
+    status: local.status,
+    accountId: local.razorpayAccountId,
+    businessName: local.businessName,
+    rejectionReason: local.rejectionReason,
+    defaultCollectionMethod: local.defaultCollectionMethod,
+    allowCashCollection: local.allowCashCollection,
+  };
+}
+
 export class AgencyPayoutService {
   static async getAccountStatus(): Promise<LinkedAccountStatus> {
     const { data, error } = await supabase.functions.invoke('get-linked-account-status', {
       body: {},
     });
-    if (error) {
-      return { status: 'not_started' };
+    if (
+      !error &&
+      data &&
+      typeof (data as LinkedAccountStatus).status === 'string'
+    ) {
+      return data as LinkedAccountStatus;
     }
-    return (data ?? { status: 'not_started' }) as LinkedAccountStatus;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.id) {
+      const local = await subscriptionDataAccess.getAgencyRazorpayAccount(user.id);
+      if (local) {
+        return mapLocalAccount(local);
+      }
+    }
+
+    return { status: 'not_started' };
   }
 
   static async submitOnboarding(payload: OnboardingPayload): Promise<LinkedAccountStatus> {

@@ -97,8 +97,22 @@ Deno.serve(async (req: Request) => {
 
     if (event === "account.activated" || event === "account.updated") {
       const account = payload.payload?.account?.entity;
-      const agencyId = account?.notes?.agency_id;
-      if (agencyId && account?.id) {
+      if (!account?.id) {
+        return jsonResponse({ received: true });
+      }
+
+      let agencyId = account.notes?.agency_id;
+      if (!agencyId) {
+        const admin = getServiceClient();
+        const { data: row } = await admin
+          .from("agency_razorpay_accounts")
+          .select("agency_id")
+          .eq("razorpay_account_id", account.id)
+          .maybeSingle();
+        agencyId = row?.agency_id ?? undefined;
+      }
+
+      if (agencyId) {
         await updateAgencyRazorpayAccountStatus(
           agencyId,
           mapAccountStatus(account.status),

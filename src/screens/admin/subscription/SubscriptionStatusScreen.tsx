@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo } from 'react';
-import { StyleSheet, ScrollView } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { Ionicons } from '@expo/vector-icons';
 import { Typography, Button, Card, LoadingSpinner } from '../../../components/common';
 import { useAuthStore } from '../../../store/authStore';
 import { useSubscriptionStore } from '../../../store/subscriptionStore';
@@ -44,6 +45,14 @@ const SubscriptionStatusScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Profile')}
+          style={styles.backRow}
+          accessibilityRole="button"
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
+          <Typography variant="body" style={styles.backText}>Back to profile</Typography>
+        </TouchableOpacity>
         <Card style={styles.card}>
           <Typography variant="h2">Subscription</Typography>
           <Typography variant="body">
@@ -78,10 +87,12 @@ const SubscriptionStatusScreen: React.FC<Props> = ({ navigation }) => {
   );
 };
 
-function createStyles(colors: { background: string }) {
+function createStyles(colors: { background: string; text: string }) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    scroll: { padding: 16 },
+    scroll: { padding: 16, gap: 12 },
+    backRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+    backText: { marginLeft: 8, color: colors.text },
     card: { padding: 16, gap: 12 },
   });
 }

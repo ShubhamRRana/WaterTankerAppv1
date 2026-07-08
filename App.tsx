@@ -8,7 +8,7 @@ import {
 } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import { View, ActivityIndicator } from 'react-native';
 
@@ -136,7 +136,7 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <SafeAreaProvider>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <ThemeProvider>
           <NavigationContent />
         </ThemeProvider>

@@ -5,6 +5,7 @@ import {
   ScrollView, 
   RefreshControl,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, LoadingSpinner } from '../../components/common';
@@ -141,16 +142,17 @@ const DriverEarningsScreen: React.FC = () => {
 
   if (isLoading && !earningsStats) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView edges={['top', 'left', 'right']} style={styles.loadingContainer}>
         <LoadingSpinner />
         <Typography variant="body" style={styles.loadingText}>
           Loading completed orders...
         </Typography>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
+    <SafeAreaView edges={['top', 'left', 'right']} style={styles.safeArea}>
     <ScrollView 
       style={styles.container}
       refreshControl={
@@ -240,11 +242,16 @@ const DriverEarningsScreen: React.FC = () => {
         </Typography>
       </View>
     </ScrollView>
+    </SafeAreaView>
   );
 };
 
 function createStyles(colors: AppPalette) {
   return StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
     container: {
       flex: 1,
       backgroundColor: colors.background,
@@ -262,7 +269,7 @@ function createStyles(colors: AppPalette) {
     },
     header: {
       padding: 24,
-      paddingTop: 60,
+      paddingTop: 24,
       paddingBottom: 20,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
