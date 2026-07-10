@@ -6,13 +6,9 @@ Server-side functions for the Water Tanker Admin + Driver app. Deploy from the *
 
 | Function | Purpose | Auth |
 |----------|---------|------|
-| `create-subscription-order` | Razorpay order for agency subscription (Flow A) | Admin JWT |
+| `create-subscription-order` | Razorpay order for agency platform subscription | Admin JWT |
 | `verify-subscription-payment` | Verify subscription checkout signature | Admin JWT |
-| `create-delivery-order` | Razorpay order for delivery collection (Flow B) | Driver JWT |
-| `verify-delivery-payment` | Verify delivery checkout signature | Driver JWT |
-| `create-linked-account` | Start Razorpay Route onboarding for an agency | Admin JWT |
-| `get-linked-account-status` | Poll linked-account / KYC status | Admin JWT |
-| `razorpay-webhook` | Payment + Route account events (source of truth) | Webhook signature |
+| `razorpay-webhook` | Subscription payment events (source of truth) | Webhook signature |
 | `send-email` | Auth emails via Resend (Send Email hook) | Hook secret |
 | `admin-create-driver` | Create driver without confirmation email | Admin JWT |
 | `admin-update-user-password` | Reset password for admin-created drivers | Admin JWT |
@@ -30,13 +26,9 @@ Set secrets first (see below), then deploy:
 # Deploy everything configured under supabase/functions/
 npx supabase functions deploy
 
-# Or deploy individually — Razorpay
+# Or deploy individually — Razorpay (subscriptions only)
 npx supabase functions deploy create-subscription-order
 npx supabase functions deploy verify-subscription-payment
-npx supabase functions deploy create-delivery-order
-npx supabase functions deploy verify-delivery-payment
-npx supabase functions deploy create-linked-account
-npx supabase functions deploy get-linked-account-status
 npx supabase functions deploy razorpay-webhook --no-verify-jwt
 
 # Auth email hook (must disable JWT verification)
@@ -72,7 +64,9 @@ For local `supabase functions serve`, you may set `SUPABASE_PUBLISHABLE_KEYS` an
 
 ---
 
-## Razorpay (admin/driver + shared webhook)
+## Razorpay (agency subscription only)
+
+Razorpay is used **only** for the agency platform subscription. Delivery payments are collected in person by the driver via the agency QR code or cash, and recorded directly in the app — no Edge Function or gateway involved.
 
 **Prerequisites:** Apply migration `supabase/migrations/20260612120000_razorpay_admin_driver_foundation.sql`. See [docs/RAZORPAY_IMPLEMENTATION_PHASES.md](../../docs/RAZORPAY_IMPLEMENTATION_PHASES.md) and [docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md](../../docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md).
 
@@ -80,11 +74,7 @@ For local `supabase functions serve`, you may set `SUPABASE_PUBLISHABLE_KEYS` an
 |----------|------|-------------|
 | `create-subscription-order` | `agency_subscription` | Admin subscription checkout |
 | `verify-subscription-payment` | `agency_subscription` | After Razorpay SDK success |
-| `create-delivery-order` | `driver_delivery` | Driver Collect Payment screen |
-| `verify-delivery-payment` | `driver_delivery` | After Razorpay SDK success |
-| `create-linked-account` | Route onboarding | Admin payout / Route setup |
-| `get-linked-account-status` | Route status | Admin payout settings |
-| `razorpay-webhook` | All flows + `account.activated` | Razorpay Dashboard |
+| `razorpay-webhook` | `agency_subscription` events | Razorpay Dashboard |
 
 ## Razorpay Live go-live
 
@@ -98,7 +88,7 @@ After obtaining Live keys from Razorpay Dashboard:
 **Razorpay Dashboard webhook:** Point to  
 `https://<project-ref>.supabase.co/functions/v1/razorpay-webhook`
 
-Enable events: `payment.captured`, `payment.failed`, `account.activated`, `account.updated`.
+Enable events: `payment.captured`, `payment.failed`.
 
 **Expo app** (publishable key only): set `EXPO_PUBLIC_RAZORPAY_KEY_ID` in the root `.env`.
 

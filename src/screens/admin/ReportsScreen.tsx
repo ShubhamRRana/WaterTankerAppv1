@@ -74,7 +74,7 @@ const ReportsScreen: React.FC = () => {
         b.status === 'delivered'
       );
     });
-    const razorpayCollected = monthBookings
+    const digitallyCollected = monthBookings
       .filter(
         (b) =>
           b.paymentStatus === 'completed' &&
@@ -86,7 +86,7 @@ const ReportsScreen: React.FC = () => {
     const pendingCollections = monthBookings
       .filter((b) => b.paymentStatus !== 'completed')
       .reduce((sum, b) => sum + (b.deliveredAmount ?? b.totalPrice), 0);
-    return { razorpayCollected, pendingCollections };
+    return { digitallyCollected, pendingCollections };
   }, [bookings, selectedYear, selectedMonth]);
 
   const handleLogout = async () => {
@@ -208,12 +208,12 @@ const ReportsScreen: React.FC = () => {
 
         <View style={styles.summarySection}>
           <Typography variant="h2" style={styles.summaryTitle}>
-            Delivery payments (Razorpay)
+            Delivery payments (QR)
           </Typography>
           <View style={styles.summaryMetrics}>
             <View style={styles.summaryMetric}>
               <Typography variant="h1" style={styles.summaryValue}>
-                {PricingUtils.formatPrice(paymentMetrics.razorpayCollected)}
+                {PricingUtils.formatPrice(paymentMetrics.digitallyCollected)}
               </Typography>
               <Typography variant="body" style={styles.summaryLabel}>
                 Collected online

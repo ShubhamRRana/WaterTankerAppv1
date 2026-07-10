@@ -1,5 +1,11 @@
 # Razorpay Subscription & Payments — Phase-Wise Implementation Guide
 
+> **OBSOLETE (2026-07-10):** Razorpay delivery payments and Route (linked accounts / payouts)
+> have been removed. Drivers now collect delivery payments via the agency QR code or cash
+> (see `docs/superpowers/specs/2026-07-10-remove-razorpay-delivery-payments-design.md`).
+> Razorpay is used only for agency platform subscriptions. Delivery/Route sections below
+> are historical.
+
 **Purpose:** Actionable implementation roadmap for the Admin + Driver app, derived from [`RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md`](./RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md).
 
 **Scope:** This repo (`WaterTankerAppv1`) — **admin** and **driver** roles only. Customer-app payment screens are tracked in Phase 5 (optional).

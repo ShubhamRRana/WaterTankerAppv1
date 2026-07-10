@@ -447,7 +447,7 @@ const TripDetailsScreen: React.FC<Props> = ({ navigation }) => {
             Society billing periods — bulk settlement tracking
           </Typography>
           {/* <Typography variant="caption" style={[styles.subtitle, { opacity: 0.75, marginTop: 4 }]}>
-            Per-delivery Razorpay payments are collected by drivers and appear under Bookings / Reports.
+            Delivery payments are collected by drivers via QR or cash and appear under Bookings / Reports.
           </Typography> */}
           </View>
           <TouchableOpacity

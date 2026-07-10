@@ -1,5 +1,11 @@
 # Razorpay Subscription & In-App Payments — Screen Change Plan
 
+> **OBSOLETE (2026-07-10):** Razorpay delivery payments and Route (linked accounts / payouts)
+> have been removed. Drivers now collect delivery payments via the agency QR code or cash
+> (see `docs/superpowers/specs/2026-07-10-remove-razorpay-delivery-payments-design.md`).
+> Razorpay is used only for agency platform subscriptions. Delivery/Route sections below
+> are historical.
+
 **Purpose:** Review document for implementing two separate payment flows using **Razorpay**, without code changes in this phase.
 
 **App context:** This repository is the **Admin + Driver** mobile app (`admin` and `driver` roles only). Customers use a separate app (linked from `RoleEntryScreen`). Screen changes below apply to this app unless noted for the customer app.

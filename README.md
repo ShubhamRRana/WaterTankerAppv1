@@ -1,6 +1,6 @@
 # Water Tanker Admin + Driver App
 
-A React Native (Expo) mobile application for water tanker **agency admins** and **drivers**. Built with TypeScript and Supabase (PostgreSQL, Auth, Realtime, Edge Functions), with **Razorpay** for platform subscriptions and delivery payments. Customer booking is handled by a separate customer mobile app that shares the same backend.
+A React Native (Expo) mobile application for water tanker **agency admins** and **drivers**. Built with TypeScript and Supabase (PostgreSQL, Auth, Realtime, Edge Functions), with **Razorpay** for platform subscriptions only — delivery payments are collected in person via the agency QR code or cash, recorded by the driver. Customer booking is handled by a separate customer mobile app that shares the same backend.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ A React Native (Expo) mobile application for water tanker **agency admins** and 
 - **Order Management**: Accept/reject available bookings scoped to the driver’s agency
 - **Status Updates**: Update booking status (in_transit, delivered)
 - **Earnings Tracking**: View earnings, completed orders, and statistics
-- **Payment Collection**: Collect delivery payments via Razorpay Checkout or manual QR/cash (agency-configurable)
+- **Payment Collection**: Collect delivery payments in person via the agency QR code or cash
 - **Order Filtering**: Filter orders by status (pending, accepted, in_transit, delivered)
 
 ### Admin Features
@@ -35,7 +35,7 @@ A React Native (Expo) mobile application for water tanker **agency admins** and 
 - **Vehicle Management**: Manage vehicle fleet with insurance and capacity details
 - **Bank Account Management**: Manage bank accounts for manual QR collection
 - **Platform Subscription**: Subscribe to agency plans (monthly/quarterly/half-yearly/yearly) via Razorpay
-- **Razorpay Route & Payouts**: Onboard linked accounts, track KYC status, and view delivery payment history
+- **Delivery Payment History**: View driver-recorded QR/cash delivery payments
 - **Expense Management**: Track diesel and maintenance expenses with receipt image uploads
 
 ## Tech Stack
@@ -53,8 +53,8 @@ A React Native (Expo) mobile application for water tanker **agency admins** and 
 - **Supabase** (PostgreSQL Database)
 - **Supabase Auth** (Authentication)
 - **Supabase Realtime** (Real-time Subscriptions)
-- **Supabase Edge Functions** (Razorpay orders, webhooks, admin auth helpers, Resend email hook)
-- **Razorpay** (Platform subscriptions + Route linked accounts for delivery payments)
+- **Supabase Edge Functions** (Razorpay subscription orders, webhooks, admin auth helpers, Resend email hook)
+- **Razorpay** (Platform subscriptions only)
 - **Resend** (Auth emails via Send Email hook)
 
 ### Testing
@@ -239,7 +239,6 @@ graph TB
         E --> S[ReportsScreen]
         E --> TA[ExpenseScreen]
         E --> TB[SubscriptionPlansScreen]
-        E --> TC[RazorpayAccountSetupScreen]
         E --> TD[DeliveryPaymentHistoryScreen]
     end
     
@@ -479,7 +478,7 @@ Before you begin, ensure you have the following installed or configured:
 - **Git** for version control
 - **Supabase Account** with a project created (shared with the customer app)
 - **Supabase CLI** (`npx supabase`) for migrations and Edge Function deploys
-- **Razorpay Account** (test keys for development; Route enabled for delivery payouts)
+- **Razorpay Account** (test keys for development; used for agency platform subscriptions only)
 - **Resend Account** (for auth emails via the Send Email hook)
 - **Google Maps API Key** (optional, for enhanced location features)
 
@@ -538,7 +537,7 @@ Ensure your Supabase project has the core tables configured:
 - `users`, `user_roles`, `customers`, `drivers`, `admins`
 - `bookings`, `vehicles`, `bank_accounts`, `tanker_sizes`, `pricing`, `expenses`
 - `subscription_plans`, `subscriptions`, `payment_transactions` (payments)
-- `agency_razorpay_accounts` (Razorpay Route onboarding per agency)
+- `agency_razorpay_accounts` (legacy table name; now stores per-agency `allow_cash_collection` setting only — see `CollectionSettingsService`)
 
 **Important**: Row Level Security (RLS) is enabled on all tables with comprehensive policies. Configure realtime publications for:
 - `bookings`
@@ -680,7 +679,7 @@ Core app tables plus payment/subscription objects used by admin and driver flows
 3. **vehicles**, **bank_accounts**, **tanker_sizes**, **pricing**, **expenses**
 4. **subscription_plans**, **subscriptions** — agency platform subscription
 5. **payment_transactions** — shared payment ledger (gateway order/transaction IDs)
-6. **agency_razorpay_accounts** — Razorpay Route linked account per agency
+6. **agency_razorpay_accounts** — legacy table name; now stores per-agency `allow_cash_collection` setting only
 
 ### Row Level Security (RLS)
 
@@ -778,16 +777,16 @@ Enable realtime for:
 
 ## Payments & Subscriptions (Razorpay)
 
-Two independent money flows share one Supabase backend and webhook:
+Razorpay is used **only** for the agency platform subscription. Delivery payments are collected in person by the driver via the agency QR code or cash, and simply recorded in the app (no payment gateway involved).
 
 | Flow | Who pays | Who receives | App role |
 |------|----------|--------------|----------|
-| **A — Platform subscription** | Agency admin | Platform (your Razorpay account) | Admin |
-| **B — Delivery payment** | Customer at delivery | Agency (Razorpay Route linked account) | Driver (+ admin setup) |
+| **Platform subscription** | Agency admin | Platform (your Razorpay account) | Admin |
+| **Delivery payment** | Customer at delivery | Agency (QR code / cash, in person) | Driver |
 
-**Admin:** Subscription plans/checkout, payment history, Route onboarding (`RazorpayAccountSetupScreen`), agency payouts, delivery payment history.
+**Admin:** Subscription plans/checkout, payment history, delivery payment history (`DeliveryPaymentHistoryScreen`).
 
-**Driver:** `CollectPaymentScreen` — Razorpay Checkout when Route is active, otherwise manual QR/cash per agency settings.
+**Driver:** `CollectPaymentScreen` — records the delivery payment as QR or cash; no checkout SDK involved.
 
 **Feature flags** in `src/constants/config.ts`: `enableRazorpaySubscription`, `enableOnlinePayment`, `enableSubscriptionGating`.
 
@@ -804,10 +803,8 @@ Server-side logic lives under `supabase/functions/`. Deploy from the project roo
 
 | Function | Purpose |
 |----------|---------|
-| `create-subscription-order` / `verify-subscription-payment` | Flow A — agency subscription |
-| `create-delivery-order` / `verify-delivery-payment` | Flow B — driver delivery collection |
-| `create-linked-account` / `get-linked-account-status` | Razorpay Route onboarding |
-| `razorpay-webhook` | Payment and account events (source of truth) |
+| `create-subscription-order` / `verify-subscription-payment` | Agency platform subscription |
+| `razorpay-webhook` | Subscription payment events (source of truth) |
 | `send-email` | Auth emails via Resend |
 | `admin-create-driver` / `admin-update-user-password` / `admin-delete-user` | Admin user management |
 
@@ -848,7 +845,7 @@ See [supabase/functions/README.md](supabase/functions/README.md) for deploy comm
 - Deploy `razorpay-webhook` with `--no-verify-jwt` and point Razorpay Dashboard to  
   `https://<project-ref>.supabase.co/functions/v1/razorpay-webhook`
 - Ensure migration `20260612120000_razorpay_admin_driver_foundation.sql` is applied
-- For delivery payouts, complete Route linked-account onboarding (`agency_razorpay_accounts.status = active`)
+- Delivery payments are not gateway-processed (QR/cash, recorded by the driver) — Razorpay issues only affect subscriptions
 
 ### Realtime Not Working
 
@@ -884,9 +881,8 @@ See [supabase/functions/README.md](supabase/functions/README.md) for deploy comm
 
 ### Shipped (current baseline)
 
-- [x] **Razorpay payments** — Platform subscription (Flow A) and verified delivery collection (Flow B)
+- [x] **Razorpay payments** — Platform subscription only; delivery payments are collected via QR code or cash and recorded by the driver
 - [x] **Agency subscription gating** — Trial and active subscription checks for admin access
-- [x] **Razorpay Route onboarding** — Linked accounts, KYC polling, payout history
 - [x] **Resend auth emails** — Send Email hook replaces default Supabase mail
 - [x] **Admin driver lifecycle** — Create without confirmation email, password reset, auth user cleanup
 - [x] **Push notifications** — Real-time order updates (feature flag enabled)
