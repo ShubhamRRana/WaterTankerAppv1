@@ -788,7 +788,7 @@ Razorpay is used **only** for the agency platform subscription. Delivery payment
 
 **Driver:** `CollectPaymentScreen` — records the delivery payment as QR or cash; no checkout SDK involved.
 
-**Feature flags** in `src/constants/config.ts`: `enableRazorpaySubscription`, `enableOnlinePayment`, `enableSubscriptionGating`.
+**Feature flags** in `src/constants/config.ts`: `enableRazorpaySubscription`, `enableSubscriptionGating`.
 
 **Implementation guides:**
 

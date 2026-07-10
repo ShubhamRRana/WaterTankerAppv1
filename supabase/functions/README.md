@@ -81,14 +81,14 @@ Razorpay is used **only** for the agency platform subscription. Delivery payment
 After obtaining Live keys from Razorpay Dashboard:
 
 1. Copy `supabase/functions/.env.example` → `supabase/functions/.env` and fill `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`.
-2. Run `npm run razorpay:go-live` — creates Live webhook, syncs Supabase secrets, updates `.env` and `eas.json`.
-3. Run `npm run razorpay:verify-live` — confirms API auth, webhook, and app config.
+2. Set Supabase secrets:
+   ```bash
+   npx supabase secrets set RAZORPAY_KEY_ID=<your-live-key-id> RAZORPAY_KEY_SECRET=<your-live-key-secret> RAZORPAY_WEBHOOK_SECRET=<your-webhook-secret>
+   ```
+3. In Razorpay Dashboard, register the webhook:
+   - URL: `https://<project-ref>.supabase.co/functions/v1/razorpay-webhook`
+   - Events: `payment.captured`, `payment.failed`
 4. Run `npm run build:production:android` — new build with live publishable key.
-
-**Razorpay Dashboard webhook:** Point to  
-`https://<project-ref>.supabase.co/functions/v1/razorpay-webhook`
-
-Enable events: `payment.captured`, `payment.failed`.
 
 **Expo app** (publishable key only): set `EXPO_PUBLIC_RAZORPAY_KEY_ID` in the root `.env`.
 
