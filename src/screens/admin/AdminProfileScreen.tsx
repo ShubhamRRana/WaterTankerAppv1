@@ -1,18 +1,21 @@
-import React, { useEffect, useState, useReducer, useCallback, useMemo } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView, 
-  Alert, 
+import React, { useEffect, useState, useReducer, useCallback, useMemo, useRef } from 'react';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
   TouchableOpacity,
   AccessibilityInfo,
+  Animated,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { Typography, Button, Card, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
+import { Typography, Card, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
 import ProfileHeader from '../../components/admin/ProfileHeader';
 import AdminSubscriptionCard from '../../components/admin/AdminSubscriptionCard';
 import EditProfileForm from '../../components/admin/EditProfileForm';
@@ -29,6 +32,80 @@ import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
 
 type AdminProfileScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Profile'>;
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+function animateSectionLayout(): void {
+  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+}
+
+interface SettingsRowProps {
+  label: string;
+  onPress: () => void;
+  disabled?: boolean;
+  colors: AppPalette;
+}
+
+const SettingsRow: React.FC<SettingsRowProps> = ({ label, onPress, disabled, colors }) => {
+  const styles = useMemo(() => createSettingsRowStyles(colors), [colors]);
+
+  return (
+    <TouchableOpacity
+      style={[styles.row, disabled && styles.rowDisabled]}
+      onPress={onPress}
+      activeOpacity={0.7}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <Typography variant="body" style={styles.label}>{label}</Typography>
+      <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+    </TouchableOpacity>
+  );
+};
+
+function createSettingsRowStyles(colors: AppPalette) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: 14,
+      paddingHorizontal: 16,
+    },
+    rowDisabled: {
+      opacity: 0.5,
+    },
+    label: {
+      fontSize: 16,
+      color: colors.text,
+    },
+  });
+}
+
+interface SectionEyebrowProps {
+  title: string;
+  colors: AppPalette;
+}
+
+const SectionEyebrow: React.FC<SectionEyebrowProps> = ({ title, colors }) => (
+  <Typography
+    variant="caption"
+    style={{
+      fontSize: 11,
+      fontWeight: '700',
+      letterSpacing: 1.2,
+      textTransform: 'uppercase',
+      color: colors.textSecondary,
+      marginBottom: 8,
+      marginLeft: 4,
+    }}
+  >
+    {title}
+  </Typography>
+);
 
 // Form state interface
 interface FormState {
@@ -50,8 +127,6 @@ interface AppState {
   editForm: FormState;
   formErrors: FormErrors;
   isSaving: boolean;
-  imageError: boolean;
-  imageLoading: boolean;
   isDirty: boolean;
   menuVisible: boolean;
   networkError: string | null;
@@ -64,8 +139,6 @@ type AppAction =
   | { type: 'SET_ERRORS'; payload: FormErrors }
   | { type: 'CLEAR_ERROR'; field: keyof FormErrors }
   | { type: 'SET_SAVING'; payload: boolean }
-  | { type: 'SET_IMAGE_ERROR'; payload: boolean }
-  | { type: 'SET_IMAGE_LOADING'; payload: boolean }
   | { type: 'SET_DIRTY'; payload: boolean }
   | { type: 'SET_MENU_VISIBLE'; payload: boolean }
   | { type: 'SET_NETWORK_ERROR'; payload: string | null }
@@ -82,8 +155,6 @@ const initialState: AppState = {
   },
   formErrors: {},
   isSaving: false,
-  imageError: false,
-  imageLoading: true,
   isDirty: false,
   menuVisible: false,
   networkError: null,
@@ -107,10 +178,6 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return { ...state, formErrors: newErrors };
     case 'SET_SAVING':
       return { ...state, isSaving: action.payload };
-    case 'SET_IMAGE_ERROR':
-      return { ...state, imageError: action.payload };
-    case 'SET_IMAGE_LOADING':
-      return { ...state, imageLoading: action.payload };
     case 'SET_DIRTY':
       return { ...state, isDirty: action.payload };
     case 'SET_MENU_VISIBLE':
@@ -161,6 +228,8 @@ const AdminProfileScreen: React.FC = () => {
   const { user, updateUser, logout, isLoading } = useAuthStore();
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [isDeleting, setIsDeleting] = React.useState(false);
+  const heroOpacity = useRef(new Animated.Value(0)).current;
+  const heroTranslateY = useRef(new Animated.Value(12)).current;
   // Debounced form values for validation
   const debouncedBusinessName = useDebounce(state.editForm.businessName, 500);
   const debouncedName = useDebounce(state.editForm.name, 500);
@@ -177,9 +246,23 @@ const AdminProfileScreen: React.FC = () => {
         phone: user.phone || '',
       };
       dispatch({ type: 'INITIALIZE_FORM', payload: initialForm });
-      dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
     }
   }, [user]);
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(heroOpacity, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+      Animated.timing(heroTranslateY, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [heroOpacity, heroTranslateY]);
 
   // Track dirty state
   useEffect(() => {
@@ -306,6 +389,7 @@ const AdminProfileScreen: React.FC = () => {
       } as Partial<User>;
       
       await updateUser(updates);
+      animateSectionLayout();
       dispatch({ type: 'SET_EDITING', payload: false });
       dispatch({ type: 'SET_DIRTY', payload: false });
       dispatch({ type: 'SET_ERRORS', payload: {} });
@@ -405,6 +489,7 @@ const AdminProfileScreen: React.FC = () => {
                   email: user.email || '',
                   phone: user.phone || '',
                 };
+                animateSectionLayout();
                 dispatch({ type: 'RESET_FORM', payload: resetForm });
                 dispatch({ type: 'SET_EDITING', payload: false });
                 AccessibilityInfo.announceForAccessibility('Changes discarded');
@@ -423,8 +508,15 @@ const AdminProfileScreen: React.FC = () => {
         };
         dispatch({ type: 'RESET_FORM', payload: resetForm });
       }
+      animateSectionLayout();
       dispatch({ type: 'SET_EDITING', payload: false });
     }
+  };
+
+  const handleStartEdit = () => {
+    animateSectionLayout();
+    dispatch({ type: 'SET_EDITING', payload: true });
+    AccessibilityInfo.announceForAccessibility('Edit profile mode activated');
   };
 
   const handleInputChange = useCallback((field: keyof FormState, value: string) => {
@@ -454,14 +546,6 @@ const AdminProfileScreen: React.FC = () => {
     [navigation],
   );
 
-  const handleRetryImage = () => {
-    dispatch({ type: 'SET_IMAGE_ERROR', payload: false });
-    dispatch({ type: 'SET_IMAGE_LOADING', payload: true });
-    setTimeout(() => {
-      dispatch({ type: 'SET_IMAGE_LOADING', payload: false });
-    }, 100);
-  };
-
   if (isLoading) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -490,11 +574,10 @@ const AdminProfileScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} keyboardShouldPersistTaps="handled">
-        {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerContent}>
-            <TouchableOpacity 
-              style={styles.menuButton} 
+            <TouchableOpacity
+              style={styles.menuButton}
               onPress={() => dispatch({ type: 'SET_MENU_VISIBLE', payload: true })}
               activeOpacity={0.7}
               accessibilityLabel="Open menu"
@@ -511,78 +594,95 @@ const AdminProfileScreen: React.FC = () => {
 
         {isAdminUser(user) && (
           <>
-            <AdminSubscriptionCard userId={user.id} navigation={navigation} />
-            <ProfileHeader
-              user={user}
-              imageError={state.imageError}
-              imageLoading={state.imageLoading}
-              onRetryImage={handleRetryImage}
-            />
+            <Animated.View
+              style={[
+                styles.heroWrap,
+                {
+                  opacity: heroOpacity,
+                  transform: [{ translateY: heroTranslateY }],
+                },
+              ]}
+            >
+              <Card style={styles.heroCard} padding="large">
+                <ProfileHeader user={user} />
+                <View style={styles.heroDivider} />
+                <AdminSubscriptionCard userId={user.id} navigation={navigation} />
+              </Card>
+            </Animated.View>
+
+            <View style={styles.section}>
+              <SectionEyebrow title="Account" colors={colors} />
+              <Card style={styles.sectionCard} padding="small">
+                {state.isEditing ? (
+                  <View style={styles.editFormWrap}>
+                    <EditProfileForm
+                      formData={state.editForm}
+                      formErrors={state.formErrors}
+                      isSaving={state.isSaving}
+                      isDirty={state.isDirty}
+                      onFieldChange={handleInputChange}
+                      onSave={handleSaveProfile}
+                      onCancel={handleCancelEdit}
+                    />
+                  </View>
+                ) : (
+                  <>
+                    <SettingsRow
+                      label="Edit profile"
+                      onPress={handleStartEdit}
+                      disabled={isDeleting}
+                      colors={colors}
+                    />
+                    <View style={styles.rowDivider} />
+                    <SettingsRow
+                      label="Change password"
+                      onPress={() => navigation.navigate('ChangePassword')}
+                      disabled={isDeleting}
+                      colors={colors}
+                    />
+                  </>
+                )}
+                {state.networkError ? (
+                  <View style={styles.inlineError}>
+                    <Ionicons name="alert-circle" size={18} color={colors.error} />
+                    <Typography variant="caption" style={styles.networkErrorText}>
+                      {state.networkError}
+                    </Typography>
+                  </View>
+                ) : null}
+              </Card>
+            </View>
+
             {!state.isEditing && (
-              <View style={styles.appearanceWrap}>
-                <AppearanceSettingsSection />
+              <View style={styles.section}>
+                <Card style={styles.sectionCard} padding="medium">
+                  <AppearanceSettingsSection />
+                </Card>
+              </View>
+            )}
+
+            {!state.isEditing && (
+              <View style={styles.section}>
+                <SectionEyebrow title="Security" colors={colors} />
+                <Card style={styles.sectionCard} padding="small">
+                  <TouchableOpacity
+                    style={styles.destructiveRow}
+                    onPress={handleDeleteAccountPress}
+                    activeOpacity={0.7}
+                    disabled={isDeleting}
+                    accessibilityLabel={isDeleting ? 'Deleting account' : 'Delete account'}
+                    accessibilityRole="button"
+                  >
+                    <Ionicons name="trash-outline" size={20} color={colors.error} />
+                    <Typography variant="body" style={styles.destructiveLabel}>
+                      {isDeleting ? 'Deleting account...' : 'Delete account'}
+                    </Typography>
+                  </TouchableOpacity>
+                </Card>
               </View>
             )}
           </>
         )}
-        {!state.isEditing && (
-          <View style={styles.editButtonContainer}>
-            <Button 
-              title="Edit Profile" 
-              onPress={() => {
-                dispatch({ type: 'SET_EDITING', payload: true });
-                dispatch({ type: 'SET_IMAGE_ERROR', payload: false });
-                AccessibilityInfo.announceForAccessibility('Edit profile mode activated');
-              }} 
-              variant="primary"
-              disabled={isDeleting}
-            />
-            <Button
-              title="Change Password"
-              onPress={() => navigation.navigate('ChangePassword')}
-              variant="outline"
-              style={styles.changePasswordButton}
-              disabled={isDeleting}
-            />
-            <TouchableOpacity
-              style={[styles.actionButton, styles.deleteAccountButton]}
-              onPress={handleDeleteAccountPress}
-              activeOpacity={0.8}
-              disabled={isDeleting}
-              accessibilityLabel={isDeleting ? 'Deleting account' : 'Delete account'}
-              accessibilityRole="button"
-            >
-              <Ionicons name="trash-outline" size={22} color={colors.error} />
-              <Typography variant="body" style={styles.deleteAccountButtonText}>
-                {isDeleting ? 'Deleting...' : 'Delete Account'}
-              </Typography>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {state.networkError && (
-          <Card style={styles.errorCard}>
-            <View style={styles.errorContainer}>
-              <Ionicons name="alert-circle" size={20} color={colors.error} />
-              <Typography variant="body" style={styles.networkErrorText}>
-                {state.networkError}
-              </Typography>
-            </View>
-          </Card>
-        )}
-
-        {state.isEditing && (
-          <EditProfileForm
-            formData={state.editForm}
-            formErrors={state.formErrors}
-            isSaving={state.isSaving}
-            isDirty={state.isDirty}
-            onFieldChange={handleInputChange}
-            onSave={handleSaveProfile}
-            onCancel={handleCancelEdit}
-          />
-        )}
-
       </ScrollView>
       </KeyboardAvoidingView>
       <AdminMenuDrawer
@@ -607,11 +707,7 @@ function createStyles(colors: AppPalette) {
     backgroundColor: colors.background,
   },
   contentContainer: {
-    paddingBottom: 32,
-  },
-  appearanceWrap: {
-    paddingHorizontal: UI_CONFIG.spacing.md,
-    marginTop: UI_CONFIG.spacing.sm,
+    paddingBottom: UI_CONFIG.spacing.xl,
   },
   header: {
     paddingHorizontal: UI_CONFIG.spacing.lg,
@@ -632,9 +728,58 @@ function createStyles(colors: AppPalette) {
     flex: 1,
   },
   headerTitle: {
+    fontFamily: 'PlayfairDisplay-Regular',
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: colors.text,
+  },
+  heroWrap: {
+    marginHorizontal: UI_CONFIG.spacing.md,
+    marginTop: UI_CONFIG.spacing.md,
+  },
+  heroCard: {
+    overflow: 'hidden',
+  },
+  heroDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginVertical: UI_CONFIG.spacing.md,
+  },
+  section: {
+    marginHorizontal: UI_CONFIG.spacing.md,
+    marginTop: UI_CONFIG.spacing.lg,
+  },
+  sectionCard: {
+    overflow: 'hidden',
+  },
+  rowDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginHorizontal: UI_CONFIG.spacing.md,
+  },
+  editFormWrap: {
+    paddingHorizontal: UI_CONFIG.spacing.md,
+    paddingBottom: UI_CONFIG.spacing.sm,
+  },
+  destructiveRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  destructiveLabel: {
+    color: colors.error,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  inlineError: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    paddingHorizontal: UI_CONFIG.spacing.md,
+    paddingBottom: UI_CONFIG.spacing.sm,
+    marginTop: UI_CONFIG.spacing.xs,
   },
   loadingContainer: {
     flex: 1,
@@ -646,51 +791,10 @@ function createStyles(colors: AppPalette) {
     marginTop: 16,
     color: colors.textSecondary,
   },
-  editButtonContainer: {
-    marginHorizontal: 16,
-    marginTop: -8,
-    marginBottom: 16,
-  },
-  changePasswordButton: {
-    marginTop: 12,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: colors.border,
-    marginTop: 12,
-  },
-  deleteAccountButton: {
-    borderColor: colors.error,
-    backgroundColor: `${colors.error}10`,
-  },
-  deleteAccountButtonText: {
-    marginLeft: 8,
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.error,
-  },
-  errorCard: {
-    marginHorizontal: 16,
-    marginTop: 8,
-    padding: 12,
-    backgroundColor: colors.surface,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.error,
-  },
-  errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   networkErrorText: {
-    marginLeft: 8,
     color: colors.error,
     flex: 1,
+    lineHeight: 18,
   },
 });
 }

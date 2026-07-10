@@ -4,10 +4,10 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
-import Card from '../common/Card';
 import { Typography, Button } from '../common';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
+import { UI_CONFIG } from '../../constants/config';
 
 interface FormState {
   businessName: string;
@@ -62,17 +62,15 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
   };
 
   return (
-    <Card style={styles.editCard}>
-      <Typography variant="h3" style={styles.sectionTitle}>Edit Profile</Typography>
-      
+    <View style={styles.form}>
       <View style={styles.inputContainer}>
         <View style={styles.labelRow}>
-          <Typography variant="body" style={styles.inputLabel}>Business Name</Typography>
-          <Typography 
-            variant="caption" 
+          <Typography variant="body" style={styles.inputLabel}>Business name</Typography>
+          <Typography
+            variant="caption"
             style={[
-              styles.characterCount, 
-              { color: getCharacterCountColor(formData.businessName, 100) }
+              styles.characterCount,
+              { color: getCharacterCountColor(formData.businessName, 100) },
             ]}
           >
             {getCharacterCount(formData.businessName, 100)}
@@ -91,21 +89,21 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           returnKeyType="next"
           onSubmitEditing={() => nameInputRef.current?.focus()}
         />
-        {formErrors.businessName && (
+        {formErrors.businessName ? (
           <Typography variant="caption" style={styles.errorText}>
             {formErrors.businessName}
           </Typography>
-        )}
+        ) : null}
       </View>
 
       <View style={styles.inputContainer}>
         <View style={styles.labelRow}>
-          <Typography variant="body" style={styles.inputLabel}>Full Name</Typography>
-          <Typography 
-            variant="caption" 
+          <Typography variant="body" style={styles.inputLabel}>Full name</Typography>
+          <Typography
+            variant="caption"
             style={[
-              styles.characterCount, 
-              { color: getCharacterCountColor(formData.name, 50) }
+              styles.characterCount,
+              { color: getCharacterCountColor(formData.name, 50) },
             ]}
           >
             {getCharacterCount(formData.name, 50)}
@@ -123,21 +121,21 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           returnKeyType="next"
           onSubmitEditing={() => emailInputRef.current?.focus()}
         />
-        {formErrors.name && (
+        {formErrors.name ? (
           <Typography variant="caption" style={styles.errorText}>
             {formErrors.name}
           </Typography>
-        )}
+        ) : null}
       </View>
 
       <View style={styles.inputContainer}>
         <View style={styles.labelRow}>
-          <Typography variant="body" style={styles.inputLabel}>Email Address</Typography>
-          <Typography 
-            variant="caption" 
+          <Typography variant="body" style={styles.inputLabel}>Email address</Typography>
+          <Typography
+            variant="caption"
             style={[
-              styles.characterCount, 
-              { color: getCharacterCountColor(formData.email, 100) }
+              styles.characterCount,
+              { color: getCharacterCountColor(formData.email, 100) },
             ]}
           >
             {getCharacterCount(formData.email, 100)}
@@ -155,21 +153,21 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           returnKeyType="next"
           onSubmitEditing={() => phoneInputRef.current?.focus()}
         />
-        {formErrors.email && (
+        {formErrors.email ? (
           <Typography variant="caption" style={styles.errorText}>
             {formErrors.email}
           </Typography>
-        )}
+        ) : null}
       </View>
 
       <View style={styles.inputContainer}>
         <View style={styles.labelRow}>
-          <Typography variant="body" style={styles.inputLabel}>Phone Number</Typography>
-          <Typography 
-            variant="caption" 
+          <Typography variant="body" style={styles.inputLabel}>Phone number</Typography>
+          <Typography
+            variant="caption"
             style={[
-              styles.characterCount, 
-              { color: getCharacterCountColor(formData.phone, 10) }
+              styles.characterCount,
+              { color: getCharacterCountColor(formData.phone, 10) },
             ]}
           >
             {getCharacterCount(formData.phone, 10)}
@@ -187,92 +185,85 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
           returnKeyType="done"
           onSubmitEditing={onSave}
         />
-        {formErrors.phone && (
+        {formErrors.phone ? (
           <Typography variant="caption" style={styles.errorText}>
             {formErrors.phone}
           </Typography>
-        )}
+        ) : null}
       </View>
 
       <View style={styles.row}>
-        <Button 
-          title="Cancel" 
+        <Button
+          title="Cancel"
           onPress={onCancel}
-          variant="outline" 
+          variant="outline"
           style={styles.rowButton}
           disabled={isSaving}
         />
-        <Button 
-          title={isSaving ? "Saving..." : "Save"} 
-          onPress={onSave} 
-          variant="primary" 
+        <Button
+          title={isSaving ? 'Saving...' : 'Save'}
+          onPress={onSave}
+          variant="primary"
           style={styles.rowButton}
           disabled={isSaving || !isDirty}
           loading={isSaving}
         />
       </View>
-    </Card>
+    </View>
   );
 };
 
 function createStyles(colors: AppPalette) {
   return StyleSheet.create({
-  editCard: {
-    marginHorizontal: 16,
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 16,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 8,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: colors.text,
-    backgroundColor: colors.surface,
-  },
-  textInputError: {
-    borderColor: colors.error,
-    borderWidth: 1.5,
-  },
-  errorText: {
-    color: colors.error,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  rowButton: {
-    flex: 1,
-    marginHorizontal: 4,
-  },
-  characterCount: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-});
+    form: {
+      paddingTop: UI_CONFIG.spacing.sm,
+    },
+    inputContainer: {
+      marginBottom: UI_CONFIG.spacing.md,
+    },
+    labelRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 6,
+    },
+    inputLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    textInput: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: UI_CONFIG.borderRadius.md,
+      padding: 12,
+      fontSize: 16,
+      color: colors.text,
+      backgroundColor: colors.background,
+    },
+    textInputError: {
+      borderColor: colors.error,
+      borderWidth: 1.5,
+    },
+    errorText: {
+      color: colors.error,
+      fontSize: 12,
+      marginTop: 4,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: UI_CONFIG.spacing.sm,
+    },
+    rowButton: {
+      flex: 1,
+      marginHorizontal: 4,
+    },
+    characterCount: {
+      fontSize: 12,
+      fontWeight: '500',
+    },
+  });
 }
 
 export default EditProfileForm;
