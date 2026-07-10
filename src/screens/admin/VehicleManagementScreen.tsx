@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -62,6 +62,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
 
   return (
   <Modal
@@ -71,7 +72,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
     transparent={false}
     onRequestClose={onClose}
   >
-    <SafeAreaView style={styles.modalContainer}>
+    <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.modalHeader}>
         <Typography variant="h2" style={styles.modalTitle}>
           {isEditMode ? 'Edit Vehicle' : 'Add New Vehicle'}
@@ -236,7 +237,7 @@ const AddVehicleModal: React.FC<AddVehicleModalProps> = ({
           </ScrollView>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   </Modal>
   );
 };
@@ -245,6 +246,7 @@ const VehicleManagementScreen: React.FC = () => {
   const navigation = useNavigation<VehicleManagementScreenNavigationProp>();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   const { vehicles, fetchAllVehicles, updateVehicle, addVehicle, deleteVehicle, isLoading } = useVehicleStore();
   const { user: currentUser, logout } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -575,7 +577,7 @@ const VehicleManagementScreen: React.FC = () => {
       transparent={false}
       onRequestClose={() => setShowVehicleModal(false)}
     >
-      <SafeAreaView style={styles.modalContainer}>
+      <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.modalHeader}>
           <Typography variant="h2" style={styles.modalTitle}>
             Vehicle Details
@@ -625,7 +627,7 @@ const VehicleManagementScreen: React.FC = () => {
             </Card>
           </ScrollView>
         )}
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 

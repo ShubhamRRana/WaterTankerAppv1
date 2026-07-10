@@ -7,7 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
 import { Typography, Card, Button, Input, DatePickerInput } from '../common';
@@ -52,6 +52,7 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   return (
   <Modal
     visible={visible}
@@ -60,7 +61,7 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
     transparent={false}
     onRequestClose={onClose}
   >
-    <SafeAreaView style={styles.modalContainer}>
+    <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.modalHeader}>
         <Typography variant="h2" style={styles.modalTitle}>
           {isEditMode ? 'Edit Driver' : 'Add New Driver'}
@@ -345,7 +346,7 @@ const AddDriverModal: React.FC<AddDriverModalProps> = ({
           </ScrollView>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   </Modal>
   );
 };

@@ -5,7 +5,7 @@ import {
   Modal,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography } from '../common';
 import { BookingStatus } from '../../types';
@@ -32,6 +32,7 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal
@@ -39,7 +40,7 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
       animationType="slide"
       presentationStyle="pageSheet"
     >
-      <SafeAreaView style={styles.modalContainer}>
+      <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.modalHeader}>
           <Typography variant="h2" style={styles.modalTitle}>
             Update Status
@@ -68,7 +69,7 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
             </TouchableOpacity>
           ))}
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 };

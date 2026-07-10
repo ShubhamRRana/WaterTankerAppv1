@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card } from '../common';
 import { Booking, BookingStatus } from '../../types';
@@ -31,13 +31,14 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   return (
   <Modal
     visible={visible}
     animationType='slide'
     presentationStyle="pageSheet"
   >
-    <SafeAreaView style={styles.modalContainer}>
+    <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.modalHeader}>
         <Typography variant="h2" style={styles.modalTitle}>
           Booking Details
@@ -142,7 +143,7 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
           )}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   </Modal>
   );
 };

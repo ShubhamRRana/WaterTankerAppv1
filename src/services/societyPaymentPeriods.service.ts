@@ -58,5 +58,32 @@ export class SocietyPaymentPeriodsService {
     const map = await this.listCompletedAtByCustomerForPeriod(periodKey, customerIds);
     return new Set(map.keys());
   }
+
+  /** Admin marks a society user's billing period as settled (upsert ledger row). */
+  static async markPaymentPeriodComplete(customerId: string, periodKey: string): Promise<void> {
+    try {
+      if (!customerId || !periodKey) {
+        throw new Error('customerId and periodKey are required');
+      }
+      const { error } = await supabase.from('society_payment_periods_completed').upsert(
+        {
+          customer_id: customerId,
+          period_key: periodKey,
+          completed_at: new Date().toISOString(),
+        },
+        { onConflict: 'customer_id,period_key' },
+      );
+
+      if (error) {
+        throw new Error(error.message || 'Failed to save payment status');
+      }
+    } catch (error) {
+      handleError(error, {
+        context: { operation: 'markPaymentPeriodComplete', customerId, periodKey },
+        userFacing: false,
+      });
+      throw error;
+    }
+  }
 }
 

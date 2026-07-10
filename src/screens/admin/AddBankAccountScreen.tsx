@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -62,6 +62,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   return (
   <Modal
     visible={visible}
@@ -70,7 +71,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
     transparent={false}
     onRequestClose={onClose}
   >
-    <SafeAreaView style={styles.modalContainer}>
+    <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.modalHeader}>
         <Typography variant="h2" style={styles.modalTitle}>
           {isEditMode ? 'Edit Bank Account' : 'Add Bank Account'}
@@ -307,7 +308,7 @@ const AddBankAccountModal: React.FC<AddBankAccountModalProps> = ({
           </View>
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   </Modal>
   );
 };

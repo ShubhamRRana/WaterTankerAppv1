@@ -18,7 +18,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { useAuthStore } from '../../store/authStore';
 import Card from '../../components/common/Card';
-import { Typography, LoadingSpinner } from '../../components/common';
+import { Typography, LoadingSpinner, Button } from '../../components/common';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
 import { SocietyTrip, SocietyTripService } from '../../services/societyTrip.service';
@@ -56,6 +56,7 @@ const SocietyUserTripBreakdownScreen: React.FC<Props> = ({ navigation }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [photoPreviewUri, setPhotoPreviewUri] = useState<string | null>(null);
+  const [settling, setSettling] = useState(false);
 
   const canLoad = user?.role === 'admin' && !!user.id;
   const businessName = user?.role === 'admin' ? (user as { businessName?: string }).businessName : undefined;
@@ -146,6 +147,54 @@ const SocietyUserTripBreakdownScreen: React.FC<Props> = ({ navigation }) => {
     return 'pending';
   }, [paymentLoad, trips.length, completedAt, totals.pendingCount]);
 
+  const canSettle =
+    paymentLoad === 'ready' &&
+    trips.length > 0 &&
+    totals.pendingTripsWithAmount > 0;
+
+  const onSettlePayment = useCallback(() => {
+    if (!canSettle || settling) return;
+
+    Alert.alert(
+      'Settle payment',
+      `Mark this society user's trips for ${periodLabel} as settled?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Settle',
+          style: 'default',
+          onPress: () => {
+            void (async () => {
+              setSettling(true);
+              try {
+                const periodKey = SocietyPaymentPeriodsService.buildMonthPeriodKey(
+                  year,
+                  monthIndex0,
+                  businessName,
+                );
+                await SocietyPaymentPeriodsService.markPaymentPeriodComplete(customerId, periodKey);
+                await load();
+              } catch {
+                Alert.alert('Error', 'Could not mark payment as settled. Try again.');
+              } finally {
+                setSettling(false);
+              }
+            })();
+          },
+        },
+      ],
+    );
+  }, [
+    canSettle,
+    settling,
+    periodLabel,
+    year,
+    monthIndex0,
+    businessName,
+    customerId,
+    load,
+  ]);
+
   if (isLoading && trips.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -222,6 +271,17 @@ const SocietyUserTripBreakdownScreen: React.FC<Props> = ({ navigation }) => {
                     {paymentStatusText}
                   </Typography>
                 </View>
+
+                {canSettle ? (
+                  <Button
+                    title="Settle Payment"
+                    onPress={onSettlePayment}
+                    variant="primary"
+                    disabled={settling}
+                    loading={settling}
+                    style={styles.settleButton}
+                  />
+                ) : null}
 
                 <View style={styles.summaryTableHeader}>
                   <View style={styles.summaryColSize}>
@@ -522,6 +582,9 @@ function createStyles(colors: AppPalette) {
       flex: 1,
       color: colors.text,
       fontWeight: '600',
+    },
+    settleButton: {
+      marginBottom: 12,
     },
     summaryTableHeader: {
       flexDirection: 'row',

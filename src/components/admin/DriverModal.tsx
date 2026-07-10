@@ -6,7 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, MonthYearStepperRow } from '../common';
 import { User, DriverUser } from '../../types';
@@ -33,6 +33,7 @@ const DriverModal: React.FC<DriverModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
   const { bookings } = useBookingStore();
   const [selectedMonth, setSelectedMonth] = useState(() => new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
@@ -67,7 +68,7 @@ const DriverModal: React.FC<DriverModalProps> = ({
     transparent={false}
     onRequestClose={onClose}
   >
-    <SafeAreaView style={styles.modalContainer}>
+    <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.modalHeader}>
         <Typography variant="h2" style={styles.modalTitle}>
           Driver Details
@@ -169,7 +170,7 @@ const DriverModal: React.FC<DriverModalProps> = ({
             </>
         </ScrollView>
       )}
-    </SafeAreaView>
+    </View>
   </Modal>
   );
 };

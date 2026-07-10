@@ -7,7 +7,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Typography, Card, Button, Input } from '../common';
 import { AppPalette } from '../../theme/palettes';
@@ -33,6 +33,7 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
 
   const [amount, setAmount] = useState('');
   const [liters, setLiters] = useState('');
@@ -86,7 +87,7 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
       transparent={false}
       onRequestClose={handleClose}
     >
-      <SafeAreaView style={styles.container}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -171,7 +172,7 @@ const AmountInputModal: React.FC<AmountInputModalProps> = ({
             />
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 };
