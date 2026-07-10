@@ -20,7 +20,6 @@ import DeliveryPaymentHistoryScreen from '../screens/admin/payments/DeliveryPaym
 import PaymentResultScreen from '../screens/shared/PaymentResultScreen';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import AdminSubscriptionGate, { useAdminSubscriptionGate } from '../components/admin/AdminSubscriptionGate';
-import AdminPayoutBanner from '../components/admin/AdminPayoutBanner';
 import AdminSubscriptionLockedBanner from '../components/admin/AdminSubscriptionLockedBanner';
 import { FEATURE_FLAGS } from '../constants/config';
 import { useAdminPostUnlockNavigation } from './useAdminPostUnlockNavigation';
@@ -102,7 +101,7 @@ const AdminNavigatorContent: React.FC = () => {
 
   return (
     <>
-      {locked ? <AdminSubscriptionLockedBanner /> : <AdminPayoutBanner />}
+      {locked ? <AdminSubscriptionLockedBanner /> : null}
       {locked ? <AdminLockedStack /> : <AdminFullStack />}
     </>
   );
