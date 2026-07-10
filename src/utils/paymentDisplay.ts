@@ -1,5 +1,4 @@
 import type { Booking } from '../types';
-import { FEATURE_FLAGS } from '../constants/config';
 
 export type BookingPaymentChip = 'paid' | 'unpaid' | 'failed' | 'cash' | 'refunded';
 
@@ -31,16 +30,4 @@ export function getBookingPaymentChipLabel(chip: BookingPaymentChip): string {
     default:
       return 'Unknown';
   }
-}
-
-export function canCollectOnlinePayment(
-  booking: Booking,
-  payoutActive = true
-): boolean {
-  if (!FEATURE_FLAGS.enableOnlinePayment) return false;
-  if (!payoutActive) return false;
-  if (booking.status === 'cancelled' || booking.status === 'delivered') return false;
-  const amount = booking.deliveredAmount ?? booking.totalPrice;
-  if (amount <= 0) return false;
-  return booking.paymentStatus === 'pending' || booking.paymentStatus === 'failed';
 }

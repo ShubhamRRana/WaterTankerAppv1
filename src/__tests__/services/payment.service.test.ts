@@ -128,24 +128,6 @@ describe('PaymentService', () => {
     });
   });
 
-  describe('verifyDeliveryPayment', () => {
-    it('returns success from edge function', async () => {
-      (supabase.functions.invoke as jest.Mock).mockResolvedValue({
-        data: { success: true, bookingId: 'booking-1' },
-        error: null,
-      });
-
-      const result = await PaymentService.verifyDeliveryPayment('booking-1', {
-        razorpay_order_id: 'order_1',
-        razorpay_payment_id: 'pay_1',
-        razorpay_signature: 'sig',
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.bookingId).toBe('booking-1');
-    });
-  });
-
   describe('confirmCODPayment', () => {
     it('delegates to recordCashPayment', async () => {
       (dataAccess.bookings.getBookingById as jest.Mock).mockResolvedValue(mockBooking);

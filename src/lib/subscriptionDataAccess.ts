@@ -96,7 +96,6 @@ function mapAgencyAccount(row: Record<string, unknown>): AgencyRazorpayAccount {
     contactName: row.contact_name != null ? String(row.contact_name) : null,
     contactEmail: row.contact_email != null ? String(row.contact_email) : null,
     contactPhone: row.contact_phone != null ? String(row.contact_phone) : null,
-    defaultCollectionMethod: (row.default_collection_method as 'razorpay' | 'manual_qr') ?? 'manual_qr',
     allowCashCollection: row.allow_cash_collection !== false,
     createdAt: new Date(String(row.created_at)),
     updatedAt: new Date(String(row.updated_at)),
@@ -231,12 +230,11 @@ export const subscriptionDataAccess = {
 
   async upsertAgencyRazorpaySettings(
     agencyId: string,
-    settings: Partial<Pick<AgencyRazorpayAccount, 'defaultCollectionMethod' | 'allowCashCollection'>>
+    settings: Partial<Pick<AgencyRazorpayAccount, 'allowCashCollection'>>
   ): Promise<void> {
     const existing = await this.getAgencyRazorpayAccount(agencyId);
     const payload = {
       agency_id: agencyId,
-      default_collection_method: settings.defaultCollectionMethod,
       allow_cash_collection: settings.allowCashCollection,
       updated_at: new Date().toISOString(),
     };

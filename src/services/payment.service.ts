@@ -8,7 +8,6 @@ import { getErrorMessage } from '../utils/errors';
 import { mapPaymentErrorCode } from '../utils/paymentErrors';
 import { generateShortId } from '../utils/idUtils';
 import type {
-  BookingPaymentVerifyResult,
   PaymentFlow,
   RazorpayOrderResponse,
   RazorpayVerifyPayload,
@@ -124,45 +123,6 @@ export class PaymentService {
       return { success: false, error: body.error };
     }
     const ok: SubscriptionPaymentVerifyResult = { success: true, subscriptionId };
-    if (body.alreadyCompleted !== undefined) ok.alreadyCompleted = body.alreadyCompleted;
-    return ok;
-  }
-
-  static async createDeliveryPayment(bookingId: string): Promise<RazorpayOrderResponse> {
-    const { data, error } = await supabase.functions.invoke('create-delivery-order', {
-      body: { bookingId },
-    });
-    if (error) {
-      const parsed = await parseEdgeFunctionErrorBody(error, ERROR_MESSAGES.payment.failed);
-      throw new Error(mapPaymentErrorCode(parsed.code, parsed.message));
-    }
-    if (!data || typeof data !== 'object' || 'error' in (data as object)) {
-      throw new Error((data as { error?: string })?.error ?? ERROR_MESSAGES.payment.failed);
-    }
-    return data as RazorpayOrderResponse;
-  }
-
-  static async verifyDeliveryPayment(
-    bookingId: string,
-    payload: RazorpayVerifyPayload
-  ): Promise<BookingPaymentVerifyResult> {
-    const { data, error } = await supabase.functions.invoke('verify-delivery-payment', {
-      body: { bookingId, ...payload },
-    });
-    if (error) {
-      const parsed = await parseEdgeFunctionErrorBody(error, ERROR_MESSAGES.payment.failed);
-      const result: BookingPaymentVerifyResult = {
-        success: false,
-        error: mapPaymentErrorCode(parsed.code, parsed.message),
-      };
-      if (parsed.code) result.code = parsed.code;
-      return result;
-    }
-    const body = data as BookingPaymentVerifyResult & { error?: string };
-    if (body?.error) {
-      return { success: false, error: body.error };
-    }
-    const ok: BookingPaymentVerifyResult = { success: true, bookingId };
     if (body.alreadyCompleted !== undefined) ok.alreadyCompleted = body.alreadyCompleted;
     return ok;
   }

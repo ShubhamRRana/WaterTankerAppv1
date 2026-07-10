@@ -4,7 +4,6 @@ export { AuthService } from './auth.service';
 export { BookingService } from './booking.service';
 export { PaymentService } from './payment.service';
 export { SubscriptionService } from './subscription.service';
-export { AgencyPayoutService } from './agencyPayout.service';
 export { openCheckout, getRazorpayKeyId } from './razorpayCheckout.service';
 export { LocationService } from './location.service';
 export { LocationTrackingService } from './locationTracking.service';

@@ -78,7 +78,6 @@ export interface AgencyRazorpayAccount {
   contactName: string | null;
   contactEmail: string | null;
   contactPhone: string | null;
-  defaultCollectionMethod: 'razorpay' | 'manual_qr';
   allowCashCollection: boolean;
   createdAt: Date;
   updatedAt: Date;

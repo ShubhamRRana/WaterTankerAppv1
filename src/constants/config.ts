@@ -158,12 +158,10 @@ export const ERROR_MESSAGES = {
     razorpayCheckoutFailed: 'Razorpay checkout failed. Please try again.',
     razorpayNetworkError: 'Network error during Razorpay checkout.',
     razorpayCancelled: 'Payment was cancelled.',
-    agencyNotOnboarded: 'Agency cannot accept online payments — complete payout setup in admin.',
     signatureMismatch: 'Payment verification failed. Contact support if amount was debited.',
     subscriptionNotEligible: 'Subscription is not eligible for payment.',
     agencySubscriptionInactive:
       'Agency subscription inactive. Contact your admin to renew.',
-    bookingAlreadyPaid: 'This booking is already paid.',
     paymentInProgress: 'A payment is already in progress for this booking.',
   },
   general: {
@@ -279,7 +277,6 @@ export const SUBSCRIPTION_CONFIG = {
 // Feature Flags
 export const FEATURE_FLAGS = {
   enableRazorpaySubscription: true,
-  enableOnlinePayment: true,
   enableSubscriptionGating: true,
   enablePushNotifications: true, // ✅ Enabled - Phase 3 Item 2 Complete
   enableRealTimeTracking: true, // ✅ Enabled - Phase 3 Item 2 Complete

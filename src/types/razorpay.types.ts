@@ -46,14 +46,6 @@ export interface SubscriptionPaymentVerifyResult {
   code?: string;
 }
 
-export interface BookingPaymentVerifyResult {
-  success: boolean;
-  alreadyCompleted?: boolean;
-  bookingId?: string;
-  error?: string;
-  code?: string;
-}
-
 export type PaymentResultScreenParams = {
   type: 'subscription' | 'delivery';
   status: 'success' | 'failed' | 'pending';
