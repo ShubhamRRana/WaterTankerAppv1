@@ -71,6 +71,42 @@ describe('PaymentService', () => {
     });
   });
 
+  describe('recordQrPayment', () => {
+    it('marks booking delivered and inserts qr ledger row', async () => {
+      (dataAccess.bookings.getBookingById as jest.Mock).mockResolvedValue(mockBooking);
+      (dataAccess.bookings.updateBooking as jest.Mock).mockResolvedValue(undefined);
+      const insertMock = jest.fn().mockResolvedValue({ error: null });
+      (supabase.from as jest.Mock).mockReturnValue({ insert: insertMock });
+
+      const result = await PaymentService.recordQrPayment('booking-1', 'driver_qr');
+
+      expect(result.success).toBe(true);
+      expect(result.paymentId).toMatch(/^qr_booking-1_/);
+      expect(dataAccess.bookings.updateBooking).toHaveBeenCalledWith(
+        'booking-1',
+        expect.objectContaining({
+          paymentStatus: 'completed',
+          status: 'delivered',
+        })
+      );
+      expect(insertMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payment_gateway: 'manual_qr',
+          payment_method: 'qr',
+        })
+      );
+    });
+
+    it('returns error when booking not found', async () => {
+      (dataAccess.bookings.getBookingById as jest.Mock).mockResolvedValue(null);
+
+      const result = await PaymentService.recordQrPayment('missing');
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Booking not found');
+    });
+  });
+
   describe('createSubscriptionPayment', () => {
     it('invokes create-subscription-order edge function', async () => {
       (supabase.functions.invoke as jest.Mock).mockResolvedValue({

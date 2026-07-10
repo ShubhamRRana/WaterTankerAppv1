@@ -167,11 +167,15 @@ export class PaymentService {
     return ok;
   }
 
-  static async recordCashPayment(bookingId: string, note?: string): Promise<PaymentResult> {
+  private static async recordManualPayment(
+    bookingId: string,
+    method: 'cash' | 'qr',
+    note?: string
+  ): Promise<PaymentResult> {
     try {
       const booking = await dataAccess.bookings.getBookingById(bookingId);
       if (!booking) return { success: false, error: 'Booking not found' };
-      const paymentId = `cash_${bookingId}_${Date.now()}_${generateShortId()}`;
+      const paymentId = `${method}_${bookingId}_${Date.now()}_${generateShortId()}`;
       const amount = booking.deliveredAmount ?? booking.totalPrice;
       const agencyId = booking.agencyId;
       const { data: authData } = await supabase.auth.getUser();
@@ -189,15 +193,15 @@ export class PaymentService {
           user_id: driverId,
           amount,
           currency: 'INR',
-          payment_gateway: 'cash',
+          payment_gateway: method === 'qr' ? 'manual_qr' : 'cash',
           gateway_transaction_id: paymentId,
           status: 'success',
-          payment_method: 'cash',
+          payment_method: method,
           metadata: {
             flow: 'driver_delivery',
             booking_id: bookingId,
             agency_id: agencyId,
-            note: note ?? 'driver_cash',
+            note: note ?? `driver_${method}`,
           },
           initiated_at: new Date().toISOString(),
           completed_at: new Date().toISOString(),
@@ -206,9 +210,17 @@ export class PaymentService {
 
       return { success: true, paymentId };
     } catch (error) {
-      handleError(error, { context: { operation: 'recordCashPayment', bookingId, note } });
-      return { success: false, error: getErrorMessage(error, 'Cash payment failed') };
+      handleError(error, { context: { operation: 'recordManualPayment', bookingId, method, note } });
+      return { success: false, error: getErrorMessage(error, 'Payment recording failed') };
     }
+  }
+
+  static async recordCashPayment(bookingId: string, note?: string): Promise<PaymentResult> {
+    return this.recordManualPayment(bookingId, 'cash', note);
+  }
+
+  static async recordQrPayment(bookingId: string, note?: string): Promise<PaymentResult> {
+    return this.recordManualPayment(bookingId, 'qr', note);
   }
 
   static async getPaymentHistory(
