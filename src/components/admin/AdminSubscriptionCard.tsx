@@ -60,11 +60,6 @@ const AdminSubscriptionCard: React.FC<Props> = ({ userId, navigation }) => {
             navigation.navigate(onTrial || !hasActive ? 'SubscriptionPlans' : 'SubscriptionStatus')
           }
         />
-        <Button
-          title="Payout setup"
-          variant="outline"
-          onPress={() => navigation.navigate('RazorpayAccountSetup')}
-        />
       </View>
     </Card>
   );

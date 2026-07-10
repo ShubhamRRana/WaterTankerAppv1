@@ -14,8 +14,6 @@ export type AdminRoute =
   | 'Expenses'
   | 'SubscriptionPlans'
   | 'SubscriptionStatus'
-  | 'RazorpayAccountSetup'
-  | 'AgencyPayouts'
   | 'DeliveryPaymentHistory';
 
 interface AdminMenuDrawerProps {
@@ -53,12 +51,12 @@ const ALL_MENU_ITEMS: Array<Omit<MenuItem<AdminRoute>, 'onPress'>> = [
     route: 'Reports',
   },
   {
-    label: 'Payments & Payouts',
+    label: 'Payments & QR',
     icon: 'wallet-outline',
     route: 'BankAccounts',
   },
   {
-    label: 'Payout history',
+    label: 'Payment history',
     icon: 'list-outline',
     route: 'DeliveryPaymentHistory',
   },

@@ -14,8 +14,6 @@ import SubscriptionPlansScreen from '../screens/admin/subscription/SubscriptionP
 import SubscriptionCheckoutScreen from '../screens/admin/subscription/SubscriptionCheckoutScreen';
 import SubscriptionStatusScreen from '../screens/admin/subscription/SubscriptionStatusScreen';
 import SubscriptionPaymentHistoryScreen from '../screens/admin/subscription/SubscriptionPaymentHistoryScreen';
-import RazorpayAccountSetupScreen from '../screens/admin/payments/RazorpayAccountSetupScreen';
-import AgencyPayoutsScreen from '../screens/admin/payments/AgencyPayoutsScreen';
 import DeliveryPaymentHistoryScreen from '../screens/admin/payments/DeliveryPaymentHistoryScreen';
 import PaymentResultScreen from '../screens/shared/PaymentResultScreen';
 import ErrorBoundary from '../components/common/ErrorBoundary';
@@ -45,8 +43,6 @@ export type AdminStackParamList = {
   SubscriptionCheckout: { subscriptionId: string; planId: string; planName: string };
   SubscriptionStatus: undefined;
   SubscriptionPaymentHistory: undefined;
-  RazorpayAccountSetup: undefined;
-  AgencyPayouts: undefined;
   DeliveryPaymentHistory: undefined;
   PaymentResult: PaymentResultScreenParams;
 };
@@ -87,8 +83,6 @@ const AdminFullStack: React.FC = () => {
     <Stack.Screen name="SubscriptionCheckout" component={SubscriptionCheckoutScreen} />
     <Stack.Screen name="SubscriptionStatus" component={SubscriptionStatusScreen} />
     <Stack.Screen name="SubscriptionPaymentHistory" component={SubscriptionPaymentHistoryScreen} />
-    <Stack.Screen name="RazorpayAccountSetup" component={RazorpayAccountSetupScreen} />
-    <Stack.Screen name="AgencyPayouts" component={AgencyPayoutsScreen} />
     <Stack.Screen name="DeliveryPaymentHistory" component={DeliveryPaymentHistoryScreen} />
     <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
   </Stack.Navigator>

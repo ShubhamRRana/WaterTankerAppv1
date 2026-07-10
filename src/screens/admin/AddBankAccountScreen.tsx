@@ -21,7 +21,7 @@ import { BankAccount } from '../../types';
 import { UI_CONFIG } from '../../constants/config';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
-import { BankAccountService, StorageService, AgencyPayoutService } from '../../services';
+import { BankAccountService, StorageService, CollectionSettingsService } from '../../services';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { getErrorMessage } from '../../utils/errors';
 import { Image } from 'react-native';
@@ -333,39 +333,19 @@ const AddBankAccountScreen: React.FC = () => {
 
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [defaultCollectionMethod, setDefaultCollectionMethod] = useState<'razorpay' | 'manual_qr'>('manual_qr');
   const [allowCashCollection, setAllowCashCollection] = useState(true);
   const [savingCollectionSettings, setSavingCollectionSettings] = useState(false);
-  const [payoutRouteStatus, setPayoutRouteStatus] = useState<string>('not_started');
 
   const loadCollectionSettings = useCallback(async () => {
     if (!user?.id) return;
-    try {
-      const status = await AgencyPayoutService.getAccountStatus();
-      setPayoutRouteStatus(status.status);
-      if (status.defaultCollectionMethod) {
-        setDefaultCollectionMethod(status.defaultCollectionMethod);
-      }
-      if (status.allowCashCollection !== undefined) {
-        setAllowCashCollection(status.allowCashCollection);
-      }
-    } catch {
-      const local = await AgencyPayoutService.getLocalAccount(user.id);
-      if (local) {
-        setDefaultCollectionMethod(local.defaultCollectionMethod);
-        setAllowCashCollection(local.allowCashCollection);
-      }
-    }
+    setAllowCashCollection(await CollectionSettingsService.getAllowCashCollection(user.id));
   }, [user?.id]);
 
   const saveCollectionSettings = async () => {
     if (!user?.id) return;
     setSavingCollectionSettings(true);
     try {
-      await AgencyPayoutService.updateCollectionSettings(user.id, {
-        defaultCollectionMethod,
-        allowCashCollection,
-      });
+      await CollectionSettingsService.setAllowCashCollection(user.id, allowCashCollection);
       Alert.alert('Saved', 'Collection settings updated.');
     } catch (error) {
       Alert.alert('Error', getErrorMessage(error, 'Failed to save collection settings.'));
@@ -662,40 +642,16 @@ const AddBankAccountScreen: React.FC = () => {
             <Ionicons name="menu" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerTextContainer}>
-            <Typography variant="h2" style={styles.headerTitle}>Payments & Payouts</Typography>
+            <Typography variant="h2" style={styles.headerTitle}>Payments & QR</Typography>
           </View>
         </View>
       </View>
 
-      <Card style={{ margin: 16, padding: 16, gap: 8 }}>
-        <Typography variant="h3">Online payouts (Razorpay)</Typography>
-        <Typography variant="body" style={{ opacity: 0.8 }}>
-          Route status: {payoutRouteStatus.replace('_', ' ')}
-        </Typography>
-        <Typography variant="body" style={{ opacity: 0.8 }}>
-          Complete Route setup to enable verified delivery payments to your agency account.
-        </Typography>
-        <Button title="Razorpay payout setup" onPress={() => navigation.navigate('RazorpayAccountSetup')} />
-        <Button title="Payout summary" variant="outline" onPress={() => navigation.navigate('AgencyPayouts')} />
-      </Card>
-
       <Card style={{ marginHorizontal: 16, marginBottom: 16, padding: 16, gap: 10 }}>
         <Typography variant="h3">Collection settings</Typography>
         <Typography variant="body" style={{ opacity: 0.8 }}>
-          Default method for drivers collecting payment at delivery.
+          Drivers collect delivery payments via your uploaded QR code. Choose whether cash is also allowed.
         </Typography>
-        <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-          <Button
-            title="Razorpay online"
-            variant={defaultCollectionMethod === 'razorpay' ? 'primary' : 'outline'}
-            onPress={() => setDefaultCollectionMethod('razorpay')}
-          />
-          <Button
-            title="Manual QR only"
-            variant={defaultCollectionMethod === 'manual_qr' ? 'primary' : 'outline'}
-            onPress={() => setDefaultCollectionMethod('manual_qr')}
-          />
-        </View>
         <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <Button
             title={allowCashCollection ? 'Cash allowed' : 'Cash disabled'}
@@ -704,7 +660,7 @@ const AddBankAccountScreen: React.FC = () => {
           />
         </View>
         <Typography variant="caption" style={{ opacity: 0.7 }}>
-          When cash is disabled, drivers must collect via Razorpay before completing delivery.
+          When cash is disabled, drivers must collect via QR before completing delivery.
         </Typography>
         <Button
           title={savingCollectionSettings ? 'Saving...' : 'Save collection settings'}

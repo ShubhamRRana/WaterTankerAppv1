@@ -3,7 +3,7 @@ import { StyleSheet, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Typography, Card, LoadingSpinner } from '../../../components/common';
 import { useAuthStore } from '../../../store/authStore';
-import { AgencyPayoutService } from '../../../services/agencyPayout.service';
+import { PaymentService } from '../../../services/payment.service';
 import type { PaymentHistoryItem } from '../../../services/payment.service';
 import { useTheme } from '../../../theme/ThemeProvider';
 
@@ -19,7 +19,7 @@ const DeliveryPaymentHistoryScreen: React.FC = () => {
     void (async () => {
       setLoading(true);
       try {
-        const rows = await AgencyPayoutService.getDeliveryPayments(user.id);
+        const rows = await PaymentService.getAgencyDeliveryPayments(user.id);
         setItems(rows);
       } finally {
         setLoading(false);
