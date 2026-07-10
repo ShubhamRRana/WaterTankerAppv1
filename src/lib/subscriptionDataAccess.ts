@@ -207,16 +207,6 @@ export const subscriptionDataAccess = {
     return (data ?? []).map((row) => mapPayment(row as Record<string, unknown>));
   },
 
-  async getDeliveryPaymentsByAgency(agencyId: string): Promise<PaymentTransaction[]> {
-    const { data, error } = await supabase
-      .from('payment_transactions')
-      .select('*')
-      .contains('metadata', { agency_id: agencyId })
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data ?? []).map((row) => mapPayment(row as Record<string, unknown>));
-  },
-
   async getAgencyRazorpayAccount(agencyId: string): Promise<AgencyRazorpayAccount | null> {
     const { data, error } = await supabase
       .from('agency_razorpay_accounts')

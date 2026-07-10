@@ -203,17 +203,6 @@ export class PaymentService {
       });
   }
 
-  static async getAgencyDeliveryPayments(agencyId: string): Promise<PaymentHistoryItem[]> {
-    const rows = await subscriptionDataAccess.getDeliveryPaymentsByAgency(agencyId);
-    return rows.map((tx) => {
-      const flow = inferPaymentFlow(tx);
-      const bookingIdRaw = tx.metadata?.booking_id;
-      const bookingId =
-        typeof bookingIdRaw === 'string' && bookingIdRaw.length > 0 ? bookingIdRaw : null;
-      return { ...tx, flow, flowLabel: flowLabel(flow), bookingId };
-    });
-  }
-
   static async confirmCODPayment(bookingId: string): Promise<PaymentResult> {
     return this.recordCashPayment(bookingId);
   }

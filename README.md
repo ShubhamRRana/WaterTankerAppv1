@@ -239,7 +239,6 @@ graph TB
         E --> S[ReportsScreen]
         E --> TA[ExpenseScreen]
         E --> TB[SubscriptionPlansScreen]
-        E --> TD[DeliveryPaymentHistoryScreen]
     end
     
     subgraph "State Management Layer"
@@ -784,7 +783,7 @@ Razorpay is used **only** for the agency platform subscription. Delivery payment
 | **Platform subscription** | Agency admin | Platform (your Razorpay account) | Admin |
 | **Delivery payment** | Customer at delivery | Agency (QR code / cash, in person) | Driver |
 
-**Admin:** Subscription plans/checkout, payment history, delivery payment history (`DeliveryPaymentHistoryScreen`).
+**Admin:** Subscription plans/checkout and subscription payment history.
 
 **Driver:** `CollectPaymentScreen` — records the delivery payment as QR or cash; no checkout SDK involved.
 

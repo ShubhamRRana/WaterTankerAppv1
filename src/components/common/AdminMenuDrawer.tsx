@@ -13,8 +13,7 @@ export type AdminRoute =
   | 'BankAccounts'
   | 'Expenses'
   | 'SubscriptionPlans'
-  | 'SubscriptionStatus'
-  | 'DeliveryPaymentHistory';
+  | 'SubscriptionStatus';
 
 interface AdminMenuDrawerProps {
   visible: boolean;
@@ -54,11 +53,6 @@ const ALL_MENU_ITEMS: Array<Omit<MenuItem<AdminRoute>, 'onPress'>> = [
     label: 'Payments & QR',
     icon: 'wallet-outline',
     route: 'BankAccounts',
-  },
-  {
-    label: 'Payment history',
-    icon: 'list-outline',
-    route: 'DeliveryPaymentHistory',
   },
   {
     label: 'Profile',
