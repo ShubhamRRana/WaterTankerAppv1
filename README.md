@@ -19,37 +19,55 @@ A React Native (Expo) mobile application for water tanker **agency admins** and 
 - [Troubleshooting](#troubleshooting)
 - [Roadmap](#roadmap)
 
+
+
 ## Features
 
+
+
 ### Driver Features
+
 - **Order Management**: Accept/reject available bookings scoped to the driver’s agency
 - **Status Updates**: Update booking status (in_transit, delivered)
-- **Earnings Tracking**: View earnings, completed orders, and statistics
-- **Payment Collection**: Collect delivery payments in person via the agency QR code or cash
+- **Order Stats**: View completed orders and related statistics
+- **Payment Collection**: Record delivery payments in person via the agency QR code or cash
+- **Agency Gate**: Blocked from active work when the agency subscription is inactive
 - **Order Filtering**: Filter orders by status (pending, accepted, in_transit, delivered)
 
+
+
 ### Admin Features
-- **Dashboard & Reports**: View statistics, society trip breakdowns, and revenue reports
+
+- **Dashboard & Reports**: View statistics, trip details, and revenue reports
+- **Society Trip Breakdown**: Per-society-user trip lists with monthly payment-period settlement
 - **Booking Management**: View and manage all bookings for the agency
 - **Driver Management**: Add, edit, reset passwords, and remove driver accounts (via Edge Functions)
 - **Vehicle Management**: Manage vehicle fleet with insurance and capacity details
-- **Bank Account Management**: Manage bank accounts for manual QR collection
-- **Platform Subscription**: Subscribe to agency plans (monthly/quarterly/half-yearly/yearly) via Razorpay
-- **Delivery Payment History**: View driver-recorded QR/cash delivery payments
+- **Bank Account & Collection Settings**: Manage bank accounts / QR uploads and allow-cash collection
+- **Platform Subscription**: Subscribe to agency plans (monthly/quarterly/half-yearly/yearly) via Razorpay; view status and subscription payment history
+- **Profile & Security**: Admin profile and change-password flows
 - **Expense Management**: Track diesel and maintenance expenses with receipt image uploads
+
+
 
 ## Tech Stack
 
+
+
 ### Frontend
-- **React Native** (Expo SDK ~54.0.27)
+
+- **React Native** (Expo SDK ~54.0.32)
 - **TypeScript** (~5.9.2)
 - **React Navigation** v6 (Stack & Bottom Tabs)
 - **Zustand** (State Management)
-- **React Native Maps** (Location Services)
 - **Expo Location** (GPS & Location Tracking)
-- **react-native-razorpay** (In-app Checkout)
+- **react-native-razorpay** (Subscription checkout; requires a development build)
+- **react-native-qrcode-svg** (Agency QR display for delivery collection)
+
+
 
 ### Backend
+
 - **Supabase** (PostgreSQL Database)
 - **Supabase Auth** (Authentication)
 - **Supabase Realtime** (Real-time Subscriptions)
@@ -57,15 +75,23 @@ A React Native (Expo) mobile application for water tanker **agency admins** and 
 - **Razorpay** (Platform subscriptions only)
 - **Resend** (Auth emails via Send Email hook)
 
+
+
 ### Testing
+
 - **Jest** (Unit Testing)
 - **React Native Testing Library** (Component Testing)
 - **Jest Expo** (Expo-specific Testing)
 
+
+
 ### Development Tools
+
 - **Expo CLI** (Development & Build Tools)
 - **TypeScript** (Type Safety)
 - **ESLint** (Code Quality)
+
+
 
 ## Architecture
 
@@ -77,6 +103,8 @@ The application follows a **layered architecture** pattern with clear separation
 4. **Data Access Layer**: Abstracted data persistence interface
 5. **Infrastructure Layer**: Supabase client and utilities
 
+
+
 ### Key Design Patterns
 
 - **Repository Pattern**: Data Access Layer abstracts database operations
@@ -84,7 +112,11 @@ The application follows a **layered architecture** pattern with clear separation
 - **Observer Pattern**: Real-time subscriptions for live updates
 - **Factory Pattern**: Data access layer factory for different backends
 
+
+
 ## UML Diagrams
+
+
 
 ### 1. Class Diagram - Core Entities
 
@@ -213,6 +245,10 @@ classDiagram
     CustomerUser "1" --> "*" Address : savedAddresses
 ```
 
+
+
+
+
 ### 2. Component Diagram - System Architecture
 
 This app exposes **Auth**, **Driver**, and **Admin** navigators only. Customer booking UI lives in a separate mobile app that shares the same Supabase project.
@@ -228,6 +264,7 @@ graph TB
         B --> G[RegisterScreen]
         B --> H[RoleEntryScreen]
         B --> H2[ForgotPasswordScreen]
+        B --> H3[PendingEmailVerification]
         
         D --> M[OrdersScreen]
         D --> N[DriverEarningsScreen]
@@ -237,8 +274,11 @@ graph TB
         E --> Q[DriverManagementScreen]
         E --> R[VehicleManagementScreen]
         E --> S[ReportsScreen]
+        E --> ST[SocietyUserTripBreakdown]
         E --> TA[ExpenseScreen]
         E --> TB[SubscriptionPlansScreen]
+        E --> TC[SubscriptionStatus / PaymentHistory]
+        E --> TD[BankAccounts / CollectionSettings]
     end
     
     subgraph "State Management Layer"
@@ -246,6 +286,7 @@ graph TB
         U[BookingStore]
         V[UserStore]
         W[VehicleStore]
+        WS[SubscriptionStore]
     end
     
     subgraph "Service Layer"
@@ -257,6 +298,9 @@ graph TB
         AC[VehicleService]
         AD[BankAccountService]
         AE[ExpenseService]
+        AF2[CollectionSettingsService]
+        AG2[SocietyTrip / PaymentPeriods]
+        AH2[SubscriptionService / RazorpayCheckout]
     end
     
     subgraph "Data Access Layer"
@@ -279,14 +323,19 @@ graph TB
     
     M --> U
     P --> U
+    ST --> AG2
     TA --> AE
-    TB --> AA
+    TB --> AH2
+    TC --> AH2
+    TD --> AD
+    TD --> AF2
     O --> AA
     
     T --> X
     U --> Y
     V --> Z
     W --> AC
+    WS --> AH2
     
     X --> AF
     Y --> AF
@@ -308,6 +357,10 @@ graph TB
     Y --> AP
     Y --> AQ
 ```
+
+
+
+
 
 ### 3. Sequence Diagram - Booking Flow
 
@@ -366,6 +419,10 @@ sequenceDiagram
     CS->>C: Show Delivery Confirmation
 ```
 
+
+
+
+
 ### 4. State Diagram - Booking Status Transitions
 
 ```mermaid
@@ -386,7 +443,7 @@ stateDiagram-v2
     
     note right of pending
         Can be cancelled by customer
-        Available to all drivers
+        Available to drivers in the agency
     end note
     
     note right of accepted
@@ -404,6 +461,10 @@ stateDiagram-v2
         Payment can be collected
     end note
 ```
+
+
+
+
 
 ### 5. Package Diagram - Module Dependencies
 
@@ -468,6 +529,10 @@ graph LR
     D --> T
 ```
 
+
+
+
+
 ## Prerequisites
 
 Before you begin, ensure you have the following installed or configured:
@@ -481,7 +546,11 @@ Before you begin, ensure you have the following installed or configured:
 - **Resend Account** (for auth emails via the Send Email hook)
 - **Google Maps API Key** (optional, for enhanced location features)
 
+
+
 ## Setup
+
+
 
 ### 1. Clone the Repository
 
@@ -490,11 +559,15 @@ git clone <repository-url>
 cd WaterTankerAppv1
 ```
 
+
+
 ### 2. Install Dependencies
 
 ```bash
 npm install
 ```
+
+
 
 ### 3. Environment Configuration
 
@@ -512,7 +585,7 @@ EXPO_PUBLIC_RAZORPAY_KEY_ID=rzp_test_your_key_id_here
 EXPO_PUBLIC_AUTH_REDIRECT_URL=https://yourdomain.com/auth/confirmed
 
 # Password reset redirect (admin forgot-password flow)
-EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL=https://tankerhub.in/auth/reset-password
+EXPO_PUBLIC_PASSWORD_RESET_REDIRECT_URL=https://path-to-reset-password
 
 # Server-side only (migration/scripts — never ship to client)
 SUPABASE_SECRET_KEY=sb_secret_your_key_here
@@ -539,6 +612,7 @@ Ensure your Supabase project has the core tables configured:
 - `agency_razorpay_accounts` (legacy table name; now stores per-agency `allow_cash_collection` setting only — see `CollectionSettingsService`)
 
 **Important**: Row Level Security (RLS) is enabled on all tables with comprehensive policies. Configure realtime publications for:
+
 - `bookings`
 - `notifications`
 - `users`
@@ -553,6 +627,8 @@ Ensure your Supabase project has the core tables configured:
 - `pricing`
 - `driver_applications`
 - `driver_locations`
+
+
 
 ### 5. Supabase Edge Functions
 
@@ -576,6 +652,7 @@ npm start
 ```
 
 Then choose your platform:
+
 - Press `a` for Android
 - Press `i` for iOS
 - Press `w` for Web
@@ -588,16 +665,15 @@ Then choose your platform:
 WaterTankerAppv1/
 ├── src/
 │   ├── components/          # Reusable UI components
-│   │   ├── admin/           # Admin-specific components
+│   │   ├── admin/           # Admin-specific components (subscription gate, etc.)
 │   │   ├── driver/          # Driver-specific components
 │   │   └── common/          # Shared components
 │   │
 │   ├── screens/             # Screen components
-│   │   ├── admin/           # Admin screens (bookings, drivers, subscription, payouts)
-│   │   │   ├── subscription/
-│   │   │   └── payments/
-│   │   ├── driver/          # Driver screens
-│   │   ├── auth/            # Login, register, password reset
+│   │   ├── admin/           # Bookings, drivers, vehicles, reports, expenses, bank accounts
+│   │   │   └── subscription/  # Plans, checkout, status, subscription payment history
+│   │   ├── driver/          # Orders, earnings, collect payment, agency-inactive
+│   │   ├── auth/            # Login, register, password reset / email verification
 │   │   └── shared/          # Cross-role screens (e.g. PaymentResult)
 │   │
 │   ├── navigation/          # AuthNavigator, DriverNavigator, AdminNavigator
@@ -605,13 +681,15 @@ WaterTankerAppv1/
 │   ├── services/            # Business logic layer
 │   │   ├── auth.service.ts
 │   │   ├── booking.service.ts
-│   │   ├── payment.service.ts
-│   │   ├── razorpayCheckout.service.ts
+│   │   ├── payment.service.ts          # QR / cash delivery recording
+│   │   ├── collectionSettings.service.ts
+│   │   ├── razorpayCheckout.service.ts # Platform subscription checkout
 │   │   ├── subscription.service.ts
-│   │   ├── agencyPayout.service.ts
+│   │   ├── societyTrip.service.ts
+│   │   ├── societyPaymentPeriods.service.ts
 │   │   └── ...
 │   │
-│   ├── store/               # Zustand state (auth, booking, subscription, …)
+│   ├── store/               # Zustand state (auth, booking, subscription, theme, …)
 │   ├── lib/                 # Data access layer + Supabase client
 │   ├── utils/               # Validation, pricing, payment display, gating
 │   ├── types/               # TypeScript definitions (incl. razorpay, subscription)
@@ -631,7 +709,11 @@ WaterTankerAppv1/
 └── README.md
 ```
 
+
+
 ## Testing
+
+
 
 ### Run Tests
 
@@ -651,6 +733,8 @@ npm run test:watch
 npm run test:coverage
 ```
 
+
+
 ### Test Structure
 
 - **Unit Tests**: Test individual functions and utilities
@@ -658,16 +742,23 @@ npm run test:coverage
 - **Component Tests**: Test React Native components
 - **Flow Tests**: Test complete user flows (booking, payment, etc.)
 
+
+
 ### Test Coverage
 
 The project maintains comprehensive test coverage for:
+
 - Services (auth, booking, payment, etc.)
 - Utilities (validation, pricing, error handling)
 - Stores (state management)
 - Components (UI components)
 - Integration flows
 
+
+
 ## Supabase Configuration
+
+
 
 ### Required Tables
 
@@ -680,11 +771,14 @@ Core app tables plus payment/subscription objects used by admin and driver flows
 5. **payment_transactions** — shared payment ledger (gateway order/transaction IDs)
 6. **agency_razorpay_accounts** — legacy table name; now stores per-agency `allow_cash_collection` setting only
 
+
+
 ### Row Level Security (RLS)
 
 RLS is **enabled on all tables** with comprehensive role-based access control policies:
 
 #### Tables with RLS Enabled
+
 - `users` - User profile access control
 - `user_roles` - Role management access
 - `customers` - Customer data access
@@ -699,66 +793,81 @@ RLS is **enabled on all tables** with comprehensive role-based access control po
 - `driver_applications` - Public create, admin manage
 - `driver_locations` - Driver and customer access
 
+
+
 #### Policy Overview
 
 **Users Table:**
+
 - Users can view, insert, and update their own profile
 - Users can delete their own row (for customer Delete Account flow; `id = auth.uid()`)
 - Admins can view all users
 - Customers can read admin users (for agency selection during booking)
 
 **User Roles Table:**
+
 - Users can view and insert their own roles
 - Users can delete their own role rows (for account deletion; `user_id = auth.uid()`)
 - Admins can view all user roles
 - Customers can read admin roles (to identify agencies)
 
 **Customers Table:**
+
 - Customers can view, insert, and update their own data
 - Customers can delete their own row (for Delete Account; `user_id = auth.uid()`)
 - Admins can view all customer data
 
 **Drivers Table:**
+
 - Drivers can view, insert, and update their own data
 - Admins can view and update all driver data
 
 **Admins Table:**
+
 - Admins can view, insert, and update their own data
 - Admins can view other admin data
 - Customers can read admin data (for agency selection during booking)
 
 **Bookings Table:**
+
 - Customers can create, view, and update their own bookings
 - Customers can delete their own bookings (for Delete Account; `customer_id = auth.uid()`)
 - Drivers can view available bookings for their agency and update assigned bookings
 - Admins can view and update bookings for their agency
 
 **Vehicles Table:**
+
 - Admins can manage vehicles for their agency (full CRUD)
 - Customers can read vehicles from any agency (for booking creation)
 
 **Bank Accounts Table:**
+
 - Admins can manage their own bank accounts (full CRUD)
 - Drivers can read bank accounts for agencies where they have assigned bookings (for QR code display during payment collection)
 
 **Expenses Table:**
+
 - Admins can create, view, update, and delete their own expenses
 - Supports filtering by expense type (diesel or maintenance)
 - Includes receipt image upload functionality
 
 **Tanker Sizes Table:**
+
 - Everyone can view active tanker sizes
 - Admins can view all sizes and manage them (full CRUD)
 
 **Pricing Table:**
+
 - Everyone can view pricing
 - Admins can insert and update pricing
 
 **Driver Applications Table:**
+
 - Anyone can create driver applications
 - Admins can view and update all applications
 
 **Driver Locations Table:**
+
 - Drivers can insert and view their own locations
 - Admins can view all driver locations
 - Customers can view driver locations for their active bookings
@@ -770,63 +879,80 @@ All policies use a secure `has_role()` helper function that checks user roles fr
 ### Realtime Subscriptions
 
 Enable realtime for:
+
 - `bookings` table (for status updates)
 - `notifications` table (for push notifications)
 - `users` table (for profile updates)
+
+
 
 ## Payments & Subscriptions (Razorpay)
 
 Razorpay is used **only** for the agency platform subscription. Delivery payments are collected in person by the driver via the agency QR code or cash, and simply recorded in the app (no payment gateway involved).
 
-| Flow | Who pays | Who receives | App role |
-|------|----------|--------------|----------|
-| **Platform subscription** | Agency admin | Platform (your Razorpay account) | Admin |
-| **Delivery payment** | Customer at delivery | Agency (QR code / cash, in person) | Driver |
 
-**Admin:** Subscription plans/checkout and subscription payment history.
+| Flow                      | Who pays             | Who receives                       | App role |
+| ------------------------- | -------------------- | ---------------------------------- | -------- |
+| **Platform subscription** | Agency admin         | Platform (your Razorpay account)   | Admin    |
+| **Delivery payment**      | Customer at delivery | Agency (QR code / cash, in person) | Driver   |
 
-**Driver:** `CollectPaymentScreen` — records the delivery payment as QR or cash; no checkout SDK involved.
 
-**Feature flags** in `src/constants/config.ts`: `enableRazorpaySubscription`, `enableSubscriptionGating`.
+**Admin:** Subscription plans, checkout, status, and subscription payment history. Bank account / QR upload and cash-collection toggle live under bank accounts (not a separate delivery-payments screen).
+
+**Driver:** `CollectPaymentScreen` — records the delivery payment as QR or cash via `PaymentService.recordQrPayment` / `recordCashPayment`; no checkout SDK involved.
+
+**Feature flags** in `src/constants/config.ts`: `enableRazorpaySubscription`, `enableSubscriptionGating`, `enablePushNotifications`, `enableRealTimeTracking`.
 
 **Implementation guides:**
 
 - [docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md](docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md) — screen and UX spec
 - [docs/RAZORPAY_IMPLEMENTATION_PHASES.md](docs/RAZORPAY_IMPLEMENTATION_PHASES.md) — phased rollout checklist
+- [docs/superpowers/specs/2026-07-10-remove-razorpay-delivery-payments-design.md](docs/superpowers/specs/2026-07-10-remove-razorpay-delivery-payments-design.md) — delivery payments are QR/cash only
 
-Apply migration `supabase/migrations/20260612120000_razorpay_admin_driver_foundation.sql` before using payments in production.
+Apply migration `supabase/migrations/20260612120000_razorpay_admin_driver_foundation.sql` before using subscription payments in production.
 
 ## Edge Functions
 
 Server-side logic lives under `supabase/functions/`. Deploy from the project root.
 
-| Function | Purpose |
-|----------|---------|
-| `create-subscription-order` / `verify-subscription-payment` | Agency platform subscription |
-| `razorpay-webhook` | Subscription payment events (source of truth) |
-| `send-email` | Auth emails via Resend |
-| `admin-create-driver` / `admin-update-user-password` / `admin-delete-user` | Admin user management |
+
+| Function                                                                   | Purpose                                       |
+| -------------------------------------------------------------------------- | --------------------------------------------- |
+| `create-subscription-order` / `verify-subscription-payment`                | Agency platform subscription                  |
+| `razorpay-webhook`                                                         | Subscription payment events (source of truth) |
+| `send-email`                                                               | Auth emails via Resend                        |
+| `admin-create-driver` / `admin-update-user-password` / `admin-delete-user` | Admin user management                         |
+
 
 See [supabase/functions/README.md](supabase/functions/README.md) for deploy commands, secrets, and webhook configuration.
 
 ## Documentation
 
-| Topic | Doc |
-|-------|-----|
-| Razorpay payments & subscriptions | [docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md](docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md) |
-| Razorpay implementation phases | [docs/RAZORPAY_IMPLEMENTATION_PHASES.md](docs/RAZORPAY_IMPLEMENTATION_PHASES.md) |
-| Resend auth email hook | [docs/RESEND_AUTH_EMAIL_SETUP.md](docs/RESEND_AUTH_EMAIL_SETUP.md) |
-| Admin password reset | [docs/WTA_ADMIN_PASSWORD_RESET.md](docs/WTA_ADMIN_PASSWORD_RESET.md) |
-| Edge Functions reference | [supabase/functions/README.md](supabase/functions/README.md) |
-| Customer app profile (separate repo) | [docs/CUSTOMER_PROFILE.md](docs/CUSTOMER_PROFILE.md) |
+
+| Topic                                                 | Doc                                                                                                                                                            |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Razorpay payments & subscriptions                     | [docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md](docs/RAZORPAY_SUBSCRIPTION_AND_PAYMENTS_SCREEN_PLAN.md)                                               |
+| Razorpay implementation phases                        | [docs/RAZORPAY_IMPLEMENTATION_PHASES.md](docs/RAZORPAY_IMPLEMENTATION_PHASES.md)                                                                               |
+| QR/cash delivery payments (no Razorpay Route)         | [docs/superpowers/specs/2026-07-10-remove-razorpay-delivery-payments-design.md](docs/superpowers/specs/2026-07-10-remove-razorpay-delivery-payments-design.md) |
+| Resend auth email hook                                | [docs/RESEND_AUTH_EMAIL_SETUP.md](docs/RESEND_AUTH_EMAIL_SETUP.md)                                                                                             |
+| Admin password reset                                  | [docs/WTA_ADMIN_PASSWORD_RESET.md](docs/WTA_ADMIN_PASSWORD_RESET.md)                                                                                           |
+| Password reset & change password (customer reference) | [docs/PASSWORD_RESET_AND_CHANGE_PASSWORD.md](docs/PASSWORD_RESET_AND_CHANGE_PASSWORD.md)                                                                       |
+| Edge Functions reference                              | [supabase/functions/README.md](supabase/functions/README.md)                                                                                                   |
+| Customer app profile (separate repo)                  | [docs/CUSTOMER_PROFILE.md](docs/CUSTOMER_PROFILE.md)                                                                                                           |
+
+
+
 
 ## Troubleshooting
+
+
 
 ### Authentication Issues
 
 **Problem**: Login fails or user not found
 
 **Solutions**:
+
 - Verify `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env` (or legacy `EXPO_PUBLIC_SUPABASE_ANON_KEY` during migration)
 - Ensure Email provider is enabled in Supabase Auth settings
 - Auth confirmation emails are sent via Resend (Send Email hook). See [docs/RESEND_AUTH_EMAIL_SETUP.md](docs/RESEND_AUTH_EMAIL_SETUP.md) if emails are missing or links fail
@@ -834,58 +960,77 @@ See [supabase/functions/README.md](supabase/functions/README.md) for deploy comm
 - Check that user exists in `users` table with corresponding `user_roles` entry
 - Verify RLS policies allow user access
 
+
+
 ### Payment / Razorpay Issues
 
 **Problem**: Checkout fails, subscription not activating, or webhook not updating status
 
 **Solutions**:
+
 - Confirm `EXPO_PUBLIC_RAZORPAY_KEY_ID` matches the Razorpay account used by Edge Functions
 - Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, and `RAZORPAY_WEBHOOK_SECRET` via `npx supabase secrets set`
 - Deploy `razorpay-webhook` with `--no-verify-jwt` and point Razorpay Dashboard to  
-  `https://<project-ref>.supabase.co/functions/v1/razorpay-webhook`
+`https://<project-ref>.supabase.co/functions/v1/razorpay-webhook`
 - Ensure migration `20260612120000_razorpay_admin_driver_foundation.sql` is applied
 - Delivery payments are not gateway-processed (QR/cash, recorded by the driver) — Razorpay issues only affect subscriptions
+
+
 
 ### Realtime Not Working
 
 **Problem**: Real-time updates not appearing
 
 **Solutions**:
+
 - Confirm realtime is enabled for relevant tables in Supabase
 - Check that tables are added to realtime publication
 - Verify subscription is active (check network tab)
 - Ensure client is online and connected
+
+
 
 ### RLS Policy Errors
 
 **Problem**: "Row Level Security policy violation" errors
 
 **Solutions**:
+
 - Ensure `user_roles` table has entry for the user's selected role
 - Verify RLS policies match the user's role
 - Check that policies allow the required operations (SELECT, INSERT, UPDATE, DELETE)
 - Review Supabase logs for specific policy violations
+
+
 
 ### Build Issues
 
 **Problem**: Build fails or app crashes on startup
 
 **Solutions**:
+
 - Clear Expo cache: `expo start -c`
 - Delete `node_modules` and reinstall: `rm -rf node_modules && npm install`
 - Check for TypeScript errors: `npx tsc --noEmit`
 - Verify all environment variables are set correctly
 
+
+
 ## Roadmap
+
+
 
 ### Shipped (current baseline)
 
-- [x] **Razorpay payments** — Platform subscription only; delivery payments are collected via QR code or cash and recorded by the driver
-- [x] **Agency subscription gating** — Trial and active subscription checks for admin access
+- [x] **Razorpay payments** — Platform subscription only; delivery payments are QR/cash recorded by the driver
+- [x] **Agency subscription gating** — Trial and active subscription checks for admin (and driver agency gate)
+- [x] **Society trip settlement** — Per-user trip breakdown and monthly payment-period marking
 - [x] **Resend auth emails** — Send Email hook replaces default Supabase mail
 - [x] **Admin driver lifecycle** — Create without confirmation email, password reset, auth user cleanup
 - [x] **Push notifications** — Real-time order updates (feature flag enabled)
 - [x] **Real-time GPS tracking** — Driver location updates (feature flag enabled)
+
+
 
 ### Planned
 
@@ -896,6 +1041,8 @@ See [supabase/functions/README.md](supabase/functions/README.md) for deploy comm
 - [ ] **ASAP bookings** — Priority queue for urgent orders
 - [ ] **Performance & analytics** — Query caching, revenue forecasting, demand prediction
 
+
+
 ## Contributing
 
 1. Fork the repository
@@ -903,6 +1050,8 @@ See [supabase/functions/README.md](supabase/functions/README.md) for deploy comm
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+
 
 ## License
 
@@ -915,4 +1064,3 @@ For issues, questions, or contributions, please contact the development team or 
 ---
 
 **Built with ❤️ using React Native, Expo, and Supabase**
-
