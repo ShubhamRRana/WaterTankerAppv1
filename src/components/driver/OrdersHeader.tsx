@@ -18,7 +18,7 @@ const OrdersHeader: React.FC<OrdersHeaderProps> = memo(
     return (
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Typography variant="h2" style={styles.title}>
+          <Typography variant="h2" style={styles.title} accessibilityRole="header">
             Welcome, {driverName || 'Driver'}!
           </Typography>
           <Typography variant="body" style={styles.subtitle}>

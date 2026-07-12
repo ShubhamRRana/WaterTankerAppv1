@@ -51,6 +51,8 @@ const BookingCard: React.FC<BookingCardProps> = ({
     <TouchableOpacity
       onPress={() => onPress(booking)}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Booking for ${booking.customerName}, status ${statusText}`}
     >
       <View style={styles.bookingHeader}>
         <View style={styles.bookingInfo}>

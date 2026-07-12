@@ -587,7 +587,7 @@ const AdminProfileScreen: React.FC = () => {
               <Ionicons name="menu" size={24} color={colors.text} />
             </TouchableOpacity>
             <View style={styles.headerTextContainer}>
-              <Typography variant="h2" style={styles.headerTitle}>Profile</Typography>
+              <Typography variant="h2" style={styles.headerTitle} accessibilityRole="header">Profile</Typography>
             </View>
           </View>
         </View>

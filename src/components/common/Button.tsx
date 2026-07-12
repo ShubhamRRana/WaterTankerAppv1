@@ -9,6 +9,7 @@ import {
 import Typography from './Typography';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AppPalette } from '../../theme/palettes';
+import { UI_CONFIG } from '../../constants/config';
 
 interface ButtonProps {
   title: string;
@@ -18,6 +19,7 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
+  accessibilityLabel?: string;
 }
 
 function variantTextStyles(variant: 'primary' | 'secondary' | 'outline') {
@@ -38,6 +40,7 @@ const Button: React.FC<ButtonProps> = ({
   disabled = false,
   loading = false,
   style,
+  accessibilityLabel,
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -77,6 +80,9 @@ const Button: React.FC<ButtonProps> = ({
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
     >
       {loading ? (
         <ActivityIndicator color={indicatorColor} size="small" />
@@ -92,7 +98,7 @@ const Button: React.FC<ButtonProps> = ({
 function createStyles(colors: AppPalette) {
   return StyleSheet.create({
     button: {
-      borderRadius: 8,
+      borderRadius: UI_CONFIG.borderRadius.md,
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: colors.accent,
@@ -121,16 +127,16 @@ function createStyles(colors: AppPalette) {
       borderColor: colors.accent,
     },
     small: {
-      paddingHorizontal: 27,
-      paddingVertical: 11,
+      paddingHorizontal: UI_CONFIG.spacing.lg,
+      paddingVertical: 11, // TODO: token gap — 37.5% off spacing.sm (8), 45% off spacing.md (16)
     },
     medium: {
-      paddingHorizontal: 27,
-      paddingVertical: 11,
+      paddingHorizontal: UI_CONFIG.spacing.lg,
+      paddingVertical: 11, // TODO: token gap — 37.5% off spacing.sm (8), 45% off spacing.md (16)
     },
     large: {
-      paddingHorizontal: 27,
-      paddingVertical: 11,
+      paddingHorizontal: UI_CONFIG.spacing.lg,
+      paddingVertical: 11, // TODO: token gap — 37.5% off spacing.sm (8), 45% off spacing.md (16)
     },
     disabled: {
       backgroundColor: colors.disabled,
@@ -139,7 +145,7 @@ function createStyles(colors: AppPalette) {
     },
     text: {
       fontWeight: '600',
-      fontSize: 18,
+      fontSize: UI_CONFIG.fontSize.lg,
     },
     primaryText: {
       color: colors.onAccent,
@@ -151,13 +157,13 @@ function createStyles(colors: AppPalette) {
       color: colors.accent,
     },
     smallText: {
-      fontSize: 18,
+      fontSize: UI_CONFIG.fontSize.lg,
     },
     mediumText: {
-      fontSize: 18,
+      fontSize: UI_CONFIG.fontSize.lg,
     },
     largeText: {
-      fontSize: 18,
+      fontSize: UI_CONFIG.fontSize.lg,
     },
     disabledText: {
       color: colors.textSecondary,

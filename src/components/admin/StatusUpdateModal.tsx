@@ -42,12 +42,14 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
     >
       <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
         <View style={styles.modalHeader}>
-          <Typography variant="h2" style={styles.modalTitle}>
+          <Typography variant="h2" style={styles.modalTitle} accessibilityRole="header">
             Update Status
           </Typography>
           <TouchableOpacity
             onPress={onClose}
             style={styles.closeButton}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
           >
             <Ionicons name="close" size={24} color={colors.textSecondary} />
           </TouchableOpacity>
@@ -59,6 +61,8 @@ const StatusUpdateModal: React.FC<StatusUpdateModalProps> = ({
               key={status}
               style={styles.statusOption}
               onPress={() => bookingId && onStatusUpdate(bookingId, status)}
+              accessibilityRole="button"
+              accessibilityLabel={`Set status to ${status.replace('_', ' ')}`}
             >
               <View style={[styles.statusIcon, { backgroundColor: getStatusColor(status) }]}>
                 <Ionicons name={getStatusIcon(status) as keyof typeof Ionicons.glyphMap} size={20} color={colors.textLight} />

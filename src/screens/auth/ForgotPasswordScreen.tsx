@@ -107,7 +107,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
             </TouchableOpacity>
 
             <View style={styles.centeredContent}>
-              <Typography variant="h1" style={cardStyles.screenTitle}>
+              <Typography variant="h1" style={cardStyles.screenTitle} accessibilityRole="header">
                 Check your email
               </Typography>
               <Typography variant="body" style={styles.sentMessage}>
@@ -146,7 +146,7 @@ const ForgotPasswordScreen: React.FC<Props> = ({ navigation, route }) => {
           </TouchableOpacity>
 
           <View style={styles.centeredContent}>
-            <Typography variant="h1" style={cardStyles.screenTitle}>
+            <Typography variant="h1" style={cardStyles.screenTitle} accessibilityRole="header">
               {SUCCESS_MESSAGES.auth.resetPasswordRequestTitle}
             </Typography>
             <Typography variant="body" style={cardStyles.screenSubtitle}>

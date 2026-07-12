@@ -9,12 +9,14 @@ import {
   Animated,
   Easing,
   Dimensions,
+  AccessibilityInfo,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Typography from './Typography';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
+import { UI_CONFIG } from '../../constants/config';
 
 export interface MenuItem<T extends string> {
   label: string;
@@ -61,20 +63,28 @@ const MenuDrawer = <T extends string>({
   // Keep the drawer mounted during the exit animation.
   const [mounted, setMounted] = useState(visible);
   const progress = useRef(new Animated.Value(visible ? 1 : 0)).current;
+  const reduceMotionRef = useRef(false);
 
   useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
+      reduceMotionRef.current = enabled;
+    });
+  }, []);
+
+  useEffect(() => {
+    const duration = reduceMotionRef.current ? 0 : ANIMATION_DURATION;
     if (visible) {
       setMounted(true);
       Animated.timing(progress, {
         toValue: 1,
-        duration: ANIMATION_DURATION,
+        duration,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }).start();
     } else {
       Animated.timing(progress, {
         toValue: 0,
-        duration: ANIMATION_DURATION,
+        duration,
         easing: Easing.in(Easing.cubic),
         useNativeDriver: true,
       }).start(({ finished }) => {
@@ -269,61 +279,61 @@ function createStyles(colors: AppPalette) {
     header: {
       flexDirection: 'row',
       alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingTop: 12,
-      paddingBottom: 20,
+      paddingHorizontal: UI_CONFIG.spacing.lg,
+      paddingTop: UI_CONFIG.spacing.md,
+      paddingBottom: UI_CONFIG.spacing.lg,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
     badge: {
       width: 48,
       height: 48,
-      borderRadius: 24,
+      borderRadius: 24, // circle geometry (half of width), not a scale value
       backgroundColor: colors.surfaceLight,
       alignItems: 'center',
       justifyContent: 'center',
     },
     badgeRing: {
       ...StyleSheet.absoluteFillObject,
-      borderRadius: 24,
+      borderRadius: 24, // circle geometry (half of badge width), not a scale value
       borderWidth: 1.5,
       borderColor: colors.accent,
     },
     badgeText: {
       fontFamily: 'PlayfairDisplay-Regular',
-      fontSize: 18,
+      fontSize: UI_CONFIG.fontSize.lg,
       fontWeight: '600',
       color: colors.accent,
     },
     headerTextGroup: {
       flex: 1,
-      marginLeft: 14,
+      marginLeft: UI_CONFIG.spacing.md,
     },
     headerTitle: {
       fontFamily: 'PlayfairDisplay-Regular',
-      fontSize: 20,
+      fontSize: UI_CONFIG.fontSize.xl,
       fontWeight: '600',
       color: colors.text,
     },
     headerSubtitle: {
-      marginTop: 2,
+      marginTop: 2, // TODO: token gap — 50% off spacing.xs (4)
       color: colors.textSecondary,
     },
     closeButton: {
-      padding: 4,
-      marginLeft: 8,
+      padding: UI_CONFIG.spacing.xs,
+      marginLeft: UI_CONFIG.spacing.sm,
     },
     body: {
       flex: 1,
-      paddingTop: 16,
+      paddingTop: UI_CONFIG.spacing.md,
     },
     section: {
-      marginBottom: 8,
+      marginBottom: UI_CONFIG.spacing.sm,
     },
     sectionLabel: {
-      paddingHorizontal: 20,
-      marginBottom: 4,
-      fontSize: 11,
+      paddingHorizontal: UI_CONFIG.spacing.lg,
+      marginBottom: UI_CONFIG.spacing.xs,
+      fontSize: UI_CONFIG.fontSize.xs,
       letterSpacing: 1.2,
       fontWeight: '700',
       color: colors.textSecondary,
@@ -331,16 +341,16 @@ function createStyles(colors: AppPalette) {
     sectionDivider: {
       height: 1,
       backgroundColor: colors.border,
-      marginHorizontal: 20,
-      marginBottom: 8,
+      marginHorizontal: UI_CONFIG.spacing.lg,
+      marginBottom: UI_CONFIG.spacing.sm,
     },
     menuItem: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginHorizontal: 12,
-      paddingHorizontal: 8,
-      paddingVertical: 10,
-      borderRadius: 14,
+      marginHorizontal: UI_CONFIG.spacing.md,
+      paddingHorizontal: UI_CONFIG.spacing.sm,
+      paddingVertical: UI_CONFIG.spacing.sm,
+      borderRadius: UI_CONFIG.borderRadius.lg,
     },
     menuItemActive: {
       backgroundColor: colors.surfaceLight,
@@ -348,7 +358,7 @@ function createStyles(colors: AppPalette) {
     iconChip: {
       width: 36,
       height: 36,
-      borderRadius: 12,
+      borderRadius: UI_CONFIG.borderRadius.md,
       backgroundColor: colors.surfaceLight,
       alignItems: 'center',
       justifyContent: 'center',
@@ -358,9 +368,9 @@ function createStyles(colors: AppPalette) {
     },
     menuItemText: {
       flex: 1,
-      fontSize: 16,
+      fontSize: UI_CONFIG.fontSize.md,
       color: colors.text,
-      marginLeft: 14,
+      marginLeft: UI_CONFIG.spacing.md,
       fontWeight: '500',
     },
     menuItemTextActive: {
@@ -370,12 +380,12 @@ function createStyles(colors: AppPalette) {
     activeDot: {
       width: 8,
       height: 8,
-      borderRadius: 4,
+      borderRadius: UI_CONFIG.borderRadius.sm,
       backgroundColor: colors.accent,
     },
     footer: {
-      paddingHorizontal: 20,
-      paddingTop: 12,
+      paddingHorizontal: UI_CONFIG.spacing.lg,
+      paddingTop: UI_CONFIG.spacing.md,
       borderTopWidth: 1,
       borderTopColor: colors.border,
     },
@@ -383,14 +393,14 @@ function createStyles(colors: AppPalette) {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      gap: 8,
-      paddingVertical: 14,
-      borderRadius: 14,
+      gap: UI_CONFIG.spacing.sm,
+      paddingVertical: UI_CONFIG.spacing.md,
+      borderRadius: UI_CONFIG.borderRadius.lg,
       borderWidth: 1,
       borderColor: colors.error,
     },
     logoutText: {
-      fontSize: 16,
+      fontSize: UI_CONFIG.fontSize.md,
       color: colors.error,
       fontWeight: '600',
     },

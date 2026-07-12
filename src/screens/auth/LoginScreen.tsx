@@ -294,7 +294,7 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
 
           <View style={styles.centeredContent}>
           <View style={[styles.header, isRoleLogin && styles.headerRole]}>
-            <Typography variant="h1" style={[styles.title, isRoleLogin && cardStyles.screenTitle]}>
+            <Typography variant="h1" style={[styles.title, isRoleLogin && cardStyles.screenTitle]} accessibilityRole="header">
               {roleCopy?.title ?? 'Sign in to your account'}
             </Typography>
             {roleCopy ? (
@@ -335,6 +335,8 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
                 <TouchableOpacity
                   style={styles.eyeIcon}
                   onPress={() => setShowPassword(!showPassword)}
+                  accessibilityRole="button"
+                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -374,6 +376,9 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
               disabled={isLoading}
               onPressIn={() => !isRoleLogin && setIsButtonPressed(true)}
               onPressOut={() => !isRoleLogin && setIsButtonPressed(false)}
+              accessibilityRole="button"
+              accessibilityLabel={isLoading ? 'Signing in' : (roleCopy?.button ?? 'Sign in')}
+              accessibilityState={{ disabled: isLoading, busy: isLoading }}
             >
               <Typography
                 variant="body"
@@ -396,6 +401,8 @@ const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
                   const role = route?.params?.preferredRole;
                   navigation.navigate('Register', role ? { preferredRole: role } : undefined);
                 }}
+                accessibilityRole="link"
+                accessibilityLabel={isRoleLogin ? 'Create an account' : 'Sign Up'}
               >
                 <Typography variant="body" style={[styles.linkText, isRoleLogin && styles.footerLink]}>
                   {isRoleLogin ? 'Create an account' : 'Sign Up'}

@@ -10,7 +10,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, useColorScheme } from 'react-native';
+import { darkPalette, lightPalette } from './src/theme/palettes';
 
 // Lazy load navigators for code splitting
 const AuthNavigator = lazy(() => import('./src/navigation/AuthNavigator'));
@@ -119,6 +120,7 @@ function NavigationContent() {
 
 const App: React.FC = () => {
   const { initializeAuth } = useAuthStore();
+  const systemScheme = useColorScheme();
 
   const [fontsLoaded] = useFonts({
     'PlayfairDisplay-Regular': require('./assets/fonts/PlayfairDisplay-Regular.ttf'),
@@ -131,7 +133,12 @@ const App: React.FC = () => {
   }, [initializeAuth]);
 
   if (!fontsLoaded) {
-    return null;
+    const colors = systemScheme === 'dark' ? darkPalette : lightPalette;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.accent} />
+      </View>
+    );
   }
 
   return (

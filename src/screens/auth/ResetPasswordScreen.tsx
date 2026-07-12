@@ -78,7 +78,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation }) => {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Typography variant="h1" style={styles.title}>
+          <Typography variant="h1" style={styles.title} accessibilityRole="header">
             {SUCCESS_MESSAGES.auth.resetPasswordTitle}
           </Typography>
           <Typography variant="body" style={styles.subtitle}>
@@ -100,6 +100,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation }) => {
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}
                 accessibilityRole="button"
+                accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
               >
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -128,6 +129,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation }) => {
                 onPress={() => setShowConfirm(!showConfirm)}
                 style={styles.eyeButton}
                 accessibilityRole="button"
+                accessibilityLabel={showConfirm ? 'Hide password' : 'Show password'}
               >
                 <Ionicons
                   name={showConfirm ? 'eye-off-outline' : 'eye-outline'}
@@ -148,7 +150,7 @@ const ResetPasswordScreen: React.FC<Props> = ({ navigation }) => {
             disabled={isLoading}
           />
 
-          <TouchableOpacity onPress={goToForgotPassword} style={styles.linkRow}>
+          <TouchableOpacity onPress={goToForgotPassword} style={styles.linkRow} accessibilityRole="link" accessibilityLabel="Request a new reset link">
             <Typography variant="body" style={styles.linkText}>Request a new reset link</Typography>
           </TouchableOpacity>
         </ScrollView>

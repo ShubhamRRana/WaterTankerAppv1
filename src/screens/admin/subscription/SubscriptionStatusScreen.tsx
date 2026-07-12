@@ -36,6 +36,11 @@ const SubscriptionStatusScreen: React.FC<Props> = ({ navigation }) => {
   const endLabel = sub?.endDate ? sub.endDate.toLocaleDateString() : '—';
   const expiringSoon = SubscriptionService.isExpiringSoon(sub?.endDate ?? null, undefined, sub);
   const activePaid = sub?.status === 'active' && !onTrial;
+  const statusLabel = onTrial
+    ? 'Free trial'
+    : sub?.status
+      ? { pending: 'Pending activation', active: 'Active', expired: 'Expired', cancelled: 'Cancelled', paused: 'Paused' }[sub.status]
+      : 'No subscription';
   const primaryCtaTitle = onTrial
     ? 'Subscribe now'
     : activePaid && !expiringSoon
@@ -56,7 +61,7 @@ const SubscriptionStatusScreen: React.FC<Props> = ({ navigation }) => {
         <Card style={styles.card}>
           <Typography variant="h2">Subscription</Typography>
           <Typography variant="body">
-            Status: {onTrial ? 'Free trial' : (sub?.status ?? 'none')}
+            Status: {statusLabel}
           </Typography>
           {onTrial ? (
             <Typography variant="body">

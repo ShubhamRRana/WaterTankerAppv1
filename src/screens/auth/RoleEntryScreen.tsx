@@ -107,7 +107,7 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
         <ScrollView contentContainerStyle={styles.scrollContainer} style={styles.contentOverlay}>
           <View style={styles.scrollMain}>
             <View style={styles.header}>
-              <Typography variant="h1" style={styles.title}>Water Tanker - Admin</Typography>
+              <Typography variant="h1" style={styles.title} accessibilityRole="header">Water Tanker - Admin</Typography>
               <Typography variant="body" style={styles.subtitle}>Select how you want to use the app</Typography>
             </View>
 
@@ -117,6 +117,9 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
                   key={role.key}
                   style={[styles.roleCard, selectedRole === role.key && styles.roleCardSelected]}
                   onPress={() => setSelectedRole(role.key)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${role.title}: ${role.subtitle}`}
+                  accessibilityState={{ selected: selectedRole === role.key }}
                 >
                   <View style={styles.roleHeader}>
                     <View style={styles.roleInfo}>
@@ -149,6 +152,9 @@ const RoleEntryScreen: React.FC<Props> = ({ navigation }) => {
                 disabled={!selectedRole}
                 onPressIn={() => setIsButtonPressed(true)}
                 onPressOut={() => setIsButtonPressed(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Continue"
+                accessibilityState={{ disabled: !selectedRole }}
               >
                 <Typography variant="body" style={styles.buttonText}>Continue</Typography>
               </TouchableOpacity>

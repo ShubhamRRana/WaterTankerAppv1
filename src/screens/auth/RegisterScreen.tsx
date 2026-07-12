@@ -310,7 +310,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.header}>
-          <Typography variant="h1" style={styles.title}>Create Account</Typography>
+          <Typography variant="h1" style={styles.title} accessibilityRole="header">Create Account</Typography>
           <Typography variant="body" style={styles.subtitle}>Sign up to get started</Typography>
           {role === 'admin' ? (
             <Typography variant="caption" style={[styles.subtitle, { marginTop: 8, opacity: 0.85 }]}>
@@ -388,6 +388,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
               <TouchableOpacity
                 style={styles.eyeIcon}
                 onPress={() => setShowPassword(!showPassword)}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
               >
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -412,6 +414,8 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
               <TouchableOpacity
                 style={styles.eyeIcon}
                 onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                accessibilityRole="button"
+                accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}
               >
                 <Ionicons
                   name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -431,6 +435,9 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
             disabled={isLoading}
             onPressIn={() => setIsButtonPressed(true)}
             onPressOut={() => setIsButtonPressed(false)}
+            accessibilityRole="button"
+            accessibilityLabel={isLoading ? 'Creating account' : 'Create Account'}
+            accessibilityState={{ disabled: isLoading, busy: isLoading }}
           >
             <Typography variant="body" style={styles.buttonText}>
               {isLoading ? 'Creating Account...' : 'Create Account'}
@@ -440,7 +447,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation, route }) => {
 
         <View style={styles.footer}>
           <Typography variant="body" style={styles.footerText}>Already have an account? </Typography>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')} accessibilityRole="link" accessibilityLabel="Sign In">
             <Typography variant="body" style={styles.linkText}>Sign In</Typography>
           </TouchableOpacity>
         </View>

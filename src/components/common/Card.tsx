@@ -15,6 +15,7 @@ interface CardProps {
   style?: StyleProp<ViewStyle>;
   onPress?: () => void;
   padding?: 'small' | 'medium' | 'large';
+  accessibilityLabel?: string;
 }
 
 type PaddingKey = 'smallPadding' | 'mediumPadding' | 'largePadding';
@@ -30,6 +31,7 @@ const Card: React.FC<CardProps> = ({
   style,
   onPress,
   padding = 'medium',
+  accessibilityLabel,
 }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -44,7 +46,13 @@ const Card: React.FC<CardProps> = ({
 
   if (onPress) {
     return (
-      <TouchableOpacity style={cardStyle} onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={cardStyle}
+        onPress={onPress}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        {...(accessibilityLabel ? { accessibilityLabel } : {})}
+      >
         {children}
       </TouchableOpacity>
     );

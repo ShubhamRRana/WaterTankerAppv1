@@ -95,7 +95,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
           placeholder={placeholder}
           placeholderTextColor={colors.textSecondary}
         />
-        <TouchableOpacity onPress={onToggle} style={styles.eyeButton} accessibilityRole="button">
+        <TouchableOpacity onPress={onToggle} style={styles.eyeButton} accessibilityRole="button" accessibilityLabel={visible ? 'Hide password' : 'Show password'}>
           <Ionicons
             name={visible ? 'eye-off-outline' : 'eye-outline'}
             size={22}
@@ -120,7 +120,7 @@ const ChangePasswordScreen: React.FC<Props> = ({ navigation }) => {
             <Typography variant="body" style={styles.backText}>Back</Typography>
           </TouchableOpacity>
 
-          <Typography variant="h1" style={styles.title}>
+          <Typography variant="h1" style={styles.title} accessibilityRole="header">
             {SUCCESS_MESSAGES.auth.changePasswordTitle}
           </Typography>
           <Typography variant="body" style={styles.subtitle}>

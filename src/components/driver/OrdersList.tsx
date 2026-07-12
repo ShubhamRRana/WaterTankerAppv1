@@ -9,6 +9,7 @@ import { UserService } from '../../services/user.service';
 import { errorLogger } from '../../utils/errorLogger';
 import { formatDateTime } from '../../utils/dateUtils';
 import { getBookingPaymentChip, getBookingPaymentChipLabel } from '../../utils/paymentDisplay';
+import { getBookingStatusColor, getBookingStatusLabel } from '../../utils/bookingStatusDisplay';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
 
@@ -109,27 +110,9 @@ const OrdersList: React.FC<OrdersListProps> = ({
     return () => clearTimeout(timeoutId);
   }, [orders]);
 
-  const getStatusColor = useCallback((status: BookingStatus): string => {
-    switch (status) {
-      case 'pending': return colors.warning;
-      case 'accepted': return colors.accent;
-      case 'in_transit': return colors.success;
-      case 'delivered': return colors.success;
-      case 'cancelled': return colors.error;
-      default: return colors.textSecondary;
-    }
-  }, [colors]);
+  const getStatusColor = useCallback((status: BookingStatus): string => getBookingStatusColor(status, colors), [colors]);
 
-  const getStatusText = useCallback((status: BookingStatus): string => {
-    switch (status) {
-      case 'pending': return 'Pending';
-      case 'accepted': return 'Accepted';
-      case 'in_transit': return 'In Transit';
-      case 'delivered': return 'Delivered';
-      case 'cancelled': return 'Cancelled';
-      default: return 'Unknown';
-    }
-  }, []);
+  const getStatusText = useCallback((status: BookingStatus): string => getBookingStatusLabel(status), []);
 
   const formatDate = useCallback((date: Date): string => {
     return formatDateTime(date);
@@ -215,12 +198,14 @@ const OrdersList: React.FC<OrdersListProps> = ({
           </View>
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             // TODO: Open Google Maps with the address
           }}
           activeOpacity={0.7}
           style={[styles.addressContainer, isCompactCard && styles.addressContainerCompact]}
+          accessibilityRole="button"
+          accessibilityLabel={`Delivery address: ${order.deliveryAddress.address}`}
         >
           <Ionicons name="location" size={14} color={colors.accent} />
           <Typography variant="caption" style={styles.orderAddress}>
@@ -363,17 +348,21 @@ const OrdersList: React.FC<OrdersListProps> = ({
       <Typography variant="caption" style={styles.errorSubtext}>
         Please try refreshing or check your connection
       </Typography>
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={onDismissError}
         style={styles.dismissButton}
+        accessibilityRole="button"
+        accessibilityLabel="Dismiss"
       >
         <Typography variant="body" style={styles.dismissButtonText}>
           Dismiss
         </Typography>
       </TouchableOpacity>
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={onRefresh}
         style={styles.retryButton}
+        accessibilityRole="button"
+        accessibilityLabel="Retry"
       >
         <Typography variant="body" style={styles.retryButtonText}>
           Retry

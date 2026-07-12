@@ -51,10 +51,11 @@ const AdminSubscriptionCard: React.FC<Props> = ({ userId, navigation }) => {
       return `Trial — ${days} day${days === 1 ? '' : 's'} left${trialEnd}`;
     }
     if (hasActive) {
-      const renewDate = currentSubscription?.endDate
-        ? ` — renews ${formatShortDate(currentSubscription.endDate)}`
+      const dateText = currentSubscription?.endDate
+        ? formatShortDate(currentSubscription.endDate)
         : '';
-      return expiring ? `Expiring soon${renewDate}` : `Active${renewDate}`;
+      if (expiring) return dateText ? `Expiring soon — ${dateText}` : 'Expiring soon';
+      return dateText ? `Active — valid until ${dateText}` : 'Active';
     }
     return 'Inactive or expired';
   })();

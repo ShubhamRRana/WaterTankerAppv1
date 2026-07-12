@@ -40,12 +40,14 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({
   >
     <View style={[styles.modalContainer, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <View style={styles.modalHeader}>
-        <Typography variant="h2" style={styles.modalTitle}>
+        <Typography variant="h2" style={styles.modalTitle} accessibilityRole="header">
           Booking Details
         </Typography>
         <TouchableOpacity
           onPress={onClose}
           style={styles.closeButton}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
         >
           <Ionicons name="close" size={24} color={colors.textSecondary} />
         </TouchableOpacity>

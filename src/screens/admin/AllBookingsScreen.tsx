@@ -17,6 +17,7 @@ import { useBookingStore } from '../../store/bookingStore';
 import { useAuthStore } from '../../store/authStore';
 import { Typography, LoadingSpinner, AdminMenuDrawer } from '../../components/common';
 import { getBookingPaymentChip } from '../../utils/paymentDisplay';
+import { getBookingStatusColor, getBookingStatusIcon } from '../../utils/bookingStatusDisplay';
 import BookingCard from '../../components/admin/BookingCard';
 import BookingDetailsModal from '../../components/admin/BookingDetailsModal';
 import StatusUpdateModal from '../../components/admin/StatusUpdateModal';
@@ -130,27 +131,9 @@ const AllBookingsScreen: React.FC = () => {
     { key: 'unpaid', label: 'Unpaid', icon: 'wallet-outline', count: filterCounts.unpaid },
   ], [filterCounts]);
 
-  const getStatusColor = useCallback((status: BookingStatus) => {
-    switch (status) {
-      case 'pending': return colors.warning;
-      case 'accepted': return colors.accent;
-      case 'in_transit': return colors.secondary;
-      case 'delivered': return colors.success;
-      case 'cancelled': return colors.error;
-      default: return colors.textSecondary;
-    }
-  }, [colors]);
+  const getStatusColor = useCallback((status: BookingStatus) => getBookingStatusColor(status, colors), [colors]);
 
-  const getStatusIcon = useCallback((status: BookingStatus) => {
-    switch (status) {
-      case 'pending': return 'time-outline';
-      case 'accepted': return 'checkmark-circle-outline';
-      case 'in_transit': return 'car-outline';
-      case 'delivered': return 'checkmark-done-outline';
-      case 'cancelled': return 'close-circle-outline';
-      default: return 'help-circle-outline';
-    }
-  }, []);
+  const getStatusIcon = useCallback((status: BookingStatus) => getBookingStatusIcon(status), []);
 
   const handleStatusUpdate = async (bookingId: string, newStatus: BookingStatus) => {
     try {
@@ -218,9 +201,12 @@ const AllBookingsScreen: React.FC = () => {
         statusFilter === filter.key && styles.filterButtonActive
       ]}
       onPress={() => setStatusFilter(filter.key as BookingStatus | 'all' | 'unpaid')}
+      accessibilityRole="button"
+      accessibilityLabel={`Filter: ${filter.label}, ${filter.count}`}
+      accessibilityState={{ selected: statusFilter === filter.key }}
     >
-      <Ionicons 
-        name={filter.icon as any} 
+      <Ionicons
+        name={filter.icon as any}
         size={16} 
         color={statusFilter === filter.key ? colors.textLight : colors.accent}
       />
@@ -261,15 +247,17 @@ const AllBookingsScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <TouchableOpacity 
-            style={styles.menuButton} 
+          <TouchableOpacity
+            style={styles.menuButton}
             onPress={() => setMenuVisible(true)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Open menu"
           >
             <Ionicons name="menu" size={24} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.headerTextContainer}>
-            <Typography variant="h2" style={styles.title}>
+            <Typography variant="h2" style={styles.title} accessibilityRole="header">
               All Bookings
             </Typography>
             <Typography variant="body" style={styles.subtitle}>
@@ -291,7 +279,11 @@ const AllBookingsScreen: React.FC = () => {
             placeholderTextColor={colors.textSecondary}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+            >
               <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
@@ -371,20 +363,20 @@ function createStyles(colors: AppPalette) {
     alignItems: 'center',
   },
   menuButton: {
-    padding: 8,
-    marginRight: 12,
+    padding: UI_CONFIG.spacing.sm,
+    marginRight: UI_CONFIG.spacing.md,
   },
   headerTextContainer: {
     flex: 1,
   },
   title: {
-    fontSize: 24,
+    fontSize: UI_CONFIG.fontSize.xxl,
     fontWeight: 'bold',
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: UI_CONFIG.spacing.xs,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: UI_CONFIG.fontSize.md,
     color: colors.textSecondary,
   },
   searchContainer: {
@@ -398,14 +390,14 @@ function createStyles(colors: AppPalette) {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.background,
-    borderRadius: 12,
+    borderRadius: UI_CONFIG.borderRadius.md,
     paddingHorizontal: UI_CONFIG.spacing.md,
     paddingVertical: UI_CONFIG.spacing.sm,
   },
   searchInput: {
     flex: 1,
     marginLeft: UI_CONFIG.spacing.sm,
-    fontSize: 16,
+    fontSize: UI_CONFIG.fontSize.md,
     color: colors.text,
   },
   filterSection: {
@@ -423,7 +415,7 @@ function createStyles(colors: AppPalette) {
     alignItems: 'center',
     paddingHorizontal: UI_CONFIG.spacing.md,
     paddingVertical: UI_CONFIG.spacing.sm,
-    borderRadius: 20,
+    borderRadius: UI_CONFIG.borderRadius.xl,
     backgroundColor: colors.background,
     borderWidth: 1,
     borderColor: colors.border,
@@ -434,20 +426,20 @@ function createStyles(colors: AppPalette) {
     borderColor: colors.accent,
   },
   filterButtonText: {
-    fontSize: 14,
+    fontSize: UI_CONFIG.fontSize.sm,
     fontWeight: '500',
     color: colors.accent,
-    marginLeft: 6,
+    marginLeft: UI_CONFIG.spacing.sm,
   },
   filterButtonTextActive: {
     color: colors.textLight,
   },
   countBadge: {
     backgroundColor: colors.border,
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    marginLeft: 6,
+    borderRadius: UI_CONFIG.borderRadius.md,
+    paddingHorizontal: 6, // TODO: token gap — 50% off spacing.xs (4)
+    paddingVertical: 2, // TODO: token gap — 50% off spacing.xs (4)
+    marginLeft: UI_CONFIG.spacing.sm,
     minWidth: 20,
     alignItems: 'center',
   },
@@ -455,7 +447,7 @@ function createStyles(colors: AppPalette) {
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   countText: {
-    fontSize: 12,
+    fontSize: UI_CONFIG.fontSize.xs,
     fontWeight: '600',
     color: colors.textSecondary,
   },
@@ -472,14 +464,14 @@ function createStyles(colors: AppPalette) {
     paddingVertical: UI_CONFIG.spacing.xl * 2,
   },
   emptyTitle: {
-    fontSize: 20,
+    fontSize: UI_CONFIG.fontSize.xl,
     fontWeight: '600',
     color: colors.text,
     marginTop: UI_CONFIG.spacing.md,
     marginBottom: UI_CONFIG.spacing.sm,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: UI_CONFIG.fontSize.md,
     color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: UI_CONFIG.spacing.lg,

@@ -79,6 +79,9 @@ const OrdersFilter: React.FC<OrdersFilterProps> = memo(({ activeTab, onTabChange
             style={styles.glassRadioOption}
             onPress={() => handleTabPress(tab.key)}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={tab.label}
+            accessibilityState={{ selected: activeTab === tab.key }}
           >
             <Typography 
               variant="body" 
