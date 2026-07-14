@@ -27,6 +27,7 @@ import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
+import { WalkthroughTarget } from '../../walkthrough/WalkthroughTarget';
 
 type AllBookingsScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Bookings'>;
 
@@ -247,15 +248,17 @@ const AllBookingsScreen: React.FC = () => {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => setMenuVisible(true)}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Open menu"
-          >
-            <Ionicons name="menu" size={24} color={colors.text} />
-          </TouchableOpacity>
+          <WalkthroughTarget id="bookings.menu">
+            <TouchableOpacity
+              style={styles.menuButton}
+              onPress={() => setMenuVisible(true)}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Open menu"
+            >
+              <Ionicons name="menu" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </WalkthroughTarget>
           <View style={styles.headerTextContainer}>
             <Typography variant="h2" style={styles.title} accessibilityRole="header">
               All Bookings
@@ -304,21 +307,23 @@ const AllBookingsScreen: React.FC = () => {
       </View>
 
       {/* Bookings List */}
-      <FlatList
-        data={filteredBookings}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        contentContainerStyle={styles.bookingsList}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListEmptyComponent={listEmptyComponent}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        updateCellsBatchingPeriod={50}
-        initialNumToRender={10}
-        windowSize={10}
-      />
+      <WalkthroughTarget id="bookings.list" style={styles.listTargetWrapper}>
+        <FlatList
+          data={filteredBookings}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          contentContainerStyle={styles.bookingsList}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          ListEmptyComponent={listEmptyComponent}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          initialNumToRender={10}
+          windowSize={10}
+        />
+      </WalkthroughTarget>
 
       <BookingDetailsModal 
         visible={showBookingModal}
@@ -458,6 +463,9 @@ function createStyles(colors: AppPalette) {
     paddingHorizontal: UI_CONFIG.spacing.lg,
     paddingTop: UI_CONFIG.spacing.md,
     paddingBottom: UI_CONFIG.spacing.xl,
+  },
+  listTargetWrapper: {
+    flex: 1,
   },
   emptyState: {
     alignItems: 'center',

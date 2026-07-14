@@ -27,6 +27,7 @@ import type { AdminRoute } from '../../components/common/AdminMenuDrawer';
 import { getErrorMessage } from '../../utils/errors';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
+import { WalkthroughTarget } from '../../walkthrough/WalkthroughTarget';
 
 type VehicleManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Vehicles'>;
 
@@ -714,13 +715,15 @@ const VehicleManagementScreen: React.FC = () => {
       </ScrollView>
 
       {/* Floating Add Vehicle Button */}
-      <TouchableOpacity
-        style={styles.floatingAddButton}
-        onPress={() => setShowAddVehicleModal(true)}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="add" size={24} color={colors.textLight} />
-      </TouchableOpacity>
+      <WalkthroughTarget id="vehicles.add">
+        <TouchableOpacity
+          style={styles.floatingAddButton}
+          onPress={() => setShowAddVehicleModal(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={24} color={colors.textLight} />
+        </TouchableOpacity>
+      </WalkthroughTarget>
 
       <VehicleModal />
       <AddVehicleModal 

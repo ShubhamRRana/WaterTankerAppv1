@@ -26,6 +26,7 @@ import {
 } from '../../utils/reportCalculations';
 import { errorLogger } from '../../utils/errorLogger';
 import { exportReportToExcel } from '../../utils/excelExport';
+import { WalkthroughTarget } from '../../walkthrough/WalkthroughTarget';
 
 type ReportsScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Reports'>;
 
@@ -166,45 +167,47 @@ const ReportsScreen: React.FC = () => {
         />
 
         {/* Summary */}
-        <View style={styles.summarySection}>
-          <Typography variant="h2" style={styles.summaryTitle}>
-            {`${months[selectedMonth]} ${selectedYear} Summary`}
-          </Typography>
-          <View style={styles.summaryMetrics}>
-            <View style={styles.summaryMetric}>
-              <View style={styles.summaryValueContainer}>
-                <Typography 
-                  variant="h1" 
-                  style={styles.summaryValue} 
-                  numberOfLines={1} 
-                  adjustsFontSizeToFit 
-                  minimumFontScale={0.6}
-                >
-                  {PricingUtils.formatPrice(totalRevenue)}
+        <WalkthroughTarget id="reports.summary">
+          <View style={styles.summarySection}>
+            <Typography variant="h2" style={styles.summaryTitle}>
+              {`${months[selectedMonth]} ${selectedYear} Summary`}
+            </Typography>
+            <View style={styles.summaryMetrics}>
+              <View style={styles.summaryMetric}>
+                <View style={styles.summaryValueContainer}>
+                  <Typography 
+                    variant="h1" 
+                    style={styles.summaryValue} 
+                    numberOfLines={1} 
+                    adjustsFontSizeToFit 
+                    minimumFontScale={0.6}
+                  >
+                    {PricingUtils.formatPrice(totalRevenue)}
+                  </Typography>
+                </View>
+                <Typography variant="body" style={styles.summaryLabel}>
+                  Total Revenue
                 </Typography>
               </View>
-              <Typography variant="body" style={styles.summaryLabel}>
-                Total Revenue
-              </Typography>
-            </View>
-            <View style={styles.summaryMetric}>
-              <View style={styles.summaryValueContainer}>
-                <Typography 
-                  variant="h1" 
-                  style={styles.summaryValue} 
-                  numberOfLines={1} 
-                  adjustsFontSizeToFit 
-                  minimumFontScale={0.6}
-                >
-                  {PricingUtils.formatNumber(totalOrders)}
+              <View style={styles.summaryMetric}>
+                <View style={styles.summaryValueContainer}>
+                  <Typography 
+                    variant="h1" 
+                    style={styles.summaryValue} 
+                    numberOfLines={1} 
+                    adjustsFontSizeToFit 
+                    minimumFontScale={0.6}
+                  >
+                    {PricingUtils.formatNumber(totalOrders)}
+                  </Typography>
+                </View>
+                <Typography variant="body" style={styles.summaryLabel}>
+                  Total Orders
                 </Typography>
               </View>
-              <Typography variant="body" style={styles.summaryLabel}>
-                Total Orders
-              </Typography>
             </View>
           </View>
-        </View>
+        </WalkthroughTarget>
 
         <View style={styles.summarySection}>
           <Typography variant="h2" style={styles.summaryTitle}>

@@ -25,6 +25,7 @@ import { BankAccountService, StorageService, CollectionSettingsService } from '.
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { getErrorMessage } from '../../utils/errors';
 import { Image } from 'react-native';
+import { WalkthroughTarget } from '../../walkthrough/WalkthroughTarget';
 
 type AddBankAccountScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'BankAccounts'>;
 
@@ -648,27 +649,29 @@ const AddBankAccountScreen: React.FC = () => {
         </View>
       </View>
 
-      <Card style={{ marginHorizontal: 16, marginBottom: 16, padding: 16, gap: 10 }}>
-        <Typography variant="h3">Collection settings</Typography>
-        <Typography variant="body" style={{ opacity: 0.8 }}>
-          Drivers collect delivery payments via your uploaded QR code. Choose whether cash is also allowed.
-        </Typography>
-        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+      <WalkthroughTarget id="payments.qr">
+        <Card style={{ marginHorizontal: 16, marginBottom: 16, padding: 16, gap: 10 }}>
+          <Typography variant="h3">Collection settings</Typography>
+          <Typography variant="body" style={{ opacity: 0.8 }}>
+            Drivers collect delivery payments via your uploaded QR code. Choose whether cash is also allowed.
+          </Typography>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Button
+              title={allowCashCollection ? 'Cash allowed' : 'Cash disabled'}
+              variant={allowCashCollection ? 'primary' : 'outline'}
+              onPress={() => setAllowCashCollection((v) => !v)}
+            />
+          </View>
+          <Typography variant="caption" style={{ opacity: 0.7 }}>
+            When cash is disabled, drivers must collect via QR before completing delivery.
+          </Typography>
           <Button
-            title={allowCashCollection ? 'Cash allowed' : 'Cash disabled'}
-            variant={allowCashCollection ? 'primary' : 'outline'}
-            onPress={() => setAllowCashCollection((v) => !v)}
+            title={savingCollectionSettings ? 'Saving...' : 'Save collection settings'}
+            onPress={() => void saveCollectionSettings()}
+            disabled={savingCollectionSettings}
           />
-        </View>
-        <Typography variant="caption" style={{ opacity: 0.7 }}>
-          When cash is disabled, drivers must collect via QR before completing delivery.
-        </Typography>
-        <Button
-          title={savingCollectionSettings ? 'Saving...' : 'Save collection settings'}
-          onPress={() => void saveCollectionSettings()}
-          disabled={savingCollectionSettings}
-        />
-      </Card>
+        </Card>
+      </WalkthroughTarget>
 
       <ScrollView 
         style={styles.container} 

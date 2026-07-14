@@ -30,6 +30,7 @@ import { getErrorMessage } from '../../utils/errors';
 import { AuthService } from '../../services/auth.service';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
+import { WalkthroughTarget } from '../../walkthrough/WalkthroughTarget';
 
 type AdminProfileScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Profile'>;
 
@@ -606,7 +607,9 @@ const AdminProfileScreen: React.FC = () => {
               <Card style={styles.heroCard} padding="large">
                 <ProfileHeader user={user} />
                 <View style={styles.heroDivider} />
-                <AdminSubscriptionCard userId={user.id} navigation={navigation} />
+                <WalkthroughTarget id="profile.subscription">
+                  <AdminSubscriptionCard userId={user.id} navigation={navigation} />
+                </WalkthroughTarget>
               </Card>
             </Animated.View>
 

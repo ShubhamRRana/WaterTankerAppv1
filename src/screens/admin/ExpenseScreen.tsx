@@ -26,6 +26,7 @@ import { ExpenseService, StorageService } from '../../services';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { exportExpensesToExcel } from '../../utils/excelExport';
 import { errorLogger } from '../../utils/errorLogger';
+import { WalkthroughTarget } from '../../walkthrough/WalkthroughTarget';
 
 type ExpenseScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Expenses'>;
 
@@ -372,24 +373,26 @@ const ExpenseScreen: React.FC = () => {
 
       {/* View Mode Toggle Buttons */}
       <View style={styles.viewModeContainer}>
-        <TouchableOpacity
-          style={[
-            styles.viewModeButton,
-            viewMode === 'add' && styles.viewModeButtonActive,
-          ]}
-          onPress={() => setViewMode('add')}
-          activeOpacity={0.7}
-        >
-          <Typography
-            variant="body"
+        <WalkthroughTarget id="expenses.add" style={styles.viewModeButtonWrapper}>
+          <TouchableOpacity
             style={[
-              styles.viewModeButtonText,
-              viewMode === 'add' && styles.viewModeButtonTextActive,
+              styles.viewModeButton,
+              viewMode === 'add' && styles.viewModeButtonActive,
             ]}
+            onPress={() => setViewMode('add')}
+            activeOpacity={0.7}
           >
-            Add Expense
-          </Typography>
-        </TouchableOpacity>
+            <Typography
+              variant="body"
+              style={[
+                styles.viewModeButtonText,
+                viewMode === 'add' && styles.viewModeButtonTextActive,
+              ]}
+            >
+              Add Expense
+            </Typography>
+          </TouchableOpacity>
+        </WalkthroughTarget>
         <TouchableOpacity
           style={[
             styles.viewModeButton,
@@ -970,6 +973,9 @@ function createStyles(colors: AppPalette) {
   viewModeButtonTextActive: {
     color: colors.textLight,
     fontWeight: '600',
+  },
+  viewModeButtonWrapper: {
+    flex: 1,
   },
   emptyState: {
     alignItems: 'center',

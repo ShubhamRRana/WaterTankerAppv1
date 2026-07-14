@@ -29,6 +29,7 @@ import { SanitizationUtils } from '../../utils/sanitization';
 import { AdminStackParamList } from '../../navigation/AdminNavigator';
 import { AuthService } from '../../services/auth.service';
 import { getErrorMessage } from '../../utils/errors';
+import { WalkthroughTarget } from '../../walkthrough/WalkthroughTarget';
 
 type DriverManagementScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Drivers'>;
 
@@ -566,13 +567,15 @@ const DriverManagementScreen: React.FC = () => {
       </ScrollView>
 
       {/* Floating Add Driver Button */}
-      <TouchableOpacity
-        style={styles.floatingAddButton}
-        onPress={() => setShowAddDriverModal(true)}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="add" size={24} color={colors.textLight} />
-      </TouchableOpacity>
+      <WalkthroughTarget id="drivers.add">
+        <TouchableOpacity
+          style={styles.floatingAddButton}
+          onPress={() => setShowAddDriverModal(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={24} color={colors.textLight} />
+        </TouchableOpacity>
+      </WalkthroughTarget>
 
       <DriverModal 
         visible={showDriverModal}
