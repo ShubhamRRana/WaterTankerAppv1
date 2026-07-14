@@ -11,10 +11,10 @@ export type Rect = {
 
 const MEASURE_TIMEOUT_MS = 400;
 
-const targets = new Map<WalkthroughTargetId, RefObject<View>>();
+const targets = new Map<WalkthroughTargetId, RefObject<View | null>>();
 
 export const targetRegistry = {
-  register(id: WalkthroughTargetId, ref: RefObject<View>): () => void {
+  register(id: WalkthroughTargetId, ref: RefObject<View | null>): () => void {
     targets.set(id, ref);
     return () => {
       if (targets.get(id) === ref) {

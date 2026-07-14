@@ -4,7 +4,7 @@ import { targetRegistry } from '../../walkthrough/targetRegistry';
 
 function mockRef(
   measureInWindow?: View['measureInWindow'],
-): RefObject<View> {
+): RefObject<View | null> {
   return {
     current: {
       measureInWindow: measureInWindow ?? jest.fn(),
@@ -44,7 +44,7 @@ describe('targetRegistry', () => {
   });
 
   it('returns null when the ref has no current node', async () => {
-    const ref = { current: null } as RefObject<View>;
+    const ref = { current: null } as RefObject<View | null>;
     targetRegistry.register('drivers.add', ref);
     await expect(targetRegistry.measure('drivers.add')).resolves.toBeNull();
   });
