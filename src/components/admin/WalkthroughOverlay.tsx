@@ -97,6 +97,12 @@ const WalkthroughOverlay: React.FC<WalkthroughOverlayProps> = ({
   }, []);
 
   useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(
+      `${title}. ${body}. Step ${stepIndex + 1} of ${stepCount}`
+    );
+  }, [title, body, stepIndex, stepCount]);
+
+  useEffect(() => {
     const duration = reduceMotionRef.current ? 0 : SLIDE_DURATION;
     Animated.timing(slideAnim, {
       toValue: 1,
