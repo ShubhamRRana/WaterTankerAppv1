@@ -91,6 +91,7 @@ interface DriverRow {
 interface AdminRow {
   user_id: string;
   business_name: string | null;
+  walkthrough_seen_at?: string | null;
   created_at: string;
   updated_at: string;
 }
