@@ -567,9 +567,9 @@ const DriverManagementScreen: React.FC = () => {
       </ScrollView>
 
       {/* Floating Add Driver Button */}
-      <WalkthroughTarget id="drivers.add">
+      <WalkthroughTarget id="drivers.add" style={styles.floatingAddButton}>
         <TouchableOpacity
-          style={styles.floatingAddButton}
+          style={styles.floatingAddButtonPressable}
           onPress={() => setShowAddDriverModal(true)}
           activeOpacity={0.8}
         >
@@ -745,6 +745,9 @@ function createStyles(colors: AppPalette) {
     right: 20,
     width: 56,
     height: 56,
+  },
+  floatingAddButtonPressable: {
+    flex: 1,
     borderRadius: 28,
     backgroundColor: colors.accent,
     justifyContent: 'center',

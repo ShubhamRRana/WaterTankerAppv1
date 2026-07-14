@@ -715,9 +715,9 @@ const VehicleManagementScreen: React.FC = () => {
       </ScrollView>
 
       {/* Floating Add Vehicle Button */}
-      <WalkthroughTarget id="vehicles.add">
+      <WalkthroughTarget id="vehicles.add" style={styles.floatingAddButton}>
         <TouchableOpacity
-          style={styles.floatingAddButton}
+          style={styles.floatingAddButtonPressable}
           onPress={() => setShowAddVehicleModal(true)}
           activeOpacity={0.8}
         >
@@ -951,6 +951,9 @@ function createStyles(colors: AppPalette) {
     right: 20,
     width: 56,
     height: 56,
+  },
+  floatingAddButtonPressable: {
+    flex: 1,
     borderRadius: 28,
     backgroundColor: colors.accent,
     justifyContent: 'center',
