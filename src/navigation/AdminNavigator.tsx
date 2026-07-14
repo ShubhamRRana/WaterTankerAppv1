@@ -21,6 +21,7 @@ import AdminSubscriptionLockedBanner from '../components/admin/AdminSubscription
 import { FEATURE_FLAGS } from '../constants/config';
 import { useAdminPostUnlockNavigation } from './useAdminPostUnlockNavigation';
 import { useAdminPendingSubscriptionSuccessNavigation } from './useAdminPendingSubscriptionSuccessNavigation';
+import { AdminWalkthroughProvider } from '../context/AdminWalkthroughContext';
 import type { PaymentResultScreenParams } from '../types/razorpay.types';
 
 export type AdminStackParamList = {
@@ -66,23 +67,25 @@ const AdminFullStack: React.FC = () => {
   useAdminPendingSubscriptionSuccessNavigation();
 
   return (
-  <Stack.Navigator screenOptions={screenOptions} initialRouteName="Bookings">
-    <Stack.Screen name="Bookings" component={AllBookingsScreen} />
-    <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
-    <Stack.Screen name="SocietyUserTripBreakdown" component={SocietyUserTripBreakdownScreen} />
-    <Stack.Screen name="Drivers" component={DriverManagementScreen} />
-    <Stack.Screen name="Vehicles" component={VehicleManagementScreen} />
-    <Stack.Screen name="Reports" component={ReportsScreen} />
-    <Stack.Screen name="Profile" component={AdminProfileScreen} />
-    <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
-    <Stack.Screen name="BankAccounts" component={AddBankAccountScreen} />
-    <Stack.Screen name="Expenses" component={ExpenseScreen} />
-    <Stack.Screen name="SubscriptionPlans" component={SubscriptionPlansScreen} />
-    <Stack.Screen name="SubscriptionCheckout" component={SubscriptionCheckoutScreen} />
-    <Stack.Screen name="SubscriptionStatus" component={SubscriptionStatusScreen} />
-    <Stack.Screen name="SubscriptionPaymentHistory" component={SubscriptionPaymentHistoryScreen} />
-    <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
-  </Stack.Navigator>
+    <AdminWalkthroughProvider>
+      <Stack.Navigator screenOptions={screenOptions} initialRouteName="Bookings">
+        <Stack.Screen name="Bookings" component={AllBookingsScreen} />
+        <Stack.Screen name="TripDetails" component={TripDetailsScreen} />
+        <Stack.Screen name="SocietyUserTripBreakdown" component={SocietyUserTripBreakdownScreen} />
+        <Stack.Screen name="Drivers" component={DriverManagementScreen} />
+        <Stack.Screen name="Vehicles" component={VehicleManagementScreen} />
+        <Stack.Screen name="Reports" component={ReportsScreen} />
+        <Stack.Screen name="Profile" component={AdminProfileScreen} />
+        <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+        <Stack.Screen name="BankAccounts" component={AddBankAccountScreen} />
+        <Stack.Screen name="Expenses" component={ExpenseScreen} />
+        <Stack.Screen name="SubscriptionPlans" component={SubscriptionPlansScreen} />
+        <Stack.Screen name="SubscriptionCheckout" component={SubscriptionCheckoutScreen} />
+        <Stack.Screen name="SubscriptionStatus" component={SubscriptionStatusScreen} />
+        <Stack.Screen name="SubscriptionPaymentHistory" component={SubscriptionPaymentHistoryScreen} />
+        <Stack.Screen name="PaymentResult" component={PaymentResultScreen} />
+      </Stack.Navigator>
+    </AdminWalkthroughProvider>
   );
 };
 
