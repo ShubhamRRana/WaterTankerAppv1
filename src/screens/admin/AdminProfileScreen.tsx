@@ -30,6 +30,7 @@ import { getErrorMessage } from '../../utils/errors';
 import { AuthService } from '../../services/auth.service';
 import { AppPalette } from '../../theme/palettes';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useOptionalAdminWalkthrough } from '../../context/AdminWalkthroughContext';
 import { WalkthroughTarget } from '../../walkthrough/WalkthroughTarget';
 
 type AdminProfileScreenNavigationProp = StackNavigationProp<AdminStackParamList, 'Profile'>;
@@ -227,6 +228,7 @@ const AdminProfileScreen: React.FC = () => {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { user, updateUser, logout, isLoading } = useAuthStore();
+  const walkthrough = useOptionalAdminWalkthrough();
   const [state, dispatch] = useReducer(appReducer, initialState);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const heroOpacity = useRef(new Animated.Value(0)).current;
@@ -643,6 +645,19 @@ const AdminProfileScreen: React.FC = () => {
                       disabled={isDeleting}
                       colors={colors}
                     />
+                    {walkthrough ? (
+                      <>
+                        <View style={styles.rowDivider} />
+                        <WalkthroughTarget id="profile.replay">
+                          <SettingsRow
+                            label="Replay walkthrough"
+                            onPress={() => walkthrough.startReplay()}
+                            disabled={isDeleting}
+                            colors={colors}
+                          />
+                        </WalkthroughTarget>
+                      </>
+                    ) : null}
                   </>
                 )}
                 {state.networkError ? (
