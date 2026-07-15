@@ -50,3 +50,6 @@ eas_error.txt
 # IDE
 .idea/
 .vscode/
+
+# Claude
+.superpowers/
